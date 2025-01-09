@@ -7,7 +7,7 @@ interface IResourceWrapper {
     event ResourceWrapped(bytes32 indexed nullifier, Resource resource);
     event ResourceUnwrapped(bytes32 indexed commitment, Resource resource);
 
-    function wrap(bytes32 nullifier, Resource memory resource, Map.KeyValuePair[] memory appData) external;
+    function wrap(bytes32 nullifier, Resource calldata resource, Map.KeyValuePair[] calldata appData) external;
 
-    function unwrap(bytes32 commitment, Resource memory resource, Map.KeyValuePair[] memory appData) external;
+    function unwrap(bytes32 commitment, Resource calldata resource, Map.KeyValuePair[] calldata appData) external;
 }
