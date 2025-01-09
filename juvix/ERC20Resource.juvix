@@ -1,0 +1,103 @@
+module ERC20Resource;
+
+import Stdlib.Prelude open;
+import Stdlib.Trait.Ord.Eq open using {fromOrdToEq};
+import Stdlib.Data.Set as Set open using {Set};
+
+import Anoma open;
+import Applib.Helpers open;
+import Anoma.Builtin.System open;
+import Applib.Identities open;
+import Applib.Authorization.Check open;
+
+import Types open;
+
+{- LOGIC -}
+
+logic (publicInputs : Logic.Instance) (privateInputs : Logic.Witness) : Bool :=
+  let
+    tag := Logic.Instance.tag publicInputs;
+    customInputs := Logic.Witness.customInputs privateInputs;
+  in case tag of
+       | Consumed nullifier :=
+         case lookupResource nullifier customInputs of {
+           | nothing := false
+           | just self :=
+             isAuthorizedBy@{
+               signer := owner self;
+               origin := tag;
+               publicInputs;
+             }
+               && case Resource.ephemeral self of {
+                    | true := requireEvmWrapperInfo self tag publicInputs
+                    | false := true
+                  }
+         }
+       | Created commitment :=
+         case lookupResource commitment customInputs of
+           | nothing := false
+           | just self :=
+             case Resource.ephemeral self of
+               | true := requireEvmWrapperInfo self tag publicInputs
+               | false := true;
+
+requireEvmWrapperInfo
+  (self : Resource) (tag : Tag) (publicInputs : Logic.Instance) : Bool :=
+  let
+    labelInfo := fromLabelRef (Resource.labelRef self);
+    appData := Logic.Instance.appData publicInputs;
+    lookUp :=
+      case tag of
+        | Consumed nullifier :=
+          lookupAppData@{
+            key := nullifier;
+            Value := EvmWrapper;
+            appData;
+          }
+        | Created commitment :=
+          lookupAppData@{
+            key := commitment;
+            Value := EvmWrapper;
+            appData;
+          };
+  in case lookUp of
+       | nothing := false
+       | just appDataInfo := appDataInfo == labelInfo;
+
+{- RESOURCE -}
+
+mkErc20Resource
+  (nonce : Nonce)
+  (quantity : Quantity)
+  (evmWrapper : EvmWrapper)
+  (owner : ExternalIdentity)
+  {nullifierKeyCommitment : NullifierKeyCommitment := Universal.nullifierKeyCommitment}
+  {ephemeral : Bool := false}
+  : Resource :=
+  mkResource@{
+    logicRef := BindingReference.compute (logic);
+    labelRef := toLabelRef evmWrapper;
+    valueRef := toValueRef owner;
+    quantity;
+    ephemeral;
+    nullifierKeyCommitment;
+    nonce;
+    randSeed := UnusedRandSeed;
+  };
+
+{- HELPERS -}
+
+toLabelRef (evmWrapper : EvmWrapper) : LabelRef :=
+  BindingReference.compute (mkLabel (anomaEncode (evmWrapper)));
+
+fromLabelRef (labelRef : LabelRef) : EvmWrapper :=
+  labelRef |> lookupFromReferenceChecked |> Label.unLabel |> anomaDecode;
+
+toValueRef (owner : ExternalIdentity) : ValueRef :=
+  BindingReference.compute (mkValue (anomaEncode (owner)));
+
+fromValueRef (valueRef : ValueRef) : ExternalIdentity :=
+  valueRef |> lookupFromReferenceChecked |> Value.unValue |> anomaDecode;
+
+owner (resource : Resource) : ExternalIdentity :=
+  resource |> Resource.valueRef |> fromValueRef;

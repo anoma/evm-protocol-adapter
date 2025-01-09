@@ -1,0 +1,25 @@
+# directories
+cache
+coverage
+node_modules
+out
+.juvix-build
+.vscode/*
+
+# files
+*.env
+*.log
+.DS_Store
+.pnp.*
+lcov.info
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+.history
+*.nockma
+.DS_Store
+
+# broadcasts
+!broadcast
+broadcast/*
+broadcast/*/31337/

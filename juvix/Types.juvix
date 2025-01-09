@@ -1,0 +1,62 @@
+module Types;
+
+import Stdlib.Prelude open;
+import Stdlib.Trait.Ord.Eq open using {fromOrdToEq};
+
+import Anoma open;
+
+axiom TODO : {A : Type} -> A;
+
+type Address := mkAddress@{unAddress : Nat};
+
+type FunctionSelector := mkFunctionSelector@{unFunctionSelector : Nat};
+
+type Calldata :=
+  mkCalldata@{
+    owner : ExternalIdentity;
+    quantity : Quantity;
+  };
+
+type EvmWrapper :=
+  mkEvmWrapper@{
+    contract : Address;
+    wrapFunction : FunctionSelector;
+    unwrapFunction : FunctionSelector;
+  };
+
+instance
+Address-Ord : Ord Address :=
+  let
+    compare (lhs rhs : Address) : Ordering :=
+      Ord.cmp (Address.unAddress lhs) (Address.unAddress rhs);
+  in mkOrd compare;
+
+instance
+Address-Eq : Eq Address := fromOrdToEq;
+
+instance
+FunctionSelector-Ord : Ord FunctionSelector :=
+  let
+    compare (lhs rhs : FunctionSelector) : Ordering :=
+      Ord.cmp
+        (FunctionSelector.unFunctionSelector lhs)
+        (FunctionSelector.unFunctionSelector rhs);
+  in mkOrd compare;
+
+instance
+FunctionSelector-Eq : Eq FunctionSelector := fromOrdToEq;
+
+instance
+EvmWrapper-Ord : Ord EvmWrapper :=
+  let
+    compare (lhs rhs : EvmWrapper) : Ordering :=
+      let
+        prod (w : EvmWrapper) : _ :=
+          EvmWrapper.contract w
+            , EvmWrapper.wrapFunction w
+            , EvmWrapper.unwrapFunction w;
+      in Ord.cmp (prod lhs) (prod rhs);
+  in mkOrd compare;
+
+instance
+EvmWrapper-Eq : Eq EvmWrapper := fromOrdToEq;
