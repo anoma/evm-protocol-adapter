@@ -6,19 +6,15 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IStarkVerifier } from "./interfaces/IStarkVerifier.sol";
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IResourceWrapper } from "./interfaces/IResourceWrapper.sol";
-import { ComputableComponents } from "./libs/ComputableComponents.sol";
-import { Map } from "./libs/Map.sol";
+import { AppData, Map } from "./libs/AppData.sol";
 
 import { Resource, Action, Transaction } from "./Types.sol";
 import { CommitmentAccumulator } from "./CommitmentAccumulator.sol";
 import { NullifierSet } from "./NullifierSet.sol";
 
-import { UNIVERSAL_NULLIFIER_KEY } from "./Constants.sol";
-
 contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSet {
-    using ComputableComponents for Resource;
+    using AppData for Map.KeyValuePair[];
     using Address for address;
-    using Map for Map.KeyValuePair[];
 
     IStarkVerifier private starkVerifier;
     uint256 private txCount;
@@ -26,7 +22,6 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
     event EVMStateChangeExecuted(IResourceWrapper indexed wrapper, bytes32 indexed tag);
 
-    error KindMismatch(bytes32 resourceKind, bytes32 wrapperKind);
     error InvalidProof(uint256[] proofParams, uint256[] proof, uint256[] publicInput);
 
     bytes32 private constant EMPTY_BYTES32 = bytes32(0);
@@ -72,11 +67,11 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
     }
 
     function _executeWrapCall(bytes32 nullifier, Map.KeyValuePair[] memory appData) internal {
-        (bool success, Resource memory resource) = _lookupConsumedResource(appData, nullifier);
+        (bool success, Resource memory resource) = AppData.lookupConsumedResource(appData, nullifier);
 
         if (success && resource.ephemeral) {
             // Lookup the wrapper contract from the resource label.
-            IResourceWrapper wrapper = _lookupWrapperFromResourceLabel(resource, appData);
+            IResourceWrapper wrapper = AppData.lookupWrapperFromResourceLabel(resource, appData);
             // Call the wrapper
             wrapper.wrap(nullifier, resource, appData);
 
@@ -85,61 +80,16 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
     }
 
     function _executeUnwrapCall(bytes32 commitment, Map.KeyValuePair[] memory appData) internal {
-        (bool success, Resource memory resource) = _lookupCreatedResource(appData, commitment);
+        (bool success, Resource memory resource) = AppData.lookupCreatedResource(appData, commitment);
 
         if (success && resource.ephemeral) {
             // Lookup the wrapper contract from the resource label.
-            IResourceWrapper wrapper = _lookupWrapperFromResourceLabel(resource, appData);
+            IResourceWrapper wrapper = AppData.lookupWrapperFromResourceLabel(resource, appData);
 
             // Call the wrapper contract.
             wrapper.unwrap(commitment, resource, appData);
 
             emit EVMStateChangeExecuted(wrapper, commitment);
-        }
-    }
-
-    function _lookupConsumedResource(
-        Map.KeyValuePair[] memory appData,
-        bytes32 nullifier
-    )
-        internal
-        pure
-        returns (bool success, Resource memory resource)
-    {
-        resource = abi.decode(appData.lookup(nullifier), (Resource));
-        success = ComputableComponents.nullifier(resource, UNIVERSAL_NULLIFIER_KEY) == nullifier;
-    }
-
-    function _lookupCreatedResource(
-        Map.KeyValuePair[] memory appData,
-        bytes32 commitment
-    )
-        internal
-        pure
-        returns (bool success, Resource memory resource)
-    {
-        resource = abi.decode(appData.lookup(commitment), (Resource));
-        success = ComputableComponents.commitment(resource) == commitment;
-    }
-
-    function _lookupWrapperFromResourceLabel(
-        Resource memory resource,
-        Map.KeyValuePair[] memory appData
-    )
-        internal
-        view
-        returns (IResourceWrapper wrapper)
-    {
-        bytes memory label = appData.lookup(resource.labelRef); // TODO Require `Label` to be a map
-        wrapper = abi.decode(label, (IResourceWrapper));
-
-        // Integretiy check the resource kind
-        {
-            bytes32 resourceKind = ComputableComponents.kind(resource);
-            bytes32 wrapperKind = wrapper.kind();
-            if (resourceKind != wrapperKind) {
-                revert KindMismatch({ resourceKind: resourceKind, wrapperKind: wrapperKind });
-            }
         }
     }
 
