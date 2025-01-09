@@ -10,10 +10,16 @@ import { Resource, Map } from "./Types.sol";
 contract ERC20ResourceWrapper is IResourceWrapper, Ownable {
     using Map for Map.KeyValuePair[];
 
-    IERC20 public immutable TOKEN;
+    bytes32 internal immutable RESOURCE_KIND;
+    IERC20 internal immutable TOKEN_CONTRACT;
 
-    constructor(address protocolAdapter, IERC20 _erc20) Ownable(protocolAdapter) {
-        TOKEN = _erc20;
+    constructor(address protocolAdapter, bytes32 resourceKind, IERC20 erc20) Ownable(protocolAdapter) {
+        TOKEN_CONTRACT = erc20;
+        RESOURCE_KIND = resourceKind;
+    }
+
+    function kind() external view returns (bytes32) {
+        return RESOURCE_KIND;
     }
 
     function wrap(
@@ -27,7 +33,7 @@ contract ERC20ResourceWrapper is IResourceWrapper, Ownable {
         bytes memory value = appData.lookup(resource.valueRef);
         address _owner = abi.decode(value, (address));
 
-        TOKEN.transferFrom({ from: _owner, to: address(this), value: resource.quantity });
+        TOKEN_CONTRACT.transferFrom({ from: _owner, to: address(this), value: resource.quantity });
 
         emit ResourceWrapped(nullifier, resource);
     }
@@ -43,7 +49,7 @@ contract ERC20ResourceWrapper is IResourceWrapper, Ownable {
         bytes memory value = appData.lookup(resource.valueRef);
         address _owner = abi.decode(value, (address));
 
-        TOKEN.transfer({ to: _owner, value: resource.quantity });
+        TOKEN_CONTRACT.transfer({ to: _owner, value: resource.quantity });
 
         emit ResourceUnwrapped(commitment, resource);
     }

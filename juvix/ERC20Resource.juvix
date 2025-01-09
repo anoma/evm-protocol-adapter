@@ -29,7 +29,7 @@ logic (publicInputs : Logic.Instance) (privateInputs : Logic.Witness) : Bool :=
                publicInputs;
              }
                && case Resource.ephemeral self of {
-                    | true := requireEvmWrapperInfo self tag publicInputs
+                    | true := requireResourceInAppData self tag publicInputs
                     | false := true
                   }
          }
@@ -38,45 +38,44 @@ logic (publicInputs : Logic.Instance) (privateInputs : Logic.Witness) : Bool :=
            | nothing := false
            | just self :=
              case Resource.ephemeral self of
-               | true := requireEvmWrapperInfo self tag publicInputs
+               | true := requireResourceInAppData self tag publicInputs
                | false := true;
 
-requireEvmWrapperInfo
+requireResourceInAppData
   (self : Resource) (tag : Tag) (publicInputs : Logic.Instance) : Bool :=
   let
-    labelInfo := fromLabelRef (Resource.labelRef self);
     appData := Logic.Instance.appData publicInputs;
     lookUp :=
       case tag of
         | Consumed nullifier :=
           lookupAppData@{
             key := nullifier;
-            Value := EvmWrapper;
+            Value := Resource;
             appData;
           }
         | Created commitment :=
           lookupAppData@{
             key := commitment;
-            Value := EvmWrapper;
+            Value := Resource;
             appData;
           };
   in case lookUp of
        | nothing := false
-       | just appDataInfo := appDataInfo == labelInfo;
+       | just resource := resource == self;
 
 {- RESOURCE -}
 
 mkErc20Resource
-  (nonce : Nonce)
-  (quantity : Quantity)
-  (evmWrapper : EvmWrapper)
+  (wrapper : Address)
   (owner : ExternalIdentity)
+  (quantity : Quantity)
+  (nonce : Nonce)
   {nullifierKeyCommitment : NullifierKeyCommitment := Universal.nullifierKeyCommitment}
   {ephemeral : Bool := false}
   : Resource :=
   mkResource@{
     logicRef := BindingReference.compute (logic);
-    labelRef := toLabelRef evmWrapper;
+    labelRef := toLabelRef wrapper;
     valueRef := toValueRef owner;
     quantity;
     ephemeral;
@@ -87,10 +86,10 @@ mkErc20Resource
 
 {- HELPERS -}
 
-toLabelRef (evmWrapper : EvmWrapper) : LabelRef :=
-  BindingReference.compute (mkLabel (anomaEncode (evmWrapper)));
+toLabelRef (wrapperContract : Address) : LabelRef :=
+  BindingReference.compute (mkLabel (anomaEncode (wrapperContract)));
 
-fromLabelRef (labelRef : LabelRef) : EvmWrapper :=
+fromLabelRef (labelRef : LabelRef) : Address :=
   labelRef |> lookupFromReferenceChecked |> Label.unLabel |> anomaDecode;
 
 toValueRef (owner : ExternalIdentity) : ValueRef :=

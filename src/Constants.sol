@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25;
 
-bytes32 constant MAGIC_NUMBER = keccak256("EVM");
-
 // The generated from the seed `0x0000000000000000000000000000000000000000000000000000000000000000`
 // (see, e.g.,
 // https://cyphr.me/ed25519_tool/ed.html) in little-endian byte order.
