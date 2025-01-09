@@ -66,33 +66,6 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
         emit TransactionExecuted({ id: txCount++, transaction: transaction });
     }
 
-    function _executeWrapCall(bytes32 nullifier, Map.KeyValuePair[] memory appData) internal {
-        (bool success, Resource memory resource) = AppData.lookupConsumedResource(appData, nullifier);
-
-        if (success && resource.ephemeral) {
-            // Lookup the wrapper contract from the resource label.
-            IResourceWrapper wrapper = AppData.lookupWrapperFromResourceLabel(resource, appData);
-            // Call the wrapper
-            wrapper.wrap(nullifier, resource, appData);
-
-            emit EVMStateChangeExecuted(wrapper, nullifier);
-        }
-    }
-
-    function _executeUnwrapCall(bytes32 commitment, Map.KeyValuePair[] memory appData) internal {
-        (bool success, Resource memory resource) = AppData.lookupCreatedResource(appData, commitment);
-
-        if (success && resource.ephemeral) {
-            // Lookup the wrapper contract from the resource label.
-            IResourceWrapper wrapper = AppData.lookupWrapperFromResourceLabel(resource, appData);
-
-            // Call the wrapper contract.
-            wrapper.unwrap(commitment, resource, appData);
-
-            emit EVMStateChangeExecuted(wrapper, commitment);
-        }
-    }
-
     function _verifyDelta(uint256 delta, uint256[] calldata deltaProof) internal {
         uint256[] memory publicInput = new uint256[](1);
         publicInput[0] = delta;
@@ -118,6 +91,33 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
             // Nothing
         } catch {
             revert InvalidProof({ proofParams: proofParams, proof: proof, publicInput: publicInput });
+        }
+    }
+
+    function _executeWrapCall(bytes32 nullifier, Map.KeyValuePair[] memory appData) internal {
+        (bool success, Resource memory resource) = AppData.lookupConsumedResource(appData, nullifier);
+
+        if (success && resource.ephemeral) {
+            // Lookup the wrapper contract from the resource label.
+            IResourceWrapper wrapper = AppData.lookupWrapperFromResourceLabel(resource, appData);
+            // Call the wrapper
+            wrapper.wrap(nullifier, resource, appData);
+
+            emit EVMStateChangeExecuted(wrapper, nullifier);
+        }
+    }
+
+    function _executeUnwrapCall(bytes32 commitment, Map.KeyValuePair[] memory appData) internal {
+        (bool success, Resource memory resource) = AppData.lookupCreatedResource(appData, commitment);
+
+        if (success && resource.ephemeral) {
+            // Lookup the wrapper contract from the resource label.
+            IResourceWrapper wrapper = AppData.lookupWrapperFromResourceLabel(resource, appData);
+
+            // Call the wrapper contract.
+            wrapper.unwrap(commitment, resource, appData);
+
+            emit EVMStateChangeExecuted(wrapper, commitment);
         }
     }
 }
