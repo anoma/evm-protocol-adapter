@@ -18,6 +18,7 @@ yarn.lock
 .history
 *.nockma
 .DS_Store
+*.bkp
 
 # broadcasts
 !broadcast
