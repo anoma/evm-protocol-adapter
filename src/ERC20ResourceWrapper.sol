@@ -18,7 +18,7 @@ contract ERC20ResourceWrapper is IResourceWrapper, Ownable {
 
     function wrap(
         bytes32 nullifier,
-        Resource memory resource,
+        Resource calldata resource,
         Map.KeyValuePair[] calldata appData
     )
         external
@@ -34,7 +34,7 @@ contract ERC20ResourceWrapper is IResourceWrapper, Ownable {
 
     function unwrap(
         bytes32 commitment,
-        Resource memory resource,
+        Resource calldata resource,
         Map.KeyValuePair[] calldata appData
     )
         external
