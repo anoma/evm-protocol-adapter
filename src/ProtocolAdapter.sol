@@ -79,7 +79,7 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
             (address wrapper, bytes4 wrapSelector) = abi.decode(label, (address, bytes4));
 
             // Prepare the `wrap` call
-            bytes memory wrapCall = abi.encodeWithSelector(wrapSelector, resource, appData);
+            bytes memory wrapCall = abi.encodeWithSelector(wrapSelector, nullifier, resource, appData);
 
             // Call `wrap` in the wrapper contract
             wrapper.functionCall({ data: wrapCall });
@@ -99,7 +99,7 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
             (address wrapper,, bytes4 unwrapSelector) = abi.decode(label, (address, bytes4, bytes4));
 
             // Prepare the `unwrap` call
-            bytes memory unwrapCall = abi.encodeWithSelector(unwrapSelector, resource, appData);
+            bytes memory unwrapCall = abi.encodeWithSelector(unwrapSelector, commitment, resource, appData);
 
             // Call `unwrap` in the wrapper contract
             wrapper.functionCall({ data: unwrapCall });
