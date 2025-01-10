@@ -2,19 +2,19 @@
 pragma solidity >=0.8.25;
 
 library Map {
+    error KeyNotFound(bytes32 key);
+
     struct KeyValuePair {
         bytes32 key;
         bytes value;
     }
 
-    error KeyNotFound(bytes32 key);
-
-    function lookup(KeyValuePair[] memory map, bytes32 key) internal pure returns (bytes memory) {
+    function lookup(KeyValuePair[] memory map, bytes32 key) internal pure returns (bool success, bytes memory) {
         for (uint256 i = 0; i < map.length; i++) {
             if (map[i].key == key) {
-                return map[i].value;
+                return (true, map[i].value);
             }
         }
-        revert KeyNotFound(key);
+        return (false, bytes(""));
     }
 }

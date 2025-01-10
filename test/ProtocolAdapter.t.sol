@@ -14,7 +14,7 @@ contract ProtocolAdapterTest is Test {
 
     // TODO: Fork mainnet https://docs.starknet.io/architecture-and-concepts/solidity-verifier/
     address internal constant STARK_VERIFIER = address(0);
-    address internal constant TREE_DEPTH = 2; // NOTE: 2^2 = 4 nodes are possible.
+    uint8 internal constant TREE_DEPTH = 2; // NOTE: 2^2 = 4 nodes are possible.
 
     function setUp() public {
         testNumber = 42;

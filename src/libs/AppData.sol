@@ -2,59 +2,43 @@
 pragma solidity >=0.8.25;
 
 import { IResourceWrapper } from "../interfaces/IResourceWrapper.sol";
-import { UNIVERSAL_NULLIFIER_KEY } from "../Constants.sol";
+
 import { Resource } from "../Types.sol";
-import { ComputableComponents } from "./ComputableComponents.sol";
+
 import { Map } from "./Map.sol";
 
 library AppData {
     using Map for Map.KeyValuePair[];
 
-    error KindMismatch(bytes32 resourceKind, bytes32 wrapperKind);
-
-    function lookupConsumedResource(
+    function lookupResource(
         Map.KeyValuePair[] memory appData,
-        bytes32 nullifier
+        bytes32 key
     )
         internal
         pure
-        returns (bool success, Resource memory resource)
+        returns (bool, Resource memory)
     {
-        resource = abi.decode(appData.lookup(nullifier), (Resource));
-        success = ComputableComponents.nullifier(resource, UNIVERSAL_NULLIFIER_KEY) == nullifier;
+        (bool success, bytes memory data) = appData.lookup(key);
+        return (success, abi.decode(data, (Resource)));
     }
 
-    function lookupCreatedResource(
+    /// @notice Looks up the wrapper contract lookup from the resource label reference and app data.
+    function lookupWrapper(
         Map.KeyValuePair[] memory appData,
-        bytes32 commitment
+        bytes32 key
     )
         internal
         pure
-        returns (bool success, Resource memory resource)
+        returns (bool, IResourceWrapper)
     {
-        resource = abi.decode(appData.lookup(commitment), (Resource));
-        success = ComputableComponents.commitment(resource) == commitment;
+        (bool success, bytes memory data) = appData.lookup(key);
+
+        return (success, abi.decode(data, (IResourceWrapper)));
     }
 
-    // TODO Refactor
-    function lookupWrapperFromResourceLabel(
-        Map.KeyValuePair[] memory appData,
-        Resource memory resource
-    )
-        internal
-        view
-        returns (IResourceWrapper wrapper)
-    {
-        bytes memory label = appData.lookup(resource.labelRef); // TODO Require `Label` to be a map
-        wrapper = abi.decode(label, (IResourceWrapper));
+    function lookupOwner(Map.KeyValuePair[] calldata appData, bytes32 key) internal pure returns (bool, address) {
+        (bool success, bytes memory data) = appData.lookup(key);
 
-        // Integrity check the resource kind
-        {
-            bytes32 resourceKind = ComputableComponents.kind(resource);
-            bytes32 wrapperKind = wrapper.kind();
-            if (resourceKind != wrapperKind) {
-                revert KindMismatch({ resourceKind: resourceKind, wrapperKind: wrapperKind });
-            }
-        }
+        return (success, abi.decode(data, (address)));
     }
 }

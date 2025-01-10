@@ -5,10 +5,11 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ResourceWrapperBase } from "./ResourceWrapperBase.sol";
-import { Resource, Map } from "./Types.sol";
+import { AppData, Map } from "./libs/AppData.sol";
+import { Resource } from "./Types.sol";
 
 contract ERC20ResourceWrapper is Ownable, ResourceWrapperBase {
-    using Map for Map.KeyValuePair[];
+    using AppData for Map.KeyValuePair[];
 
     IERC20 internal immutable TOKEN_CONTRACT;
 
@@ -30,10 +31,11 @@ contract ERC20ResourceWrapper is Ownable, ResourceWrapperBase {
         internal
         override
     {
-        bytes memory value = appData.lookup(resource.valueRef);
-        address _owner = abi.decode(value, (address));
+        (bool success, address owner) = appData.lookupOwner({ key: resource.valueRef });
 
-        TOKEN_CONTRACT.transferFrom({ from: _owner, to: address(this), value: resource.quantity });
+        if (!success) revert Map.KeyNotFound({ key: resource.valueRef });
+
+        TOKEN_CONTRACT.transferFrom({ from: owner, to: address(this), value: resource.quantity });
     }
 
     function _unwrap(
@@ -44,9 +46,10 @@ contract ERC20ResourceWrapper is Ownable, ResourceWrapperBase {
         internal
         override
     {
-        bytes memory value = appData.lookup(resource.valueRef);
-        address _owner = abi.decode(value, (address));
+        (bool success, address owner) = appData.lookupOwner({ key: resource.valueRef });
 
-        TOKEN_CONTRACT.transfer({ to: _owner, value: resource.quantity });
+        if (!success) revert Map.KeyNotFound({ key: resource.valueRef });
+
+        TOKEN_CONTRACT.transfer({ to: owner, value: resource.quantity });
     }
 }
