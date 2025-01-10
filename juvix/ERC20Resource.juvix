@@ -5,12 +5,16 @@ import Stdlib.Trait.Ord.Eq open using {fromOrdToEq};
 import Stdlib.Data.Set as Set open using {Set};
 
 import Anoma open;
-import Applib.Helpers open;
 import Anoma.Builtin.System open;
+import Anoma.Builtin.ByteArray open using {ByteArray};
+import Applib.Helpers open;
 import Applib.Identities open;
 import Applib.Authorization.Check open;
 
+import MagicNumbers open;
 import Types open;
+
+bitwiseXOR {A} (a : A) (b : ByteArray) : ByteArray := TODO;
 
 {- LOGIC -}
 
@@ -49,13 +53,13 @@ requireResourceInAppData
       case tag of
         | Consumed nullifier :=
           lookupAppData@{
-            key := nullifier;
+            key := bitwiseXOR nullifier WRAP_MAGIC_NUMBER;
             Value := Resource;
             appData;
           }
         | Created commitment :=
           lookupAppData@{
-            key := commitment;
+            key := bitwiseXOR commitment UNWRAP_MAGIC_NUMBER;
             Value := Resource;
             appData;
           };

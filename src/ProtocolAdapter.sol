@@ -10,7 +10,7 @@ import { ComputableComponents } from "./libs/ComputableComponents.sol";
 import { AppData, Map } from "./libs/AppData.sol";
 
 import { Resource, Action, Transaction } from "./Types.sol";
-import { UNIVERSAL_NULLIFIER_KEY } from "./Constants.sol";
+import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./CommitmentAccumulator.sol";
 import { NullifierSet } from "./NullifierSet.sol";
 
@@ -106,7 +106,7 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
         Resource memory resource;
         {
             bool success;
-            (success, resource) = appData.lookupResource({ key: nullifier });
+            (success, resource) = appData.lookupResource({ key: nullifier ^ WRAP_MAGIC_NUMBER });
             if (!success) return;
 
             // Nullifier integrity check
@@ -132,7 +132,7 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
         Resource memory resource;
         {
             bool success;
-            (success, resource) = appData.lookupResource({ key: commitment });
+            (success, resource) = appData.lookupResource({ key: commitment ^ UNWRAP_MAGIC_NUMBER });
             if (!success) return;
 
             // Nullifier integrity check
