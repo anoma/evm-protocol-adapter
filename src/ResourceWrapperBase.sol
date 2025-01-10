@@ -17,8 +17,6 @@ abstract contract ResourceWrapperBase is IResourceWrapper, Ownable {
     /// address in its label influencing its kind.
     bytes32 internal immutable RESOURCE_KIND;
 
-    // TODO ERC-165 Check
-
     constructor(address protocolAdapter, bytes32 resourceKind) Ownable(protocolAdapter) {
         RESOURCE_KIND = resourceKind;
     }
