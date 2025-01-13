@@ -9,7 +9,7 @@ import { IResourceWrapper } from "./interfaces/IResourceWrapper.sol";
 import { ComputableComponents } from "./libs/ComputableComponents.sol";
 import { AppData, Map } from "./libs/AppData.sol";
 
-import { Resource, Action, Transaction } from "./Types.sol";
+import { Resource, Action, Transaction, LogicInstance } from "./Types.sol";
 import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./CommitmentAccumulator.sol";
 import { NullifierSet } from "./NullifierSet.sol";
@@ -57,7 +57,7 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
         verify(transaction);
 
         for (uint256 i = 0; i < transaction.actions.length; ++i) {
-            Action memory action = transaction.actions[i];
+            Action calldata action = transaction.actions[i];
             Map.KeyValuePair[] memory appData = action.appData;
 
             for (uint256 j = 0; j < action.nullifiers.length; ++j) {
@@ -81,12 +81,32 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
     }
 
     function _verifyAction(Action calldata action) internal {
-        for (uint256 i; i < action.proofs.length; ++i) {
-            _verifyProof({ proofParams: EMPTY_UINT256_ARR, proof: action.proofs[i], publicInput: EMPTY_UINT256_ARR });
+        for (uint256 i; i < action.complianceProofs.length; ++i) {
+            _verifyComplianceProof(action, action.complianceProofs[i]);
+        }
+        for (uint256 i; i < action.logicProofs.length; ++i) {
+            _verifyLogicProof(action, action.complianceProofs[i]);
         }
     }
 
+    function _verifyComplianceProof(Action calldata action, uint256[] calldata proof) internal {
+        // TODO
+        {
+            action;
+        }
+        _verifyProof({ proofParams: EMPTY_UINT256_ARR, proof: proof, publicInput: EMPTY_UINT256_ARR });
+    }
+
+    function _verifyLogicProof(Action calldata action, uint256[] calldata proof) internal {
+        // TODO
+        {
+            action;
+        }
+        _verifyProof({ proofParams: EMPTY_UINT256_ARR, proof: proof, publicInput: EMPTY_UINT256_ARR });
+    }
+
     function _verifyProof(
+        // TODO use calldata if possible.
         uint256[] memory proofParams,
         uint256[] memory proof,
         uint256[] memory publicInput

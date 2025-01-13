@@ -17,13 +17,22 @@ struct Resource {
 struct Action {
     bytes32[] commitments;
     bytes32[] nullifiers;
-    uint256[][] proofs; // TODO Use bytes32[]? (StarkVerifier requires uint256[].)
+    uint256[][] complianceProofs; // TODO Use bytes32? (StarkVerifier requires uint256[].)
+    uint256[][] logicProofs; // TODO Use bytes32? (StarkVerifier requires uint256[].)
     Map.KeyValuePair[] appData;
 }
 
 struct Transaction {
-    uint256 delta; // TODO Use bytes32? (StarkVerifier requires uint256[].)
+    uint256 delta;
     bytes32[] roots;
     Action[] actions;
-    uint256[] deltaProof;
+    uint256[] deltaProof; // TODO Use bytes32? (StarkVerifier requires uint256[].)
+}
+
+struct LogicInstance {
+    bytes32 tag;
+    bool isConsumed;
+    bytes32[] consumed;
+    bytes32[] created;
+    Map.KeyValuePair[] appDataForTag; // TODO Revisit.
 }
