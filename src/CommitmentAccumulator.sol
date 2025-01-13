@@ -26,10 +26,6 @@ contract CommitmentAccumulator {
 
     event CommitmentAdded(bytes32 indexed commitmentIdentifier, uint256 indexed index, bytes32 root);
 
-    function containsRoot(bytes32 root) public view returns (bool) {
-        return roots.contains(root);
-    }
-
     constructor(uint8 treeDepth) {
         bytes32 emptyLeafHash = keccak256("EMPTY LEAF");
         initialRoot = merkleTree.setup(treeDepth, emptyLeafHash, fnHash);
@@ -39,14 +35,29 @@ contract CommitmentAccumulator {
         return roots.at(roots.length() - 1);
     }
 
+    function containsRoot(bytes32 root) public view returns (bool) {
+        return roots.contains(root);
+    }
+
+    function rootByIndex(uint256 index) external view returns (bytes32) {
+        return roots.at(index);
+    }
+
     // TODO Does the Protocol adapter backend need this function?
-    function verify(bytes32 root, bytes32 commitmentIdentifier, bytes32[] memory witness) public pure returns (bool) {
+    function verifyMerklePath(
+        bytes32 root,
+        bytes32 commitmentIdentifier,
+        bytes32[] memory witness
+    )
+        public
+        view
+        returns (bool)
+    {
         if (!roots.contains(root)) {
             revert("ROOT NOT EXISTENT"); // TODO
-
-            // NOTE by Xuyang: If `root` doesn't exist, the corresponding resource doesn't exist.
-            // In the compliance, we checked the root generation. This makes sure that the root corresponds to the
-            // resource.
+                // NOTE by Xuyang: If `root` doesn't exist, the corresponding resource doesn't exist.
+                // In the compliance, we checked the root generation. This makes sure that the root corresponds to the
+                // resource.
         }
         return MerkleProof.verify({ proof: witness, root: root, leaf: commitmentIdentifier });
     }
@@ -58,11 +69,7 @@ contract CommitmentAccumulator {
 
         commitments[commitmentIdentifier] = true;
         (uint256 index, bytes32 newRoot) = merkleTree.push(commitmentIdentifier, fnHash);
-        roots[index] = (newRoot);
+        roots.add(newRoot);
         emit CommitmentAdded({ commitmentIdentifier: commitmentIdentifier, index: index, root: newRoot });
-    }
-
-    function nextLeafIndex() internal view returns (uint256) {
-        return merkleTree._nextLeafIndex;
     }
 }

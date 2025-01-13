@@ -9,7 +9,7 @@ import { IResourceWrapper } from "./interfaces/IResourceWrapper.sol";
 import { ComputableComponents } from "./libs/ComputableComponents.sol";
 import { AppData, Map } from "./libs/AppData.sol";
 
-import { Resource, Action, Transaction, LogicInstance } from "./Types.sol";
+import { Resource, Action, Transaction, LogicInstance, ComplianceInstance } from "./Types.sol";
 import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./CommitmentAccumulator.sol";
 import { NullifierSet } from "./NullifierSet.sol";
@@ -90,16 +90,25 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
     }
 
     function _verifyComplianceProof(Action calldata action, uint256[] calldata proof) internal {
-        // TODO
-        {
-            action;
-        }
+        // TODO 1. Ask Xuyang if there are discrepancies to the specs and if I need to follow the node implementation.
+        // TODO 2. Populate.
+        ComplianceInstance memory instance = ComplianceInstance({
+            consumed: new ConsumedRefs[](0),
+            created: new CreatedRefs[](0),
+            unitDelta: bytes32(0) // DeltaHash - what hash function?
+         });
+
+        // TODO 3. `verify_compliance_hash(proofRecords)` ?
+
+        verifyMerklePath({ root: bytes(0), commitmentIdentifier: bytes(0), witness: new bytes32[](0) });
+
         _verifyProof({ proofParams: EMPTY_UINT256_ARR, proof: proof, publicInput: EMPTY_UINT256_ARR });
     }
 
     function _verifyLogicProof(Action calldata action, uint256[] calldata proof) internal {
-        // TODO Populate.
-        LogicInstance memory publicInputs = LogicInstance({
+        // TODO 1. Ask Xuyang if there are discrepancies to the specs and if I need to follow the node implementation.
+        // TODO 2. Populate.
+        LogicInstance memory instance = LogicInstance({
             tag: bytes32(0),
             isConsumed: true,
             consumed: new bytes32[](0),
