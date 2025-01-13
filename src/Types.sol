@@ -14,19 +14,24 @@ struct Resource {
     bool ephemeral;
 }
 
-struct Action {
-    bytes32[] commitments;
-    bytes32[] nullifiers;
-    uint256[][] complianceProofs; // TODO Use bytes32? (StarkVerifier requires uint256[].)
-    uint256[][] logicProofs; // TODO Use bytes32? (StarkVerifier requires uint256[].)
-    Map.KeyValuePair[] appData;
-}
-
 struct Transaction {
     uint256 delta;
     bytes32[] roots;
     Action[] actions;
-    uint256[] deltaProof; // TODO Use bytes32? (StarkVerifier requires uint256[].)
+    uint256[] deltaProof;
+}
+
+struct Action {
+    bytes32[] commitments;
+    bytes32[] nullifiers;
+    mapping(bytes32 tag => LogicRefHashProofPair) resourceLogicProofs;
+    uint256[][] complianceProofs;
+    Map.KeyValuePair[] appData;
+}
+
+struct LogicRefHashProofPair {
+    bytes32 logicRefHash;
+    uint256[] proof;
 }
 
 struct LogicInstance {
@@ -35,4 +40,35 @@ struct LogicInstance {
     bytes32[] consumed;
     bytes32[] created;
     Map.KeyValuePair[] appDataForTag; // TODO Revisit.
+}
+
+struct RefInstance {
+    bool TODO_MISSING_DEFINITION;
+}
+
+struct VerifyingKey {
+    bool TODO_MISSING_DEFINITION;
+}
+
+struct ComplianceUnit {
+    uint256[] proof;
+    RefInstance refInstance;
+    VerifyingKey verifyingKey;
+}
+
+struct ComplianceInstance {
+    ConsumedRefs[] consumed;
+    CreatedRefs[] created;
+    bytes32 unitDelta; // DeltaHash // TODO Is it 0?
+}
+
+struct ConsumedRefs {
+    bytes32 nullifierRef;
+    bytes32 rootRef;
+    bytes32 logicRef;
+}
+
+struct CreatedRefs {
+    bytes32 commitmentRef;
+    bytes32 logicRef;
 }

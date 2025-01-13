@@ -98,10 +98,15 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
     }
 
     function _verifyLogicProof(Action calldata action, uint256[] calldata proof) internal {
-        // TODO
-        {
-            action;
-        }
+        // TODO Populate.
+        LogicInstance memory publicInputs = LogicInstance({
+            tag: bytes32(0),
+            isConsumed: true,
+            consumed: new bytes32[](0),
+            created: new bytes32[](0),
+            appDataForTag: new Map.KeyValuePair[](0)
+        });
+        // TODO Convert into `StarkVerifier` format.
         _verifyProof({ proofParams: EMPTY_UINT256_ARR, proof: proof, publicInput: EMPTY_UINT256_ARR });
     }
 
