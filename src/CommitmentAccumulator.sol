@@ -3,27 +3,32 @@ pragma solidity >=0.8.25;
 
 import { MerkleTree } from "@openzeppelin/contracts/utils/structs/MerkleTree.sol";
 import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { Hashes } from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
 //TODO import { Poseidon } from "./libs/Poseidon.sol";
 
 contract CommitmentAccumulator {
     using MerkleTree for MerkleTree.Bytes32PushTree;
     using MerkleProof for MerkleTree.Bytes32PushTree;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
     MerkleTree.Bytes32PushTree internal merkleTree;
 
+    EnumerableSet.Bytes32Set internal roots;
     bytes32 public immutable initialRoot;
-    mapping(uint256 index => bytes32 root) public roots;
+    //mapping(uint256 index => bytes32 root) public roots;
 
-    // TODO Use merkle tree that cannot include duplicates by construction.
     mapping(bytes32 commitmentIdentifier => bool exists) public commitments;
 
     error DuplicateCommitment(bytes32 commitmentIdentifier);
 
-    //TODO use Poseidon.commutativeHash2;
     function(bytes32, bytes32) internal view returns (bytes32) internal fnHash = Hashes.commutativeKeccak256;
 
     event CommitmentAdded(bytes32 indexed commitmentIdentifier, uint256 indexed index, bytes32 root);
+
+    function containsRoot(bytes32 root) public view returns (bool) {
+        return roots.contains(root);
+    }
 
     constructor(uint8 treeDepth) {
         bytes32 emptyLeafHash = keccak256("EMPTY LEAF");
@@ -31,20 +36,27 @@ contract CommitmentAccumulator {
     }
 
     function latestRoot() external view returns (bytes32) {
-        return roots[nextLeafIndex() - 1];
+        return roots.at(roots.length() - 1);
     }
 
     // TODO Does the Protocol adapter backend need this function?
     function verify(bytes32 root, bytes32 commitmentIdentifier, bytes32[] memory witness) public pure returns (bool) {
+        if (!roots.contains(root)) {
+            revert("ROOT NOT EXISTENT"); // TODO
+
+            // NOTE by Xuyang: If `root` doesn't exist, the corresponding resource doesn't exist.
+            // In the compliance, we checked the root generation. This makes sure that the root corresponds to the
+            // resource.
+        }
         return MerkleProof.verify({ proof: witness, root: root, leaf: commitmentIdentifier });
     }
 
     function _addCommitment(bytes32 commitmentIdentifier) internal {
-        // TODO Use merkle tree that cannot include duplicates by construction.
         if (commitments[commitmentIdentifier]) {
             revert DuplicateCommitment(commitmentIdentifier);
         }
 
+        commitments[commitmentIdentifier] = true;
         (uint256 index, bytes32 newRoot) = merkleTree.push(commitmentIdentifier, fnHash);
         roots[index] = (newRoot);
         emit CommitmentAdded({ commitmentIdentifier: commitmentIdentifier, index: index, root: newRoot });
