@@ -136,7 +136,7 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
             if (!success) return;
 
             // Nullifier integrity check
-            _checkResourceCommimtmentIntegrity(resource, commitment);
+            _checkResourceCommitmentIntegrity(resource, commitment);
         }
         // Wrapper contract lookup from the resource label reference
         IResourceWrapper wrapper;
@@ -164,7 +164,7 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
         }
     }
 
-    function _checkResourceCommimtmentIntegrity(Resource memory resource, bytes32 commitment) internal pure {
+    function _checkResourceCommitmentIntegrity(Resource memory resource, bytes32 commitment) internal pure {
         bytes32 recomputedCommitment = resource.commitment();
         if (recomputedCommitment != commitment) {
             revert CommitmentMismatch({ expected: commitment, actual: recomputedCommitment });
