@@ -2,36 +2,38 @@
 pragma solidity >=0.8.25;
 
 import { Resource } from "../Types.sol";
-// TODO import { Poseidon } from "./Poseidon.sol";
+import { Poseidon } from "./Poseidon.sol";
 
 library ComputableComponents {
     function commitment(Resource memory resource) internal pure returns (bytes32) {
-        // TODO Use poseidon?
-        return keccak256(abi.encode(resource));
+        return Poseidon.hash1(preHashResource(resource));
     }
 
     function nullifier(Resource memory resource, bytes32 nullifierKey) internal pure returns (bytes32) {
-        // TODO Use poseidon?
-        return keccak256(abi.encode(resource, nullifierKey));
+        return Poseidon.hash2(preHashResource(resource), nullifierKey);
     }
 
     function kind(Resource memory resource) internal pure returns (bytes32) {
-        // TODO Use poseidon?
-        return keccak256(abi.encode(resource.logicRef, resource.labelRef));
+        return Poseidon.hash2(resource.logicRef, resource.labelRef);
+    }
+
+    function preHashResource(Resource memory resource) internal pure returns (bytes32) {
+        return sha256(abi.encode(resource));
     }
 
     function commitmentCalldata(Resource calldata resource) internal pure returns (bytes32) {
-        // TODO Use poseidon?
-        return keccak256(abi.encode(resource));
+        return Poseidon.hash1(preHashResourceCalldata(resource));
     }
 
     function nullifierCalldata(Resource calldata resource, bytes32 nullifierKey) internal pure returns (bytes32) {
-        // TODO Use poseidon?
-        return keccak256(abi.encode(resource, nullifierKey));
+        return Poseidon.hash2(preHashResourceCalldata(resource), nullifierKey);
     }
 
     function kindCalldata(Resource calldata resource) internal pure returns (bytes32) {
-        // TODO Use poseidon?
-        return keccak256(abi.encode(resource.logicRef, resource.labelRef));
+        return Poseidon.hash2(resource.logicRef, resource.labelRef);
+    }
+
+    function preHashResourceCalldata(Resource calldata resource) internal pure returns (bytes32) {
+        return sha256(abi.encode(resource));
     }
 }

@@ -4,8 +4,7 @@ pragma solidity >=0.8.25;
 import { MerkleTree } from "@openzeppelin/contracts/utils/structs/MerkleTree.sol";
 import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import { Hashes } from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
-//TODO import { Poseidon } from "./libs/Poseidon.sol";
+import { Poseidon } from "./libs/Poseidon.sol";
 
 contract CommitmentAccumulator {
     using MerkleTree for MerkleTree.Bytes32PushTree;
@@ -22,7 +21,7 @@ contract CommitmentAccumulator {
 
     error DuplicateCommitment(bytes32 commitmentIdentifier);
 
-    function(bytes32, bytes32) internal view returns (bytes32) internal fnHash = Hashes.commutativeKeccak256;
+    function(bytes32, bytes32) internal view returns (bytes32) internal fnHash = Poseidon.commutativeHash2; //Hashes.commutativeKeccak256;
 
     event CommitmentAdded(bytes32 indexed commitmentIdentifier, uint256 indexed index, bytes32 root);
 
