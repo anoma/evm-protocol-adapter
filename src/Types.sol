@@ -15,17 +15,17 @@ struct Resource {
 }
 
 struct Transaction {
-    uint256 delta;
+    bytes32 delta;
     bytes32[] roots;
     Action[] actions;
-    uint256[] deltaProof;
+    bytes deltaProof;
 }
 
 struct Action {
     bytes32[] commitments;
     bytes32[] nullifiers;
     Map.KeyValuePair[] logicProofs;
-    uint256[][] complianceProofs;
+    bytes[][] complianceProofs;
     Map.KeyValuePair[] appData;
 }
 

@@ -3,9 +3,6 @@ pragma solidity >=0.8.25;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import { IRiscZeroVerifier } from "@risc0-ethereum/contracts/src/IRiscZeroVerifier.sol";
-
-import { IStarkVerifier } from "./interfaces/IStarkVerifier.sol";
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IResourceWrapper } from "./interfaces/IResourceWrapper.sol";
 import { ComputableComponents } from "./libs/ComputableComponents.sol";
@@ -17,20 +14,18 @@ import {
 import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./CommitmentAccumulator.sol";
 import { NullifierSet } from "./NullifierSet.sol";
+import { RiscZeroVerifier } from "./RiscZeroVerifier.sol";
 
-contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSet {
+contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumulator, NullifierSet {
     using ComputableComponents for Resource;
     using AppData for Map.KeyValuePair[];
     using Address for address;
 
-    IStarkVerifier private starkVerifier;
-    IRiscZeroVerifier private riscZeroVerifier;
     uint256 private txCount;
 
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
     event EVMStateChangeExecuted(IResourceWrapper indexed wrapper, bytes32 indexed tag);
 
-    error InvalidProof(uint256[] proofParams, uint256[] proof, uint256[] publicInput);
     error KindMismatch(bytes32 expected, bytes32 actual);
     error CommitmentMismatch(bytes32 expected, bytes32 actual);
     error NullifierMismatch(bytes32 expected, bytes32 actual);
@@ -41,15 +36,12 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
     uint256[] private EMPTY_UINT256_ARR = new uint256[](0);
 
     constructor(
-        address _starkVerifier,
         address _riscZeroVerifier,
         uint8 _treeDepth
     )
+        RiscZeroVerifier(_riscZeroVerifier)
         CommitmentAccumulator(_treeDepth)
-    {
-        starkVerifier = IStarkVerifier(_starkVerifier);
-        riscZeroVerifier = IRiscZeroVerifier(_riscZeroVerifier);
-    }
+    { }
 
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
     /// @param transaction The transaction to verify.
@@ -85,67 +77,56 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
         emit TransactionExecuted({ id: txCount++, transaction: transaction });
     }
 
-    function _verifyDelta(uint256 delta, uint256[] calldata deltaProof) internal {
-        uint256[] memory publicInput = new uint256[](1);
-        publicInput[0] = delta;
+    function _verifyDelta(bytes32 delta, bytes calldata deltaProof) internal {
+        bytes32 expectedDelta = 0;
 
-        _verifyProof({ seal: seal, imageId: imageId, journalDigest: journalDigest });
-        _verifyProof({ proofParams: EMPTY_UINT256_ARR, proof: deltaProof, publicInput: publicInput });
+        {
+            delta;
+            expectedDelta;
+        }
+
+        _verifyProof({ seal: deltaProof, imageId: /*TODO*/ bytes32(0), journalDigest: /*TODO*/ bytes32(0) });
     }
 
     function _verifyAction(Action calldata action) internal {
         for (uint256 i; i < action.complianceProofs.length; ++i) {
-            _verifyComplianceProof(action, action.complianceProofs[i]);
+            ComplianceInstance memory instance = ComplianceInstance({
+                consumed: new ConsumedRefs[](0),
+                created: new CreatedRefs[](0),
+                unitDelta: bytes32(0) // DeltaHash - what hash function?
+             });
+
+            // TODO
+
+            _verifyComplianceProof(instance);
         }
         for (uint256 i; i < action.logicProofs.length; ++i) {
-            _verifyLogicProof(action, action.complianceProofs[i]);
+            LogicInstance memory instance = LogicInstance({
+                tag: bytes32(0),
+                isConsumed: true,
+                consumed: new bytes32[](0),
+                created: new bytes32[](0),
+                appDataForTag: new Map.KeyValuePair[](0)
+            });
+
+            // TODO
+
+            _verifyLogicProof(instance);
         }
     }
 
-    function _verifyComplianceProof(Action calldata action, uint256[] calldata proof) internal {
-        // TODO 1. Ask Xuyang if there are discrepancies to the specs and if I need to follow the node implementation.
-        // TODO 2. Populate.
-        ComplianceInstance memory instance = ComplianceInstance({
-            consumed: new ConsumedRefs[](0),
-            created: new CreatedRefs[](0),
-            unitDelta: bytes32(0) // DeltaHash - what hash function?
-         });
+    function _verifyComplianceProof(ComplianceInstance memory complianceInstance) internal {
+        // TODO `verify_compliance_hash(proofRecords)` ?
 
-        // TODO 3. `verify_compliance_hash(proofRecords)` ?
-
+        // TODO iterate over refs
         verifyMerklePath({ root: bytes32(0), commitmentIdentifier: bytes32(0), witness: new bytes32[](0) });
 
-        _verifyProof({ proofParams: EMPTY_UINT256_ARR, proof: proof, publicInput: EMPTY_UINT256_ARR });
+        _verifyProof({ seal: bytes(""), imageId: bytes32(0), journalDigest: bytes32(0) });
     }
 
-    function _verifyLogicProof(Action calldata action, uint256[] calldata proof) internal {
-        // TODO 1. Ask Xuyang if there are discrepancies to the specs and if I need to follow the node implementation.
-        // TODO 2. Populate.
-        LogicInstance memory instance = LogicInstance({
-            tag: bytes32(0),
-            isConsumed: true,
-            consumed: new bytes32[](0),
-            created: new bytes32[](0),
-            appDataForTag: new Map.KeyValuePair[](0)
-        });
-        // TODO Convert into RISC0 format.
-        _verifyProof({ proofParams: bytes(""), proof: bytes32(0), publicInput: bytes32(0) });
-    }
-
-    function _verifyProof(bytes calldata seal, bytes32 imageId, bytes32 journalDigest) internal view {
-        riscZeroVerifier.verify({ seal: seal, imageId: imageId, journalDigest: journalDigest });
-    }
-
-    function _verifyStarkProof(
-        // TODO use calldata if possible.
-        uint256[] memory proofParams,
-        uint256[] memory proof,
-        uint256[] memory publicInput
-    )
-        // TODO Make this `view` if possible.
-        internal
-    {
-        starkVerifier.verifyProofExternal({ proofParams: proofParams, proof: proof, publicInput: publicInput });
+    function _verifyLogicProof(LogicInstance memory instance) internal {
+        // TODO
+        _verifyProof({ seal: bytes(""), imageId: bytes32(0), journalDigest: bytes32(0) });
     }
 
     function _attemptWrapCall(bytes32 nullifier, Map.KeyValuePair[] memory appData) internal {
