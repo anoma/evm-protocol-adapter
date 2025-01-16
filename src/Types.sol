@@ -24,7 +24,7 @@ struct Transaction {
 struct Action {
     bytes32[] commitments;
     bytes32[] nullifiers;
-    mapping(bytes32 tag => LogicRefHashProofPair) resourceLogicProofs;
+    Map.KeyValuePair[] logicProofs;
     uint256[][] complianceProofs;
     Map.KeyValuePair[] appData;
 }

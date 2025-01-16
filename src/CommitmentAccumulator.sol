@@ -4,30 +4,28 @@ pragma solidity >=0.8.25;
 import { MerkleTree } from "@openzeppelin/contracts/utils/structs/MerkleTree.sol";
 import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import { Poseidon } from "./libs/Poseidon.sol";
+import { SHA256 } from "./libs/SHA256.sol";
 
 contract CommitmentAccumulator {
     using MerkleTree for MerkleTree.Bytes32PushTree;
     using MerkleProof for MerkleTree.Bytes32PushTree;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
+    bytes32 internal constant EMPTY_LEAF_HASH = sha256("EMPTY_LEAF");
+    bytes32 internal immutable INITIAL_ROOT;
+
     MerkleTree.Bytes32PushTree internal merkleTree;
-
     EnumerableSet.Bytes32Set internal roots;
-    bytes32 public immutable initialRoot;
-    //mapping(uint256 index => bytes32 root) public roots;
-
     mapping(bytes32 commitmentIdentifier => bool exists) public commitments;
 
     error DuplicateCommitment(bytes32 commitmentIdentifier);
 
-    function(bytes32, bytes32) internal view returns (bytes32) internal fnHash = Poseidon.commutativeHash2; //Hashes.commutativeKeccak256;
+    function(bytes32, bytes32) internal view returns (bytes32) internal fnHash = SHA256.commutativeHash;
 
     event CommitmentAdded(bytes32 indexed commitmentIdentifier, uint256 indexed index, bytes32 root);
 
     constructor(uint8 treeDepth) {
-        bytes32 emptyLeafHash = keccak256("EMPTY LEAF");
-        initialRoot = merkleTree.setup(treeDepth, emptyLeafHash, fnHash);
+        INITIAL_ROOT = merkleTree.setup(treeDepth, EMPTY_LEAF_HASH, fnHash);
     }
 
     function latestRoot() external view returns (bytes32) {
@@ -53,7 +51,7 @@ contract CommitmentAccumulator {
         returns (bool)
     {
         if (!roots.contains(root)) {
-            revert("ROOT NOT EXISTENT"); // TODO
+            revert("ROOT DOES NOT EXISTENT"); // TODO return false or revert?
                 // NOTE by Xuyang: If `root` doesn't exist, the corresponding resource doesn't exist.
                 // In the compliance, we checked the root generation. This makes sure that the root corresponds to the
                 // resource.

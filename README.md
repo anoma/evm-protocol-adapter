@@ -221,3 +221,11 @@ $ bun run test:coverage:report
 ## License
 
 This project is licensed under MIT.
+
+| N [bytes32] | SHA-256 [gas] | Poseidon [gas] |
+| :---------: | ------------: | -------------: |
+|      1      |           877 |          13911 |
+|      2      |          1014 |          21628 |
+|      3      |          1096 |          75018 |
+|      4      |          1188 |         112211 |
+|      5      |          1323 |         162844 |

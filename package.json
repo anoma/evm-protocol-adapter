@@ -9,6 +9,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.1.0",
     "@starkware-libs/starkex-contracts": "starkware-libs/starkex-contracts",
+    "risc0/risc0-ethereum" : "risc0/risc0-ethereum",
     "chancehudson/poseidon-solidity": "chancehudson/poseidon-solidity"
   },
   "devDependencies": {

@@ -3,6 +3,7 @@ pragma solidity >=0.8.25;
 
 //import { CpuVerifier } from "@starkware-libs/starkex-contracts/evm-verifier/solidity/contracts/cpu/CpuVerifier.sol";
 //import { StarkVerifier } from "@starkware-libs/starkex-contracts/evm-verifier/solidity/contracts/StarkVerifier.sol";
+//import { IStarkVerifier } from "@starkware-libs/starkex-contracts/evm-verifier/solidity/contracts/interfaces/IStarkVerifier.sol";
 
 interface IStarkVerifier {
     // @inheritdoc @CpuVerifier

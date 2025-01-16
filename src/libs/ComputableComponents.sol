@@ -2,38 +2,29 @@
 pragma solidity >=0.8.25;
 
 import { Resource } from "../Types.sol";
-import { Poseidon } from "./Poseidon.sol";
 
 library ComputableComponents {
     function commitment(Resource memory resource) internal pure returns (bytes32) {
-        return Poseidon.hash1(preHashResource(resource));
+        return sha256(abi.encode(resource));
     }
 
     function nullifier(Resource memory resource, bytes32 nullifierKey) internal pure returns (bytes32) {
-        return Poseidon.hash2(preHashResource(resource), nullifierKey);
+        return sha256(abi.encode(resource, nullifierKey));
     }
 
     function kind(Resource memory resource) internal pure returns (bytes32) {
-        return Poseidon.hash2(resource.logicRef, resource.labelRef);
-    }
-
-    function preHashResource(Resource memory resource) internal pure returns (bytes32) {
-        return sha256(abi.encode(resource));
+        return sha256(abi.encode(resource.logicRef, resource.labelRef));
     }
 
     function commitmentCalldata(Resource calldata resource) internal pure returns (bytes32) {
-        return Poseidon.hash1(preHashResourceCalldata(resource));
+        return sha256(abi.encode(resource));
     }
 
     function nullifierCalldata(Resource calldata resource, bytes32 nullifierKey) internal pure returns (bytes32) {
-        return Poseidon.hash2(preHashResourceCalldata(resource), nullifierKey);
+        return sha256(abi.encode(resource, nullifierKey));
     }
 
     function kindCalldata(Resource calldata resource) internal pure returns (bytes32) {
-        return Poseidon.hash2(resource.logicRef, resource.labelRef);
-    }
-
-    function preHashResourceCalldata(Resource calldata resource) internal pure returns (bytes32) {
-        return sha256(abi.encode(resource));
+        return sha256(abi.encode(resource.logicRef, resource.labelRef));
     }
 }

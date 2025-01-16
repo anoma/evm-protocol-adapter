@@ -3,13 +3,17 @@ pragma solidity >=0.8.25;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
+import { IRiscZeroVerifier } from "@risc0-ethereum/contracts/src/IRiscZeroVerifier.sol";
+
 import { IStarkVerifier } from "./interfaces/IStarkVerifier.sol";
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IResourceWrapper } from "./interfaces/IResourceWrapper.sol";
 import { ComputableComponents } from "./libs/ComputableComponents.sol";
 import { AppData, Map } from "./libs/AppData.sol";
 
-import { Resource, Action, Transaction, LogicInstance, ComplianceInstance } from "./Types.sol";
+import {
+    Resource, Action, Transaction, LogicInstance, ComplianceInstance, ConsumedRefs, CreatedRefs
+} from "./Types.sol";
 import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./CommitmentAccumulator.sol";
 import { NullifierSet } from "./NullifierSet.sol";
@@ -20,6 +24,7 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
     using Address for address;
 
     IStarkVerifier private starkVerifier;
+    IRiscZeroVerifier private riscZeroVerifier;
     uint256 private txCount;
 
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
@@ -35,8 +40,15 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
     // solhint-disable-next-line var-name-mixedcase
     uint256[] private EMPTY_UINT256_ARR = new uint256[](0);
 
-    constructor(address _starkVerifier, uint8 _treeDepth) CommitmentAccumulator(_treeDepth) {
+    constructor(
+        address _starkVerifier,
+        address _riscZeroVerifier,
+        uint8 _treeDepth
+    )
+        CommitmentAccumulator(_treeDepth)
+    {
         starkVerifier = IStarkVerifier(_starkVerifier);
+        riscZeroVerifier = IRiscZeroVerifier(_riscZeroVerifier);
     }
 
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
@@ -77,6 +89,7 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
         uint256[] memory publicInput = new uint256[](1);
         publicInput[0] = delta;
 
+        _verifyProof({ seal: seal, imageId: imageId, journalDigest: journalDigest });
         _verifyProof({ proofParams: EMPTY_UINT256_ARR, proof: deltaProof, publicInput: publicInput });
     }
 
@@ -100,7 +113,7 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
 
         // TODO 3. `verify_compliance_hash(proofRecords)` ?
 
-        verifyMerklePath({ root: bytes(0), commitmentIdentifier: bytes(0), witness: new bytes32[](0) });
+        verifyMerklePath({ root: bytes32(0), commitmentIdentifier: bytes32(0), witness: new bytes32[](0) });
 
         _verifyProof({ proofParams: EMPTY_UINT256_ARR, proof: proof, publicInput: EMPTY_UINT256_ARR });
     }
@@ -115,24 +128,24 @@ contract ProtocolAdapter is IProtocolAdapter, CommitmentAccumulator, NullifierSe
             created: new bytes32[](0),
             appDataForTag: new Map.KeyValuePair[](0)
         });
-        // TODO Convert into `StarkVerifier` format.
-        _verifyProof({ proofParams: EMPTY_UINT256_ARR, proof: proof, publicInput: EMPTY_UINT256_ARR });
+        // TODO Convert into RISC0 format.
+        _verifyProof({ proofParams: bytes(""), proof: bytes32(0), publicInput: bytes32(0) });
     }
 
-    function _verifyProof(
+    function _verifyProof(bytes calldata seal, bytes32 imageId, bytes32 journalDigest) internal view {
+        riscZeroVerifier.verify({ seal: seal, imageId: imageId, journalDigest: journalDigest });
+    }
+
+    function _verifyStarkProof(
         // TODO use calldata if possible.
         uint256[] memory proofParams,
         uint256[] memory proof,
         uint256[] memory publicInput
     )
+        // TODO Make this `view` if possible.
         internal
     {
-        // solhint-disable-next-line no-empty-blocks
-        try starkVerifier.verifyProofExternal({ proofParams: proofParams, proof: proof, publicInput: publicInput }) {
-            // Nothing
-        } catch {
-            revert InvalidProof({ proofParams: proofParams, proof: proof, publicInput: publicInput });
-        }
+        starkVerifier.verifyProofExternal({ proofParams: proofParams, proof: proof, publicInput: publicInput });
     }
 
     function _attemptWrapCall(bytes32 nullifier, Map.KeyValuePair[] memory appData) internal {

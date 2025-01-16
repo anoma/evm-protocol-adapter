@@ -39,7 +39,7 @@
   number_underscore = "thousands"
   quote_style = "double"
   tab_width = 4
-  wrap_comments = true
+  wrap_comments = false
 
 [rpc_endpoints]
   arbitrum = "https://arbitrum-mainnet.infura.io/v3/${API_KEY_INFURA}"
