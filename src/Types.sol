@@ -15,7 +15,6 @@ struct Resource {
 }
 
 struct Transaction {
-    bytes32 delta;
     bytes32[] roots;
     Action[] actions;
     bytes deltaProof;
@@ -25,13 +24,13 @@ struct Action {
     bytes32[] commitments;
     bytes32[] nullifiers;
     Map.KeyValuePair[] logicProofs;
-    bytes[][] complianceProofs;
+    ComplianceUnit[] complianceUnits;
     Map.KeyValuePair[] appData;
 }
 
-struct LogicRefHashProofPair {
-    bytes32 logicRefHash;
-    uint256[] proof;
+struct DeltaInstance {
+    bytes32 delta; // DeltaHash
+    uint256 expectedBalance; // Balance
 }
 
 struct LogicInstance {
@@ -40,6 +39,17 @@ struct LogicInstance {
     bytes32[] consumed;
     bytes32[] created;
     Map.KeyValuePair[] appDataForTag; // TODO Revisit.
+}
+
+struct ComplianceInstance {
+    ConsumedRefs[] consumed;
+    CreatedRefs[] created;
+    bytes32 unitDelta; // DeltaHash // TODO Is it 0?
+}
+
+struct LogicRefHashProofPair {
+    bytes32 logicRefHash;
+    bytes proof;
 }
 
 struct RefInstance {
@@ -52,14 +62,8 @@ struct VerifyingKey {
 
 struct ComplianceUnit {
     uint256[] proof;
-    RefInstance refInstance;
+    ComplianceInstance refInstance; // TODO - use ref instance!
     VerifyingKey verifyingKey;
-}
-
-struct ComplianceInstance {
-    ConsumedRefs[] consumed;
-    CreatedRefs[] created;
-    bytes32 unitDelta; // DeltaHash // TODO Is it 0?
 }
 
 struct ConsumedRefs {
@@ -71,4 +75,38 @@ struct ConsumedRefs {
 struct CreatedRefs {
     bytes32 commitmentRef;
     bytes32 logicRef;
+}
+
+library LogicProofMap {
+    error KeyNotFound(bytes32 key);
+    error IndexOutBounds(uint256 index, uint256 max);
+
+    struct TagLogicProofPair {
+        bytes32 tag;
+        LogicRefHashProofPair pair;
+    }
+
+    function lookup(
+        TagLogicProofPair[] memory map,
+        bytes32 tag
+    )
+        internal
+        pure
+        returns (bool success, LogicRefHashProofPair memory)
+    {
+        for (uint256 i = 0; i < map.length; i++) {
+            if (map[i].tag == tag) {
+                return (true, map[i].pair);
+            }
+        }
+        return (false, LogicRefHashProofPair({ logicRefHash: bytes32(0), proof: bytes("") }));
+    }
+
+    function at(TagLogicProofPair[] memory map, uint256 index) internal pure returns (LogicRefHashProofPair memory) {
+        uint256 lastIndex = map.length - 1;
+        if (index > lastIndex) {
+            revert IndexOutBounds({ index: index, max: lastIndex });
+        }
+        return map[index].pair;
+    }
 }

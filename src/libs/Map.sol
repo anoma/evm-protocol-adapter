@@ -3,6 +3,7 @@ pragma solidity >=0.8.25;
 
 library Map {
     error KeyNotFound(bytes32 key);
+    error IndexOutBounds(uint256 index, uint256 max);
 
     struct KeyValuePair {
         bytes32 key;
@@ -16,5 +17,13 @@ library Map {
             }
         }
         return (false, bytes(""));
+    }
+
+    function at(KeyValuePair[] memory map, uint256 index) internal pure returns (bytes memory) {
+        uint256 lastIndex = map.length - 1;
+        if (index > lastIndex) {
+            revert IndexOutBounds({ index: index, max: lastIndex });
+        }
+        return map[index].value;
     }
 }
