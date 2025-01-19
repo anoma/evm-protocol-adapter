@@ -4,7 +4,7 @@ pragma solidity >=0.8.25;
 import { MerkleTree } from "@openzeppelin/contracts/utils/structs/MerkleTree.sol";
 import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import { SHA256 } from "./libs/SHA256.sol";
+import { SHA256 } from "../libs/SHA256.sol";
 
 contract CommitmentAccumulator {
     using MerkleTree for MerkleTree.Bytes32PushTree;

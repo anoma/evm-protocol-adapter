@@ -10,14 +10,14 @@ import { AppData, Map } from "./libs/AppData.sol";
 import { Delta } from "./libs/Delta.sol";
 
 import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
-import { CommitmentAccumulator } from "./CommitmentAccumulator.sol";
-import { NullifierSet } from "./NullifierSet.sol";
-import { RiscZeroVerifier } from "./RiscZeroVerifier.sol";
+import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
+import { NullifierSet } from "./state/NullifierSet.sol";
+import { RiscZeroVerifier } from "./proving/RiscZeroVerifier.sol";
 
-import "./Types.sol"; // TODO explicit imports
-import "./ProvingSystem/Compliance.sol";
-import "./ProvingSystem/Delta.sol";
-import "./ProvingSystem/Logic.sol";
+import { ComplianceUnit, ComplianceInstance } from "./proving/Compliance.sol";
+import { DeltaInstance } from "./proving/Delta.sol";
+import { LogicProofMap } from "./proving/Logic.sol";
+import { Resource, Transaction, Action } from "./Types.sol";
 
 contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumulator, NullifierSet {
     using ComputableComponents for Resource;

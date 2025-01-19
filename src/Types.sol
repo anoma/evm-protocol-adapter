@@ -3,9 +3,9 @@ pragma solidity >=0.8.25;
 
 import { Map } from "./libs/Map.sol";
 
-import { LogicProofMap } from "./ProvingSystem/Logic.sol";
-import { ComplianceUnit } from "./ProvingSystem/Compliance.sol";
-import { DeltaInstance } from "./ProvingSystem/Delta.sol";
+import { LogicProofMap } from "./proving/Logic.sol";
+import { ComplianceUnit } from "./proving/Compliance.sol";
+import { DeltaInstance } from "./proving/Delta.sol";
 
 struct Resource {
     bytes32 logicRef;
