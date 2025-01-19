@@ -10,16 +10,18 @@ contract NullifierSet {
 
     event NullifierAdded(bytes32 indexed nullifier, uint256 indexed index);
 
-    error DuplicatedNullifier(bytes32 nullifier);
+    error ExistentNullifier(bytes32 nullifier);
 
-    function contains(bytes32 nullifier) public view returns (bool) {
-        return nullifierSet.contains(nullifier);
+    function _checkNullifierNonExistence(bytes32 nullifier) internal view {
+        if (nullifierSet.contains(nullifier)) {
+            revert ExistentNullifier(nullifier);
+        }
     }
 
     function _addNullifier(bytes32 nullifier) internal {
         (bool success) = nullifierSet.add(nullifier);
         if (!success) {
-            revert DuplicatedNullifier(nullifier);
+            revert ExistentNullifier(nullifier);
         }
         emit NullifierAdded({ nullifier: nullifier, index: nullifierSet.length() - 1 });
     }

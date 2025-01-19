@@ -16,13 +16,17 @@ contract CommitmentAccumulator {
 
     MerkleTree.Bytes32PushTree internal merkleTree;
     EnumerableSet.Bytes32Set internal roots;
-    mapping(bytes32 commitmentIdentifier => bool exists) public commitments;
+    EnumerableSet.Bytes32Set internal commitments;
 
-    error DuplicateCommitment(bytes32 commitmentIdentifier);
+    error NonExistingRoot(bytes32 root);
+    error PreExistingRoot(bytes32 root);
+    error InvalidRoot(bytes32 expected, bytes32 actual);
+    error NonExistingCommitment(bytes32 commitment);
+    error PreExistingCommitment(bytes32 commitment);
 
     function(bytes32, bytes32) internal view returns (bytes32) internal fnHash = SHA256.commutativeHash;
 
-    event CommitmentAdded(bytes32 indexed commitmentIdentifier, uint256 indexed index, bytes32 root);
+    event CommitmentAdded(bytes32 indexed commitment, uint256 indexed index, bytes32 root);
 
     constructor(uint8 treeDepth) {
         INITIAL_ROOT = merkleTree.setup(treeDepth, EMPTY_LEAF_HASH, fnHash);
@@ -41,32 +45,51 @@ contract CommitmentAccumulator {
     }
 
     // TODO Does the Protocol adapter backend need this function?
-    function verifyMerklePath(
-        bytes32 root,
-        bytes32 commitmentIdentifier,
-        bytes32[] memory witness
+    function _checkMerklePath(
+        bytes32 root, // proof
+        bytes32 commitment, // verifying key
+        bytes32[] memory siblings // instance
     )
-        public
-        view
-        returns (bool)
+        internal
+        pure
     {
-        if (!roots.contains(root)) {
-            revert("ROOT DOES NOT EXISTENT"); // TODO return false or revert?
-                // NOTE by Xuyang: If `root` doesn't exist, the corresponding resource doesn't exist.
-                // In the compliance, we checked the root generation. This makes sure that the root corresponds to the
-                // resource.
+        bytes32 expectedRoot = MerkleProof.processProof({ proof: siblings, leaf: commitment });
+
+        if (root != expectedRoot) {
+            revert InvalidRoot({ expected: expectedRoot, actual: root });
         }
-        return MerkleProof.verify({ proof: witness, root: root, leaf: commitmentIdentifier });
     }
 
-    function _addCommitment(bytes32 commitmentIdentifier) internal {
-        if (commitments[commitmentIdentifier]) {
-            revert DuplicateCommitment(commitmentIdentifier);
+    function _checkRootPreExistence(bytes32 root) internal view {
+        if (!roots.contains(root)) {
+            revert NonExistingRoot(root);
+            // NOTE by Xuyang: If `root` doesn't exist, the corresponding resource doesn't exist.
+            // In the compliance, we checked the root generation. This makes sure that the root corresponds to the
+            // resource.
+        }
+    }
+
+    function _checkCommitmentNonExistence(bytes32 commitment) internal view {
+        if (commitments.contains(commitment)) {
+            revert PreExistingCommitment(commitment);
+        }
+    }
+
+    function _checkCommitmentPreExistence(bytes32 commitment) internal view {
+        if (!commitments.contains(commitment)) {
+            revert NonExistingCommitment(commitment);
+        }
+    }
+
+    function _addCommitment(bytes32 commitment) internal {
+        if (!commitments.add(commitment)) {
+            revert PreExistingCommitment(commitment);
         }
 
-        commitments[commitmentIdentifier] = true;
-        (uint256 index, bytes32 newRoot) = merkleTree.push(commitmentIdentifier, fnHash);
-        roots.add(newRoot);
-        emit CommitmentAdded({ commitmentIdentifier: commitmentIdentifier, index: index, root: newRoot });
+        (uint256 index, bytes32 newRoot) = merkleTree.push(commitment, fnHash);
+        if (!roots.add(newRoot)) {
+            revert PreExistingRoot(newRoot);
+        }
+        emit CommitmentAdded({ commitment: commitment, index: index, root: newRoot });
     }
 }

@@ -9,13 +9,15 @@ import { ComputableComponents } from "./libs/ComputableComponents.sol";
 import { AppData, Map } from "./libs/AppData.sol";
 import { Delta } from "./libs/Delta.sol";
 
-import {
-    Resource, Action, Transaction, LogicInstance, ComplianceInstance, ConsumedRefs, CreatedRefs
-} from "./Types.sol";
 import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./CommitmentAccumulator.sol";
 import { NullifierSet } from "./NullifierSet.sol";
 import { RiscZeroVerifier } from "./RiscZeroVerifier.sol";
+
+import "./Types.sol"; // TODO explicit imports
+import "./ProvingSystem/Compliance.sol";
+import "./ProvingSystem/Delta.sol";
+import "./ProvingSystem/Logic.sol";
 
 contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumulator, NullifierSet {
     using ComputableComponents for Resource;
@@ -24,7 +26,11 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
     using Address for address;
 
     uint256 private txCount;
-    bytes32 internal constant EXPECTED_DELTA = bytes32(0);
+    uint256 internal constant BALANCED = uint256(0);
+
+    bytes32 internal constant COMPLIANCE_CIRCUIT_ID = bytes32(0); //TODO
+    bytes32 internal constant LOGIC_CIRCUIT_ID = bytes32(0); //TODO
+    bytes32 internal constant DELTA_CIRCUIT_ID = bytes32(0); //TODO
 
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
     event EVMStateChangeExecuted(IResourceWrapper indexed wrapper, bytes32 indexed tag);
@@ -33,6 +39,8 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
     error CommitmentMismatch(bytes32 expected, bytes32 actual);
     error NullifierMismatch(bytes32 expected, bytes32 actual);
     error DeltaMismatch(bytes32 expected, bytes32 actual);
+    error BalanceMismatch(uint256 expected, uint256 actual);
+
     error WrongEphemerality(bytes32 tag, bool ephemeral);
 
     bytes32 private constant EMPTY_BYTES32 = bytes32(0);
@@ -49,7 +57,7 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
 
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
     /// @param transaction The transaction to verify.
-    function verify(Transaction calldata transaction) public {
+    function verify(Transaction calldata transaction) public view {
         // compute delta
         bytes32 transactionDelta = 0;
 
@@ -63,18 +71,9 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         _verifyDelta(transactionDelta, transaction.deltaProof);
     }
 
-    function _actionDelta(Action memory action) internal pure returns (bytes32 delta) {
+    function _actionDelta(Action calldata action) internal pure returns (bytes32 delta) {
         for (uint256 i; i < action.complianceUnits.length; ++i) {
-            bytes32 ref = action.complianceUnits[i].refInstance;
-
-            // TODO use reference or ensure they match - maybe put in transient storage
-            ComplianceInstance memory referencedInstance = ComplianceInstance({
-                consumed: new ConsumedRefs[](0),
-                created: new CreatedRefs[](0),
-                unitDelta: bytes32(0)
-            });
-
-            delta = delta.add(referencedInstance.unitDelta);
+            delta = delta.add(action.complianceUnits[i].refInstance.referencedComplianceInstance.unitDelta);
         }
     }
 
@@ -101,74 +100,75 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         emit TransactionExecuted({ id: txCount++, transaction: transaction });
     }
 
-    function _verifyDelta(bytes32 delta, bytes calldata deltaProof) internal {
+    function _verifyDelta(bytes32 computedDelta, bytes calldata deltaProof) internal pure {
+        DeltaInstance memory instance = abi.decode(deltaProof, (DeltaInstance));
+
         /* Constraints (https://specs.anoma.net/latest/arch/system/state/resource_machine/data_structures/transaction/delta_proof.html#constraints)
         1. delta = sum(unit.delta() for unit in action.units for action in tx) - can be checked outside of the circuit since all values are public
         2. delta's preimage's quantity component is expectedBalance
         */
 
-        if (delta != EXPECTED_DELTA) revert DeltaMismatch({ expected: EXPECTED_DELTA, actual: delta });
-
-        // TODO is proof verification required?
-        _verifyProof({ seal: deltaProof, imageId: /*TODO*/ bytes32(0), journalDigest: /*TODO*/ bytes32(0) });
-    }
-
-    function _verifyAction(Action calldata action) internal {
-        for (uint256 i; i < action.complianceUnits.length; ++i) {
-            /*
-            1. Merkle path validity (for non-ephemeral resources only): CMTree::Verify(cm, path, root) = True for each resource associated with a nullifier from the consumedResourceTagSet
-            2. for each consumed resource r:
-                - Nullifier integrity: r.nullifier(nullifierKey) is in consumedResourceTagSet
-                - consumed commitment integrity: r.commitment() = cm
-                - Logic integrity: logicRefHash = hash(r.logicRef, ...)
-            3. for each created resource r:
-                - Commitment integrity: r.commitment() is in createdResourceTagSet
-                - Logic integrity: logicRefHash = hash(r.logicRef, ...)
-                - Delta integrity: unitDelta = sum(r.delta() for r in consumed) - sum(r.delta() for r in created)
-            */
-
-            for (uint256 j = 0; j < action.nullifiers.length; ++j) { }
-
-            for (uint256 j = 0; j < action.commitments.length; ++j) { }
-
-            verifyMerklePath({ root: bytes32(0), commitmentIdentifier: bytes32(0), witness: new bytes32[](0) });
-
-            ComplianceInstance memory instance = ComplianceInstance({
-                consumed: new ConsumedRefs[](0),
-                created: new CreatedRefs[](0),
-                unitDelta: bytes32(0) // DeltaHash - what hash function?
-             });
-
-            // TODO
-
-            _verifyComplianceProof(instance);
+        if (instance.expectedBalance != BALANCED) {
+            revert BalanceMismatch({ expected: BALANCED, actual: instance.expectedBalance });
         }
 
-        for (uint256 i = 0; i < action.nullifiers.length; ++i) { }
+        // TODO is proof verification required? Can we use the computed delta?
+        if (instance.delta != computedDelta) {
+            revert DeltaMismatch({ expected: computedDelta, actual: instance.delta });
+        }
+        //_verifyProof({ seal: deltaProof, imageId: /*TODO*/ bytes32(0), journalDigest: delta });
+    }
 
-        for (uint256 j = 0; j < action.commitments.length; ++j) { }
+    function _verifyAction(Action calldata action) internal view {
+        for (uint256 i; i < action.complianceUnits.length; ++i) {
+            _verifyComplianceUnit(action.complianceUnits[i]);
+        }
 
         for (uint256 i; i < action.logicProofs.length; ++i) {
-            LogicRefHashProofPair memory instance = action.logicProofs.at(i);
-
-            // TODO Is more information needed? What's the verifying key?
-
-            _verifyLogicProof(instance);
+            //_verifyLogicProof(action.logicProofs.at(i));
+            _verifyLogicProof(action.logicProofs[i]);
         }
     }
 
-    function _verifyComplianceProof(ComplianceInstance memory complianceInstance) internal {
-        // TODO `verify_compliance_hash(proofRecords)` ?
+    function _verifyComplianceUnit(ComplianceUnit calldata complianceUnit) internal view {
+        ComplianceInstance memory complianceInstance = complianceUnit.refInstance.referencedComplianceInstance;
 
-        // TODO iterate over refs
-        verifyMerklePath({ root: bytes32(0), commitmentIdentifier: bytes32(0), witness: new bytes32[](0) });
+        // TODO needed?
+        for (uint256 i; i < complianceInstance.consumed.length; ++i) {
+            // TODO Ask Xuyang: Do we need to verify the merkle path validity
+            // NOTE: We need the commitment associated with a nullifier do the nullifier check. Similarly, we need all roots.
 
-        _verifyProof({ seal: bytes(""), imageId: bytes32(0), journalDigest: bytes32(0) });
+            _checkNullifierNonExistence(complianceInstance.consumed[i].nullifierRef);
+            _checkRootPreExistence(complianceInstance.consumed[i].rootRef);
+            _checkMerklePath({
+                root: complianceInstance.consumed[i].rootRef,
+                // TODO Ask Yulia: Where can I get the commitment identifier from?
+                // TODO Ask Xuyang: If merkle path validity checks happen out-of-circuit, don't we loose nullifier-commitment unlinkability? -> The merkle path check should happen in-circuit.
+                commitment: sha256("WHERE TO GET THE COMMITMENT FROM?"),
+                // TODO Ask Yulia: Where can I get the siblings from? Are the siblings the witness?
+                siblings: new bytes32[](0)
+            });
+        }
+
+        // TODO needed?
+        for (uint256 i; i < complianceInstance.created.length; ++i) {
+            _checkCommitmentNonExistence(complianceInstance.created[i].commitmentRef);
+        }
+
+        _verifyProofCalldata({
+            seal: complianceUnit.proof,
+            imageId: COMPLIANCE_CIRCUIT_ID,
+            journalDigest: sha256(abi.encode(complianceUnit))
+        });
     }
 
-    function _verifyLogicProof(LogicInstance memory instance) internal {
+    function _verifyLogicProof(LogicProofMap.TagLogicProofPair calldata tagLogicProofPair) internal view {
         // TODO
-        _verifyProof({ seal: bytes(""), imageId: bytes32(0), journalDigest: bytes32(0) });
+        _verifyProofCalldata({
+            seal: tagLogicProofPair.pair.proof,
+            imageId: LOGIC_CIRCUIT_ID,
+            journalDigest: sha256(abi.encode(tagLogicProofPair.pair))
+        });
     }
 
     function _attemptWrapCall(bytes32 nullifier, Map.KeyValuePair[] memory appData) internal {
