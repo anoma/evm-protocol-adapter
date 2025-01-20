@@ -2,6 +2,7 @@
 pragma solidity >=0.8.25;
 
 import { Map } from "../libs/Map.sol";
+import "../Types.sol";
 
 library LogicProofMap {
     error KeyNotFound(bytes32 key);
@@ -28,6 +29,23 @@ library LogicProofMap {
         return (false, LogicRefHashProofPair({ logicRefHash: bytes32(0), proof: bytes("") }));
     }
 
+    function lookupCalldata(
+        TagLogicProofPair[] calldata map,
+        bytes32 tag
+    )
+        internal
+        pure
+        returns (LogicRefHashProofPair calldata)
+    {
+        for (uint256 i = 0; i < map.length; i++) {
+            if (map[i].tag == tag) {
+                return (map[i].pair);
+            }
+        }
+
+        revert KeyNotFound(tag);
+    }
+
     function at(TagLogicProofPair[] memory map, uint256 index) internal pure returns (LogicRefHashProofPair memory) {
         uint256 lastIndex = map.length - 1;
         if (index > lastIndex) {
@@ -48,7 +66,7 @@ struct LogicInstance {
     bool isConsumed;
     bytes32[] consumed;
     bytes32[] created;
-    Map.KeyValuePair[] appDataForTag; // TODO Revisit.
+    AppData appDataForTag; // TODO Revisit.
 }
 
 // TODO Needed? Ask Yulia or Xuyang.

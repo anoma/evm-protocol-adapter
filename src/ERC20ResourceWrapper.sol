@@ -5,11 +5,11 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ResourceWrapperBase } from "./ResourceWrapperBase.sol";
-import { AppData, Map } from "./libs/AppData.sol";
+import { AppDataOLD, Map } from "./libs/AppDataOLD.sol";
 import { Resource } from "./Types.sol";
 
 contract ERC20ResourceWrapper is Ownable, ResourceWrapperBase {
-    using AppData for Map.KeyValuePair[];
+    using AppDataOLD for Map.KeyValuePair[];
 
     IERC20 internal immutable TOKEN_CONTRACT;
 

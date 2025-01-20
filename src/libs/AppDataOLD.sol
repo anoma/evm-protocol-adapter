@@ -7,7 +7,7 @@ import { Resource } from "../Types.sol";
 
 import { Map } from "./Map.sol";
 
-library AppData {
+library AppDataOLD {
     using Map for Map.KeyValuePair[];
 
     function lookupResource(

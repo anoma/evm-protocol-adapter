@@ -6,22 +6,25 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IResourceWrapper } from "./interfaces/IResourceWrapper.sol";
 import { ComputableComponents } from "./libs/ComputableComponents.sol";
-import { AppData, Map } from "./libs/AppData.sol";
+
 import { Delta } from "./libs/Delta.sol";
 
 import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
+import { BlobStorage } from "./state/BlobStorage.sol";
+
 import { RiscZeroVerifier } from "./proving/RiscZeroVerifier.sol";
 
 import { ComplianceUnit, ComplianceInstance } from "./proving/Compliance.sol";
 import { DeltaInstance } from "./proving/Delta.sol";
-import { LogicProofMap } from "./proving/Logic.sol";
-import { Resource, Transaction, Action } from "./Types.sol";
+import { LogicProofMap, LogicInstance, LogicRefHashProofPair } from "./proving/Logic.sol";
+import { Resource, Transaction, Action, AppDataMap, AppData } from "./Types.sol";
 
-contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumulator, NullifierSet {
+contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumulator, NullifierSet, BlobStorage {
     using ComputableComponents for Resource;
-    using AppData for Map.KeyValuePair[];
+    using AppDataMap for AppDataMap.TagAppDataPair[];
+    using LogicProofMap for LogicProofMap.TagLogicProofPair[];
     using Delta for bytes32;
     using Address for address;
 
@@ -55,11 +58,38 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         CommitmentAccumulator(_treeDepth)
     { }
 
+    /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
+    /// set, respectively, and calling EVM.
+    /// @param transaction The transaction to execute.
+    function execute(Transaction calldata transaction) external {
+        verify(transaction);
+
+        for (uint256 i = 0; i < transaction.actions.length; ++i) {
+            Action calldata action = transaction.actions[i];
+            //AppDataMap.TagAppDataPair[] calldata tagAppDataPairs = action.tagAppDataPairs;
+
+            for (uint256 j = 0; j < action.tagAppDataPairs.length; ++j) {
+                _storeBlob(action.tagAppDataPairs[j].appData);
+            }
+
+            for (uint256 j = 0; j < action.nullifiers.length; ++j) {
+                _addNullifier(action.nullifiers[j]);
+                //_attemptWrapCall(action.nullifiers[j], tagAppDataPairs);
+            }
+
+            for (uint256 j = 0; j < action.commitments.length; ++j) {
+                _addCommitment(action.commitments[j]);
+                //_attemptUnwrapCall(action.commitments[j], tagAppDataPairs);
+            }
+        }
+        emit TransactionExecuted({ id: txCount++, transaction: transaction });
+    }
+
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
     /// @param transaction The transaction to verify.
     function verify(Transaction calldata transaction) public view {
         // compute delta
-        bytes32 transactionDelta = 0;
+        bytes32 transactionDelta;
 
         // Verify resource logics and compliance proofs.
         for (uint256 i; i < transaction.actions.length; ++i) {
@@ -77,37 +107,15 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         }
     }
 
-    /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
-    /// set, respectively, and calling EVM.
-    /// @param transaction The transaction to execute.
-    function execute(Transaction calldata transaction) external {
-        verify(transaction);
-
-        for (uint256 i = 0; i < transaction.actions.length; ++i) {
-            Action calldata action = transaction.actions[i];
-            Map.KeyValuePair[] memory appData = action.appData;
-
-            for (uint256 j = 0; j < action.nullifiers.length; ++j) {
-                _addNullifier(action.nullifiers[j]);
-                _attemptWrapCall(action.nullifiers[j], appData);
-            }
-
-            for (uint256 j = 0; j < action.commitments.length; ++j) {
-                _addCommitment(action.commitments[j]);
-                _attemptUnwrapCall(action.commitments[j], appData);
-            }
-        }
-        emit TransactionExecuted({ id: txCount++, transaction: transaction });
-    }
-
     function _verifyDelta(bytes32 computedDelta, bytes calldata deltaProof) internal pure {
-        DeltaInstance memory instance = abi.decode(deltaProof, (DeltaInstance));
+        DeltaInstance memory instance = DeltaInstance({ delta: computedDelta, expectedBalance: BALANCED });
+        bytes32 verifyingKey = bytes32(sha256("TODO"));
 
         /* Constraints (https://specs.anoma.net/latest/arch/system/state/resource_machine/data_structures/transaction/delta_proof.html#constraints)
         1. delta = sum(unit.delta() for unit in action.units for action in tx) - can be checked outside of the circuit since all values are public
         2. delta's preimage's quantity component is expectedBalance
         */
-
+        /*
         if (instance.expectedBalance != BALANCED) {
             revert BalanceMismatch({ expected: BALANCED, actual: instance.expectedBalance });
         }
@@ -116,7 +124,13 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         if (instance.delta != computedDelta) {
             revert DeltaMismatch({ expected: computedDelta, actual: instance.delta });
         }
-        //_verifyProof({ seal: deltaProof, imageId: /*TODO*/ bytes32(0), journalDigest: delta });
+        */
+        // TODO Ask Yulia / Xuyang if inputs are roughly correct.
+        _verifyProof({
+            seal: deltaProof,
+            imageId: DELTA_CIRCUIT_ID,
+            journalDigest: sha256(abi.encode(verifyingKey, instance))
+        });
     }
 
     function _verifyAction(Action calldata action) internal view {
@@ -124,54 +138,65 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
             _verifyComplianceUnit(action.complianceUnits[i]);
         }
 
-        for (uint256 i; i < action.logicProofs.length; ++i) {
-            //_verifyLogicProof(action.logicProofs.at(i));
-            _verifyLogicProof(action.logicProofs[i]);
+        for (uint256 i; i < action.commitments.length; ++i) {
+            _verifyLogicProof({ tag: action.commitments[i], action: action });
+        }
+
+        for (uint256 i; i < action.nullifiers.length; ++i) {
+            _verifyLogicProof({ tag: action.nullifiers[i], action: action });
         }
     }
 
     function _verifyComplianceUnit(ComplianceUnit calldata complianceUnit) internal view {
-        ComplianceInstance memory complianceInstance = complianceUnit.refInstance.referencedComplianceInstance;
+        ComplianceInstance memory instance = complianceUnit.refInstance.referencedComplianceInstance;
 
-        // TODO needed?
-        for (uint256 i; i < complianceInstance.consumed.length; ++i) {
-            // TODO Ask Xuyang: Do we need to verify the merkle path validity
-            // NOTE: We need the commitment associated with a nullifier do the nullifier check. Similarly, we need all roots.
+        for (uint256 i; i < instance.consumed.length; ++i) {
+            _checkRootPreExistence(instance.consumed[i].rootRef);
 
-            _checkNullifierNonExistence(complianceInstance.consumed[i].nullifierRef);
-            _checkRootPreExistence(complianceInstance.consumed[i].rootRef);
-            _checkMerklePath({
-                root: complianceInstance.consumed[i].rootRef,
-                // TODO Ask Yulia: Where can I get the commitment identifier from?
-                // TODO Ask Xuyang: If merkle path validity checks happen out-of-circuit, don't we loose nullifier-commitment unlinkability? -> The merkle path check should happen in-circuit.
-                commitment: sha256("WHERE TO GET THE COMMITMENT FROM?"),
-                // TODO Ask Yulia: Where can I get the siblings from? Are the siblings the witness?
-                siblings: new bytes32[](0)
-            });
+            // TODO Confirm with Yulia / Xuyang.
+            _checkNullifierNonExistence(instance.consumed[i].nullifierRef);
+            // TODO Confirm with Yulia, Xuyang that `_checkCommitmentExistence` is an in-circuit check.
         }
 
-        // TODO needed?
-        for (uint256 i; i < complianceInstance.created.length; ++i) {
-            _checkCommitmentNonExistence(complianceInstance.created[i].commitmentRef);
+        for (uint256 i; i < instance.created.length; ++i) {
+            // TODO Confirm with Yulia / Xuyang.
+            _checkCommitmentNonExistence(instance.created[i].commitmentRef);
         }
 
+        bytes32 verifyingKey = bytes32(0);
+
+        // TODO Ask Yulia / Xuyang if inputs are roughly correct.
         _verifyProofCalldata({
             seal: complianceUnit.proof,
             imageId: COMPLIANCE_CIRCUIT_ID,
-            journalDigest: sha256(abi.encode(complianceUnit))
+            journalDigest: sha256(abi.encode(verifyingKey, instance))
         });
     }
 
-    function _verifyLogicProof(LogicProofMap.TagLogicProofPair calldata tagLogicProofPair) internal view {
-        // TODO
-        _verifyProofCalldata({
-            seal: tagLogicProofPair.pair.proof,
+    function _verifyLogicProof(bytes32 tag, Action calldata action) internal view {
+        LogicRefHashProofPair calldata logicRefHashProofPair = action.logicProofs.lookupCalldata(tag);
+        AppData calldata appData = action.tagAppDataPairs.lookupCalldata(tag);
+
+        bytes calldata proof = logicRefHashProofPair.proof;
+        bytes32 verifyingKey = logicRefHashProofPair.logicRefHash;
+
+        LogicInstance memory instance = LogicInstance({
+            tag: tag,
+            isConsumed: false,
+            consumed: action.nullifiers,
+            created: action.commitments,
+            appDataForTag: appData
+        });
+
+        // TODO Ask Yulia / Xuyang if inputs are roughly correct.
+        _verifyProof({ // TODO Use calldata if possible
+            seal: proof,
             imageId: LOGIC_CIRCUIT_ID,
-            journalDigest: sha256(abi.encode(tagLogicProofPair.pair))
-        });
+            journalDigest: sha256(abi.encode(verifyingKey, instance)) // TODO Check
+         });
     }
 
-    function _attemptWrapCall(bytes32 nullifier, Map.KeyValuePair[] memory appData) internal {
+    /*function _attemptWrapCall(bytes32 nullifier, Map.KeyValuePair[] memory appData) internal {
         // Resource object lookup from the app data
         Resource memory resource;
         {
@@ -254,4 +279,5 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
             revert KindMismatch({ expected: resourceKind, actual: wrapperKind });
         }
     }
+    */
 }
