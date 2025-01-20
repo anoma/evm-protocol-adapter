@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25;
 
-import { AppData } from "../libs/AppData.sol";
+import { Blob } from "../libs/AppData.sol";
 
 library LogicProofMap {
     error KeyNotFound(bytes32 key);
@@ -65,10 +65,5 @@ struct LogicInstance {
     bool isConsumed;
     bytes32[] consumed;
     bytes32[] created;
-    AppData appDataForTag; // TODO Revisit.
-}
-
-// TODO Needed? Ask Yulia or Xuyang.
-struct LogicVerifyingKey {
-    bool TODO_MISSING_DEFINITION;
+    Blob appDataForTag; // TODO Revisit.
 }

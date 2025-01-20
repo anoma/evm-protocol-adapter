@@ -19,7 +19,7 @@ import { RiscZeroVerifier } from "./proving/RiscZeroVerifier.sol";
 import { ComplianceUnit, ComplianceInstance } from "./proving/Compliance.sol";
 import { DeltaInstance } from "./proving/Delta.sol";
 import { LogicProofMap, LogicInstance, LogicRefHashProofPair } from "./proving/Logic.sol";
-import { Resource, Transaction, Action, AppDataMap, AppData } from "./Types.sol";
+import { Resource, Transaction, Action, AppDataMap, Blob } from "./Types.sol";
 
 contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumulator, NullifierSet, BlobStorage {
     using ComputableComponents for Resource;
@@ -103,6 +103,7 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
 
     function _actionDelta(Action calldata action) internal pure returns (bytes32 delta) {
         for (uint256 i; i < action.complianceUnits.length; ++i) {
+            // TODO Ask Yulia if this is correct.
             delta = delta.add(action.complianceUnits[i].refInstance.referencedComplianceInstance.unitDelta);
         }
     }

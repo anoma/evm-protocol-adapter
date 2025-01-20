@@ -3,7 +3,7 @@ pragma solidity >=0.8.25;
 
 library Delta {
     function add(bytes32 a, bytes32 b) internal pure returns (bytes32) {
-        // TODO implement
+        // TODO implement. Ask Yulia first how this works.
 
         b;
 
