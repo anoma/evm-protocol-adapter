@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25;
 
-import { Map } from "../libs/Map.sol";
-import "../Types.sol";
+import { AppData } from "../libs/AppData.sol";
 
 library LogicProofMap {
     error KeyNotFound(bytes32 key);

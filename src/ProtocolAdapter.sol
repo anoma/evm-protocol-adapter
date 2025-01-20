@@ -107,8 +107,8 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         }
     }
 
-    function _verifyDelta(bytes32 computedDelta, bytes calldata deltaProof) internal pure {
-        DeltaInstance memory instance = DeltaInstance({ delta: computedDelta, expectedBalance: BALANCED });
+    function _verifyDelta(bytes32 computedDelta, bytes calldata deltaProof) internal view {
+        DeltaInstance memory instance = DeltaInstance({ delta: computedDelta, expectedBalance: 0 });
         bytes32 verifyingKey = bytes32(sha256("TODO"));
 
         /* Constraints (https://specs.anoma.net/latest/arch/system/state/resource_machine/data_structures/transaction/delta_proof.html#constraints)
@@ -126,7 +126,7 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         }
         */
         // TODO Ask Yulia / Xuyang if inputs are roughly correct.
-        _verifyProof({
+        _verifyProofCalldata({
             seal: deltaProof,
             imageId: DELTA_CIRCUIT_ID,
             journalDigest: sha256(abi.encode(verifyingKey, instance))
@@ -148,7 +148,7 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
     }
 
     function _verifyComplianceUnit(ComplianceUnit calldata complianceUnit) internal view {
-        ComplianceInstance memory instance = complianceUnit.refInstance.referencedComplianceInstance;
+        ComplianceInstance calldata instance = complianceUnit.refInstance.referencedComplianceInstance;
 
         for (uint256 i; i < instance.consumed.length; ++i) {
             _checkRootPreExistence(instance.consumed[i].rootRef);
@@ -163,14 +163,27 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
             _checkCommitmentNonExistence(instance.created[i].commitmentRef);
         }
 
-        bytes32 verifyingKey = bytes32(0);
-
         // TODO Ask Yulia / Xuyang if inputs are roughly correct.
         _verifyProofCalldata({
             seal: complianceUnit.proof,
             imageId: COMPLIANCE_CIRCUIT_ID,
-            journalDigest: sha256(abi.encode(verifyingKey, instance))
+            journalDigest: sha256(abi.encode(complianceUnit.verifyingKey, instance))
         });
+    }
+
+    function _toJournalDigest(
+        bytes32 verifyingKey,
+        ComplianceInstance calldata instance
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
+        return sha256(abi.encode(verifyingKey, instance));
+    }
+
+    function _toJournalDigest(bytes32 verifyingKey, LogicInstance calldata instance) internal pure returns (bytes32) {
+        return sha256(abi.encode(verifyingKey, instance));
     }
 
     function _verifyLogicProof(bytes32 tag, Action calldata action) internal view {
@@ -189,7 +202,7 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         });
 
         // TODO Ask Yulia / Xuyang if inputs are roughly correct.
-        _verifyProof({ // TODO Use calldata if possible
+        _verifyProofCalldata({ // TODO Use calldata if possible
             seal: proof,
             imageId: LOGIC_CIRCUIT_ID,
             journalDigest: sha256(abi.encode(verifyingKey, instance)) // TODO Check

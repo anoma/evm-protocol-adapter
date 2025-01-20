@@ -4,7 +4,7 @@ pragma solidity >=0.8.25;
 struct ComplianceUnit {
     bytes proof;
     RefInstance refInstance; // TODO
-    ComplianceVerifyingKey verifyingKey; // TODO ask Yulia what this is? The latest root?
+    bytes32 verifyingKey; // TODO ask Yulia what this is? The latest root?
 }
 
 // TODO Can we deviate here for the EVM?
@@ -30,9 +30,4 @@ struct ConsumedRefs {
 struct CreatedRefs {
     bytes32 commitmentRef;
     bytes32 logicRef;
-}
-
-// TODO Ask Yulia or Xuyang what to put here.
-struct ComplianceVerifyingKey {
-    bool TODO_MISSING_DEFINITION;
 }

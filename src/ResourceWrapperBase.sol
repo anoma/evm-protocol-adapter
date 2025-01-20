@@ -5,8 +5,9 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+import { Map } from "./libs/Map.sol";
 import { IResourceWrapper } from "./interfaces/IResourceWrapper.sol";
-import { Resource, Map } from "./Types.sol";
+import { Resource } from "./Types.sol";
 
 abstract contract ResourceWrapperBase is IResourceWrapper, Ownable {
     using Map for Map.KeyValuePair[];

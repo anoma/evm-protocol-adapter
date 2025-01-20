@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25;
 
-import { Resource, Map } from "../Types.sol";
+import { Map } from "../libs/Map.sol";
+import { Resource } from "../Types.sol";
 
 interface IResourceWrapper {
     event ResourceWrapped(bytes32 indexed nullifier, Resource resource); // TODO Does indexed make sense?
