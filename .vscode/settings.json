@@ -8,5 +8,9 @@
   },
   //"solidity.formatter": "prettier",
   "solidity.formatter": "forge",
-  "cSpell.words": ["Hashers", "treaple"]
+  "cSpell.words": [
+    "expirable",
+    "Hashers",
+    "treaple"
+  ]
 }

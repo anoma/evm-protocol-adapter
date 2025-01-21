@@ -6,20 +6,19 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IResourceWrapper } from "./interfaces/IResourceWrapper.sol";
 import { ComputableComponents } from "./libs/ComputableComponents.sol";
-
 import { Delta } from "./libs/Delta.sol";
 
-import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
+//import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
-import { BlobStorage } from "./state/BlobStorage.sol";
+import { BlobStorage, ExpirableBlob } from "./state/BlobStorage.sol";
 
 import { RiscZeroVerifier } from "./proving/RiscZeroVerifier.sol";
 
 import { ComplianceUnit, ComplianceInstance } from "./proving/Compliance.sol";
 import { DeltaInstance } from "./proving/Delta.sol";
 import { LogicProofMap, LogicInstance, LogicRefHashProofPair } from "./proving/Logic.sol";
-import { Resource, Transaction, Action, AppDataMap, Blob } from "./Types.sol";
+import { Resource, Transaction, Action, AppDataMap } from "./Types.sol";
 
 contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumulator, NullifierSet, BlobStorage {
     using ComputableComponents for Resource;
@@ -30,7 +29,6 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
 
     uint256 private txCount;
     uint256 internal constant BALANCED = uint256(0);
-
     bytes32 internal constant COMPLIANCE_CIRCUIT_ID = bytes32(0); //TODO
     bytes32 internal constant LOGIC_CIRCUIT_ID = bytes32(0); //TODO
     bytes32 internal constant DELTA_CIRCUIT_ID = bytes32(0); //TODO
@@ -172,24 +170,9 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         });
     }
 
-    function _toJournalDigest(
-        bytes32 verifyingKey,
-        ComplianceInstance calldata instance
-    )
-        internal
-        pure
-        returns (bytes32)
-    {
-        return sha256(abi.encode(verifyingKey, instance));
-    }
-
-    function _toJournalDigest(bytes32 verifyingKey, LogicInstance calldata instance) internal pure returns (bytes32) {
-        return sha256(abi.encode(verifyingKey, instance));
-    }
-
     function _verifyLogicProof(bytes32 tag, Action calldata action) internal view {
         LogicRefHashProofPair calldata logicRefHashProofPair = action.logicProofs.lookupCalldata(tag);
-        AppData calldata appData = action.tagAppDataPairs.lookupCalldata(tag);
+        ExpirableBlob calldata appData = action.tagAppDataPairs.lookupCalldata(tag);
 
         bytes calldata proof = logicRefHashProofPair.proof;
         bytes32 verifyingKey = logicRefHashProofPair.logicRefHash;

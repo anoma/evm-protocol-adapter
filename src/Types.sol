@@ -4,7 +4,7 @@ pragma solidity >=0.8.25;
 import { LogicProofMap } from "./proving/Logic.sol";
 import { ComplianceUnit } from "./proving/Compliance.sol";
 
-import { AppDataMap, Blob } from "./libs/AppData.sol";
+import { AppDataMap } from "./libs/AppData.sol";
 
 struct Resource {
     bytes32 logicRef;

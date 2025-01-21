@@ -1,4 +1,5 @@
 @openzeppelin/contracts=node_modules/@openzeppelin/contracts
+@transience=node_modules/transience
 @starkware-libs/starkex-contracts=node_modules/@starkware-libs/starkex-contracts
 @risc0-ethereum=node_modules/risc0-ethereum
 @poseidon-solidity/contracts=node_modules/poseidon-solidity

@@ -1,75 +1,130 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25;
 
-import { StorageSlot } from "@openzeppelin/contracts/utils/StorageSlot.sol";
-import { SlotDerivation } from "@openzeppelin/contracts/utils/SlotDerivation.sol";
-import { TransientSlot } from "@openzeppelin/contracts/utils/TransientSlot.sol";
+import { TransientContextBytes } from "@transience/src/TransientContextBytes.sol";
 
-struct Blob {
+// ExpirableBlob
+struct ExpirableBlob {
     DeletionCriterion deletionCriterion;
-    bytes data;
+    bytes blob;
 }
 
 enum DeletionCriterion {
     AfterTransaction, // Specs say "AfterBlock"
+    AfterTimestamp,
+    AfterSigOverData,
+    AfterPredicate,
     Never
 }
 
 contract BlobStorage {
-    using StorageSlot for bytes32;
-    using TransientSlot for bytes32;
-    using SlotDerivation for bytes32;
-    using SlotDerivation for string;
+    using TransientContextBytes for bytes32;
 
-    string private constant _NAMESPACE = "Anoma.Blob.Transient";
-    mapping(bytes32 bindingReference => Blob) internal blobs;
+    error BlobEmpty();
+    error BlobNotFound(bytes32 blobHash);
+    error BlobNotExpired(bytes32 blobHash);
+    error BlobExpired(bytes32 blobHash);
+    error BlobHashMismatch(bytes32 expected, bytes32 actual);
+    error InvalidExpiryTime(bytes32 blobHash);
+    error DeletionCriterionNotSupported(DeletionCriterion deletionCriterion);
 
-    // TODO add transient storage.
+    mapping(bytes32 blobHash => mapping(DeletionCriterion => bytes blob)) internal blobs;
+    mapping(bytes32 blobHash => uint256 timestamp) internal expiryTimes;
 
-    // We use `keccak256` for bytes comparison, because it is cheaper than `sha256`.
-    bytes32 internal constant EMPTY = keccak256(bytes(""));
+    bytes32 internal constant EMPTY_BLOB_HASH = sha256(bytes(""));
 
-    function _storeBlob(Blob calldata blob) internal {
-        bytes32 bindingReference = sha256(blob.data);
+    function _storeBlob(ExpirableBlob calldata expirableBlob) internal {
+        bytes32 blobHash = sha256(expirableBlob.blob);
 
-        if (keccak256(blobs[bindingReference]) != EMPTY) return;
+        // Blob exists already
+        if (sha256(blobs[blobHash][expirableBlob.deletionCriterion]) != EMPTY_BLOB_HASH) {
+            return;
+        }
 
-        if (blob.deletionCriterion == DeletionCriterion.Never) {
-            // Skip if the Blob exists already.
-            if (keccak256(blobs[bindingReference]) == EMPTY) {
-                blobs[bindingReference] = blob;
+        if (expirableBlob.deletionCriterion == DeletionCriterion.Never) {
+            blobs[blobHash][expirableBlob.deletionCriterion] = expirableBlob.blob;
+            return;
+        }
+
+        if (expirableBlob.deletionCriterion == DeletionCriterion.AfterTransaction) {
+            blobHash.set(expirableBlob.blob);
+            return;
+        }
+
+        revert DeletionCriterionNotSupported(expirableBlob.deletionCriterion);
+    }
+
+    function getBlob(bytes32 blobHash) external view returns (bytes memory) {
+        return _getBlob(blobHash);
+    }
+
+    function _getBlob(bytes32 blobHash) internal view returns (bytes memory blob) {
+        if (blobHash == EMPTY_BLOB_HASH) {
+            revert BlobEmpty();
+        }
+
+        bytes32 retrievedBlobHash;
+
+        // Try all deletion criteria
+
+        // DeletionCriterion.AfterTransaction
+        {
+            blob = blobHash.get();
+            retrievedBlobHash = sha256(blob);
+            if (retrievedBlobHash != EMPTY_BLOB_HASH) {
+                _checkIntegrity(blobHash, retrievedBlobHash);
+                return blob;
             }
         }
 
-        if (blob.deletionCriterion == DeletionCriterion.AfterTransaction) {
-            _setValueInNamespace({ key: bindingReference, newValue: blob.data });
+        // DeletionCriterion.Never
+        {
+            blob = blobs[blobHash][DeletionCriterion.Never];
+            retrievedBlobHash = sha256(blob);
+            if (retrievedBlobHash != EMPTY_BLOB_HASH) {
+                _checkIntegrity(blobHash, retrievedBlobHash);
+                return blob;
+            }
+        }
+
+        // DeletionCriterion.AfterTimestamp
+        {
+            blob = blobs[blobHash][DeletionCriterion.AfterTimestamp];
+            retrievedBlobHash = sha256(blob);
+            if (retrievedBlobHash != EMPTY_BLOB_HASH) {
+                _checkExpiration(blobHash);
+                _checkIntegrity(blobHash, retrievedBlobHash);
+
+                return blob;
+            }
+        }
+
+        revert BlobNotFound(blobHash);
+    }
+
+    function _checkExpiration(bytes32 blobHash) internal view {
+        if (block.timestamp <= expiryTimes[blobHash]) {
+            revert BlobExpired(blobHash);
         }
     }
 
-    function getBlob(bytes32 bindingReference) public view returns (bytes memory) {
-        return blobs[bindingReference];
-    }
-
-    function _getBlob(
-        bytes32 bindingReference,
-        DeletionCriterion deletionCriterion
-    )
-        internal
-        view
-        returns (bytes memory blob)
-    {
-        if (deletionCriterion == DeletionCriterion.Never) blob = blobs[bindingReference];
-
-        if (deletionCriterion == DeletionCriterion.AfterTransaction) {
-            _getTransientBlob({ key: bindingReference, newValue: blob.data });
+    function _checkIntegrity(bytes32 blobHash, bytes32 retrievedBlobHash) internal pure {
+        if (blobHash != retrievedBlobHash) {
+            revert BlobHashMismatch({ expected: blobHash, actual: retrievedBlobHash });
         }
     }
 
-    function _setTransientBlob(bytes calldata blob) internal {
-        // TODO
+    // TODO Protect with only owner?
+    function deleteAfterTimestamp(bytes32 blobHash) external {
+        _deleteAfterTimestamp(blobHash);
     }
 
-    function _getTransientBlob(bytes32 bindingReference) internal view returns (bytes calldata) {
-        return bytes("TODO");
+    function _deleteAfterTimestamp(bytes32 blobHash) internal {
+        if (expiryTimes[blobHash] != 0) revert InvalidExpiryTime(blobHash);
+        if (block.timestamp < expiryTimes[blobHash]) revert BlobNotExpired(blobHash);
+
+        // Deallocate storage
+        blobs[blobHash][DeletionCriterion.AfterTimestamp] = bytes("");
+        expiryTimes[blobHash] = 0;
     }
 }
