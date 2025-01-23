@@ -57,14 +57,18 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
     { }
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
-    /// set, respectively, and calling EVM.
+    /// set, respectively.
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external {
         verify(transaction);
 
+        // Execute external state change
+        for (uint256 i = 0; i < transaction.evmCalls.length; ++i) {
+            evmCalls[i].address.functionCall(evmCalls[i].data);
+        }
+
         for (uint256 i = 0; i < transaction.actions.length; ++i) {
             Action calldata action = transaction.actions[i];
-            //AppDataMap.TagAppDataPair[] calldata tagAppDataPairs = action.tagAppDataPairs;
 
             for (uint256 j = 0; j < action.tagAppDataPairs.length; ++j) {
                 _storeBlob(action.tagAppDataPairs[j].appData);
@@ -72,12 +76,10 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
 
             for (uint256 j = 0; j < action.nullifiers.length; ++j) {
                 _addNullifier(action.nullifiers[j]);
-                //_attemptWrapCall(action.nullifiers[j], tagAppDataPairs);
             }
 
             for (uint256 j = 0; j < action.commitments.length; ++j) {
                 _addCommitment(action.commitments[j]);
-                //_attemptUnwrapCall(action.commitments[j], tagAppDataPairs);
             }
         }
         emit TransactionExecuted({ id: txCount++, transaction: transaction });
@@ -193,7 +195,7 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
          });
     }
 
-    /*function _attemptWrapCall(bytes32 nullifier, Map.KeyValuePair[] memory appData) internal {
+    function _attemptWrapCall(bytes32 nullifier, Map.KeyValuePair[] memory appData) internal {
         // Resource object lookup from the app data
         Resource memory resource;
         {
@@ -276,5 +278,4 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
             revert KindMismatch({ expected: resourceKind, actual: wrapperKind });
         }
     }
-    */
 }

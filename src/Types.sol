@@ -17,10 +17,16 @@ struct Resource {
     bool ephemeral;
 }
 
+struct EVMCall {
+    address to;
+    bytes data;
+}
+
 struct Transaction {
     bytes32[] roots;
     Action[] actions;
     bytes deltaProof; // => DeltaInstance
+    EVMCall[] evmCalls;
 }
 
 struct Action {
