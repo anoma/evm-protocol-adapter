@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity >=0.8.25;
+pragma solidity >=0.8.27;
 
 import { TransientContextBytes } from "@transience/src/TransientContextBytes.sol";
 
@@ -33,25 +33,30 @@ contract BlobStorage {
 
     bytes32 internal constant EMPTY_BLOB_HASH = sha256(bytes(""));
 
-    function _storeBlob(ExpirableBlob calldata expirableBlob) internal {
+    // TODO refactor/optimize
+    function _storeBlob(ExpirableBlob memory expirableBlob) internal returns (bytes32) {
         bytes32 blobHash = sha256(expirableBlob.blob);
 
         // Blob exists already
         if (sha256(blobs[blobHash][expirableBlob.deletionCriterion]) != EMPTY_BLOB_HASH) {
-            return;
+            return blobHash;
         }
 
         if (expirableBlob.deletionCriterion == DeletionCriterion.Never) {
             blobs[blobHash][expirableBlob.deletionCriterion] = expirableBlob.blob;
-            return;
+            return blobHash;
         }
 
         if (expirableBlob.deletionCriterion == DeletionCriterion.AfterTransaction) {
             blobHash.set(expirableBlob.blob);
-            return;
+            return blobHash;
         }
 
         revert DeletionCriterionNotSupported(expirableBlob.deletionCriterion);
+    }
+
+    function _storeBlobCalldata(ExpirableBlob calldata expirableBlob) internal returns (bytes32) {
+        return _storeBlob(expirableBlob);
     }
 
     function getBlob(bytes32 blobHash) external view returns (bytes memory) {

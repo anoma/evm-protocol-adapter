@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity >=0.8.25;
+pragma solidity >=0.8.27;
 
 import { Resource } from "../Types.sol";
 
@@ -14,6 +14,10 @@ library ComputableComponents {
 
     function kind(Resource memory resource) internal pure returns (bytes32) {
         return sha256(abi.encode(resource.logicRef, resource.labelRef));
+    }
+
+    function kind(bytes32 logicRef, bytes32 labelRef) internal pure returns (bytes32) {
+        return sha256(abi.encode(logicRef, labelRef));
     }
 
     function commitmentCalldata(Resource calldata resource) internal pure returns (bytes32) {

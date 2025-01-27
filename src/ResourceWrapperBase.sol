@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity >=0.8.25;
+pragma solidity >=0.8.27;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -9,6 +9,7 @@ import { Map } from "./libs/Map.sol";
 import { IResourceWrapper } from "./interfaces/IResourceWrapper.sol";
 import { Resource } from "./Types.sol";
 
+/// A contract owning EVM state and executing EVM calls.
 abstract contract ResourceWrapperBase is IResourceWrapper, Ownable {
     using Map for Map.KeyValuePair[];
 
@@ -16,7 +17,7 @@ abstract contract ResourceWrapperBase is IResourceWrapper, Ownable {
     /// @dev To establish the linkage between wrapper resource and wrapper contract, the wrapper contract must be
     /// deployed deterministically. This is necessary because the wrapper resource must contain the wrapper contract
     /// address in its label influencing its kind.
-    bytes32 internal immutable RESOURCE_KIND;
+    bytes32 internal immutable RESOURCE_KIND; // TODO needed?
 
     constructor(address protocolAdapter, bytes32 resourceKind) Ownable(protocolAdapter) {
         RESOURCE_KIND = resourceKind;
@@ -26,42 +27,19 @@ abstract contract ResourceWrapperBase is IResourceWrapper, Ownable {
         return RESOURCE_KIND;
     }
 
-    function wrap(
-        bytes32 nullifier,
-        Resource calldata resource,
-        Map.KeyValuePair[] calldata appData
-    )
-        external
-        onlyOwner
-    {
-        _wrap(nullifier, resource, appData);
-        emit ResourceWrapped(nullifier, resource);
+    function wrap(bytes calldata input) external onlyOwner returns (bytes memory output) {
+        output = _wrap(input);
+        emit ResourceWrapped(input, output);
     }
 
-    function unwrap(
-        bytes32 commitment,
-        Resource calldata resource,
-        Map.KeyValuePair[] calldata appData
-    )
-        external
-        onlyOwner
-    {
-        _unwrap(commitment, resource, appData);
-        emit ResourceUnwrapped(commitment, resource);
+    function unwrap(bytes calldata input) external onlyOwner returns (bytes memory output) {
+        output = _unwrap(input);
+        emit ResourceUnwrapped(input, output);
     }
 
-    function _wrap(
-        bytes32 nullifier,
-        Resource calldata resource,
-        Map.KeyValuePair[] calldata appData
-    )
-        internal
-        virtual;
-    function _unwrap(
-        bytes32 commitment,
-        Resource calldata resource,
-        Map.KeyValuePair[] calldata appData
-    )
-        internal
-        virtual;
+    /// @notice A virtual function that can conduct EVM state reads and writes being required to wrap a resource.
+    function _wrap(bytes calldata input) internal virtual returns (bytes memory output);
+
+    /// @notice A virtual function that can conduct EVM state reads and writes being required to unwrap a resource.
+    function _unwrap(bytes calldata input) internal virtual returns (bytes memory output);
 }

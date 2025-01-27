@@ -1,0 +1,83 @@
+
+module ERC20WrapperContractResource;
+
+import Stdlib.Prelude open;
+import Applib open;
+
+import MagicNumbers open;
+import Types open;
+
+{- LOGIC -}
+
+logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
+  let
+    tag := Instance.tag publicInputs;
+    customInputs := Witness.customInputs privateInputs;
+  in if
+    | isNullifier tag :=
+      case findResourceByNullifier tag privateInputs of {
+        | nothing := false
+        | just self :=
+          if
+            | Resource.ephemeral self :=  initializationLogic publicInputs
+            | else := consumptionLogic
+      }
+    | isCommitment tag :=
+      case findResourceByCommitment tag privateInputs of {
+        | nothing := false
+        | just self :=
+          if
+            | Resource.ephemeral self := finalizationLogic
+            | else := creationLogic
+      }
+    | else := false;
+
+-- RL is such that only the PA can add this to the TX -> require npk to always be Universal.identity so that anyone can consume it
+initializationLogic (publicInputs : Instance) : Bool := false; --(isNfPresent publicInputs) && TODO;
+--isNfPresent (publicInputs : Instance) : Bool := TODO;
+
+-- Will the PA directly create those resources?
+-- -> EVM call field in tx -> `to` encodes wrapper contract 
+
+--- Gets FFI call data and enforces that ERC20 resource gets finalized or initialized
+consumptionLogic  : Bool := TODO;
+
+--- Checks the FFI calls stored in `value` and requires resources corresponding to the wrapped ERC20 contract to be created and consumed.
+creationLogic : Bool := TODO; -- this logic will get the appdata and require that a resource is created
+
+--- Potentially not needed. Finalization implies destroying the wrapper contract (not possible anymore since the deprecation of `selfdestruct`) or rendering it unusable.
+finalizationLogic : Bool := false; -- most likely, this can be simply set to `false`
+
+--- Contains all the information to find a 
+type FFICall := mkFFICall{
+  wrapper : Address;
+  uniqueNf : Nat;
+};
+
+{- RESOURCE -}
+
+type WrapperResourceLabel := mkWrapperResourceLabel{
+  wrapper : Address;
+  uniqueNf : Nat; -- TODO Needed?
+};
+
+mkERC20WrapperContractResource
+  (wrapperResourceLabel : WrapperResourceLabel)
+  (nonce : Nat)
+  {nkc : NullifierKeyCommitment := Universal.nullifierKeyCommitment}
+  {ephemeral : Bool := false}
+  : Resource :=
+  mkResource@{
+    logic; -- checks 
+    label := builtinAnomaEncode wrapperResourceLabel;
+    value := 0;
+    quantity := 1;
+    ephemeral;
+    nullifierKeyCommitment := builtinAnomaEncode (nkc);
+    nonce;
+    randSeed := 0;
+  };
+
+{- HELPERS -}
+
+

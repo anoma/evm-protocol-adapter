@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity >=0.8.25;
+pragma solidity >=0.8.27;
 
 import { PoseidonT2 } from "poseidon-solidity/contracts/PoseidonT2.sol";
 import { PoseidonT3 } from "poseidon-solidity/contracts/PoseidonT3.sol";

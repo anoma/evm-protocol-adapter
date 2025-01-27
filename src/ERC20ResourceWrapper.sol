@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity >=0.8.25;
+pragma solidity >=0.8.27;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ResourceWrapperBase } from "./ResourceWrapperBase.sol";
@@ -9,8 +10,9 @@ import { AppDataOLD, Map } from "./libs/AppDataOLD.sol";
 import { Resource } from "./Types.sol";
 
 contract ERC20ResourceWrapper is Ownable, ResourceWrapperBase {
-    using AppDataOLD for Map.KeyValuePair[];
+    using Address for address;
 
+    bytes constant NOTHING = "";
     IERC20 internal immutable TOKEN_CONTRACT;
 
     constructor(
@@ -23,33 +25,24 @@ contract ERC20ResourceWrapper is Ownable, ResourceWrapperBase {
         TOKEN_CONTRACT = erc20;
     }
 
-    function _wrap(
-        bytes32, // nullifier, // NOTE: unused
-        Resource calldata resource,
-        Map.KeyValuePair[] calldata appData
-    )
-        internal
-        override
-    {
-        (bool success, address owner) = appData.lookupOwner({ key: resource.valueRef });
+    function _wrap(bytes calldata input) internal override returns (bytes memory output) {
+        (uint256 _quantity, address _owner) = abi.decode(input, (uint256, address));
 
-        if (!success) revert Map.KeyNotFound({ key: resource.valueRef });
+        TOKEN_CONTRACT.transferFrom({ from: _owner, to: address(this), value: _quantity });
 
-        TOKEN_CONTRACT.transferFrom({ from: owner, to: address(this), value: resource.quantity });
+        output = NOTHING;
     }
 
-    function _unwrap(
-        bytes32, //commitment, // NOTE: unused
-        Resource calldata resource,
-        Map.KeyValuePair[] calldata appData
-    )
-        internal
-        override
-    {
-        (bool success, address owner) = appData.lookupOwner({ key: resource.valueRef });
+    // TODO is this sufficient?
+    function _evmCall(bytes calldata input) internal returns (bytes memory output) {
+        output = address(TOKEN_CONTRACT).functionCall(input);
+    }
 
-        if (!success) revert Map.KeyNotFound({ key: resource.valueRef });
+    function _unwrap(bytes calldata input) internal override returns (bytes memory output) {
+        (uint256 _quantity, address _owner) = abi.decode(input, (uint256, address));
 
-        TOKEN_CONTRACT.transfer({ to: owner, value: resource.quantity });
+        TOKEN_CONTRACT.transfer({ to: _owner, value: _quantity });
+
+        output = NOTHING;
     }
 }
