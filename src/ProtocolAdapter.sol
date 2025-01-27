@@ -212,35 +212,18 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
 
     function _actionDelta(Action calldata action) internal pure returns (bytes32 delta) {
         for (uint256 i; i < action.complianceUnits.length; ++i) {
-            // TODO Ask Yulia if this is correct.
             delta = delta.add(action.complianceUnits[i].refInstance.referencedComplianceInstance.unitDelta);
         }
     }
 
     function _verifyDelta(bytes32 computedDelta, bytes calldata deltaProof) internal view {
         DeltaInstance memory instance = DeltaInstance({ delta: computedDelta, expectedBalance: 0 });
-        bytes32 verifyingKey = bytes32(sha256("TODO"));
+        bytes32 verifyingKey = bytes32(sha256("TODO")); // Signature of verifying key, public key
 
-        /* Constraints (https://specs.anoma.net/latest/arch/system/state/resource_machine/data_structures/transaction/delta_proof.html#constraints)
-        1. delta = sum(unit.delta() for unit in action.units for action in tx) - can be checked outside of the circuit since all values are public
-        2. delta's preimage's quantity component is expectedBalance
-        */
-        /*
-        if (instance.expectedBalance != BALANCED) {
-            revert BalanceMismatch({ expected: BALANCED, actual: instance.expectedBalance });
-        }
-
-        // TODO is proof verification required? Can we use the computed delta?
-        if (instance.delta != computedDelta) {
-            revert DeltaMismatch({ expected: computedDelta, actual: instance.delta });
-        }
-        */
-        // TODO Ask Yulia / Xuyang if inputs are roughly correct.
-        _verifyProofCalldata({
-            seal: deltaProof,
-            imageId: DELTA_CIRCUIT_ID,
-            journalDigest: sha256(abi.encode(verifyingKey, instance))
-        });
+        // Proof is signature over the verifying key.
+        // Public key that signs the message is derived from some values.
+        // -> Yulia: https://research.anoma.net/t/sapling-binding-signature/121
+        // Xuyang can tell me what to do concretely.
     }
 
     function _verifyAction(Action calldata action) internal view {
@@ -249,27 +232,26 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         }
 
         for (uint256 i; i < action.commitments.length; ++i) {
-            _verifyLogicProof({ tag: action.commitments[i], action: action });
+            _verifyLogicProof({ tag: action.commitments[i], action: action, isConsumed: false });
         }
 
         for (uint256 i; i < action.nullifiers.length; ++i) {
-            _verifyLogicProof({ tag: action.nullifiers[i], action: action });
+            _verifyLogicProof({ tag: action.nullifiers[i], action: action, isConsumed: true });
         }
     }
 
     function _verifyComplianceUnit(ComplianceUnit calldata complianceUnit) internal view {
         ComplianceInstance calldata instance = complianceUnit.refInstance.referencedComplianceInstance;
+        // Note: referenced, because the instance contains things that we use in other places (see definiton of compliance instance).
+        // Note: If we provide a copy, we have to ensure that both things are really the same.
 
         for (uint256 i; i < instance.consumed.length; ++i) {
             _checkRootPreExistence(instance.consumed[i].rootRef);
 
-            // TODO Confirm with Yulia / Xuyang.
             _checkNullifierNonExistence(instance.consumed[i].nullifierRef);
-            // TODO Confirm with Yulia, Xuyang that `_checkCommitmentExistence` is an in-circuit check.
         }
 
         for (uint256 i; i < instance.created.length; ++i) {
-            // TODO Confirm with Yulia / Xuyang.
             _checkCommitmentNonExistence(instance.created[i].commitmentRef);
         }
 
@@ -279,29 +261,37 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
             imageId: COMPLIANCE_CIRCUIT_ID,
             journalDigest: sha256(abi.encode(complianceUnit.verifyingKey, instance))
         });
+        // Logic ref + commitment + nullifier derivation.
     }
 
-    function _verifyLogicProof(bytes32 tag, Action calldata action) internal view {
+    function _verifyLogicProof(bytes32 tag, Action calldata action, bool isConsumed) internal view {
         LogicRefHashProofPair calldata logicRefHashProofPair = action.logicProofs.lookupCalldata(tag);
-        ExpirableBlob calldata appData = action.tagAppDataPairs.lookupCalldata(tag);
+        // hash of the logifRef -> function privacy requires and additional layer of verification.
 
         bytes calldata proof = logicRefHashProofPair.proof;
-        bytes32 verifyingKey = logicRefHashProofPair.logicRefHash;
+        // NOTE: Yulia: The following is NOT correct.
+        // //bytes32 verifyingKey = logicRefHashProofPair.logicRefHash;
 
+        // For below, see https://research.anoma.net/t/zkvm-compilers-goals/459.
+        // TODO Yulia, specs will change. Afterwards, the transaction object will most likely contain the verifying key in some form. Alternatively, the verifying key could be part of app data, but this should be avoided to not overcomplicate things/lookups.
+        bytes32 verifyingKey = sha256("TODO - REQUIRES SPECS UPDATE");
+
+        // NOTE: Yulia: The instance
         LogicInstance memory instance = LogicInstance({
             tag: tag,
-            isConsumed: false,
+            isConsumed: isConsumed,
             consumed: action.nullifiers,
             created: action.commitments,
-            appDataForTag: appData
+            appDataForTag: action.tagAppDataPairs.lookupCalldata(tag)
         });
 
-        // TODO Ask Yulia / Xuyang if inputs are roughly correct.
-        _verifyProofCalldata({ // TODO Use calldata if possible
+        // NOTE: Yulia: This is a outer proof (recursive proof) verifying that the resource logic proof was verified.
+        // Accordingly, this doesn't receive the LogicInstance as defined above.
+        _verifyProofCalldata({
             seal: proof,
             imageId: LOGIC_CIRCUIT_ID,
-            journalDigest: sha256(abi.encode(verifyingKey, instance)) // TODO Check
-         });
+            journalDigest: sha256(abi.encode(verifyingKey, instance))
+        });
     }
 
     function wrapperContractResourceCommitment(bytes32 logicRef, bytes32 labelRef) internal returns (bytes32) {

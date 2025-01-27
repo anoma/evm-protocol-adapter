@@ -5,6 +5,15 @@ library Delta {
     function add(bytes32 a, bytes32 b) internal pure returns (bytes32) {
         // TODO implement. Ask Yulia first how this works.
 
+        // Shielded case: Pedersen Commitments, operation over elliptic curves
+        // Ethereum uses ECDSA
+
+        // Yulia: types need to support addition
+
+        // Keys are not generated "naturally".
+
+        // ecrecover();
+
         b;
 
         return a;
