@@ -18,18 +18,10 @@ struct Resource {
 }
 
 struct EVMCall {
-    bytes32 wrapperContractLogicRef;
-    bytes32 wrapperContractResourceKind; // TODO needed?
-    address wrapperContract;
-    bytes4 functionSelector;
+    address to;
     bytes input;
 }
 
-struct FFICall {
-    bytes4 functionSelector;
-    bytes input;
-    bytes output; // Must be predictable, if resource logics want to depend on it, so that proves can be conducted beforehand.
-}
 // TODO input format + output format?
 
 struct Transaction {

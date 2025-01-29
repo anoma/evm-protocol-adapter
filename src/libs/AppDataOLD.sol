@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.27;
 
-import { IResourceWrapper } from "../interfaces/IResourceWrapper.sol";
+import { IWrapper } from "../interfaces/IWrapper.sol";
 
 import { Resource } from "../Types.sol";
 
@@ -23,17 +23,10 @@ library AppDataOLD {
     }
 
     /// @notice Looks up the wrapper contract lookup from the resource label reference and app data.
-    function lookupWrapper(
-        Map.KeyValuePair[] memory appData,
-        bytes32 key
-    )
-        internal
-        pure
-        returns (bool, IResourceWrapper)
-    {
+    function lookupWrapper(Map.KeyValuePair[] memory appData, bytes32 key) internal pure returns (bool, IWrapper) {
         (bool success, bytes memory data) = appData.lookup(key);
 
-        return (success, abi.decode(data, (IResourceWrapper)));
+        return (success, abi.decode(data, (IWrapper)));
     }
 
     function lookupOwner(Map.KeyValuePair[] calldata appData, bytes32 key) internal pure returns (bool, address) {

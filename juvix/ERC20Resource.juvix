@@ -8,7 +8,7 @@ import Types open;
 
 isAuthorizedBy
   (signer : ExternalIdentity) (origin : Nat) (publicInputs : Instance) : Bool :=
-  TODO;
+  todo;
 
 {- LOGIC -}
 
@@ -17,27 +17,34 @@ logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
     tag := Instance.tag publicInputs;
     customInputs := Witness.customInputs privateInputs;
   in if
+    {- ERC20 resource consumed -}
     | isNullifier tag :=
       case findResourceByNullifier tag privateInputs of {
         | nothing := false
         | just self :=
           if
+            {- initializing consumption -}
             | Resource.ephemeral self := initializationLogic
-            -- && requireResourceInAppData self tag publicInputs
+            {- conventional consumption -}
             | else := consumptionLogic tag self publicInputs
       }
+    {- ERC20 resource created -}
     | isCommitment tag :=
       case findResourceByCommitment tag privateInputs of {
         | nothing := false
         | just self :=
           if
+            {- finalizing creation -}
             | Resource.ephemeral self := finalizationLogic
+            {- conventional creation -}
             | else := creationLogic
       }
     | else := false;
 
 --- Requires a W
-initializationLogic : Bool := TODO;
+initializationLogic : Bool := todo;
+
+finalizationLogic : Bool := todo;
 
 --- Transferable token logic
 consumptionLogic
@@ -47,35 +54,8 @@ consumptionLogic
     origin := tag;
     publicInputs;
   };
+
 creationLogic : Bool := true;
-
---- Requires a wrapper contract resource to be created that contains an FFI call to a wrapper contract method `unwrap` function with matching `owner` and `quantity` that in turn calls `transfer`. 
-finalizationLogic : Bool := TODO;
-
-{-
-requireResourceInAppData
-(self : Resource) (tag : Tag) (publicInputs : Logic.Instance) : Bool :=
-let
-appData := Logic.Instance.appData publicInputs;
-lookUp :=
-case tag of
-| Consumed nullifier :=
-lookupAppData@{
-key := bitwiseXOR nullifier WRAP_MAGIC_NUMBER;
-Value := Resource;
-appData;
-}
-| Created commitment :=
-lookupAppData@{
-key := bitwiseXOR commitment UNWRAP_MAGIC_NUMBER;
-Value := Resource;
-appData;
-};
-in case lookUp of
-| nothing := false
-| just resource := resource == self;
-bitwiseXOR {A} (a : A) (b : ByteArray) : ByteArray := TODO;
--}
 
 {- RESOURCE -}
 

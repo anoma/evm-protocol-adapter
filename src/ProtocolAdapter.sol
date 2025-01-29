@@ -2,105 +2,100 @@
 pragma solidity >=0.8.25;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
-import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
-import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+// import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
+// import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { ReentrancyGuardTransient } from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
-import { IResourceWrapper } from "./interfaces/IResourceWrapper.sol";
+import { IWrapper } from "./interfaces/IWrapper.sol";
 import { ComputableComponents } from "./libs/ComputableComponents.sol";
+import { Reference } from "./libs/Reference.sol";
 import { Delta } from "./libs/Delta.sol";
 
 //import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
-import { BlobStorage, ExpirableBlob, DeletionCriterion } from "./state/BlobStorage.sol";
+import { BlobStorage } /*, ExpirableBlob, DeletionCriterion*/ from "./state/BlobStorage.sol";
 
-import { RiscZeroVerifier } from "./proving/RiscZeroVerifier.sol";
+import { IRiscZeroVerifier } from "@risc0-ethereum/contracts/src/IRiscZeroVerifier.sol";
 
 import { ComplianceUnit, ComplianceInstance } from "./proving/Compliance.sol";
 import { DeltaInstance } from "./proving/Delta.sol";
 import { LogicProofMap, LogicInstance, LogicRefHashProofPair } from "./proving/Logic.sol";
-import { Resource, Transaction, Action, AppDataMap, EVMCall, FFICall, TagSet } from "./Types.sol";
+import { Resource, Transaction, Action, AppDataMap, TagSet, EVMCall } from "./Types.sol";
 import { UNIVERSAL_NULLIFIER_KEY_COMMITMENT } from "./Constants.sol";
 
-contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumulator, NullifierSet, BlobStorage {
+contract ProtocolAdapter is
+    IProtocolAdapter,
+    ReentrancyGuardTransient,
+    // TODO Factor out CommitmentAccumulator and NullifierSet
+    CommitmentAccumulator,
+    NullifierSet,
+    BlobStorage
+{
     using TagSet for bytes32[];
     using Address for address;
     using ComputableComponents for Resource;
+    using Reference for address;
+    using Reference for bytes;
     using AppDataMap for AppDataMap.TagAppDataPair[];
     using LogicProofMap for LogicProofMap.TagLogicProofPair[];
     using Delta for bytes32;
 
-    uint256 private txCount;
-    uint256 internal constant BALANCED = uint256(0);
-    bytes32 internal constant COMPLIANCE_CIRCUIT_ID = bytes32(0); //TODO
-    bytes32 internal constant LOGIC_CIRCUIT_ID = bytes32(0); //TODO
-    bytes32 internal constant DELTA_CIRCUIT_ID = bytes32(0); //TODO
+    uint256 private constant BALANCED = uint256(0);
+
+    IRiscZeroVerifier private immutable RISC_ZERO_VERIFIER;
+    bytes32 private immutable COMPLIANCE_CIRCUIT_ID;
+    bytes32 private immutable LOGIC_CIRCUIT_ID;
+    bytes32 private immutable DELTA_CIRCUIT_ID;
+
+    /// @notice The binding reference to the logic of the wrapper contract resource.
+    /// @dev Determined by the protocol adapter on deployment.
+    bytes32 private immutable WRAPPER_LOGIC_REF;
+
+    uint256 private _txCount;
+    uint256 private _nonce;
 
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
-    event EVMStateChangeExecuted(IResourceWrapper indexed wrapper, bytes32 indexed tag);
+    event EVMStateChangeExecuted(IWrapper indexed wrapper, bytes32 indexed tag);
 
-    error KindMismatch(bytes32 expected, bytes32 actual);
-    error CommitmentMismatch(bytes32 expected, bytes32 actual);
-    error NullifierMismatch(bytes32 expected, bytes32 actual);
-    error DeltaMismatch(bytes32 expected, bytes32 actual);
-    error BalanceMismatch(uint256 expected, uint256 actual);
-    error EVMCallWrapperContractResourceCommitmentNotFound(bytes32 commitment);
-
-    error WrongEphemerality(bytes32 tag, bool ephemeral);
-
-    bytes32 internal immutable PROTOCOL_ADAPTER_NULLIFIER_KEY;
-
-    bytes32 private constant EMPTY_BYTES32 = bytes32(0);
-    // solhint-disable-next-line var-name-mixedcase
-    uint256[] private EMPTY_UINT256_ARR = new uint256[](0);
-
-    uint256 internal nonce;
+    error WrapperContractResourceLabelMismatch(bytes32 expected, bytes32 actual);
+    error WrapperContractResourceCommitmentNotFound(bytes32 commitment);
 
     constructor(
-        address _riscZeroVerifier,
-        uint8 _treeDepth
+        bytes32 logicCircuitID,
+        bytes32 complianceCircuitID,
+        bytes32 deltaCircuitID,
+        bytes32 wrapperLogicRef,
+        address riscZeroVerifier,
+        uint8 treeDepth
     )
-        RiscZeroVerifier(_riscZeroVerifier)
-        CommitmentAccumulator(_treeDepth)
+        CommitmentAccumulator(treeDepth)
     {
-        PROTOCOL_ADAPTER_NULLIFIER_KEY = bytes32(uint256(uint160(address(this))));
+        COMPLIANCE_CIRCUIT_ID = complianceCircuitID;
+        LOGIC_CIRCUIT_ID = logicCircuitID;
+        DELTA_CIRCUIT_ID = deltaCircuitID;
+
+        WRAPPER_LOGIC_REF = wrapperLogicRef;
+        RISC_ZERO_VERIFIER = IRiscZeroVerifier(riscZeroVerifier);
     }
 
-    /// TODO THIS FUNCTION IS UNSAFE AND CAN BE MISUSED TO CREATE RESOURCES WITH ARBITRARY LOGICS AND LABELS.
+    /// TODO REFACTOR
     /// @notice Creates a wrapper contract resource object and adds the commitment to the commitment accumulator
     // @param wrappedResourceKind The wrapped resource kind (that must not be confused with the wrapper contract resource kind).
-    /// @param wrapperContract The wrapper contract
-    function createWrapperContractResource(bytes32 wrapperContractLogicRef, address wrapperContract) internal {
-        // Create a wrapper contract resource that can be consumed by the universal identity.
-        Resource memory wrapperContractResource = Resource({
-            logicRef: wrapperContractLogicRef,
-            labelRef: wrapperContractLabelRef(wrapperContract),
-            valueRef: EMPTY_BYTES32, // NOTE: The value is explicitly empty.
-            nullifierKeyCommitment: UNIVERSAL_NULLIFIER_KEY_COMMITMENT,
-            quantity: 1,
-            nonce: 0, // NOTE: We explicitly set it to 0 to require the `labelRef` and `logicRef` to be different.
-            randSeed: 0,
-            ephemeral: false
-        });
-
-        _addCommitment(wrapperContractResource.commitment());
-        revert("THIS FUNCTION IS UNSAFE AND CAN BE MISUSED TO CREATE RESOURCES WITH ARBITRARY LOGICS AND LABELS");
-    }
-
-    function wrapperContractLabelRef(address wrapperContract)
-        //, bytes32 wrappedResourceKind
-        internal
-        pure
-        returns (bytes32 labelRef)
-    {
-        labelRef = sha256(abi.encode(wrapperContract)); //sha256(abi.encode(wrappedResourceKind, wrapperContract));
+    /// @param wrapper The wrapper contract.
+    function createWrapperContractResource(IWrapper wrapper) internal {
+        _addCommitment(
+            _wrapperContractResourceCommitment({ labelRef: wrapper.wrapperLabelRef(), valueRef: bytes32(0), nonce: 0 })
+        );
+        revert("UNSAFE: ALLOWS ARBITRARY WRAPPER RESOURCe CREATION OUTSIDE TRANSACTIONS");
     }
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
     /// @param transaction The transaction to execute.
-    function execute(Transaction calldata transaction) external {
+    /// @dev This function is non-reentrant.
+    function execute(Transaction calldata transaction) external nonReentrant {
         verify(transaction);
 
         for (uint256 i = 0; i < transaction.actions.length; ++i) {
@@ -122,77 +117,65 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
                 _addCommitment(action.commitments[j]);
             }
         }
-        emit TransactionExecuted({ id: txCount++, transaction: transaction });
+        emit TransactionExecuted({ id: _txCount++, transaction: transaction });
     }
 
+    /// @notice This call expects the consumed & created wrapper resource to be already part of the transaction object and to be proven.
+    // TODO think if this is needed.
     function _executeEvmCall(Action memory action, EVMCall memory evmCall) internal {
+        IWrapper wrapperContract = IWrapper(evmCall.to);
+
+        // Execute EVM call
         // TODO How can this output be available during proving times?
         // TODO Ask Chris. Probably this requires the full protocol adapter.
-        bytes memory output =
-            evmCall.wrapperContract.functionCall(abi.encodeWithSelector(evmCall.functionSelector, evmCall.input));
+        bytes memory evmCallOutput = wrapperContract.evmCall(evmCall.input);
 
-        FFICall memory ffiCalldata =
-            FFICall({ functionSelector: evmCall.functionSelector, input: evmCall.input, output: output });
+        bytes32 computedWrapperLabelRef = abi.encode(evmCall.to).toRefCalldata();
+        bytes32 expectedWrapperLabelRef = wrapperContract.wrapperLabelRef();
 
-        // bytes32 wrapperContractValueRef = sha256(abi.encode(ffiCalldata));
-        bytes32 wrapperContractValueRef = _storeBlob(
-            ExpirableBlob({ deletionCriterion: DeletionCriterion.AfterTransaction, blob: abi.encode(ffiCalldata) })
-        );
+        // TODO This check is implicitly included in the commitment lookup and therefore redundant.
+        if (computedWrapperLabelRef != expectedWrapperLabelRef) {
+            revert WrapperContractResourceLabelMismatch({
+                expected: expectedWrapperLabelRef,
+                actual: computedWrapperLabelRef
+            });
+        }
+        bytes32 valueRef = abi.encode(evmCall.input, evmCallOutput).toRefCalldata();
 
-        Resource memory wrapperContractResource = Resource({
-            logicRef: evmCall.wrapperContractLogicRef,
-            labelRef: wrapperContractLabelRef(evmCall.wrapperContract),
-            valueRef: wrapperContractValueRef,
-            nullifierKeyCommitment: UNIVERSAL_NULLIFIER_KEY_COMMITMENT,
-            quantity: 1,
-            nonce: 0, // NOTE: We explicitly set it to 0 to require the `labelRef` and `logicRef` to be different.
-            randSeed: 0,
-            ephemeral: false
+        // NOTE: The full protocol adapter can store the logic, label, and value data as blobs.
+        //bytes32 labelRef = _storeBlob(abi.encode(evmCall.to), DeletionCriterion.AfterTransaction);
+        //bytes32 valueRef = _storeBlob(abi.encode(evmCall.input, output), DeletionCriterion.AfterTransaction);
+
+        // Create a new wrapper contract resource.
+        // NOTE: The delta proof requires the old wrapper contract to be consumed.
+        bytes32 commitment = _wrapperContractResourceCommitment({
+            valueRef: valueRef,
+            labelRef: computedWrapperLabelRef,
+            nonce: ++_nonce
         });
-        // Lookup
-        bytes32 commitment = wrapperContractResource.commitment();
-
-        (bool appDataLookupSuccess, ExpirableBlob memory foundExpirableBlob) = action.tagAppDataPairs.lookup(commitment);
-
-        // Check that an app data entry exists for wrapper contract resource with the commitment as the tag.
-        if (!appDataLookupSuccess) revert AppDataMap.KeyNotFound({ key: commitment });
 
         // Check that the commitment is part of the commitment set.
         bool commitmentLookupSuccess = action.commitments.contains(commitment);
-        if (!commitmentLookupSuccess) revert EVMCallWrapperContractResourceCommitmentNotFound(commitment);
+        if (!commitmentLookupSuccess) revert WrapperContractResourceCommitmentNotFound(commitment);
 
-        // Expect blob to be deleted after the transaction. // TODO necessary?
-        if (foundExpirableBlob.deletionCriterion != DeletionCriterion.AfterTransaction) {
-            revert DeletionCriterionNotSupported(foundExpirableBlob.deletionCriterion);
-        }
+        // TODO This is not needed because proof generation has already happened.
+        /*{
+            // Check that an app data entry exists for wrapper contract resource with the commitment as the tag.
+            (bool appDataLookupSuccess, ExpirableBlob memory appDataBlob) = action.tagAppDataPairs.lookup(commitment);
 
-        // Expect blob to equal the encoded EVM call.
-        bytes32 foundBlobHash = sha256(foundExpirableBlob.blob);
-        if (foundBlobHash == wrapperContractValueRef) {
-            revert BlobHashMismatch({ expected: wrapperContractValueRef, actual: foundBlobHash });
-        }
+            if (!appDataLookupSuccess) revert AppDataMap.KeyNotFound({ key: commitment });
+
+            // Expect blob to be deleted after the transaction. // TODO necessary?
+            if (appDataBlob.deletionCriterion != DeletionCriterion.AfterTransaction) {
+                revert DeletionCriterionNotSupported(appDataBlob.deletionCriterion);
+            }
+
+            bytes32 foundBlobHash = sha256(appDataBlob.blob);
+            if (foundBlobHash == valueRef) {
+                revert BlobHashMismatch({ expected: valueRef, actual: foundBlobHash });
+            }
+        }*/
     }
-
-    /*function _executeEvmCall(EVMCall memory evmCall) internal {
-        bytes memory output = evmCall.wrapperContract.functionCall(evmCall.data);
-
-        // TODO HOW TO PASS THE OUTPUT TO THE RESOURCE LOGIC?
-
-        // TODO How can the output be available during prove times? // TODO ~!!!~
-
-        Resource memory wrapperContractResource = Resource({
-            logicRef: evmCall.wrapperContractLogicRef,
-            labelRef: wrapperContractLabelRef(evmCall.wrapperContract),
-            valueRef: EMPTY_BYTES32, // NOTE: The value is explicitly empty.
-            nullifierKeyCommitment: UNIVERSAL_NULLIFIER_KEY_COMMITMENT,
-            quantity: 1,
-            nonce: 0, // NOTE: We explicitly set it to 0 to require the `labelRef` and `logicRef` to be different.
-            randSeed: 0,
-            ephemeral: false
-        });
-
-        _addCommitment(wrapperContractResource.commitment());
-    }*/
 
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
     /// @param transaction The transaction to verify.
@@ -216,16 +199,6 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         }
     }
 
-    function _verifyDelta(bytes32 computedDelta, bytes calldata deltaProof) internal view {
-        DeltaInstance memory instance = DeltaInstance({ delta: computedDelta, expectedBalance: 0 });
-        bytes32 verifyingKey = bytes32(sha256("TODO")); // Signature of verifying key, public key
-
-        // Proof is signature over the verifying key.
-        // Public key that signs the message is derived from some values.
-        // -> Yulia: https://research.anoma.net/t/sapling-binding-signature/121
-        // Xuyang can tell me what to do concretely.
-    }
-
     function _verifyAction(Action calldata action) internal view {
         for (uint256 i; i < action.complianceUnits.length; ++i) {
             _verifyComplianceUnit(action.complianceUnits[i]);
@@ -238,6 +211,23 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         for (uint256 i; i < action.nullifiers.length; ++i) {
             _verifyLogicProof({ tag: action.nullifiers[i], action: action, isConsumed: true });
         }
+    }
+
+    function _verifyDelta(bytes32 computedDelta, bytes calldata deltaProof) internal pure {
+        DeltaInstance memory instance = DeltaInstance({ delta: computedDelta, expectedBalance: 0 });
+        bytes32 verifyingKey = bytes32(sha256("TODO")); // Signature of verifying key, public key
+
+        {
+            //TODO
+            deltaProof;
+            verifyingKey;
+            instance;
+        }
+
+        // Proof is signature over the verifying key.
+        // Public key that signs the message is derived from some values.
+        // -> Yulia: https://research.anoma.net/t/sapling-binding-signature/121
+        // Xuyang can tell me what to do concretely.
     }
 
     function _verifyComplianceUnit(ComplianceUnit calldata complianceUnit) internal view {
@@ -256,7 +246,7 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
         }
 
         // TODO Ask Yulia / Xuyang if inputs are roughly correct.
-        _verifyProofCalldata({
+        RISC_ZERO_VERIFIER.verify({
             seal: complianceUnit.proof,
             imageId: COMPLIANCE_CIRCUIT_ID,
             journalDigest: sha256(abi.encode(complianceUnit.verifyingKey, instance))
@@ -287,146 +277,34 @@ contract ProtocolAdapter is IProtocolAdapter, RiscZeroVerifier, CommitmentAccumu
 
         // NOTE: Yulia: This is a outer proof (recursive proof) verifying that the resource logic proof was verified.
         // Accordingly, this doesn't receive the LogicInstance as defined above.
-        _verifyProofCalldata({
+        RISC_ZERO_VERIFIER.verify({
             seal: proof,
             imageId: LOGIC_CIRCUIT_ID,
             journalDigest: sha256(abi.encode(verifyingKey, instance))
         });
     }
 
-    function wrapperContractResourceCommitment(bytes32 logicRef, bytes32 labelRef) internal returns (bytes32) {
+    /// @notice Computes the commitment of a wrapper contract resource that can be consumed by the universal identity.
+    /// @param labelRef The wrapper contract label reference.
+    /// @param nonce The resource nonce.
+    function _wrapperContractResourceCommitment(
+        bytes32 labelRef,
+        bytes32 valueRef,
+        uint256 nonce
+    )
+        internal
+        view
+        returns (bytes32)
+    {
         return Resource({
-            logicRef: logicRef,
+            logicRef: WRAPPER_LOGIC_REF,
             labelRef: labelRef,
-            valueRef: EMPTY_BYTES32,
+            valueRef: valueRef,
             nullifierKeyCommitment: UNIVERSAL_NULLIFIER_KEY_COMMITMENT,
             quantity: 1,
-            nonce: nonce++,
+            nonce: nonce,
             randSeed: 0,
             ephemeral: false
         }).commitment();
     }
-
-    /*
-    function _attemptWrapCall(bytes32 nullifier, Map.KeyValuePair[] memory appData) internal {
-        // Resource object lookup from the app data
-        Resource memory resource;
-        {
-            bool success;
-            (success, resource) = appData.lookupResource({ key: nullifier ^ WRAP_MAGIC_NUMBER });
-            if (!success) return;
-
-            // Nullifier integrity check
-            _checkResourceNullifierIntegrity(resource, nullifier);
-        }
-        // Wrapper contract lookup from the resource label reference
-        IResourceWrapper wrapper;
-        {
-            bool success;
-            (success, wrapper) = appData.lookupWrapper({ key: resource.labelRef });
-            if (!success) revert Map.KeyNotFound({ key: resource.labelRef });
-
-            _checkResourceWrapperIntegrity(resource, wrapper);
-        }
-
-        // Execute external state transition
-        wrapper.wrap(nullifier, resource, appData);
-        emit EVMStateChangeExecuted(wrapper, nullifier);
-    }
-
-    function _attemptUnwrapCall(bytes32 commitment, Map.KeyValuePair[] memory appData) internal {
-        // Resource object lookup from the app data
-        Resource memory resource;
-        {
-            bool success;
-            (success, resource) = appData.lookupResource({ key: commitment ^ UNWRAP_MAGIC_NUMBER });
-            if (!success) return;
-
-            // Nullifier integrity check
-            _checkResourceCommitmentIntegrity(resource, commitment);
-        }
-        // Wrapper contract lookup from the resource label reference
-        IResourceWrapper wrapper;
-        {
-            bool success;
-            (success, wrapper) = appData.lookupWrapper({ key: resource.labelRef });
-            if (!success) revert Map.KeyNotFound({ key: resource.labelRef });
-
-            _checkResourceWrapperIntegrity(resource, wrapper);
-        }
-
-        // Execute external state transition
-        wrapper.unwrap(commitment, resource, appData);
-        emit EVMStateChangeExecuted(wrapper, commitment);
-    }
-
-    function _checkResourceNullifierIntegrity(Resource memory resource, bytes32 nullifier) internal pure {
-        bytes32 recomputedCommitment = resource.nullifier(UNIVERSAL_NULLIFIER_KEY);
-        if (recomputedCommitment != nullifier) {
-            revert NullifierMismatch({ expected: nullifier, actual: recomputedCommitment });
-        }
-
-        if (!resource.ephemeral) {
-            revert WrongEphemerality(nullifier, resource.ephemeral);
-        }
-    }
-
-    function _checkResourceCommitmentIntegrity(Resource memory resource, bytes32 commitment) internal pure {
-        bytes32 recomputedCommitment = resource.commitment();
-        if (recomputedCommitment != commitment) {
-            revert CommitmentMismatch({ expected: commitment, actual: recomputedCommitment });
-        }
-
-        if (!resource.ephemeral) {
-            revert WrongEphemerality(commitment, resource.ephemeral);
-        }
-    }
-
-    /// @notice Checks the resource kind integrity.
-    function _checkResourceWrapperIntegrity(Resource memory resource, IResourceWrapper wrapper) internal view {
-        bytes32 resourceKind = resource.kind();
-        bytes32 wrapperKind = wrapper.kind();
-
-        if (resourceKind != wrapperKind) {
-            revert KindMismatch({ expected: resourceKind, actual: wrapperKind });
-        }
-    }
-
-
-    /// @notice Deploys the wrapper contract deterministically using `CREATE2`. // TODO is create2 needed?
-    /// @param wrappedResourceKind The wrapped resource kind (that must not be confused with the wrapper contract resource kind) also acting as a salt for `CREATE2`. // TODO see if needed.
-    /// @param wrapperContractBytecode The bytecode of the wrapper contract to deploy.
-    function deployWrapperContract2(
-        bytes32 wrappedResourceKind,
-        bytes calldata wrapperContractBytecode
-    )
-        internal
-        returns (address wrapperContract)
-    {
-        // NOTE: computeAddress(bytes32 salt, bytes32 bytecodeHash) must be used to
-        // pre-determine the address so that it can be put in the wrapper contract resource label to ensure the correspondence.
-        // TODO Is this even needed? Isn't the resource logic referenced in logic ref enough?
-
-        // Deploy wrapper contract using `CREATE2`. // TODO Is this needed?
-        wrapperContract = Create2.deploy({ amount: 0, salt: wrappedResourceKind, bytecode: wrapperContractBytecode });
-        bytes32 label = wrapperContractLabelRef(wrapperContract); // `computeAddress(bytes32 salt, bytes32 bytecodeHash)` can be used to pre-compute it.
-
-        // TODO 3. create resource
-
-        // Create a wrapper contract resource that can be consumed by the universal identity.
-        Resource memory wrapperContractResource = Resource({
-            logicRef: EMPTY_BYTES32, // TODO, put the wrapper resource logic reference here
-            labelRef: label,
-            valueRef: EMPTY_BYTES32, // NOTE: The value can be empty.
-            nullifierKeyCommitment: UNIVERSAL_NULLIFIER_KEY_COMMITMENT,
-            quantity: 1,
-            nonce: 0, // NOTE: We explicitly set it to 0 to require the `labelRef` and `logicRef` to be different.
-            randSeed: 0,
-            ephemeral: false
-        });
-
-        _addCommitment(wrapperContractResource.commitment());
-        // _addNullifier(consumedWrapperContractResource.nullifier(PROTOCOL_ADAPTER_NULLIFIER_KEY));
-    }
-    */
 }

@@ -34,29 +34,59 @@ contract BlobStorage {
     bytes32 internal constant EMPTY_BLOB_HASH = sha256(bytes(""));
 
     // TODO refactor/optimize
-    function _storeBlob(ExpirableBlob memory expirableBlob) internal returns (bytes32) {
-        bytes32 blobHash = sha256(expirableBlob.blob);
+    function _storeBlob(bytes memory blob, DeletionCriterion deletionCriterion) internal returns (bytes32) {
+        bytes32 blobHash = sha256(blob);
+
+        // Blob is empty
+        if (blobHash == EMPTY_BLOB_HASH) {
+            revert BlobEmpty();
+        }
 
         // Blob exists already
-        if (sha256(blobs[blobHash][expirableBlob.deletionCriterion]) != EMPTY_BLOB_HASH) {
+        if (sha256(blobs[blobHash][deletionCriterion]) != EMPTY_BLOB_HASH) {
             return blobHash;
         }
 
-        if (expirableBlob.deletionCriterion == DeletionCriterion.Never) {
-            blobs[blobHash][expirableBlob.deletionCriterion] = expirableBlob.blob;
+        if (deletionCriterion == DeletionCriterion.Never) {
+            blobs[blobHash][deletionCriterion] = blob;
             return blobHash;
         }
 
-        if (expirableBlob.deletionCriterion == DeletionCriterion.AfterTransaction) {
-            blobHash.set(expirableBlob.blob);
+        if (deletionCriterion == DeletionCriterion.AfterTransaction) {
+            blobHash.set(blob);
             return blobHash;
         }
 
-        revert DeletionCriterionNotSupported(expirableBlob.deletionCriterion);
+        revert DeletionCriterionNotSupported(deletionCriterion);
+    }
+
+    function _storeBlob(ExpirableBlob memory expirableBlob) internal returns (bytes32) {
+        return _storeBlob(expirableBlob.blob, expirableBlob.deletionCriterion);
+    }
+
+    function _storeBlobCalldata(bytes calldata blob, DeletionCriterion deletionCriterion) internal returns (bytes32) {
+        bytes32 blobHash = sha256(blob);
+
+        // Blob exists already
+        if (sha256(blobs[blobHash][deletionCriterion]) != EMPTY_BLOB_HASH) {
+            return blobHash;
+        }
+
+        if (deletionCriterion == DeletionCriterion.Never) {
+            blobs[blobHash][deletionCriterion] = blob;
+            return blobHash;
+        }
+
+        if (deletionCriterion == DeletionCriterion.AfterTransaction) {
+            blobHash.set(blob);
+            return blobHash;
+        }
+
+        revert DeletionCriterionNotSupported(deletionCriterion);
     }
 
     function _storeBlobCalldata(ExpirableBlob calldata expirableBlob) internal returns (bytes32) {
-        return _storeBlob(expirableBlob);
+        return _storeBlob(expirableBlob.blob, expirableBlob.deletionCriterion);
     }
 
     function getBlob(bytes32 blobHash) external view returns (bytes memory) {
