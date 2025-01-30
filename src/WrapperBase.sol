@@ -28,14 +28,12 @@ abstract contract WrapperBase is IWrapper, Ownable {
 
     mapping(bytes4 functionSelector => bool allowed) private isFunctionAllowed;
 
-    error KindMismatch(bytes32 expected, bytes32 actual);
     error ForbiddenFunctionCall(bytes4 functionSelector);
 
     constructor(
         address protocolAdapter,
         bytes32 wrappedResourceLogicRef,
         bytes32 wrappedResourceLabelRef,
-        // TODO Needs the resource kind of the wrapped resources
         bytes4[] memory allowedFunctionSelectors
     )
         Ownable(protocolAdapter)
@@ -53,9 +51,9 @@ abstract contract WrapperBase is IWrapper, Ownable {
         }
     }
 
-    // function kind() external view returns (bytes32) {
-    //     return WRAPPED_KIND;
-    // }
+    function wrappedKind() external view returns (bytes32) {
+        return WRAPPED_KIND;
+    }
 
     function wrappedLabelRef() external view returns (bytes32) {
         return WRAPPED_LABEL_REF;

@@ -130,7 +130,7 @@ contract ProtocolAdapter is
         // TODO Ask Chris. Probably this requires the full protocol adapter.
         bytes memory evmCallOutput = wrapperContract.evmCall(evmCall.input);
 
-        bytes32 computedWrapperLabelRef = abi.encode(evmCall.to).toRefCalldata();
+        bytes32 computedWrapperLabelRef = abi.encode(evmCall.to, wrapperContract.wrappedKind()).toRefCalldata();
         bytes32 expectedWrapperLabelRef = wrapperContract.wrapperLabelRef();
 
         // TODO This check is implicitly included in the commitment lookup and therefore redundant.
@@ -143,7 +143,6 @@ contract ProtocolAdapter is
         bytes32 valueRef = abi.encode(evmCall.input, evmCallOutput).toRefCalldata();
 
         // NOTE: The full protocol adapter can store the logic, label, and value data as blobs.
-        //bytes32 labelRef = _storeBlob(abi.encode(evmCall.to), DeletionCriterion.AfterTransaction);
         //bytes32 valueRef = _storeBlob(abi.encode(evmCall.input, output), DeletionCriterion.AfterTransaction);
 
         // Create a new wrapper contract resource.
@@ -157,24 +156,6 @@ contract ProtocolAdapter is
         // Check that the commitment is part of the commitment set.
         bool commitmentLookupSuccess = action.commitments.contains(commitment);
         if (!commitmentLookupSuccess) revert WrapperContractResourceCommitmentNotFound(commitment);
-
-        // TODO This is not needed because proof generation has already happened.
-        /*{
-            // Check that an app data entry exists for wrapper contract resource with the commitment as the tag.
-            (bool appDataLookupSuccess, ExpirableBlob memory appDataBlob) = action.tagAppDataPairs.lookup(commitment);
-
-            if (!appDataLookupSuccess) revert AppDataMap.KeyNotFound({ key: commitment });
-
-            // Expect blob to be deleted after the transaction. // TODO necessary?
-            if (appDataBlob.deletionCriterion != DeletionCriterion.AfterTransaction) {
-                revert DeletionCriterionNotSupported(appDataBlob.deletionCriterion);
-            }
-
-            bytes32 foundBlobHash = sha256(appDataBlob.blob);
-            if (foundBlobHash == valueRef) {
-                revert BlobHashMismatch({ expected: valueRef, actual: foundBlobHash });
-            }
-        }*/
     }
 
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.

@@ -12,6 +12,10 @@ interface IWrapper {
     /// @return The binding logic reference.
     function wrappedLogicRef() external view returns (bytes32);
 
+    /// @notice Returns the kind of the resource this contract is wrapping EVM state in.
+    /// @return The binding label reference.
+    function wrappedKind() external view returns (bytes32);
+
     /// @notice Returns the binding reference to the label of the wrapper contract resource.
     /// @return The binding label reference.
     function wrapperLabelRef() external view returns (bytes32);

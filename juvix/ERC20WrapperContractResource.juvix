@@ -215,9 +215,6 @@ matchKinds
 
 {- RESOURCE -}
 
--- TODO add ERC20 resource kind in wrapper contract
--- TODO create binding between ERC20 resource and wrapper
-
 mkERC20WrapperContractResource
   (wrapperContract : Address)
   (wrappedResourceKind : Kind)
@@ -235,5 +232,3 @@ mkERC20WrapperContractResource
     nonce;
     randSeed := 0;
   };
-
-{- HELPERS -}
