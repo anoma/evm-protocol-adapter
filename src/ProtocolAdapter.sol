@@ -88,7 +88,7 @@ contract ProtocolAdapter is
         _addCommitment(
             _wrapperContractResourceCommitment({ labelRef: wrapper.wrapperLabelRef(), valueRef: bytes32(0), nonce: 0 })
         );
-        revert("UNSAFE: ALLOWS ARBITRARY WRAPPER RESOURCe CREATION OUTSIDE TRANSACTIONS");
+        revert("UNSAFE: ALLOWS ARBITRARY WRAPPER RESOURCE CREATION OUTSIDE TRANSACTIONS");
     }
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
