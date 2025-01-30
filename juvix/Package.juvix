@@ -6,9 +6,5 @@ package : Package :=
   defaultPackage@{
     name := "erc20-wrapper";
     version := defaultVersion;
-    dependencies :=
-      [
-        defaultStdlib;
-        github "anoma" "anoma-applib" "v0.7.1";
-      ];
+    dependencies := [defaultStdlib; github "anoma" "anoma-applib" "v0.7.1"];
   };

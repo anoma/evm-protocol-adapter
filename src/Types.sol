@@ -20,6 +20,7 @@ struct Resource {
 struct EVMCall {
     address to;
     bytes input;
+    uint256 nonce;
 }
 
 // TODO input format + output format?

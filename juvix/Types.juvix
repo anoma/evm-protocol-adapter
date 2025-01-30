@@ -3,7 +3,10 @@ module Types;
 import Stdlib.Prelude open;
 import Stdlib.Trait.Ord.Eq open using {fromOrdToEq};
 
-type Address := mkAddress@{unAddress : Nat};
+type Address :=
+  mkAddress@{
+    unAddress : Nat;
+  };
 
 instance
 Address-Ord : Ord Address :=

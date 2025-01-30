@@ -3,12 +3,8 @@ module ERC20Resource;
 import Stdlib.Prelude open;
 import Applib open;
 
-import MagicNumbers open;
 import Types open;
-
-isAuthorizedBy
-  (signer : ExternalIdentity) (origin : Nat) (publicInputs : Instance) : Bool :=
-  todo;
+import Helpers open;
 
 {- LOGIC -}
 
@@ -24,9 +20,15 @@ logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
         | just self :=
           if
             {- initializing consumption -}
-            | Resource.ephemeral self := initializationLogic
+            | Resource.ephemeral self :=
+              requireWrapperContractTransition self privateInputs
             {- conventional consumption -}
-            | else := consumptionLogic tag self publicInputs
+            | else :=
+              isAuthorizedBy@{
+                signer := owner self;
+                origin := tag;
+                publicInputs;
+              }
       }
     {- ERC20 resource created -}
     | isCommitment tag :=
@@ -35,51 +37,67 @@ logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
         | just self :=
           if
             {- finalizing creation -}
-            | Resource.ephemeral self := finalizationLogic
+            | Resource.ephemeral self :=
+              requireWrapperContractTransition self privateInputs
             {- conventional creation -}
-            | else := creationLogic
+            | else := true
       }
     | else := false;
 
---- Requires a W
-initializationLogic : Bool := todo;
-
-finalizationLogic : Bool := todo;
-
---- Transferable token logic
-consumptionLogic
-  (tag : Nat) (self : Resource) (publicInputs : Instance) : Bool :=
-  isAuthorizedBy@{
-    signer := owner self;
-    origin := tag;
-    publicInputs;
-  };
-
-creationLogic : Bool := true;
+requireWrapperContractTransition
+  (self : Resource) (privateInputs : Witness) : Bool :=
+  -- require wrapper contract resource to be consumed/created
+  case Witness.consumed privateInputs, Witness.created privateInputs of
+    | [a; b], [x; y] :=
+      let
+        ((consumedERC20, createdERC20), consumedWC, createdWC) :=
+          matchKinds self a b x y;
+      in same-kind?
+          [
+            decodeWrapperResourceKindFromLabel consumedERC20;
+            decodeWrapperResourceKindFromLabel createdERC20;
+          ]
+        && same-kind?
+          [
+            decodeWrappedResourceKindFromValue consumedWC;
+            decodeWrappedResourceKindFromValue createdWC;
+            kind self;
+            kind consumedERC20;
+            kind createdERC20;
+          ]
+    | _, _ := false;
 
 {- RESOURCE -}
 
+-- should only be initializable/finalizable if wc is consumed
 mkErc20Resource
   (erc20Token : Address)
-  (wrapperContract : Address)
+  (wrapperContractKind : Kind)
   (owner : ExternalIdentity)
   (quantity : Nat)
   (nonce : Nat)
+  -- TODO change for shielded case
   {nkc : NullifierKeyCommitment := Universal.nullifierKeyCommitment}
   {ephemeral : Bool := false}
   : Resource :=
   mkResource@{
     logic;
-    label := builtinAnomaEncode (wrapperContract, erc20Token);
+    label := builtinAnomaEncode (wrapperContractKind, erc20Token);
     value := builtinAnomaEncode owner;
     quantity;
     ephemeral;
-    nullifierKeyCommitment := builtinAnomaEncode (nkc);
+    nullifierKeyCommitment := builtinAnomaEncode nkc;
     nonce;
     randSeed := 0;
   };
 
 {- HELPERS -}
+
+decodeWrapperResourceKindFromLabel (wrappedResource : Resource) : Kind :=
+  let
+    (wrapperResourceKind, _) : Pair Kind Address :=
+      builtinAnomaDecode (Resource.label wrappedResource);
+  in wrapperResourceKind;
 
 owner (resource : Resource) : ExternalIdentity :=
   resource |> Resource.value |> builtinAnomaDecode;

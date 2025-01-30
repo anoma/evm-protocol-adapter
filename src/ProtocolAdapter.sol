@@ -54,7 +54,6 @@ contract ProtocolAdapter is
     bytes32 private immutable WRAPPER_LOGIC_REF;
 
     uint256 private _txCount;
-    uint256 private _nonce;
 
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
     event EVMStateChangeExecuted(IWrapper indexed wrapper, bytes32 indexed tag);
@@ -86,7 +85,11 @@ contract ProtocolAdapter is
     /// @param wrapper The wrapper contract.
     function createWrapperContractResource(IWrapper wrapper) internal {
         _addCommitment(
-            _wrapperContractResourceCommitment({ labelRef: wrapper.wrapperLabelRef(), valueRef: bytes32(0), nonce: 0 })
+            _wrapperContractResourceCommitment({
+                labelRef: wrapper.wrapperResourceLabelRef(),
+                valueRef: abi.encode().toRefCalldata(),
+                nonce: 0
+            })
         );
         revert("UNSAFE: ALLOWS ARBITRARY WRAPPER RESOURCE CREATION OUTSIDE TRANSACTIONS");
     }
@@ -120,18 +123,25 @@ contract ProtocolAdapter is
         emit TransactionExecuted({ id: _txCount++, transaction: transaction });
     }
 
-    /// @notice This call expects the consumed & created wrapper resource to be already part of the transaction object and to be proven.
-    // TODO think if this is needed.
-    function _executeEvmCall(Action memory action, EVMCall memory evmCall) internal {
-        IWrapper wrapperContract = IWrapper(evmCall.to);
+    function _computeWrapperValueRef(
+        bytes32 wrappedResourceKind,
+        bytes memory input,
+        bytes memory output
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
+        return abi.encode(wrappedResourceKind, input, output).toRefCalldata();
+    }
 
-        // Execute EVM call
-        // TODO How can this output be available during proving times?
-        // TODO Ask Chris. Probably this requires the full protocol adapter.
-        bytes memory evmCallOutput = wrapperContract.evmCall(evmCall.input);
+    function _computeWrapperLabelRef(address wrapperContract) internal pure returns (bytes32) {
+        return abi.encode(wrapperContract).toRefCalldata();
+    }
 
-        bytes32 computedWrapperLabelRef = abi.encode(evmCall.to, wrapperContract.wrappedKind()).toRefCalldata();
-        bytes32 expectedWrapperLabelRef = wrapperContract.wrapperLabelRef();
+    function _computeWrapperLabelRefWithIntegrityCheck(IWrapper wrapperContract) internal pure returns (bytes32) {
+        bytes32 computedWrapperLabelRef = _computeWrapperLabelRef(wrapperContract);
+        bytes32 expectedWrapperLabelRef = wrapperContract.wrapperResourceLabelRef();
 
         // TODO This check is implicitly included in the commitment lookup and therefore redundant.
         if (computedWrapperLabelRef != expectedWrapperLabelRef) {
@@ -140,7 +150,24 @@ contract ProtocolAdapter is
                 actual: computedWrapperLabelRef
             });
         }
-        bytes32 valueRef = abi.encode(evmCall.input, evmCallOutput).toRefCalldata();
+        return computedWrapperLabelRef;
+    }
+
+    /// @notice This call expects the consumed & created wrapper resource to be already part of the transaction object and to be proven.
+    function _executeEvmCall(Action memory action, EVMCall memory evmCall) internal {
+        IWrapper wrapperContract = IWrapper(evmCall.to);
+
+        bytes32 labelRef = _computeWrapperLabelRefWithIntegrityCheck(wrapperContract);
+
+        // Execute EVM call
+        // TODO How can this output be available during proving times?
+        // TODO Ask Chris. Probably this requires the full protocol adapter.
+    
+        bytes32 valueRef = _computeWrapperValueRef({
+            wrappedResourceKind: wrapperContract.wrappedResourceKind(),
+            input: evmCall.input,
+            output: wrapperContract.evmCall(evmCall.input)
+        });
 
         // NOTE: The full protocol adapter can store the logic, label, and value data as blobs.
         //bytes32 valueRef = _storeBlob(abi.encode(evmCall.input, output), DeletionCriterion.AfterTransaction);
@@ -150,7 +177,7 @@ contract ProtocolAdapter is
         bytes32 commitment = _wrapperContractResourceCommitment({
             valueRef: valueRef,
             labelRef: computedWrapperLabelRef,
-            nonce: ++_nonce
+            nonce: evmCall.nonce
         });
 
         // Check that the commitment is part of the commitment set.

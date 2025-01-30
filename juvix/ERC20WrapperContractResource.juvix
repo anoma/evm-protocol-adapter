@@ -4,67 +4,23 @@ import Stdlib.Prelude open hiding {to};
 import Stdlib.Debug.Fail open;
 import Applib open;
 
-import MagicNumbers open;
 import Types open;
 
 import Anoma.Identity.External open;
 import ERC20Resource open using {owner as erc20Owner};
+import Helpers open;
 
-builtinEvmDecode {A : Type} (data : ByteArray) : A := todo;
-
-builtinEvmEncode {A : Type} (data : A) : ByteArray := todo;
-
-functionSelectorFromString (functionSignature : String) : ByteArray := todo;
-
+-- 0xa9059cbb;
 transferSelector : ByteArray :=
-  -- 0xa9059cbb;
-    -- evmFunctionSelector("function transfer(address, uint256) returns (bool)");
+  -- functionSelectorFromString("function transfer(address, uint256) returns (bool)");
     mkByteArray
     [0xa9; 0x5; 0x9c; 0xbb];
 
+-- 0x23b872dd
 transferFromSelector : ByteArray :=
-  -- 0x23b872dd
-    -- evmFunctionSelector("function transferFrom(address, address, uint256) returns (bool)");
+  -- functionSelectorFromString("function transferFrom(address, address, uint256) returns (bool)");
     mkByteArray
     [0x23; 0xb8; 0x72; 0xdd];
-
-type TransferFromData :=
-  mkTransferFromData@{
-    from : Address;
-    to : Address;
-    value : Nat;
-  };
-
-type TransferData :=
-  mkTransferData@{
-    to : Address;
-    value : Nat;
-  };
-
-slice
-  (data : ByteArray) (start : Nat) {offset : Nat := size data} : ByteArray :=
-  todo;
-
-functionSelector (input : ByteArray) : ByteArray :=
-  slice@{
-    data := input;
-    start := 0;
-    offset := 4;
-  };
-
-functionCalldata (input : ByteArray) : ByteArray :=
-  slice@{
-    data := input;
-    start := 4;
-  };
-
-externalIdentityToEvmAddress (evmAccount : ExternalIdentity) : Address :=
-  slice@{
-    data := ExternalIdentity.unExternalIdentity evmAccount;
-    start := 12;
-  }
-    |> toAnomaContents
-    |> mkAddress;
 
 {- LOGIC -}
 logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
@@ -82,7 +38,7 @@ logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
             {- initializing consumption -}
             | Resource.ephemeral self := initializationLogic
             {- conventional consumption -}
-            | else := consumptionLogic
+            | else := true
       }
     {- Wrapper contract resource created -}
     | isCommitment tag :=
@@ -91,7 +47,7 @@ logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
         | just self :=
           if
             {- finalizing creation -}
-            | Resource.ephemeral self := finalizationLogic
+            | Resource.ephemeral self := false
             {- conventional creation -}
             | else := creationLogic self privateInputs
       }
@@ -104,12 +60,6 @@ initializationLogic : Bool := false;
 --(isNfPresent publicInputs) && TODO;
 --isNfPresent (publicInputs : Instance) : Bool := todo;
 
---- The wrapper contract can never be finalized and must always return false.
-finalizationLogic : Bool := false;
-
--- Everyone can consume the wrapper resource.
-consumptionLogic : Bool := true;
-
 --- Checks the FFI calls stored in `value` and requires resources corresponding to the wrapped ERC20 contract to be created and consumed.
 creationLogic (self : Resource) (privateInputs : Witness) : Bool :=
   -- identify
@@ -118,34 +68,45 @@ creationLogic (self : Resource) (privateInputs : Witness) : Bool :=
       let
         ((consumedWC, createdWC), consumedERC20, createdERC20) :=
           matchKinds self a b x y;
-        (input, output) : Pair ByteArray ByteArray :=
+        (wrappedResourceKindInSelf, input, output)
+          : Pair Kind (Pair ByteArray ByteArray) :=
           builtinAnomaDecode (Resource.value self);
-        selector := functionSelector (input);
-        data := functionCalldata (input);
-      in case both Resource.ephemeral (consumedERC20, createdERC20) of {
-           {- ERC20 resource initialization -}
-           | false, true :=
-             if
-               | selector == transferFromSelector :=
-                 checkTransferFromCompliance@{
-                   data;
-                   consumedWC;
-                   createdERC20;
-                 }
-               | else := false
-           {- ERC20 resource finalization -}
-           | true, false :=
-             if
-               | selector == transferSelector :=
-                 checkTransferCompliance@{
-                   data;
-                   consumedWC;
-                   consumedERC20;
-                 }
-               | else := false
-           {- ERC20 resource transfers -}
-           | _, _ := false
-         }
+
+      in same-kind?
+          [
+            decodeWrappedResourceKindFromValue consumedWC;
+            decodeWrappedResourceKindFromValue createdWC;
+            wrappedResourceKindInSelf;
+            kind consumedERC20;
+            kind createdERC20;
+          ]
+        && let
+             selector := functionSelector input;
+             data := functionCalldata input;
+           in case both Resource.ephemeral (consumedERC20, createdERC20) of {
+                {- ERC20 resource initialization -}
+                | false, true :=
+                  if
+                    | selector == transferFromSelector :=
+                      checkTransferFromCompliance@{
+                        data;
+                        consumedWC;
+                        createdERC20;
+                      }
+                    | else := false
+                {- ERC20 resource finalization -}
+                | true, false :=
+                  if
+                    | selector == transferSelector :=
+                      checkTransferCompliance@{
+                        data;
+                        consumedWC;
+                        consumedERC20;
+                      }
+                    | else := false
+                {- ERC20 resource transfers -}
+                | _, _ := false
+              }
     | _, _ := false;
 
 checkTransferFromCompliance
@@ -153,19 +114,16 @@ checkTransferFromCompliance
   let
     ((from, to), value) : Pair (Pair Address Address) Nat :=
       builtinEvmDecode data;
-      (wrapperContract
-      , wrappedResourcekind) : Pair Address Kind :=
-      consumedWC |> Resource.label |> builtinAnomaDecode;
+
+    wrapperContract : Address :=
+      decodeWrapperContractAddressFromLabel consumedWC;
+
     createdERC20Owner :=
       createdERC20 |> erc20Owner |> externalIdentityToEvmAddress;
     createdERC20Quantity := createdERC20 |> Resource.quantity;
-
-  in -- The kind must match the one stored in the wrapper contract resource label.
-        kind
-        createdERC20
-      == wrappedResourcekind
-    -- The funds must be transferred to the wrapper contract.
-    && wrapperContract == to
+  in -- The funds must be transferred to the wrapper contract.
+      wrapperContract
+      == to
     -- The created non-ephemeral resource must be owned by the `from` address from which the funds were transferred.
     && createdERC20Owner == from
     -- The quantity of the non-ephemeral resource must equal the value that has been transferred.
@@ -175,60 +133,36 @@ checkTransferCompliance
   (data : ByteArray) (consumedWC consumedERC20 : Resource) : Bool :=
   let
     (to, value) : Pair Address Nat := builtinEvmDecode data;
-    (wrapperContract, wrappedResourcekind) : Pair Address Kind :=
-      consumedWC |> Resource.label |> builtinAnomaDecode;
+
     consumedERC20Owner :=
       consumedERC20 |> erc20Owner |> externalIdentityToEvmAddress;
     consumedERC20Quantity := consumedERC20 |> Resource.quantity;
-
-  in -- The kind must match the one stored in the wrapper contract resource label.
-        kind
-        consumedERC20
-      == wrappedResourcekind
-    -- The consumed non-ephemeral resource must be owned by the `to` address to which the wrapper contract will transfer the funds.
-    && consumedERC20Owner == to
+  in -- The consumed non-ephemeral resource must be owned by the `to` address to which the wrapper contract will transfer the funds.
+      consumedERC20Owner
+      == to
     -- The quantity of the non-ephemeral resource must equal the value that has been transferred.
     && consumedERC20Quantity == value;
-
---- Distinguishes the ERC20 wrapper contract and and ERC20 resource kinds.
---- The first pair returned contains the consumed and created ERC20 wrapper contract resources.
---- The second pair returned contains the consumed and created ERC20 resources.
-matchKinds
-  (wrapperContract a b x y : Resource)
-  : Pair (Pair Resource Resource) (Pair Resource Resource) :=
-  let
-    kwc := kind wrapperContract;
-    ka := kind a;
-    kb := kind b;
-    kx := kind x;
-    ky := kind y;
-  in if
-    | kwc == kx :=
-      if
-        | kwc == ka := (a, x), b, y
-        | else := (b, x), a, y
-    | kwc == ky :=
-      if
-        | kwc == ka := (a, y), b, x
-        | else := (b, y), a, x
-    | else := failwith "This should never happen.";
 
 {- RESOURCE -}
 
 mkERC20WrapperContractResource
   (wrapperContract : Address)
   (wrappedResourceKind : Kind)
+  (input output : ByteArray)
   (nonce : Nat)
   {nkc : NullifierKeyCommitment := Universal.nullifierKeyCommitment}
   {ephemeral : Bool := false}
   : Resource :=
   mkResource@{
     logic;
-    label := builtinAnomaEncode (wrapperContract, wrappedResourceKind);
-    value := 0;
+    label := builtinAnomaEncode (wrapperContract);
+    value := builtinAnomaEncode (wrappedResourceKind, input, output);
     quantity := 1;
     ephemeral;
     nullifierKeyCommitment := builtinAnomaEncode nkc;
     nonce;
     randSeed := 0;
   };
+
+decodeWrapperContractAddressFromLabel (wrapperResource : Resource) : Address :=
+  wrapperResource |> Resource.label |> builtinAnomaDecode;
