@@ -15,17 +15,9 @@ abstract contract WrapperBase is IWrapper, Ownable {
     /// @dev Determined by the protocol adapter on deployment.
     bytes32 internal immutable WRAPPER_RESOURCE_LABEL_REF;
 
-    constructor(
-        address protocolAdapter,
-        bytes32 wrappedResourceLogicRef,
-        bytes32 wrappedResourceLabelRef
-    )
-        Ownable(protocolAdapter)
-    {
-        WRAPPED_RESOURCE_KIND =
-            ComputableComponents.kind({ logicRef: wrappedResourceLogicRef, labelRef: wrappedResourceLabelRef });
-
-        WRAPPER_RESOURCE_LABEL_REF = sha256(abi.encode(address(this), WRAPPED_RESOURCE_KIND));
+    constructor(address protocolAdapter, bytes32 wrappedResourceKind) Ownable(protocolAdapter) {
+        WRAPPED_RESOURCE_KIND = wrappedResourceKind;
+        WRAPPER_RESOURCE_LABEL_REF = sha256(abi.encode(address(this), wrappedResourceKind));
     }
 
     function wrappedResourceKind() external view returns (bytes32) {

@@ -22,7 +22,7 @@ import { IRiscZeroVerifier } from "@risc0-ethereum/contracts/src/IRiscZeroVerifi
 import { ComplianceUnit, ComplianceInstance } from "./proving/Compliance.sol";
 import { DeltaInstance } from "./proving/Delta.sol";
 import { LogicProofMap, LogicInstance, LogicRefHashProofPair } from "./proving/Logic.sol";
-import { Resource, Transaction, Action, AppDataMap, TagSet, EVMCall } from "./Types.sol";
+import { Resource, Transaction, Action, AppDataMap, ArrayLookup, EVMCall } from "./Types.sol";
 import { UNIVERSAL_NULLIFIER_KEY_COMMITMENT } from "./Constants.sol";
 
 contract ProtocolAdapter is
@@ -33,7 +33,7 @@ contract ProtocolAdapter is
     NullifierSet,
     BlobStorage
 {
-    using TagSet for bytes32[];
+    using ArrayLookup for bytes32[];
     using ComputableComponents for Resource;
     using Reference for bytes;
     using AppDataMap for AppDataMap.TagAppDataPair[];
@@ -45,7 +45,6 @@ contract ProtocolAdapter is
     IRiscZeroVerifier private immutable RISC_ZERO_VERIFIER;
     bytes32 private immutable COMPLIANCE_CIRCUIT_ID;
     bytes32 private immutable LOGIC_CIRCUIT_ID;
-    bytes32 private immutable DELTA_CIRCUIT_ID;
     /// @notice The binding reference to the logic of the wrapper contract resource.
     bytes32 private immutable WRAPPER_LOGIC_REF;
 
@@ -60,7 +59,6 @@ contract ProtocolAdapter is
     constructor(
         bytes32 logicCircuitID,
         bytes32 complianceCircuitID,
-        bytes32 deltaCircuitID,
         bytes32 wrapperLogicRef,
         address riscZeroVerifier,
         uint8 treeDepth
@@ -69,7 +67,6 @@ contract ProtocolAdapter is
     {
         COMPLIANCE_CIRCUIT_ID = complianceCircuitID;
         LOGIC_CIRCUIT_ID = logicCircuitID;
-        DELTA_CIRCUIT_ID = deltaCircuitID;
 
         WRAPPER_LOGIC_REF = wrapperLogicRef;
         RISC_ZERO_VERIFIER = IRiscZeroVerifier(riscZeroVerifier);
@@ -93,7 +90,7 @@ contract ProtocolAdapter is
     /// @param transaction The transaction to execute.
     /// @dev This function is non-reentrant.
     function execute(Transaction calldata transaction) external nonReentrant {
-        verify(transaction);
+        _verify(transaction);
 
         for (uint256 i = 0; i < transaction.actions.length; ++i) {
             Action calldata action = transaction.actions[i];
@@ -157,7 +154,11 @@ contract ProtocolAdapter is
 
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
     /// @param transaction The transaction to verify.
-    function verify(Transaction calldata transaction) public view {
+    function verify(Transaction calldata transaction) external view {
+        _verify(transaction);
+    }
+
+    function _verify(Transaction calldata transaction) internal view {
         // compute delta
         bytes32 transactionDelta;
 
@@ -171,12 +172,6 @@ contract ProtocolAdapter is
         _verifyDelta(transactionDelta, transaction.deltaProof);
     }
 
-    function _actionDelta(Action calldata action) internal pure returns (bytes32 delta) {
-        for (uint256 i; i < action.complianceUnits.length; ++i) {
-            delta = delta.add(action.complianceUnits[i].refInstance.referencedComplianceInstance.unitDelta);
-        }
-    }
-
     function _verifyAction(Action calldata action) internal view {
         for (uint256 i; i < action.complianceUnits.length; ++i) {
             _verifyComplianceUnit(action.complianceUnits[i]);
@@ -188,6 +183,12 @@ contract ProtocolAdapter is
 
         for (uint256 i; i < action.nullifiers.length; ++i) {
             _verifyLogicProof({ tag: action.nullifiers[i], action: action, isConsumed: true });
+        }
+    }
+
+    function _actionDelta(Action calldata action) internal pure returns (bytes32 delta) {
+        for (uint256 i; i < action.complianceUnits.length; ++i) {
+            delta = delta.add(action.complianceUnits[i].refInstance.referencedComplianceInstance.unitDelta);
         }
     }
 

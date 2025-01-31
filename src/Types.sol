@@ -23,8 +23,6 @@ struct EVMCall {
     uint256 nonce;
 }
 
-// TODO input format + output format?
-
 struct Transaction {
     bytes32[] roots;
     Action[] actions;
@@ -40,7 +38,7 @@ struct Action {
     EVMCall[] evmCalls;
 }
 
-library TagSet {
+library ArrayLookup {
     function contains(bytes32[] memory set, bytes32 tag) internal pure returns (bool success) {
         for (uint256 i = 0; i < set.length; i++) {
             if (set[i] == tag) {

@@ -19,10 +19,9 @@ contract ERC20Wrapper is Ownable, WrapperBase {
     constructor(
         address protocolAdapter,
         address erc20,
-        bytes32 wrappedLogicReference,
-        bytes32 wrappedLabelReference
+        bytes32 wrappedResourceKind
     )
-        WrapperBase(protocolAdapter, wrappedLogicReference, wrappedLabelReference)
+        WrapperBase(protocolAdapter, wrappedResourceKind)
     {
         ERC20_CONTRACT = erc20;
     }
