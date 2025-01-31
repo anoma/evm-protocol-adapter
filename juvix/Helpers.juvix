@@ -2,10 +2,25 @@ module Helpers;
 
 import Stdlib.Prelude open;
 import Stdlib.Debug.Fail open;
+
+import Stdlib.Data.Byte open public;
 import Applib open;
 
-import Anoma.Identity.External open;
+import Anoma open using {
+  module ExternalIdentity;
+  };
+
+-- import Anoma.Identity.External open using {module ExternalIdentity};
 import Types open;
+
+instance
+EqKindI : Eq Kind := todo;
+
+instance
+ByteArray-FromNatural : FromNatural ByteArray := todo;
+
+instance
+ByteArray-Eq : Eq ByteArray := todo;
 
 builtinEvmDecode {A : Type} (data : ByteArray) : A := todo;
 
@@ -30,13 +45,13 @@ functionCalldata (input : ByteArray) : ByteArray :=
     start := 4;
   };
 
-externalIdentityToEvmAddress (evmAccount : ExternalIdentity) : Address :=
-  slice@{
-    data := ExternalIdentity.unExternalIdentity evmAccount;
-    start := 12;
-  }
-    |> toAnomaContents
-    |> mkAddress;
+externalIdentityToEvmAddress (evmAccount : ExternalIdentity) : Address := todo;
+  -- slice@{
+  --   data := ExternalIdentity.unExternalIdentity evmAccount;
+  --   start := 12;
+  -- }
+  --  |> toAnomaContents
+  --  |> mkAddress;
 
 --- Distinguishes the ERC20 wrapper contract and and ERC20 resource kinds.
 --- The first pair returned contains the consumed and created resource pair matching the `self` resource kind.

@@ -11,23 +11,22 @@ import ERC20Resource open using {owner as erc20Owner};
 import Helpers open;
 
 -- 0xa9059cbb;
-transferSelector : ByteArray :=
+transferSelector : ByteArray := todo;
   -- functionSelectorFromString("function transfer(address, uint256) returns (bool)");
-    mkByteArray
-    [0xa9; 0x5; 0x9c; 0xbb];
+  --  mkByteArray
+  --  [0xa9; 0x5; 0x9c; 0xbb];
 
 -- 0x23b872dd
-transferFromSelector : ByteArray :=
+transferFromSelector : ByteArray := todo;
   -- functionSelectorFromString("function transferFrom(address, address, uint256) returns (bool)");
-    mkByteArray
-    [0x23; 0xb8; 0x72; 0xdd];
+  --  mkByteArray
+  --  [0x23; 0xb8; 0x72; 0xdd];
 
 {- LOGIC -}
 logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
   let
     tag := Instance.tag publicInputs;
     -- TODO use `isConsumed` bool (see specs)
-    customInputs := Witness.customInputs privateInputs;
   in if
     {- Wrapper contract resource consumed -}
     | isNullifier tag :=

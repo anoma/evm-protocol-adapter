@@ -1,231 +1,106 @@
-# Foundry Template [![Open in Gitpod][gitpod-badge]][gitpod] [![Github Actions][gha-badge]][gha] [![Foundry][foundry-badge]][foundry] [![License: MIT][license-badge]][license]
+# EVM Protocol Adapter
 
-[gitpod]: https://gitpod.io/#https://github.com/anoma/evm-protocol-adapter
-[gitpod-badge]:
-  https://img.shields.io/badge/Gitpod-Open%20in%20Gitpod-FFB45B?logo=gitpod
-[gha]: https://github.com/anoma/evm-protocol-adapter/actions
-[gha-badge]:
-  https://github.com/PaulRBerg/foundry-template/actions/workflows/ci.yml/badge.svg
-[foundry]: https://getfoundry.sh/
-[foundry-badge]: https://img.shields.io/badge/Built%20with-Foundry-FFDB1C.svg
-[license]: https://opensource.org/licenses/MIT
-[license-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 
-A Foundry-based template for developing Solidity smart contracts, with sensible
-defaults.
+## Protocol Adapter Deployment
 
-## What's Inside
-
-- [Forge](https://github.com/foundry-rs/foundry/blob/master/forge): compile,
-  test, fuzz, format, and deploy smart contracts
-- [Forge Std](https://github.com/foundry-rs/forge-std): collection of helpful
-  contracts and utilities for testing
-- [Prettier](https://github.com/prettier/prettier): code formatter for
-  non-Solidity files
-- [Solhint](https://github.com/protofire/solhint): linter for Solidity code
-
-## Getting Started
-
-Click the
-[`Use this template`](https://github.com/PaulRBerg/foundry-template/generate)
-button at the top of the page to create a new repository with this repo as the
-initial state.
-
-Or, if you prefer to install the template manually:
-
-```sh
-$ forge init --template PaulRBerg/foundry-template my-project
-$ cd my-project
-$ bun install # install Solhint, Prettier, and other Node.js deps
+```mermaid
+sequenceDiagram
+  box ARM
+    participant rm as RM Interface
+    participant app as Juvix App
+    participant wr as Wrapper Resource
+    participant er as ERC20 Resource
+  end
+  actor dep as Deployer
+  box EVM
+    participant pa as Protocol Adapter Contract
+    participant wc as Wrapper Contract
+    participant ec as  ERC20 Contract
+    participant r0 as  RISZ Zero Verifier Contract
+  end
+  # Preparation
+  wr -->> pa : logic reference  
+  rm -->> pa : logic circuit ID
+  rm -->> pa : compliance circuit ID
+  r0 -->> pa : address
+  
+  # Steps
+  dep ->> pa : deploy
 ```
 
-If this is your first time with Foundry, check out the
-[installation](https://github.com/foundry-rs/foundry#installation) instructions.
 
-## Features
+## Wrapper Contract Deployment
 
-This template builds upon the frameworks and libraries mentioned above, so
-please consult their respective documentation for details about their specific
-features.
+```mermaid
+sequenceDiagram
+  box ARM
+    participant rm as RM Interface
+    participant app as Juvix App
+    participant wr as Wrapper Resource
+    participant er as ERC20 Resource
+  end
+  actor dep as Deployer
+  box EVM
+    participant pa as Protocol Adapter Contract
+    participant wc as Wrapper Contract
+    participant ec as  ERC20 Contract
+    participant r0 as  RISZ Zero Verifier Contract
+  end
 
-For example, if you're interested in exploring Foundry in more detail, you
-should look at the [Foundry Book](https://book.getfoundry.sh/). In particular,
-you may be interested in reading the
-[Writing Tests](https://book.getfoundry.sh/forge/writing-tests.html) tutorial.
+  dep ->> wc : 1. deploy
 
-### Sensible Defaults
-
-This template comes with a set of sensible default configurations for you to
-use. These defaults can be found in the following files:
-
-```text
-├── .editorconfig
-├── .gitignore
-├── .prettierignore
-├── .prettierrc.yml
-├── .solhint.json
-├── foundry.toml
-└── remappings.txt
+  par Wrapper Resource Creation
+    dep ->> pa : 2. createWrapperContractResource(address wrapperContract)
+    pa ->> wr : create resource
+    pa ->> pa : store resource commitment
+  end
 ```
 
-### VSCode Integration
 
-This template is IDE agnostic, but for the best user experience, you may want to
-use it in VSCode alongside Nomic Foundation's
-[Solidity extension](https://marketplace.visualstudio.com/items?itemName=NomicFoundation.hardhat-solidity).
+## Transaction with EVM call
 
-For guidance on how to integrate a Foundry project in VSCode, please refer to
-this [guide](https://book.getfoundry.sh/config/vscode).
 
-### GitHub Actions
+```mermaid
+sequenceDiagram
+  box ARM
+    participant rm as RM Interface
+    participant app as Juvix App
+    participant wr as Wrapper Resource
+    participant er as ERC20 Resource
+  end
+  #participant ip as Intent Pool
+  #participant mp as Mem Pool
+  actor a as Alice
+  #actor b as Bob
+  box EVM
+    participant pa as Protocol Adapter Contract
+    participant wc as Wrapper Contract
+    participant ec as  ERC20 Contract
+    participant r0 as  RISZ Zero Verifier Contract
+  end
 
-This template comes with GitHub Actions pre-configured. Your contracts will be
-linted and tested on every push and pull request made to the `main` branch.
+  par Step 1
+    a ->> app : call transaction function <br> wrap (erc20 : Address) (quantity : Nat) <br> or unwrap (erc20 : resource)
+    app -->> wr : consume & create wrapper resource NFT
+    app -->> er : initialize or finalize ERC20 resource
+    app -->> rm : computeProofs()
+    rm -->> app : proofs
+    app ->> a : transaction object
+  end
 
-You can edit the CI script in
-[.github/workflows/ci.yml](./.github/workflows/ci.yml).
+  par Step 2
+    a ->> pa : execute transaction object
+    pa ->> pa : do out-of-circuit checks
+    pa ->> r0 : verify in-circuit proofs
+    pa ->> wc : evmCall(bytes input) : bytes output
+    wc ->> ec : call external function <br>transferFrom(address from, address to, uint256 value) : bool success <br> or transfer(address to, uint256 value) : bool success
+    pa ->> pa : store blobs
+    pa ->> pa : add nullifiers & commitments to the <br> commitment and nullifier accumulators
 
-## Installing Dependencies
-
-Foundry typically uses git submodules to manage dependencies, but this template
-uses Node.js packages because
-[submodules don't scale](https://twitter.com/PaulRBerg/status/1736695487057531328).
-
-This is how to install dependencies:
-
-1. Install the dependency using your preferred package manager, e.g.
-   `bun install dependency-name`
-   - Use this syntax to install from GitHub:
-     `bun install github:username/repo-name`
-2. Add a remapping for the dependency in [remappings.txt](./remappings.txt),
-   e.g. `dependency-name=node_modules/dependency-name`
-
-Note that OpenZeppelin Contracts is pre-installed, so you can follow that as an
-example.
-
-## Writing Tests
-
-To write a new test contract, you start by importing `Test` from `forge-std`,
-and then you inherit it in your test contract. Forge Std comes with a
-pre-instantiated [cheatcodes](https://book.getfoundry.sh/cheatcodes/)
-environment accessible via the `vm` property. If you would like to view the logs
-in the terminal output, you can add the `-vvv` flag and use
-[console.log](https://book.getfoundry.sh/faq?highlight=console.log#how-do-i-use-consolelog).
-
-This template comes with an example test contract [Foo.t.sol](./test/Foo.t.sol)
-
-## Usage
-
-This is a list of the most frequently needed commands.
-
-### Build
-
-Build the contracts:
-
-```sh
-$ forge build
+  end
 ```
 
-### Clean
-
-Delete the build artifacts and cache directories:
-
-```sh
-$ forge clean
-```
-
-### Compile
-
-Compile the contracts:
-
-```sh
-$ forge build
-```
-
-### Coverage
-
-Get a test coverage report:
-
-```sh
-$ forge coverage
-```
-
-### Deploy
-
-Deploy to Anvil:
-
-```sh
-$ forge script script/Deploy.s.sol --broadcast --fork-url http://localhost:8545
-```
-
-For this script to work, you need to have a `MNEMONIC` environment variable set
-to a valid [BIP39 mnemonic](https://iancoleman.io/bip39/).
-
-For instructions on how to deploy to a testnet or mainnet, check out the
-[Solidity Scripting](https://book.getfoundry.sh/tutorials/solidity-scripting.html)
-tutorial.
-
-### Format
-
-Format the contracts:
-
-```sh
-$ forge fmt
-```
-
-### Gas Usage
-
-Get a gas report:
-
-```sh
-$ forge test --gas-report
-```
-
-### Lint
-
-Lint the contracts:
-
-```sh
-$ bun run lint
-```
-
-### Test
-
-Run the tests:
-
-```sh
-$ forge test
-```
-
-Generate test coverage and output result to the terminal:
-
-```sh
-$ bun run test:coverage
-```
-
-Generate test coverage with lcov report (you'll have to open the
-`./coverage/index.html` file in your browser, to do so simply copy paste the
-path):
-
-```sh
-$ bun run test:coverage:report
-```
-
-## Related Efforts
-
-- [abigger87/femplate](https://github.com/abigger87/femplate)
-- [cleanunicorn/ethereum-smartcontract-template](https://github.com/cleanunicorn/ethereum-smartcontract-template)
-- [foundry-rs/forge-template](https://github.com/foundry-rs/forge-template)
-- [FrankieIsLost/forge-template](https://github.com/FrankieIsLost/forge-template)
-
-## License
-
-This project is licensed under MIT.
-
-| N [bytes32] | SHA-256 [gas] | Poseidon [gas] |
-| :---------: | ------------: | -------------: |
-|      1      |           877 |          13911 |
-|      2      |          1014 |          21628 |
-|      3      |          1096 |          75018 |
-|      4      |          1188 |         112211 |
-|      5      |          1323 |         162844 |
+### Limitations
+- A wrapper contract must be deployed by a 3rd party
+- 1 EVM call per wrapper contract per block
+- EVM call return values must be known at proving time

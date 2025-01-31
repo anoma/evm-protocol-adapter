@@ -2,7 +2,6 @@ module ERC20Resource;
 
 import Stdlib.Prelude open;
 import Applib open;
-
 import Types open;
 import Helpers open;
 
@@ -11,7 +10,6 @@ import Helpers open;
 logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
   let
     tag := Instance.tag publicInputs;
-    customInputs := Witness.customInputs privateInputs;
   in if
     {- ERC20 resource consumed -}
     | isNullifier tag :=
@@ -72,7 +70,7 @@ requireWrapperContractTransition
 -- should only be initializable/finalizable if wc is consumed
 mkErc20Resource
   (erc20Token : Address)
-  (wrapperContractKind : Kind)
+  (wrapperResourceKind : Kind)
   (owner : ExternalIdentity)
   (quantity : Nat)
   (nonce : Nat)
@@ -82,7 +80,7 @@ mkErc20Resource
   : Resource :=
   mkResource@{
     logic;
-    label := builtinAnomaEncode (wrapperContractKind, erc20Token);
+    label := builtinAnomaEncode (wrapperResourceKind, erc20Token);
     value := builtinAnomaEncode owner;
     quantity;
     ephemeral;
