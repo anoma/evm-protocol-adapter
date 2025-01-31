@@ -15,7 +15,7 @@ import { Delta } from "./libs/Delta.sol";
 //import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
-import { BlobStorage } /*, ExpirableBlob, DeletionCriterion*/ from "./state/BlobStorage.sol";
+import { BlobStorage } from "./state/BlobStorage.sol";
 
 import { IRiscZeroVerifier } from "@risc0-ethereum/contracts/src/IRiscZeroVerifier.sol";
 
@@ -34,9 +34,7 @@ contract ProtocolAdapter is
     BlobStorage
 {
     using TagSet for bytes32[];
-    using Address for address;
     using ComputableComponents for Resource;
-    using Reference for address;
     using Reference for bytes;
     using AppDataMap for AppDataMap.TagAppDataPair[];
     using LogicProofMap for LogicProofMap.TagLogicProofPair[];
@@ -48,15 +46,13 @@ contract ProtocolAdapter is
     bytes32 private immutable COMPLIANCE_CIRCUIT_ID;
     bytes32 private immutable LOGIC_CIRCUIT_ID;
     bytes32 private immutable DELTA_CIRCUIT_ID;
-
     /// @notice The binding reference to the logic of the wrapper contract resource.
-    /// @dev Determined by the protocol adapter on deployment.
     bytes32 private immutable WRAPPER_LOGIC_REF;
 
     uint256 private _txCount;
 
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
-    event EVMStateChangeExecuted(IWrapper indexed wrapper, bytes32 indexed tag);
+    // TODO Add events
 
     error WrapperContractResourceLabelMismatch(bytes32 expected, bytes32 actual);
     error WrapperContractResourceCommitmentNotFound(bytes32 commitment);
@@ -79,19 +75,17 @@ contract ProtocolAdapter is
         RISC_ZERO_VERIFIER = IRiscZeroVerifier(riscZeroVerifier);
     }
 
-    /// TODO REFACTOR
     /// @notice Creates a wrapper contract resource object and adds the commitment to the commitment accumulator
     // @param wrappedResourceKind The wrapped resource kind (that must not be confused with the wrapper contract resource kind).
     /// @param wrapper The wrapper contract.
     function createWrapperContractResource(IWrapper wrapper) internal {
         _addCommitment(
             _wrapperContractResourceCommitment({
-                labelRef: wrapper.wrapperResourceLabelRef(),
-                valueRef: abi.encode().toRefCalldata(),
+                labelRef: _computeWrapperLabelRefWithIntegrityCheck(wrapper),
+                valueRef: _computeWrapperValueRef(wrapper.wrappedResourceKind(), bytes(""), bytes("")),
                 nonce: 0
             })
         );
-        revert("UNSAFE: ALLOWS ARBITRARY WRAPPER RESOURCE CREATION OUTSIDE TRANSACTIONS");
     }
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
@@ -135,34 +129,13 @@ contract ProtocolAdapter is
         return abi.encode(wrappedResourceKind, input, output).toRefCalldata();
     }
 
-    function _computeWrapperLabelRef(address wrapperContract) internal pure returns (bytes32) {
-        return abi.encode(wrapperContract).toRefCalldata();
-    }
-
-    function _computeWrapperLabelRefWithIntegrityCheck(IWrapper wrapperContract) internal pure returns (bytes32) {
-        bytes32 computedWrapperLabelRef = _computeWrapperLabelRef(wrapperContract);
-        bytes32 expectedWrapperLabelRef = wrapperContract.wrapperResourceLabelRef();
-
-        // TODO This check is implicitly included in the commitment lookup and therefore redundant.
-        if (computedWrapperLabelRef != expectedWrapperLabelRef) {
-            revert WrapperContractResourceLabelMismatch({
-                expected: expectedWrapperLabelRef,
-                actual: computedWrapperLabelRef
-            });
-        }
-        return computedWrapperLabelRef;
-    }
-
     /// @notice This call expects the consumed & created wrapper resource to be already part of the transaction object and to be proven.
     function _executeEvmCall(Action memory action, EVMCall memory evmCall) internal {
         IWrapper wrapperContract = IWrapper(evmCall.to);
 
         bytes32 labelRef = _computeWrapperLabelRefWithIntegrityCheck(wrapperContract);
 
-        // Execute EVM call
-        // TODO How can this output be available during proving times?
-        // TODO Ask Chris. Probably this requires the full protocol adapter.
-    
+        // Execute EVM call and compute the value reference
         bytes32 valueRef = _computeWrapperValueRef({
             wrappedResourceKind: wrapperContract.wrappedResourceKind(),
             input: evmCall.input,
@@ -174,11 +147,8 @@ contract ProtocolAdapter is
 
         // Create a new wrapper contract resource.
         // NOTE: The delta proof requires the old wrapper contract to be consumed.
-        bytes32 commitment = _wrapperContractResourceCommitment({
-            valueRef: valueRef,
-            labelRef: computedWrapperLabelRef,
-            nonce: evmCall.nonce
-        });
+        bytes32 commitment =
+            _wrapperContractResourceCommitment({ valueRef: valueRef, labelRef: labelRef, nonce: evmCall.nonce });
 
         // Check that the commitment is part of the commitment set.
         bool commitmentLookupSuccess = action.commitments.contains(commitment);
@@ -314,5 +284,22 @@ contract ProtocolAdapter is
             randSeed: 0,
             ephemeral: false
         }).commitment();
+    }
+
+    function _computeWrapperLabelRef(address wrapperContract) internal pure returns (bytes32) {
+        return abi.encode(wrapperContract).toRefCalldata();
+    }
+
+    function _computeWrapperLabelRefWithIntegrityCheck(IWrapper wrapperContract) internal view returns (bytes32) {
+        bytes32 computedWrapperLabelRef = _computeWrapperLabelRef(address(wrapperContract));
+        bytes32 expectedWrapperLabelRef = wrapperContract.wrapperResourceLabelRef();
+
+        if (computedWrapperLabelRef != expectedWrapperLabelRef) {
+            revert WrapperContractResourceLabelMismatch({
+                expected: expectedWrapperLabelRef,
+                actual: computedWrapperLabelRef
+            });
+        }
+        return computedWrapperLabelRef;
     }
 }
