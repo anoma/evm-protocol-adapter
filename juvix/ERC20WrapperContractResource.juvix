@@ -52,16 +52,11 @@ logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
       }
     | else := false;
 
---- Currently, only the protocol adapter can create this resource directly.
+--- Currently, the protocol adapter can create this resource directly and only once (with a fixed label, logic, value, quantity, and nonce).
 --- TODO adapt eventually
 initializationLogic : Bool := false;
--- TODO THIS DOESN'T WORK - proofs must still be valid
---(isNfPresent publicInputs) && TODO;
---isNfPresent (publicInputs : Instance) : Bool := todo;
 
---- Checks the FFI calls stored in `value` and requires resources corresponding to the wrapped ERC20 contract to be created and consumed.
 creationLogic (self : Resource) (privateInputs : Witness) : Bool :=
-  -- identify
   case Witness.consumed privateInputs, Witness.created privateInputs of
     | [a; b], [x; y] :=
       let
@@ -70,7 +65,6 @@ creationLogic (self : Resource) (privateInputs : Witness) : Bool :=
         (wrappedResourceKindInSelf, inputWithSelector, output)
           : Pair Kind (Pair ByteArray ByteArray) :=
           builtinAnomaDecode (Resource.value self);
-
       in same-kind?
           [
             decodeWrappedResourceKindFromValue consumedWC;
@@ -145,6 +139,8 @@ checkTransferCompliance
 
 {- RESOURCE -}
 
+--- NOTE: Only the wrapper label is enforced by the protocol adapter.
+--- The wrapper logic and value  can be customized to correspond to other EVM state changes.
 mkERC20WrapperContractResource
   (wrapperContract : Address)
   (wrappedResourceKind : Kind)

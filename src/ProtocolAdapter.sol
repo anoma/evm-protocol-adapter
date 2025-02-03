@@ -11,6 +11,7 @@ import { IWrapper } from "./interfaces/IWrapper.sol";
 import { ComputableComponents } from "./libs/ComputableComponents.sol";
 import { Reference } from "./libs/Reference.sol";
 import { Delta } from "./libs/Delta.sol";
+import { ArrayLookup } from "./libs/ArrayLookup.sol";
 
 //import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
@@ -22,7 +23,8 @@ import { IRiscZeroVerifier } from "@risc0-ethereum/contracts/src/IRiscZeroVerifi
 import { ComplianceUnit, ComplianceInstance } from "./proving/Compliance.sol";
 import { DeltaInstance } from "./proving/Delta.sol";
 import { LogicProofMap, LogicInstance, LogicRefHashProofPair } from "./proving/Logic.sol";
-import { Resource, Transaction, Action, AppDataMap, ArrayLookup, EVMCall } from "./Types.sol";
+
+import { Resource, Transaction, Action, AppDataMap, EVMCall } from "./Types.sol";
 import { UNIVERSAL_NULLIFIER_KEY_COMMITMENT } from "./Constants.sol";
 
 contract ProtocolAdapter is
@@ -75,7 +77,7 @@ contract ProtocolAdapter is
     /// @notice Creates a wrapper contract resource object and adds the commitment to the commitment accumulator
     // @param wrappedResourceKind The wrapped resource kind (that must not be confused with the wrapper contract resource kind).
     /// @param wrapper The wrapper contract.
-    function createWrapperContractResource(IWrapper wrapper) internal {
+    function createWrapperContractResource(IWrapper wrapper) external {
         _addCommitment(
             _wrapperContractResourceCommitment({
                 labelRef: _computeWrapperLabelRefWithIntegrityCheck(wrapper),
@@ -132,14 +134,14 @@ contract ProtocolAdapter is
 
         bytes32 labelRef = _computeWrapperLabelRefWithIntegrityCheck(wrapperContract);
 
-        // Execute EVM call and compute the value reference
+        // Execute EVM call and put call in- and output in the wrapper resource value field.
         bytes32 valueRef = _computeWrapperValueRef({
             wrappedResourceKind: wrapperContract.wrappedResourceKind(),
             input: evmCall.input,
             output: wrapperContract.evmCall(evmCall.input)
         });
 
-        // NOTE: The full protocol adapter can store the logic, label, and value data as blobs.
+        // NOTE: The full protocol adapter can store the label, and value data as blobs.
         //bytes32 valueRef = _storeBlob(abi.encode(evmCall.input, output), DeletionCriterion.AfterTransaction);
 
         // Create a new wrapper contract resource.
@@ -216,7 +218,6 @@ contract ProtocolAdapter is
 
         for (uint256 i; i < instance.consumed.length; ++i) {
             _checkRootPreExistence(instance.consumed[i].rootRef);
-
             _checkNullifierNonExistence(instance.consumed[i].nullifierRef);
         }
 
@@ -224,13 +225,11 @@ contract ProtocolAdapter is
             _checkCommitmentNonExistence(instance.created[i].commitmentRef);
         }
 
-        // TODO Ask Yulia / Xuyang if inputs are roughly correct.
         RISC_ZERO_VERIFIER.verify({
             seal: complianceUnit.proof,
             imageId: COMPLIANCE_CIRCUIT_ID,
             journalDigest: sha256(abi.encode(complianceUnit.verifyingKey, instance))
         });
-        // Logic ref + commitment + nullifier derivation.
     }
 
     function _verifyLogicProof(bytes32 tag, Action calldata action, bool isConsumed) internal view {

@@ -54,7 +54,10 @@ requireWrapperContractTransition
           [
             decodeWrapperResourceKindFromLabel consumedERC20;
             decodeWrapperResourceKindFromLabel createdERC20;
+            kind consumedWC;
+            kind createdWC
           ]
+        {- The following is redundant since the wrapper contract checks this already.
         && same-kind?
           [
             decodeWrappedResourceKindFromValue consumedWC;
@@ -63,6 +66,7 @@ requireWrapperContractTransition
             kind consumedERC20;
             kind createdERC20;
           ]
+        -}
     | _, _ := false;
 
 {- RESOURCE -}
@@ -74,7 +78,6 @@ mkErc20Resource
   (owner : ExternalIdentity)
   (quantity : Nat)
   (nonce : Nat)
-  -- TODO change for shielded case
   {nkc : NullifierKeyCommitment := Universal.nullifierKeyCommitment}
   {ephemeral : Bool := false}
   : Resource :=

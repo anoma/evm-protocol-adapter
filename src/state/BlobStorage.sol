@@ -28,6 +28,7 @@ contract BlobStorage {
     error DeletionCriterionNotSupported(DeletionCriterion deletionCriterion);
 
     mapping(bytes32 blobHash => mapping(DeletionCriterion => bytes blob)) internal blobs;
+    //mapping(bytes32 blobHash => bytes32 deletionCriteriaData) criteriaData; // Stores timestamp, signature, or predicate address
 
     bytes internal constant EMPTY_BLOB = bytes("");
     bytes32 internal constant EMPTY_BLOB_HASH = sha256(EMPTY_BLOB);
