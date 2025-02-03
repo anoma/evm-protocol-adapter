@@ -43,7 +43,6 @@ contract BlobStorageTest is Test {
     }
 
     function test_store_delete_never() public {
-        // store
         bytes32 blobHash = bs.storeBlob(BLOB, DeletionCriterion.Never);
         assertEq(blobHash, EXPECTED_BLOB_HASH);
 

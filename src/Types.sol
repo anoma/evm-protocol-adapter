@@ -33,7 +33,7 @@ struct Action {
 }
 
 struct EVMCall {
-    address to;
+    address wrapperContract;
     bytes input;
     uint256 nonce;
 }

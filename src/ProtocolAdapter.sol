@@ -74,17 +74,10 @@ contract ProtocolAdapter is
         RISC_ZERO_VERIFIER = IRiscZeroVerifier(riscZeroVerifier);
     }
 
-    /// @notice Creates a wrapper contract resource object and adds the commitment to the commitment accumulator
-    // @param wrappedResourceKind The wrapped resource kind (that must not be confused with the wrapper contract resource kind).
-    /// @param wrapper The wrapper contract.
-    function createWrapperContractResource(IWrapper wrapper) external {
-        _addCommitment(
-            _wrapperContractResourceCommitment({
-                labelRef: _computeWrapperLabelRefWithIntegrityCheck(wrapper),
-                valueRef: _computeWrapperValueRef(wrapper.wrappedResourceKind(), bytes(""), bytes("")),
-                nonce: 0
-            })
-        );
+    /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
+    /// @param transaction The transaction to verify.
+    function verify(Transaction calldata transaction) external view {
+        _verify(transaction);
     }
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
@@ -116,6 +109,19 @@ contract ProtocolAdapter is
         emit TransactionExecuted({ id: _txCount++, transaction: transaction });
     }
 
+    /// @notice Creates a wrapper contract resource object and adds the commitment to the commitment accumulator
+    // @param wrappedResourceKind The wrapped resource kind (that must not be confused with the wrapper contract resource kind).
+    /// @param wrapper The wrapper contract.
+    function createWrapperContractResource(IWrapper wrapper) external {
+        _addCommitment(
+            _wrapperContractResourceCommitment({
+                labelRef: _computeWrapperLabelRefWithIntegrityCheck(wrapper),
+                valueRef: _computeWrapperValueRef(wrapper.wrappedResourceKind(), bytes(""), bytes("")),
+                nonce: 0
+            })
+        );
+    }
+
     function _computeWrapperValueRef(
         bytes32 wrappedResourceKind,
         bytes memory input,
@@ -126,38 +132,6 @@ contract ProtocolAdapter is
         returns (bytes32)
     {
         return abi.encode(wrappedResourceKind, input, output).toRefCalldata();
-    }
-
-    /// @notice This call expects the consumed & created wrapper resource to be already part of the transaction object and to be proven.
-    function _executeEvmCall(Action memory action, EVMCall memory evmCall) internal {
-        IWrapper wrapperContract = IWrapper(evmCall.to);
-
-        bytes32 labelRef = _computeWrapperLabelRefWithIntegrityCheck(wrapperContract);
-
-        // Execute EVM call and put call in- and output in the wrapper resource value field.
-        bytes32 valueRef = _computeWrapperValueRef({
-            wrappedResourceKind: wrapperContract.wrappedResourceKind(),
-            input: evmCall.input,
-            output: wrapperContract.evmCall(evmCall.input)
-        });
-
-        // NOTE: The full protocol adapter can store the label, and value data as blobs.
-        //bytes32 valueRef = _storeBlob(abi.encode(evmCall.input, output), DeletionCriterion.AfterTransaction);
-
-        // Create a new wrapper contract resource.
-        // NOTE: The delta proof requires the old wrapper contract to be consumed.
-        bytes32 commitment =
-            _wrapperContractResourceCommitment({ valueRef: valueRef, labelRef: labelRef, nonce: evmCall.nonce });
-
-        // Check that the commitment is part of the commitment set.
-        bool commitmentLookupSuccess = action.commitments.contains(commitment);
-        if (!commitmentLookupSuccess) revert WrapperContractResourceCommitmentNotFound(commitment);
-    }
-
-    /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
-    /// @param transaction The transaction to verify.
-    function verify(Transaction calldata transaction) external view {
-        _verify(transaction);
     }
 
     function _verify(Transaction calldata transaction) internal view {
@@ -262,9 +236,35 @@ contract ProtocolAdapter is
         });
     }
 
+    /// @notice This call expects the consumed & created wrapper resource to be already part of the transaction object and to be proven.
+    function _executeEvmCall(Action memory action, EVMCall memory evmCall) internal {
+        IWrapper wrapperContract = IWrapper(evmCall.wrapperContract);
+
+        bytes32 labelRef = _computeWrapperLabelRefWithIntegrityCheck(wrapperContract);
+
+        // Execute EVM call and put call in- and output in the wrapper resource value field.
+        bytes32 valueRef = _computeWrapperValueRef({
+            wrappedResourceKind: wrapperContract.wrappedResourceKind(),
+            input: evmCall.input,
+            output: wrapperContract.evmCall(evmCall.input)
+        });
+
+        // NOTE: The full protocol adapter can store the label, and value data as blobs.
+        //bytes32 valueRef = _storeBlob(abi.encode(evmCall.input, output), DeletionCriterion.AfterTransaction);
+
+        // Create a new wrapper contract resource.
+        // NOTE: The delta proof requires the old wrapper contract to be consumed.
+        bytes32 commitment =
+            _wrapperContractResourceCommitment({ valueRef: valueRef, labelRef: labelRef, nonce: evmCall.nonce });
+
+        // Check that the commitment is part of the commitment set.
+        bool commitmentLookupSuccess = action.commitments.contains(commitment);
+        if (!commitmentLookupSuccess) revert WrapperContractResourceCommitmentNotFound(commitment);
+    }
     /// @notice Computes the commitment of a wrapper contract resource that can be consumed by the universal identity.
     /// @param labelRef The wrapper contract label reference.
     /// @param nonce The resource nonce.
+
     function _wrapperContractResourceCommitment(
         bytes32 labelRef,
         bytes32 valueRef,

@@ -146,7 +146,6 @@ mkERC20WrapperContractResource
   (wrappedResourceKind : Kind)
   (input output : ByteArray)
   (nonce : Nat)
-  {nkc : NullifierKeyCommitment := Universal.nullifierKeyCommitment}
   {ephemeral : Bool := false}
   : Resource :=
   mkResource@{
@@ -155,7 +154,7 @@ mkERC20WrapperContractResource
     value := builtinAnomaEncode (wrappedResourceKind, input, output);
     quantity := 1;
     ephemeral;
-    nullifierKeyCommitment := builtinAnomaEncode nkc;
+    nullifierKeyCommitment := builtinAnomaEncode Universal.nullifierKeyCommitment;
     nonce;
     randSeed := 0;
   };

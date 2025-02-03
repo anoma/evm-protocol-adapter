@@ -83,7 +83,8 @@ mkErc20Resource
   : Resource :=
   mkResource@{
     logic;
-    label := builtinAnomaEncode (wrapperResourceKind, erc20Token);
+    label := builtinAnomaEncode wrapperResourceKind; 
+    -- TODO remove -- label := builtinAnomaEncode (wrapperResourceKind, erc20Token);
     value := builtinAnomaEncode owner;
     quantity;
     ephemeral;
@@ -96,8 +97,8 @@ mkErc20Resource
 
 decodeWrapperResourceKindFromLabel (wrappedResource : Resource) : Kind :=
   let
-    (wrapperResourceKind, _) : Pair Kind Address :=
-      builtinAnomaDecode (Resource.label wrappedResource);
+   wrapperResourceKind := builtinAnomaDecode (Resource.label wrappedResource);
+   -- TODO remove -- (wrapperResourceKind, _) : Pair Kind Address := builtinAnomaDecode (Resource.label wrappedResource);
   in wrapperResourceKind;
 
 owner (resource : Resource) : ExternalIdentity :=
