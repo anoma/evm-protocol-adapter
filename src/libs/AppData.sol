@@ -1,44 +1,54 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity >=0.8.25;
+pragma solidity >=0.8.27;
 
-import { IResourceWrapper } from "../interfaces/IResourceWrapper.sol";
+import { ExpirableBlob, DeletionCriterion } from "../state/BlobStorage.sol";
 
-import { Resource } from "../Types.sol";
+library AppDataMap {
+    error KeyNotFound(bytes32 key);
+    error IndexOutBounds(uint256 index, uint256 max);
 
-import { Map } from "./Map.sol";
+    struct TagAppDataPair {
+        bytes32 tag;
+        ExpirableBlob appData;
+    }
 
-library AppData {
-    using Map for Map.KeyValuePair[];
-
-    function lookupResource(
-        Map.KeyValuePair[] memory appData,
-        bytes32 key
+    function lookup(
+        TagAppDataPair[] memory map,
+        bytes32 tag
     )
         internal
         pure
-        returns (bool, Resource memory)
+        returns (bool success, ExpirableBlob memory)
     {
-        (bool success, bytes memory data) = appData.lookup(key);
-        return (success, abi.decode(data, (Resource)));
+        for (uint256 i = 0; i < map.length; i++) {
+            if (map[i].tag == tag) {
+                return (true, map[i].appData);
+            }
+        }
+        return (false, ExpirableBlob(DeletionCriterion.AfterTransaction, bytes("")));
     }
 
-    /// @notice Looks up the wrapper contract lookup from the resource label reference and app data.
-    function lookupWrapper(
-        Map.KeyValuePair[] memory appData,
-        bytes32 key
+    function lookupCalldata(
+        TagAppDataPair[] calldata map,
+        bytes32 tag
     )
         internal
         pure
-        returns (bool, IResourceWrapper)
+        returns (ExpirableBlob calldata)
     {
-        (bool success, bytes memory data) = appData.lookup(key);
-
-        return (success, abi.decode(data, (IResourceWrapper)));
+        for (uint256 i = 0; i < map.length; i++) {
+            if (map[i].tag == tag) {
+                return (map[i].appData);
+            }
+        }
+        revert KeyNotFound(tag);
     }
 
-    function lookupOwner(Map.KeyValuePair[] calldata appData, bytes32 key) internal pure returns (bool, address) {
-        (bool success, bytes memory data) = appData.lookup(key);
-
-        return (success, abi.decode(data, (address)));
+    function at(TagAppDataPair[] memory map, uint256 index) internal pure returns (ExpirableBlob memory) {
+        uint256 lastIndex = map.length - 1;
+        if (index > lastIndex) {
+            revert IndexOutBounds({ index: index, max: lastIndex });
+        }
+        return map[index].appData;
     }
 }

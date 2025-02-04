@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity >=0.8.25;
+pragma solidity >=0.8.27;
 
-import { Map } from "./libs/Map.sol";
+import { LogicProofMap } from "./proving/Logic.sol";
+import { ComplianceUnit } from "./proving/Compliance.sol";
+
+import { AppDataMap } from "./libs/AppData.sol";
 
 struct Resource {
     bytes32 logicRef;
@@ -14,16 +17,23 @@ struct Resource {
     bool ephemeral;
 }
 
+struct Transaction {
+    bytes32[] roots;
+    Action[] actions;
+    bytes deltaProof; // => DeltaInstance
+}
+
 struct Action {
     bytes32[] commitments;
     bytes32[] nullifiers;
-    uint256[][] proofs; // TODO Use bytes32[]? (StarkVerifier requires uint256[].)
-    Map.KeyValuePair[] appData;
+    LogicProofMap.TagLogicProofPair[] logicProofs;
+    ComplianceUnit[] complianceUnits;
+    AppDataMap.TagAppDataPair[] tagAppDataPairs;
+    EVMCall[] evmCalls;
 }
 
-struct Transaction {
-    uint256 delta; // TODO Use bytes32? (StarkVerifier requires uint256[].)
-    bytes32[] roots;
-    Action[] actions;
-    uint256[] deltaProof;
+struct EVMCall {
+    address wrapperContract;
+    bytes input;
+    uint256 nonce;
 }

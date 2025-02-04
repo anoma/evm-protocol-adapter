@@ -1,0 +1,3 @@
+[submodule "lib/transience"]
+	path = lib/transience
+	url = https://github.com/ethereum-optimism/transience

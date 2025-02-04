@@ -1,0 +1,163 @@
+module ERC20WrapperContractResource;
+
+import Stdlib.Prelude open hiding {to};
+import Stdlib.Debug.Fail open;
+import Applib open;
+
+import Types open;
+
+import Anoma.Identity.External open;
+import ERC20Resource open using {owner as erc20Owner};
+import Helpers open;
+
+-- 0xa9059cbb;
+transferSelector : ByteArray := todo;
+  -- functionSelectorFromString("function transfer(address, uint256) returns (bool)");
+  --  mkByteArray
+  --  [0xa9; 0x5; 0x9c; 0xbb];
+
+-- 0x23b872dd
+transferFromSelector : ByteArray := todo;
+  -- functionSelectorFromString("function transferFrom(address, address, uint256) returns (bool)");
+  --  mkByteArray
+  --  [0x23; 0xb8; 0x72; 0xdd];
+
+{- LOGIC -}
+logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
+  let
+    tag := Instance.tag publicInputs;
+    -- TODO use `isConsumed` bool (see specs)
+  in if
+    {- Wrapper contract resource consumed -}
+    | isNullifier tag :=
+      case findResourceByNullifier tag privateInputs of {
+        | nothing := false
+        | just self :=
+          if
+            {- initializing consumption -}
+            | Resource.ephemeral self := initializationLogic
+            {- conventional consumption -}
+            | else := true
+      }
+    {- Wrapper contract resource created -}
+    | isCommitment tag :=
+      case findResourceByCommitment tag privateInputs of {
+        | nothing := false
+        | just self :=
+          if
+            {- finalizing creation -}
+            | Resource.ephemeral self := false
+            {- conventional creation -}
+            | else := creationLogic self privateInputs
+      }
+    | else := false;
+
+--- Currently, the protocol adapter can create this resource directly and only once (with a fixed label, logic, value, quantity, and nonce).
+--- TODO adapt eventually
+initializationLogic : Bool := false;
+
+creationLogic (self : Resource) (privateInputs : Witness) : Bool :=
+  case Witness.consumed privateInputs, Witness.created privateInputs of
+    | [a; b], [x; y] :=
+      let
+        ((consumedWC, createdWC), consumedERC20, createdERC20) :=
+          matchKinds self a b x y;
+        (wrappedResourceKindInSelf, inputWithSelector, output)
+          : Pair Kind (Pair ByteArray ByteArray) :=
+          builtinAnomaDecode (Resource.value self);
+      in same-kind?
+          [
+            decodeWrappedResourceKindFromValue consumedWC;
+            decodeWrappedResourceKindFromValue createdWC;
+            wrappedResourceKindInSelf;
+            kind consumedERC20;
+            kind createdERC20;
+          ]
+        && let
+             selector := functionSelector inputWithSelector;
+             input := functionCalldata inputWithSelector;
+           in case both Resource.ephemeral (consumedERC20, createdERC20) of {
+                {- ERC20 resource initialization -}
+                | false, true :=
+                  if
+                    | selector == transferFromSelector :=
+                      checkTransferFromCompliance@{
+                        input;
+                        output;
+                        consumedWC;
+                        createdERC20;
+                      }
+                    | else := false
+                {- ERC20 resource finalization -}
+                | true, false :=
+                  if
+                    | selector == transferSelector :=
+                      checkTransferCompliance@{
+                        input;
+                        output;
+                        consumedWC;
+                        consumedERC20;
+                      }
+                    | else := false
+                {- ERC20 resource transfers -}
+                | _, _ := false
+              }
+    | _, _ := false;
+
+checkTransferFromCompliance
+  (input output : ByteArray) (consumedWC createdERC20 : Resource) : Bool :=
+  let
+    ((from, to), value) : Pair (Pair Address Address) Nat :=
+      builtinEvmDecode input;
+    evmCallSuccess : Bool := builtinEvmDecode output;
+    wrapperContract : Address :=
+      decodeWrapperContractAddressFromLabel consumedWC;
+    createdERC20Owner :=
+      createdERC20 |> erc20Owner |> externalIdentityToEvmAddress;
+    createdERC20Quantity := createdERC20 |> Resource.quantity;
+  in evmCallSuccess
+    -- The funds must be transferred to the wrapper contract.
+    && wrapperContract == to
+    -- The created non-ephemeral resource must be owned by the `from` address from which the funds were transferred.
+    && createdERC20Owner == from
+    -- The quantity of the non-ephemeral resource must equal the value that has been transferred.
+    && createdERC20Quantity == value;
+
+checkTransferCompliance
+  (input output : ByteArray) (consumedWC consumedERC20 : Resource) : Bool :=
+  let
+    (to, value) : Pair Address Nat := builtinEvmDecode input;
+    evmCallSuccess : Bool := builtinEvmDecode output;
+    consumedERC20Owner :=
+      consumedERC20 |> erc20Owner |> externalIdentityToEvmAddress;
+    consumedERC20Quantity := consumedERC20 |> Resource.quantity;
+  in evmCallSuccess
+    -- The consumed non-ephemeral resource must be owned by the `to` address to which the wrapper contract will transfer the funds.
+    && consumedERC20Owner == to
+    -- The quantity of the non-ephemeral resource must equal the value that has been transferred.
+    && consumedERC20Quantity == value;
+
+{- RESOURCE -}
+
+--- NOTE: Only the wrapper label is enforced by the protocol adapter.
+--- The wrapper logic and value  can be customized to correspond to other EVM state changes.
+mkERC20WrapperContractResource
+  (wrapperContract : Address)
+  (wrappedResourceKind : Kind)
+  (input output : ByteArray)
+  (nonce : Nat)
+  {ephemeral : Bool := false}
+  : Resource :=
+  mkResource@{
+    logic;
+    label := builtinAnomaEncode (wrapperContract);
+    value := builtinAnomaEncode (wrappedResourceKind, input, output);
+    quantity := 1;
+    ephemeral;
+    nullifierKeyCommitment := builtinAnomaEncode Universal.nullifierKeyCommitment;
+    nonce;
+    randSeed := 0;
+  };
+
+decodeWrapperContractAddressFromLabel (wrapperResource : Resource) : Address :=
+  wrapperResource |> Resource.label |> builtinAnomaDecode;

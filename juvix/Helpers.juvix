@@ -1,0 +1,100 @@
+module Helpers;
+
+import Stdlib.Prelude open;
+import Stdlib.Debug.Fail open;
+
+import Stdlib.Data.Byte open public;
+import Applib open;
+
+import Anoma open using {
+  module ExternalIdentity;
+  };
+
+-- import Anoma.Identity.External open using {module ExternalIdentity};
+import Types open;
+
+instance
+EqKindI : Eq Kind := todo;
+
+instance
+ByteArray-FromNatural : FromNatural ByteArray := todo;
+
+instance
+ByteArray-Eq : Eq ByteArray := todo;
+
+builtinEvmDecode {A : Type} (data : ByteArray) : A := todo;
+
+builtinEvmEncode {A : Type} (data : A) : ByteArray := todo;
+
+slice
+  (data : ByteArray) (start : Nat) {offset : Nat := size data} : ByteArray :=
+  todo;
+
+functionSelectorFromString (functionSignature : String) : ByteArray := todo;
+
+functionSelector (input : ByteArray) : ByteArray :=
+  slice@{
+    data := input;
+    start := 0;
+    offset := 4;
+  };
+
+functionCalldata (input : ByteArray) : ByteArray :=
+  slice@{
+    data := input;
+    start := 4;
+  };
+
+externalIdentityToEvmAddress (evmAccount : ExternalIdentity) : Address := todo;
+  -- slice@{
+  --   data := ExternalIdentity.unExternalIdentity evmAccount;
+  --   start := 12;
+  -- }
+  --  |> toAnomaContents
+  --  |> mkAddress;
+
+--- Distinguishes the ERC20 wrapper contract and and ERC20 resource kinds.
+--- The first pair returned contains the consumed and created resource pair matching the `self` resource kind.
+--- The second pair returned contains the consumed and created resource pair not matching the  `self` resource kind.
+matchKinds
+  (self a b x y : Resource)
+  : Pair (Pair Resource Resource) (Pair Resource Resource) :=
+  let
+    ks := kind self;
+    ka := kind a;
+    kb := kind b;
+    kx := kind x;
+    ky := kind y;
+  in if
+    | ks == kx :=
+      if
+        | ks == ka := (a, x), b, y
+        | else := (b, x), a, y
+    | ks == ky :=
+      if
+        | ks == ka := (a, y), b, x
+        | else := (b, y), a, x
+    | ks == ka :=
+      if
+        | ks == kx := (a, x), b, y
+        | else := (a, y), b, x
+    | ks == kb :=
+      if
+        | ks == kx := (b, x), a, y
+        | else := (b, y), a, x
+    | else := failwith "This should never happen.";
+
+same-kind? : List Kind -> Bool
+  | nil := true
+  | (x :: xs) := all \{y := y == x} xs;
+
+isAuthorizedBy
+  (signer : ExternalIdentity) (origin : Nat) (publicInputs : Instance) : Bool :=
+  todo;
+
+-- TODO Move
+decodeWrappedResourceKindFromValue (wrapper : Resource) : Kind :=
+  let
+    (wrappedResourceKind, _) : Pair Kind (Pair ByteArray ByteArray) :=
+      builtinAnomaDecode (Resource.value wrapper);
+  in wrappedResourceKind;

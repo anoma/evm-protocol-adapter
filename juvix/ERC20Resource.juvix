@@ -1,106 +1,105 @@
 module ERC20Resource;
 
 import Stdlib.Prelude open;
-import Stdlib.Trait.Ord.Eq open using {fromOrdToEq};
-import Stdlib.Data.Set as Set open using {Set};
-
-import Anoma open;
-import Anoma.Builtin.System open;
-import Anoma.Builtin.ByteArray open using {ByteArray};
-import Applib.Helpers open;
-import Applib.Identities open;
-import Applib.Authorization.Check open;
-
-import MagicNumbers open;
+import Applib open;
 import Types open;
-
-bitwiseXOR {A} (a : A) (b : ByteArray) : ByteArray := TODO;
+import Helpers open;
 
 {- LOGIC -}
 
-logic (publicInputs : Logic.Instance) (privateInputs : Logic.Witness) : Bool :=
+logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
   let
-    tag := Logic.Instance.tag publicInputs;
-    customInputs := Logic.Witness.customInputs privateInputs;
-  in case tag of
-       | Consumed nullifier :=
-         case lookupResource nullifier customInputs of {
-           | nothing := false
-           | just self :=
-             isAuthorizedBy@{
-               signer := owner self;
-               origin := tag;
-               publicInputs;
-             }
-               && case Resource.ephemeral self of {
-                    | true := requireResourceInAppData self tag publicInputs
-                    | false := true
-                  }
-         }
-       | Created commitment :=
-         case lookupResource commitment customInputs of
-           | nothing := false
-           | just self :=
-             case Resource.ephemeral self of
-               | true := requireResourceInAppData self tag publicInputs
-               | false := true;
+    tag := Instance.tag publicInputs;
+  in if
+    {- ERC20 resource consumed -}
+    | isNullifier tag :=
+      case findResourceByNullifier tag privateInputs of {
+        | nothing := false
+        | just self :=
+          if
+            {- initializing consumption -}
+            | Resource.ephemeral self :=
+              requireWrapperContractTransition self privateInputs
+            {- conventional consumption -}
+            | else :=
+              isAuthorizedBy@{
+                signer := owner self;
+                origin := tag;
+                publicInputs;
+              }
+      }
+    {- ERC20 resource created -}
+    | isCommitment tag :=
+      case findResourceByCommitment tag privateInputs of {
+        | nothing := false
+        | just self :=
+          if
+            {- finalizing creation -}
+            | Resource.ephemeral self :=
+              requireWrapperContractTransition self privateInputs
+            {- conventional creation -}
+            | else := true
+      }
+    | else := false;
 
-requireResourceInAppData
-  (self : Resource) (tag : Tag) (publicInputs : Logic.Instance) : Bool :=
-  let
-    appData := Logic.Instance.appData publicInputs;
-    lookUp :=
-      case tag of
-        | Consumed nullifier :=
-          lookupAppData@{
-            key := bitwiseXOR nullifier WRAP_MAGIC_NUMBER;
-            Value := Resource;
-            appData;
-          }
-        | Created commitment :=
-          lookupAppData@{
-            key := bitwiseXOR commitment UNWRAP_MAGIC_NUMBER;
-            Value := Resource;
-            appData;
-          };
-  in case lookUp of
-       | nothing := false
-       | just resource := resource == self;
+requireWrapperContractTransition
+  (self : Resource) (privateInputs : Witness) : Bool :=
+  -- require wrapper contract resource to be consumed/created
+  case Witness.consumed privateInputs, Witness.created privateInputs of
+    | [a; b], [x; y] :=
+      let
+        ((consumedERC20, createdERC20), consumedWC, createdWC) :=
+          matchKinds self a b x y;
+      in same-kind?
+          [
+            decodeWrapperResourceKindFromLabel consumedERC20;
+            decodeWrapperResourceKindFromLabel createdERC20;
+            kind consumedWC;
+            kind createdWC
+          ]
+        {- The following is redundant since the wrapper contract checks this already.
+        && same-kind?
+          [
+            decodeWrappedResourceKindFromValue consumedWC;
+            decodeWrappedResourceKindFromValue createdWC;
+            kind self;
+            kind consumedERC20;
+            kind createdERC20;
+          ]
+        -}
+    | _, _ := false;
 
 {- RESOURCE -}
 
+-- should only be initializable/finalizable if wc is consumed
 mkErc20Resource
-  (wrapper : Address)
+  (erc20Token : Address)
+  (wrapperResourceKind : Kind)
   (owner : ExternalIdentity)
-  (quantity : Quantity)
-  (nonce : Nonce)
-  {nullifierKeyCommitment : NullifierKeyCommitment := Universal.nullifierKeyCommitment}
+  (quantity : Nat)
+  (nonce : Nat)
+  {nkc : NullifierKeyCommitment := Universal.nullifierKeyCommitment}
   {ephemeral : Bool := false}
   : Resource :=
   mkResource@{
-    logicRef := BindingReference.compute (logic);
-    labelRef := toLabelRef wrapper;
-    valueRef := toValueRef owner;
+    logic;
+    label := builtinAnomaEncode wrapperResourceKind; 
+    -- TODO remove -- label := builtinAnomaEncode (wrapperResourceKind, erc20Token);
+    value := builtinAnomaEncode owner;
     quantity;
     ephemeral;
-    nullifierKeyCommitment;
+    nullifierKeyCommitment := builtinAnomaEncode nkc;
     nonce;
-    randSeed := UnusedRandSeed;
+    randSeed := 0;
   };
 
 {- HELPERS -}
 
-toLabelRef (wrapperContract : Address) : LabelRef :=
-  BindingReference.compute (mkLabel (anomaEncode (wrapperContract)));
-
-fromLabelRef (labelRef : LabelRef) : Address :=
-  labelRef |> lookupFromReferenceChecked |> Label.unLabel |> anomaDecode;
-
-toValueRef (owner : ExternalIdentity) : ValueRef :=
-  BindingReference.compute (mkValue (anomaEncode (owner)));
-
-fromValueRef (valueRef : ValueRef) : ExternalIdentity :=
-  valueRef |> lookupFromReferenceChecked |> Value.unValue |> anomaDecode;
+decodeWrapperResourceKindFromLabel (wrappedResource : Resource) : Kind :=
+  let
+   wrapperResourceKind := builtinAnomaDecode (Resource.label wrappedResource);
+   -- TODO remove -- (wrapperResourceKind, _) : Pair Kind Address := builtinAnomaDecode (Resource.label wrappedResource);
+  in wrapperResourceKind;
 
 owner (resource : Resource) : ExternalIdentity :=
-  resource |> Resource.valueRef |> fromValueRef;
+  resource |> Resource.value |> builtinAnomaDecode;

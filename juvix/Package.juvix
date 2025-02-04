@@ -9,7 +9,9 @@ package : Package :=
     dependencies :=
       [
         defaultStdlib;
-        github "anoma" "juvix-arm-specs" "v2.0.0-transparent-alpha.1";
-        github "anoma" "anoma-applib" "v0.6.1";
+        github
+          "anoma"
+          "anoma-applib"
+          "9ee273dd811c938d5a60aafacb1b869c7ab9ec44";
       ];
   };
