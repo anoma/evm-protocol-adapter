@@ -12,7 +12,8 @@ struct ExpirableBlob {
 }
 
 enum DeletionCriterion {
-    AfterTransaction, // Specs say "AfterBlock"
+    AfterTransaction,
+    AfterBlock,
     AfterTimestamp,
     AfterSigOverData,
     AfterPredicate,
