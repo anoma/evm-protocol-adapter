@@ -1,8 +1,8 @@
 pragma solidity >=0.8.25 <0.9.0;
 
-import {Test} from "forge-std/src/Test.sol";
+import { Test } from "forge-std/src/Test.sol";
 
-import {BlobStorage, DeletionCriterion} from "../src/state/BlobStorage.sol";
+import { BlobStorage, DeletionCriterion } from "../src/state/BlobStorage.sol";
 
 contract BlobStorageMock is BlobStorage {
     function storeBlob(bytes calldata blob, DeletionCriterion deletionCriterion) external returns (bytes32 blobHash) {
@@ -18,6 +18,8 @@ contract BlobStorageTest is Test {
     bytes32 internal constant EXPECTED_BLOB_HASH = sha256(BLOB);
 
     bytes internal constant EMPTY_BLOB = bytes("");
+
+    bytes32 internal constant ZERO_HASH = bytes32(0);
     bytes32 internal constant EMPTY_BLOB_HASH = sha256(bytes(""));
 
     BlobStorageMock private bs;
@@ -26,24 +28,29 @@ contract BlobStorageTest is Test {
         bs = new BlobStorageMock();
     }
 
-    function test_store_delete_after_transaction() public {
-        // store
-        bytes32 blobHash = bs.storeBlob(BLOB, DeletionCriterion.AfterTransaction);
-        assertEq(blobHash, EXPECTED_BLOB_HASH);
+    function test_store_delete_never_returns_correct_blob_hash() public {
+        assertEq(bs.storeBlob(BLOB, DeletionCriterion.Never), EXPECTED_BLOB_HASH);
+    }
 
-        // check storage
-        assertEq(bs.getBlob(blobHash), BLOB);
+    function test_store_delete_immediately_returns_empty_blob_hash() public {
+        assertEq(bs.storeBlob(BLOB, DeletionCriterion.Immediately), ZERO_HASH);
+    }
 
-        emit log_uint(block.number);
-        // advance block
-        vm.roll(block.number + 1);
-        emit log_uint(block.number);
+    function test_store_delete_never_should_revert_for_empty_blob() public {
+        vm.expectRevert(abi.encodeWithSelector(BlobStorage.BlobEmpty.selector));
+        bs.storeBlob(EMPTY_BLOB, DeletionCriterion.Never);
+    }
 
-        assertEq(bs.getBlob(blobHash), EMPTY_BLOB);
+    function test_store_delete_immediately() public {
+        bytes32 blobHash = bs.storeBlob(BLOB, DeletionCriterion.Immediately);
+
+        vm.expectRevert(abi.encodeWithSelector(BlobStorage.BlobNotFound.selector, blobHash));
+        bs.getBlob(blobHash);
     }
 
     function test_store_delete_never() public {
         bytes32 blobHash = bs.storeBlob(BLOB, DeletionCriterion.Never);
+
         assertEq(blobHash, EXPECTED_BLOB_HASH);
 
         assertEq(bs.getBlob(blobHash), BLOB);
@@ -51,12 +58,5 @@ contract BlobStorageTest is Test {
         vm.roll(block.number + 100);
 
         assertEq(bs.getBlob(blobHash), BLOB);
-    }
-
-    function test_cannot_be_stored_with_deletion_criterion_after_timestamp() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(BlobStorage.DeletionCriterionNotSupported.selector, DeletionCriterion.AfterTimestamp)
-        );
-        bs.storeBlob(BLOB, DeletionCriterion.AfterTimestamp);
     }
 }

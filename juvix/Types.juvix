@@ -3,17 +3,12 @@ module Types;
 import Stdlib.Prelude open;
 import Stdlib.Trait.Ord.Eq open using {fromOrdToEq};
 
-type Address :=
-  mkAddress@{
-    unAddress : Nat;
+import Anoma.Builtin.ByteArray open;
+
+type FfiCall :=
+  mkFfiCall@{
+    address : ByteArray;
+    -- function : Nat;
+    input : ByteArray;
+    output : ByteArray;
   };
-
-instance
-Address-Ord : Ord Address :=
-  let
-    compare (lhs rhs : Address) : Ordering :=
-      Ord.cmp (Address.unAddress lhs) (Address.unAddress rhs);
-  in mkOrd compare;
-
-instance
-Address-Eq : Eq Address := fromOrdToEq;

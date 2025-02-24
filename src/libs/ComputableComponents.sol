@@ -8,6 +8,7 @@ library ComputableComponents {
         return sha256(abi.encode(resource));
     }
 
+    // TODO wrong format?
     function nullifier(Resource memory resource, bytes32 nullifierKey) internal pure returns (bytes32) {
         return sha256(abi.encode(resource, nullifierKey));
     }

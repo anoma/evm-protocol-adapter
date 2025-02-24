@@ -10,7 +10,9 @@ struct ComplianceUnit {
 // TODO Can we deviate here for the EVM?
 // Yulia's Answer: Yes, but we have to ensure that roots, commitments, and nullifiers are identical.
 struct RefInstance {
-    // ReferenceInstance is a modified PS.Instance structure in which some elements are replaced by their references. To get PS.Instance from ReferencedInstance the referenced structures must be dereferenced. The structures we assume to be referenced here are:
+    // ReferenceInstance is a modified PS.Instance structure in which some elements are replaced by their references.
+    // To get PS.Instance from ReferencedInstance the referenced structures must be dereferenced.
+    // The structures we assume to be referenced here are:
     // - CMtree roots (stored in transaction)
     // - commitments and nullifiers (stored in action)
     ComplianceInstance referencedComplianceInstance;
@@ -19,7 +21,7 @@ struct RefInstance {
 struct ComplianceInstance {
     ConsumedRefs[] consumed;
     CreatedRefs[] created;
-    bytes32 unitDelta; // DeltaHash // TODO Is it 0?
+    uint256[2] unitDelta; // DeltaHash ? TODO
 }
 
 struct ConsumedRefs {

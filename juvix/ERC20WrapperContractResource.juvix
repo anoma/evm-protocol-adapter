@@ -5,32 +5,48 @@ import Stdlib.Debug.Fail open;
 import Applib open;
 
 import Types open;
-
-import Anoma.Identity.External open;
 import ERC20Resource open using {owner as erc20Owner};
 import Helpers open;
+import Anoma open using {module ExternalIdentity; module InternalIdentity};
 
 -- 0xa9059cbb;
 transferSelector : ByteArray := todo;
-  -- functionSelectorFromString("function transfer(address, uint256) returns (bool)");
-  --  mkByteArray
-  --  [0xa9; 0x5; 0x9c; 0xbb];
+-- functionSelectorFromString("function transfer(address, uint256) returns (bool)");
+--  mkByteArray
+--  [0xa9; 0x5; 0x9c; 0xbb];
+
+transferEvmInput (to : ExternalIdentity) (quantity : Nat) : ByteArray :=
+  builtinEvmEncode
+    (transferSelector
+      , (to |> ExternalIdentity.ExternalIdentity.unExternalIdentity |> builtinEvmEncode)
+      , builtinEvmEncode quantity);
 
 -- 0x23b872dd
 transferFromSelector : ByteArray := todo;
-  -- functionSelectorFromString("function transferFrom(address, address, uint256) returns (bool)");
-  --  mkByteArray
-  --  [0x23; 0xb8; 0x72; 0xdd];
+-- functionSelectorFromString("function transferFrom(address, address, uint256) returns (bool)");
+--  mkByteArray
+--  [0x23; 0xb8; 0x72; 0xdd];
+
+transferFromEvmInput
+  (from to : ExternalIdentity) (quantity : Nat) : ByteArray :=
+  builtinEvmEncode
+    (transferFromSelector
+      , (from |> ExternalIdentity.ExternalIdentity.unExternalIdentity |> builtinEvmEncode)
+      , (to |> ExternalIdentity.ExternalIdentity.unExternalIdentity |> builtinEvmEncode)
+      , builtinEvmEncode quantity);
+
+transferFromEvmOutput : ByteArray := builtinEvmEncode true;
+
+transferEvmOutput : ByteArray := transferFromEvmOutput;
 
 {- LOGIC -}
-logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
+erc20WrapperContractLogic (pub : Instance) (priv : Witness) : Bool :=
   let
-    tag := Instance.tag publicInputs;
-    -- TODO use `isConsumed` bool (see specs)
+    tag := Instance.tag pub;
   in if
     {- Wrapper contract resource consumed -}
     | isNullifier tag :=
-      case findResourceByNullifier tag privateInputs of {
+      case findResourceByNullifier tag priv of {
         | nothing := false
         | just self :=
           if
@@ -41,14 +57,14 @@ logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
       }
     {- Wrapper contract resource created -}
     | isCommitment tag :=
-      case findResourceByCommitment tag privateInputs of {
+      case findResourceByCommitment tag priv of {
         | nothing := false
         | just self :=
           if
             {- finalizing creation -}
             | Resource.ephemeral self := false
             {- conventional creation -}
-            | else := creationLogic self privateInputs
+            | else := creationLogic self priv
       }
     | else := false;
 
@@ -56,8 +72,8 @@ logic (publicInputs : Instance) (privateInputs : Witness) : Bool :=
 --- TODO adapt eventually
 initializationLogic : Bool := false;
 
-creationLogic (self : Resource) (privateInputs : Witness) : Bool :=
-  case Witness.consumed privateInputs, Witness.created privateInputs of
+creationLogic (self : Resource) (priv : Witness) : Bool :=
+  case Witness.consumed priv, Witness.created priv of
     | [a; b], [x; y] :=
       let
         ((consumedWC, createdWC), consumedERC20, createdERC20) :=
@@ -107,13 +123,12 @@ creationLogic (self : Resource) (privateInputs : Witness) : Bool :=
 checkTransferFromCompliance
   (input output : ByteArray) (consumedWC createdERC20 : Resource) : Bool :=
   let
-    ((from, to), value) : Pair (Pair Address Address) Nat :=
+    ((from, to), value) : Pair (Pair ExternalIdentity ExternalIdentity) Nat :=
       builtinEvmDecode input;
     evmCallSuccess : Bool := builtinEvmDecode output;
-    wrapperContract : Address :=
+    wrapperContract : ExternalIdentity :=
       decodeWrapperContractAddressFromLabel consumedWC;
-    createdERC20Owner :=
-      createdERC20 |> erc20Owner |> externalIdentityToEvmAddress;
+    createdERC20Owner := createdERC20 |> erc20Owner;
     createdERC20Quantity := createdERC20 |> Resource.quantity;
   in evmCallSuccess
     -- The funds must be transferred to the wrapper contract.
@@ -126,10 +141,9 @@ checkTransferFromCompliance
 checkTransferCompliance
   (input output : ByteArray) (consumedWC consumedERC20 : Resource) : Bool :=
   let
-    (to, value) : Pair Address Nat := builtinEvmDecode input;
+    (to, value) : Pair ExternalIdentity Nat := builtinEvmDecode input;
     evmCallSuccess : Bool := builtinEvmDecode output;
-    consumedERC20Owner :=
-      consumedERC20 |> erc20Owner |> externalIdentityToEvmAddress;
+    consumedERC20Owner := consumedERC20 |> erc20Owner;
     consumedERC20Quantity := consumedERC20 |> Resource.quantity;
   in evmCallSuccess
     -- The consumed non-ephemeral resource must be owned by the `to` address to which the wrapper contract will transfer the funds.
@@ -142,22 +156,26 @@ checkTransferCompliance
 --- NOTE: Only the wrapper label is enforced by the protocol adapter.
 --- The wrapper logic and value  can be customized to correspond to other EVM state changes.
 mkERC20WrapperContractResource
-  (wrapperContract : Address)
+  (logic : Logic)
   (wrappedResourceKind : Kind)
-  (input output : ByteArray)
+  (ffiCall : FfiCall)
   (nonce : Nat)
   {ephemeral : Bool := false}
   : Resource :=
   mkResource@{
     logic;
-    label := builtinAnomaEncode (wrapperContract);
-    value := builtinAnomaEncode (wrappedResourceKind, input, output);
+    label := builtinAnomaEncode (FfiCall.address ffiCall);
+    value :=
+      builtinAnomaEncode
+        (wrappedResourceKind, FfiCall.input ffiCall, FfiCall.output ffiCall);
     quantity := 1;
     ephemeral;
-    nullifierKeyCommitment := builtinAnomaEncode Universal.nullifierKeyCommitment;
+    nullifierKeyCommitment :=
+      builtinAnomaEncode Universal.nullifierKeyCommitment;
     nonce;
     randSeed := 0;
   };
 
-decodeWrapperContractAddressFromLabel (wrapperResource : Resource) : Address :=
+decodeWrapperContractAddressFromLabel
+  (wrapperResource : Resource) : ExternalIdentity :=
   wrapperResource |> Resource.label |> builtinAnomaDecode;

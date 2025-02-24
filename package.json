@@ -8,8 +8,9 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.1.0",
+    "@solarity/solidity-lib" : "^2.7.17",
     "risc0/risc0-ethereum": "risc0/risc0-ethereum",
-    "ethereum-optimism/transience": "ethereum-optimism/transience"
+    "witnet/elliptic-curve-solidity": "witnet/elliptic-curve-solidity"
   },
   "devDependencies": {
     "forge-std": "github:foundry-rs/forge-std#v1.8.1",
