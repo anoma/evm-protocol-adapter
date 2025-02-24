@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25 <0.9.0;
 
-import { Test } from "forge-std/src/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 import { SHA256 } from "../../src/libs/SHA256.sol";
 

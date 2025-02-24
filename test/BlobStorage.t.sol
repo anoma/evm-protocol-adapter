@@ -1,6 +1,6 @@
 pragma solidity >=0.8.25 <0.9.0;
 
-import { Test } from "forge-std/src/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 import { BlobStorage, DeletionCriterion } from "../src/state/BlobStorage.sol";
 

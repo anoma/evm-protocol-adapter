@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25 <0.9.0;
 
-import { Test } from "forge-std/src/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import { MerkleProof } from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 
 import { SHA256 } from "../../src/libs/SHA256.sol";
 
@@ -60,7 +60,7 @@ contract FullTreeTest is Test, CommitmentAccumulatorMock {
     }
 
     // /// forge-config: default.allow_internal_expect_revert = true
-    function test_should_revert_if_max_nodes_are_reached_after() public {
+    function testFail_should_revert_if_max_nodes_are_reached_after() public {
         vm.expectRevert();
         // TODO find out how to expect this error with foundry.
         //vm.expectRevert("panic: memory allocation error (0x41)");

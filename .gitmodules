@@ -1,3 +1,15 @@
-[submodule "lib/transience"]
-	path = lib/transience
-	url = https://github.com/ethereum-optimism/transience
+[submodule "lib/forge-std"]
+	path = lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "lib/openzeppelin-contracts"]
+	path = lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "lib/risc0-ethereum"]
+	path = lib/risc0-ethereum
+	url = https://github.com/risc0/risc0-ethereum
+[submodule "lib/elliptic-curve-solidity"]
+	path = lib/elliptic-curve-solidity
+	url = https://github.com/witnet/elliptic-curve-solidity
+[submodule "lib/solidity-lib"]
+	path = lib/solidity-lib
+	url = https://github.com/dl-solarity/solidity-lib

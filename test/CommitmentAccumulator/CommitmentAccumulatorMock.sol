@@ -1,17 +1,25 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.27;
 
-import { MerkleTree } from "@openzeppelin/contracts/utils/structs/MerkleTree.sol";
-import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { MerkleTree } from "openzeppelin-contracts/utils/structs/MerkleTree.sol";
+import { MerkleProof } from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import { EnumerableSet } from "openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
 import { CommitmentAccumulator } from "../../src/state/CommitmentAccumulator.sol";
 import { SHA256 } from "../../src/libs/SHA256.sol";
+
+import { console } from "forge-std/console.sol";
 
 contract CommitmentAccumulatorMock is CommitmentAccumulator {
     using MerkleTree for MerkleTree.Bytes32PushTree;
     using MerkleProof for MerkleTree.Bytes32PushTree;
     using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    // TODO Why does this offset exist in `EnumerableSet`?
+    uint256 internal constant COMMITMENT_INDEX_OFFSET = 1;
+
+    error EmptyCommitment();
+    error InvalidCommitmentIndexPanic(bytes32 commitment, uint256 index, uint256 nextLeafIndex);
 
     constructor(uint8 treeDepth) CommitmentAccumulator(treeDepth) { }
 
@@ -57,6 +65,10 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
                 tree[d][i] = SHA256.commutativeHash({ a: tree[d - 1][(i * 2)], b: tree[d - 1][(i * 2) + 1] });
             }
         }
+    }
+
+    function _revertingFunc(bytes32 commitment) internal view {
+        revert EmptyCommitment();
     }
 
     function _findCommitmentIndex(bytes32 commitment) internal view returns (uint256 index) {

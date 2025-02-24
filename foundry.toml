@@ -18,6 +18,7 @@
   solc = "0.8.27"
   src = "src"
   test = "test"
+  allow_internal_expect_revert = true
 
 [profile.ci]
   fuzz = { runs = 10_000 }
