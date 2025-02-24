@@ -2,7 +2,7 @@
 pragma solidity >=0.8.25;
 
 import { ReentrancyGuardTransient } from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
-import { IRiscZeroVerifier } from "risc0-ethereum/contracts/src/IRiscZeroVerifier.sol";
+import { IRiscZeroVerifier } from "risc0-ethereum/IRiscZeroVerifier.sol";
 
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IWrapper } from "./interfaces/IWrapper.sol";
