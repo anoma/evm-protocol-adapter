@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25 <0.9.0;
 
-import {Test} from "forge-std/src/Test.sol";
+import { Test } from "forge-std/src/Test.sol";
 
-import {console} from "forge-std/src/console.sol";
+import { console } from "forge-std/src/console.sol";
 
 contract EncodingTest is Test {
-    function setUp() public {}
-
     function test1() public view {
         bytes32[] memory list1 = new bytes32[](2);
         list1[0] = bytes32(uint256(1));

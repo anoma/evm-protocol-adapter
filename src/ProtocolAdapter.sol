@@ -2,6 +2,7 @@
 pragma solidity >=0.8.25;
 
 import { ReentrancyGuardTransient } from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
+import { IRiscZeroVerifier } from "risc0-ethereum/contracts/src/IRiscZeroVerifier.sol";
 
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IWrapper } from "./interfaces/IWrapper.sol";
@@ -13,9 +14,7 @@ import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
 import { BlobStorage, ExpirableBlob, DeletionCriterion } from "./state/BlobStorage.sol";
 
-import { IRiscZeroVerifier } from "risc0-ethereum/contracts/src/IRiscZeroVerifier.sol";
-
-import { ComplianceInstance, ComplianceUnit } from "./proving/Compliance.sol";
+import { ComplianceUnit } from "./proving/Compliance.sol";
 import { Delta } from "./proving/Delta.sol";
 import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
 
@@ -76,8 +75,6 @@ contract ProtocolAdapter is
         _verify(transaction);
     }
 
-    function lookupFFICall() external { }
-
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
     /// @param transaction The transaction to execute.
@@ -118,6 +115,7 @@ contract ProtocolAdapter is
         zeroDelta[1] = ZERO_DELTA_Y;
     }
 
+    // solhint-disable-next-line code-complexity
     function _verify(Transaction calldata transaction) internal view {
         // Can also be named DeltaHash (which is what Yulia does).
         uint256[2] memory transactionDelta = _zeroDelta();
@@ -145,7 +143,7 @@ contract ProtocolAdapter is
                 ComplianceUnit calldata unit = action.complianceUnits[j];
 
                 // Prepare delta proof
-                transactionDelta = Delta.add({ p1: transactionDelta, p2: action.complianceUnits[i].instance.unitDelta });
+                transactionDelta = Delta.add({ p1: transactionDelta, p2: unit.instance.unitDelta });
 
                 // Check consumed resources
                 for (uint256 k; k < unit.instance.consumed.length; ++k) {
