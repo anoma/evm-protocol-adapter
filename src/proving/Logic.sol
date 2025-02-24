@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.27;
 
-import { ExpirableBlob } from "../libs/AppData.sol";
+import { ExpirableBlob } from "../state/BlobStorage.sol";
 
-// TODO Needed? Ask Yulia or Xuyang.
 struct LogicInstance {
     bytes32 tag;
     bool isConsumed;

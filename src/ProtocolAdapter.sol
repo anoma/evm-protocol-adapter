@@ -11,7 +11,7 @@ import { ArrayLookup } from "./libs/ArrayLookup.sol";
 
 import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
-import { BlobStorage } from "./state/BlobStorage.sol";
+import { BlobStorage, ExpirableBlob, DeletionCriterion } from "./state/BlobStorage.sol";
 
 import { IRiscZeroVerifier } from "risc0-ethereum/contracts/src/IRiscZeroVerifier.sol";
 
@@ -118,72 +118,125 @@ contract ProtocolAdapter is
         zeroDelta[1] = ZERO_DELTA_Y;
     }
 
-    function _transactionDigest(Transaction calldata transaction) internal pure returns (bytes32) {
-        uint256 commitmentCount = 0;
-        uint256 nullifierCount = 0;
-
-        for (uint256 i; i < transaction.actions.length; ++i) {
-            commitmentCount += transaction.actions[i].commitments.length;
-            nullifierCount += transaction.actions[i].nullifiers.length;
-        }
-
-        bytes32[] memory cmsAndNfs = new bytes32[](commitmentCount + nullifierCount);
-
-        for (uint256 i; i < transaction.actions.length; ++i) {
-            for (uint256 j; j < commitmentCount; ++j) {
-                cmsAndNfs[j] = transaction.actions[i].commitments[j];
-            }
-            for (uint256 j; j < nullifierCount; ++j) {
-                cmsAndNfs[nullifierCount + j] = transaction.actions[i].nullifiers[j];
-            }
-        }
-
-        return sha256(abi.encode(cmsAndNfs));
-    }
-
     function _verify(Transaction calldata transaction) internal view {
         // Can also be named DeltaHash (which is what Yulia does).
         uint256[2] memory transactionDelta = _zeroDelta();
 
+        // Helper variable
+        uint256 resourceCount;
+
         for (uint256 i; i < transaction.actions.length; ++i) {
-            // Compute the transaction delta
-            transactionDelta = Delta.add({ p1: transactionDelta, p2: _actionDelta(transaction.actions[i]) });
+            resourceCount += transaction.actions[i].commitments.length;
+            resourceCount += transaction.actions[i].nullifiers.length;
+        }
+        bytes32[] memory tags = new bytes32[](resourceCount);
+        // Reset resource count for later use.
+        resourceCount = 0;
 
-            // Verify resource logics and compliance proofs.
-            _verifyAction(transaction.actions[i]);
+        for (uint256 i; i < transaction.actions.length; ++i) {
+            Action calldata action = transaction.actions[i];
+
+            for (uint256 j; j < action.kindFFICallPairs.length; ++j) {
+                _verifyFFICall(action.kindFFICallPairs[j]);
+            }
+
+            // Compliance Proofs
+            for (uint256 j; j < action.complianceUnits.length; ++j) {
+                ComplianceUnit calldata unit = action.complianceUnits[j];
+
+                // Prepare delta proof
+                transactionDelta = Delta.add({ p1: transactionDelta, p2: action.complianceUnits[i].instance.unitDelta });
+
+                // Check consumed resources
+                for (uint256 k; k < unit.instance.consumed.length; ++k) {
+                    transaction.roots.contains(unit.instance.consumed[k].rootRef);
+                    _checkRootPreExistence(unit.instance.consumed[k].rootRef);
+
+                    action.nullifiers.contains(unit.instance.consumed[k].nullifierRef);
+                    _checkNullifierNonExistence(unit.instance.consumed[k].nullifierRef);
+                }
+
+                // Check created resources
+                for (uint256 k; k < unit.instance.created.length; ++k) {
+                    action.commitments.contains(unit.instance.created[k].commitmentRef);
+                    _checkCommitmentNonExistence(unit.instance.created[k].commitmentRef);
+                }
+
+                RISC_ZERO_VERIFIER.verify({
+                    seal: unit.proof,
+                    imageId: COMPLIANCE_CIRCUIT_ID,
+                    journalDigest: sha256(abi.encode(unit.verifyingKey, unit.instance))
+                });
+            }
+
+            // Logic Proofs
+            {
+                LogicInstance memory instance = LogicInstance({
+                    tag: bytes32(0),
+                    isConsumed: true,
+                    consumed: action.nullifiers,
+                    created: action.commitments,
+                    appDataForTag: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: bytes("") })
+                });
+                LogicRefProofPair memory logicRefProofPair;
+
+                // Check consumed resources
+                for (uint256 j; j < action.nullifiers.length; ++j) {
+                    bytes32 tag = action.nullifiers[j];
+
+                    tags[resourceCount] = tag;
+                    resourceCount++;
+
+                    instance.tag = tag;
+                    instance.appDataForTag = action.tagAppDataPairs.lookup(tag);
+
+                    {
+                        logicRefProofPair = action.logicProofs.lookup(tag);
+                        RISC_ZERO_VERIFIER.verify({
+                            seal: logicRefProofPair.proof,
+                            imageId: LOGIC_CIRCUIT_ID,
+                            journalDigest: sha256(abi.encode( /*verifying key*/ logicRefProofPair.logicRef, instance))
+                        });
+                    }
+                }
+                // Check created resources
+                instance.isConsumed = false;
+                for (uint256 j; j < action.commitments.length; ++j) {
+                    bytes32 tag = action.commitments[j];
+
+                    tags[resourceCount] = tag;
+                    resourceCount++;
+
+                    instance.tag = tag;
+                    instance.appDataForTag = action.tagAppDataPairs.lookup(tag);
+
+                    {
+                        logicRefProofPair = action.logicProofs.lookup(tag);
+                        RISC_ZERO_VERIFIER.verify({
+                            seal: logicRefProofPair.proof,
+                            imageId: LOGIC_CIRCUIT_ID,
+                            journalDigest: sha256(abi.encode( /*verifying key*/ logicRefProofPair.logicRef, instance))
+                        });
+                    }
+                }
+            }
         }
 
-        bytes32 transactionDigest = sha256(abi.encode(transaction)); // TODO Use _transactionDigest instead
+        {
+            // Delta Proof
+            Delta.verify({
+                transactionHash: sha256(abi.encode(tags)),
+                delta: transactionDelta,
+                deltaProof: transaction.deltaProof // TODO delta proof needed?
+             });
 
-        _verifyDelta(transactionDigest, transactionDelta, transaction.deltaProof);
-    }
-
-    function _actionDelta(Action calldata action) internal view returns (uint256[2] memory delta) {
-        delta = _zeroDelta();
-
-        for (uint256 i; i < action.complianceUnits.length; ++i) {
-            delta = Delta.add({
-                p1: delta,
-                p2: action.complianceUnits[i].refInstance.referencedComplianceInstance.unitDelta
-            });
-        }
-    }
-
-    function _verifyAction(Action calldata action) internal view {
-        for (uint256 i; i < action.kindFFICallPairs.length; ++i) {
-            _verifyFFICall(action.kindFFICallPairs[i]);
-        }
-
-        for (uint256 i; i < action.complianceUnits.length; ++i) {
-            _verifyComplianceUnit(action.complianceUnits[i]);
-        }
-
-        for (uint256 i; i < action.nullifiers.length; ++i) {
-            _verifyLogicProof({ tag: action.nullifiers[i], action: action, isConsumed: true });
-        }
-
-        for (uint256 i; i < action.commitments.length; ++i) {
-            _verifyLogicProof({ tag: action.commitments[i], action: action, isConsumed: false });
+            // TODO needed?
+            if (transactionDelta[0] != ZERO_DELTA_X) {
+                revert TransactionUnbalanced({ expected: ZERO_DELTA_X, actual: transactionDelta[0] });
+            }
+            if (transactionDelta[1] != ZERO_DELTA_Y) {
+                revert TransactionUnbalanced({ expected: ZERO_DELTA_Y, actual: transactionDelta[1] });
+            }
         }
     }
 
@@ -193,75 +246,6 @@ contract ProtocolAdapter is
 
         if (passedKind != fetchedKind) {
             revert WrapperResourceKindMismatch({ expected: fetchedKind, actual: passedKind });
-        }
-    }
-
-    /// @notice Checks the
-    /// For ephemeral resources, the check is skipped in the circuit. Still, a fake root can be provided.
-    function _verifyComplianceUnit(ComplianceUnit calldata complianceUnit) internal view {
-        ComplianceInstance calldata instance = complianceUnit.refInstance.referencedComplianceInstance;
-        // Note: referenced, because the instance contains data that we use in other places.
-        // Note: If we provide a copy, we have to ensure that both things are really the same.
-
-        for (uint256 i; i < instance.consumed.length; ++i) {
-            _checkRootPreExistence(instance.consumed[i].rootRef);
-            // NOTE: For ephemeral resources, a fake root is provided.
-            // Initial root of the empty tree.
-
-            // TODO Is it ok if we make these checks for ephemeral resources?
-            _checkNullifierNonExistence(instance.consumed[i].nullifierRef);
-        }
-
-        for (uint256 i; i < instance.created.length; ++i) {
-            // TODO Is it ok if we make these checks for ephemeral resources?
-            _checkCommitmentNonExistence(instance.created[i].commitmentRef);
-        }
-
-        RISC_ZERO_VERIFIER.verify({
-            seal: complianceUnit.proof,
-            imageId: COMPLIANCE_CIRCUIT_ID,
-            journalDigest: sha256(abi.encode(complianceUnit.verifyingKey, instance))
-        });
-    }
-
-    function _verifyLogicProof(bytes32 tag, Action calldata action, bool isConsumed) internal view {
-        LogicRefProofPair memory logicRefProofPair = action.logicProofs.lookup(tag);
-
-        bytes memory proof = logicRefProofPair.proof;
-
-        bytes32 verifyingKey = logicRefProofPair.logicRef;
-
-        LogicInstance memory instance = LogicInstance({
-            tag: tag,
-            isConsumed: isConsumed,
-            consumed: action.nullifiers,
-            created: action.commitments,
-            appDataForTag: action.tagAppDataPairs.lookup(tag)
-        });
-
-        RISC_ZERO_VERIFIER.verify({
-            seal: proof,
-            imageId: LOGIC_CIRCUIT_ID,
-            journalDigest: sha256(abi.encode(verifyingKey, instance))
-        });
-    }
-
-    function _verifyDelta(
-        bytes32 transactionDigest,
-        uint256[2] memory delta, // deltaHash,
-        bytes calldata deltaProof
-    )
-        internal
-        view
-    {
-        Delta.verify(transactionDigest, delta, deltaProof);
-
-        // TODO needed?
-        if (delta[0] != ZERO_DELTA_X) {
-            revert TransactionUnbalanced({ expected: ZERO_DELTA_X, actual: delta[0] });
-        }
-        if (delta[1] != ZERO_DELTA_Y) {
-            revert TransactionUnbalanced({ expected: ZERO_DELTA_Y, actual: delta[1] });
         }
     }
 

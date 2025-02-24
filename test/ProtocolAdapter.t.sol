@@ -66,8 +66,8 @@ contract ProtocolAdapterTest is Test {
             bytes[] memory createdResourceProofs = new bytes[](1);
             bytes[] memory consumedResourceProofs = new bytes[](1);
 
-            createdResourceProofs[0] = bytes("TODO");
-            consumedResourceProofs[0] = bytes("TODO");
+            createdResourceProofs[0] = bytes("LOGIC PROOF MISSING");
+            consumedResourceProofs[0] = bytes("LOGIC PROOF MISSING");
 
             logicProofs = new TagLogicProofPair[](2);
             logicProofs[0] = TagLogicProofPair({

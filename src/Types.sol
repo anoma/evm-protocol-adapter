@@ -20,7 +20,7 @@ struct Resource {
 struct Transaction {
     bytes32[] roots;
     Action[] actions;
-    bytes deltaProof; // => DeltaInstance
+    bytes deltaProof;
 }
 
 struct Action {
