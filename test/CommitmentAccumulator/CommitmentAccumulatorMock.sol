@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.27;
 
-import {MerkleTree} from "@openzeppelin-contracts/utils/structs/MerkleTree.sol";
-import {MerkleProof} from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
-import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
+import {MerkleTree} from "openzeppelin-contracts/utils/structs/MerkleTree.sol";
+import {MerkleProof} from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import {EnumerableSet} from "openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
 import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";

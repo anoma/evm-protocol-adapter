@@ -24,7 +24,8 @@ contract ProtocolAdapterTest is Test {
     ProtocolAdapter internal protocolAdapter;
 
     uint8 internal constant TREE_DEPTH = 2 ^ 8;
-    address internal constant RISC_ZERO_VERIFIER_ROUTER_SEPOLIA =
+
+    IRiscZeroVerifier internal constant sepoliaVerifier =
         IRiscZeroVerifier(address(0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187));
 
     IRiscZeroVerifier mockVerifier = new RiscZeroMockVerifier(bytes4(0x12345678));
@@ -33,7 +34,7 @@ contract ProtocolAdapterTest is Test {
         protocolAdapter = new ProtocolAdapter({
             logicCircuitID: bytes32(0),
             complianceCircuitID: bytes32(0),
-            riscZeroVerifier: RISC_ZERO_VERIFIER_ROUTER_SEPOLIA,
+            riscZeroVerifier: mockVerifier,
             treeDepth: TREE_DEPTH
         });
     }

@@ -3,7 +3,7 @@ pragma solidity >=0.8.25 <0.9.0;
 
 import {Test} from "forge-std/Test.sol";
 
-import {MerkleProof} from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import {MerkleProof} from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 
 import {SHA256} from "../../src/libs/SHA256.sol";
 
