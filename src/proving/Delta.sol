@@ -9,7 +9,7 @@ struct DeltaInstance {
     uint256 expectedBalance; // Balance // pre-image
 }
 
-// solhint-disable-next-line max-line-length
+// slither-disable-next-line max-line-length
 /// @notice Uses the Pedersen commitment scheme (https://link.springer.com/content/pdf/10.1007/3-540-46766-1_9.pdf#page=3)
 library Delta {
     error DeltaMismatch(address expected, address actual);
@@ -28,11 +28,11 @@ library Delta {
 
     function verify(bytes32 transactionHash, uint256[2] memory delta, bytes calldata deltaProof) internal pure {
         bytes32 r = bytes32(delta[0]);
-        // solhint-disable-next-line max-line-length
+        // slither-disable-next-line max-line-length
         uint8 v = 27; // boolean to indicate which of the two y-values is used. Traditionally, 27 and 28 were used in Bitcoin.
         bytes32 s = bytes32(0);
 
-        // solhint-disable-next-line max-line-length
+        // slither-disable-next-line max-line-length
         // https://dev.to/truongpx396/understanding-ethereum-ecdsa-eip-712-and-its-role-in-permit-functionality-26ll
         // https://eips.ethereum.org/EIPS/eip-2098
 

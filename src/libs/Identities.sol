@@ -9,7 +9,7 @@ library Universal {
     bytes32 internal constant INTERNAL_IDENTITY = 0x0000000000000000000000000000000000000000000000000000000000000001;
 
     // 1- Public ECDSA Key:
-    // solhint-disable-next-line max-line-length
+    // slither-disable-next-line max-line-length
     // 79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
 
     // 2- Keccak-256 hash of 1:
@@ -39,5 +39,5 @@ library Universal {
 // 4CB5ABF6AD79FBF5ABBCCAFCC269D85CD2651ED4B885B5869F241AEDF0A5BA29
 
 // Seed || Public
-// solhint-disable-next-line max-line-length
+// slither-disable-next-line max-line-length
 // 00000000000000000000000000000000000000000000000000000000000000014CB5ABF6AD79FBF5ABBCCAFCC269D85CD2651ED4B885B5869F241AEDF0A5BA29

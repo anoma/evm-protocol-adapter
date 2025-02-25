@@ -59,8 +59,8 @@ contract ProtocolAdapter is
     )
         CommitmentAccumulator(treeDepth)
     {
-        COMPLIANCE_CIRCUIT_ID = complianceCircuitID;
         LOGIC_CIRCUIT_ID = logicCircuitID;
+        COMPLIANCE_CIRCUIT_ID = complianceCircuitID;
 
         uint256[2] memory zeroDelta = Delta.zero();
         ZERO_DELTA_X = zeroDelta[0];
@@ -115,7 +115,7 @@ contract ProtocolAdapter is
         zeroDelta[1] = ZERO_DELTA_Y;
     }
 
-    // solhint-disable-next-line code-complexity
+    // slither-disable-next-line code-complexity
     function _verify(Transaction calldata transaction) internal view {
         // Can also be named DeltaHash (which is what Yulia does).
         uint256[2] memory transactionDelta = _zeroDelta();
@@ -186,7 +186,7 @@ contract ProtocolAdapter is
                     resourceCount++;
 
                     instance.tag = tag;
-                    instance.appDataForTag = action.tagAppDataPairs.lookup(tag);
+                    instance.appDataForTag = action.tagAppDataPairs.lookupCalldata(tag);
 
                     {
                         logicRefProofPair = action.logicProofs.lookup(tag);

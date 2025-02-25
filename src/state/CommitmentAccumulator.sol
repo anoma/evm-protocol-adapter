@@ -13,7 +13,7 @@ contract CommitmentAccumulator {
 
     using Arrays for bytes32[];
 
-    // solhint-disable-next-line max-line-length
+    // slither-disable-next-line max-line-length
     bytes32 internal constant EMPTY_LEAF_HASH = 0x283d1bb3a401a7e0302d0ffb9102c8fc1f4730c2715a2bfd46a9d9209d5965e0; // sha256("EMPTY_LEAF");
 
     MerkleTree.Bytes32PushTree internal merkleTree;
