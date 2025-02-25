@@ -14,9 +14,9 @@ import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
 import { BlobStorage, ExpirableBlob, DeletionCriterion } from "./state/BlobStorage.sol";
 
+import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
 import { ComplianceUnit } from "./proving/Compliance.sol";
 import { Delta } from "./proving/Delta.sol";
-import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
 
 import { AppData } from "./libs/AppData.sol";
 
@@ -224,17 +224,9 @@ contract ProtocolAdapter is
             // Delta Proof
             Delta.verify({
                 transactionHash: sha256(abi.encode(tags)),
-                delta: transactionDelta,
+                transactionDelta: transactionDelta,
                 deltaProof: transaction.deltaProof // TODO delta proof needed?
              });
-
-            // TODO needed?
-            if (transactionDelta[0] != ZERO_DELTA_X) {
-                revert TransactionUnbalanced({ expected: ZERO_DELTA_X, actual: transactionDelta[0] });
-            }
-            if (transactionDelta[1] != ZERO_DELTA_Y) {
-                revert TransactionUnbalanced({ expected: ZERO_DELTA_Y, actual: transactionDelta[1] });
-            }
         }
     }
 

@@ -13,13 +13,17 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {ExpirableBlob, DeletionCriterion} from "../src/state/BlobStorage.sol";
 import {Transaction, Resource, Action, KindFFICallPair} from "../src/Types.sol";
 import {Universal} from "../src/libs/Identities.sol";
+
 import {LogicInstance, TagLogicProofPair, LogicRefProofPair} from "../src/proving/Logic.sol";
 import {ComplianceUnit} from "../src/proving/Compliance.sol";
+import {Delta} from "../src/proving/Delta.sol";
+
 import {AppData, TagAppDataPair} from "../src/libs/AppData.sol";
 
 contract ProtocolAdapterTest is Test {
     using ComputableComponents for Resource;
     using AppData for TagAppDataPair[];
+    using Delta for uint256[2];
 
     uint256 internal testNumber;
     ProtocolAdapter internal protocolAdapter;
@@ -42,6 +46,12 @@ contract ProtocolAdapterTest is Test {
             riscZeroVerifier: mockVerifier,
             treeDepth: TREE_DEPTH
         });
+    }
+
+    function test_verify_empty_tx() public view {
+        Resource[] memory consumed;
+        Resource[] memory created;
+        protocolAdapter.verify(_mockTransaction({consumed: consumed, created: created}));
     }
 
     function test_verify() public view {
@@ -106,7 +116,8 @@ contract ProtocolAdapterTest is Test {
         Action[] memory actions = new Action[](1);
         actions[0] = action;
 
-        bytes memory deltaProof = bytes("TODO");
+        // TODO compute real delta
+        bytes memory deltaProof = Delta.zero().toSignature();
 
         bytes32[] memory roots = new bytes32[](1);
         roots[0] = protocolAdapter.latestRoot();
@@ -121,18 +132,18 @@ contract ProtocolAdapterTest is Test {
     {
         appData = new TagAppDataPair[](nullifiers.length + commitments.length);
         {
-            bytes memory empty = bytes("");
+            bytes memory emptyBlob = bytes("");
 
             for (uint256 i = 0; i < nullifiers.length; ++i) {
                 appData[i] = TagAppDataPair({
                     tag: nullifiers[i],
-                    appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: empty})
+                    appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: emptyBlob})
                 });
             }
             for (uint256 i = 0; i < commitments.length; ++i) {
                 appData[nullifiers.length + i] = TagAppDataPair({
                     tag: commitments[i],
-                    appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: empty})
+                    appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: emptyBlob})
                 });
             }
         }

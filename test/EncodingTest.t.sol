@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25 <0.9.0;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { console } from "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 
 contract EncodingTest is Test {
     function test1() public view {
