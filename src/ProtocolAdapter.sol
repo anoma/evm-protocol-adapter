@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25;
 
-import { ReentrancyGuardTransient } from "openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
+import { ReentrancyGuardTransient } from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
 import { IRiscZeroVerifier } from "risc0-ethereum/IRiscZeroVerifier.sol";
 
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
@@ -54,7 +54,7 @@ contract ProtocolAdapter is
     constructor(
         bytes32 logicCircuitID,
         bytes32 complianceCircuitID,
-        address riscZeroVerifier,
+        IRiscZeroVerifier riscZeroVerifier,
         uint8 treeDepth
     )
         CommitmentAccumulator(treeDepth)
@@ -66,7 +66,7 @@ contract ProtocolAdapter is
         ZERO_DELTA_X = zeroDelta[0];
         ZERO_DELTA_Y = zeroDelta[1];
 
-        RISC_ZERO_VERIFIER = IRiscZeroVerifier(riscZeroVerifier);
+        RISC_ZERO_VERIFIER = riscZeroVerifier;
     }
 
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.

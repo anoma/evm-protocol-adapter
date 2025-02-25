@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25 <0.9.0;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { ComputableComponents } from "../src/libs/ComputableComponents.sol";
-import { ProtocolAdapter } from "../src/ProtocolAdapter.sol";
-import { ExpirableBlob, DeletionCriterion } from "../src/state/BlobStorage.sol";
-import { Transaction, Resource, Action, KindFFICallPair } from "../src/Types.sol";
-import { Universal } from "../src/libs/Identities.sol";
-import { TagLogicProofPair, LogicRefProofPair } from "../src/proving/Logic.sol";
-import { ComplianceUnit } from "../src/proving/Compliance.sol";
-import { TagAppDataPair } from "../src/libs/AppData.sol";
+import {IRiscZeroVerifier} from "risc0-ethereum/IRiscZeroVerifier.sol";
+
+import {RiscZeroVerifierRouter} from "risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {RiscZeroMockVerifier} from "risc0-ethereum/test/RiscZeroMockVerifier.sol";
+
+import {ComputableComponents} from "../src/libs/ComputableComponents.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {ExpirableBlob, DeletionCriterion} from "../src/state/BlobStorage.sol";
+import {Transaction, Resource, Action, KindFFICallPair} from "../src/Types.sol";
+import {Universal} from "../src/libs/Identities.sol";
+import {TagLogicProofPair, LogicRefProofPair} from "../src/proving/Logic.sol";
+import {ComplianceUnit} from "../src/proving/Compliance.sol";
+import {TagAppDataPair} from "../src/libs/AppData.sol";
 
 contract ProtocolAdapterTest is Test {
     using ComputableComponents for Resource;
@@ -19,7 +24,10 @@ contract ProtocolAdapterTest is Test {
     ProtocolAdapter internal protocolAdapter;
 
     uint8 internal constant TREE_DEPTH = 2 ^ 8;
-    address internal constant RISC_ZERO_VERIFIER_ROUTER_SEPOLIA = 0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187;
+    address internal constant RISC_ZERO_VERIFIER_ROUTER_SEPOLIA =
+        IRiscZeroVerifier(address(0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187));
+
+    IRiscZeroVerifier mockVerifier = new RiscZeroMockVerifier(bytes4(0x12345678));
 
     function setUp() public {
         protocolAdapter = new ProtocolAdapter({
@@ -71,11 +79,11 @@ contract ProtocolAdapterTest is Test {
             logicProofs = new TagLogicProofPair[](2);
             logicProofs[0] = TagLogicProofPair({
                 tag: cms[0],
-                pair: LogicRefProofPair({ logicRef: alwaysValidLogicRef, proof: createdResourceProofs[0] })
+                pair: LogicRefProofPair({logicRef: alwaysValidLogicRef, proof: createdResourceProofs[0]})
             });
             logicProofs[0] = TagLogicProofPair({
                 tag: nfs[0],
-                pair: LogicRefProofPair({ logicRef: alwaysValidLogicRef, proof: consumedResourceProofs[0] })
+                pair: LogicRefProofPair({logicRef: alwaysValidLogicRef, proof: consumedResourceProofs[0]})
             });
         }
 
@@ -87,12 +95,12 @@ contract ProtocolAdapterTest is Test {
 
             appData[0] = TagAppDataPair({
                 tag: cms[0],
-                appData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: empty })
+                appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: empty})
             });
 
             appData[1] = TagAppDataPair({
                 tag: nfs[0],
-                appData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: empty })
+                appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: empty})
             });
         }
 
@@ -115,7 +123,7 @@ contract ProtocolAdapterTest is Test {
         bytes32[] memory roots = new bytes32[](1);
         roots[0] = protocolAdapter.latestRoot();
 
-        return Transaction({ roots: roots, actions: actions, deltaProof: deltaProof });
+        return Transaction({roots: roots, actions: actions, deltaProof: deltaProof});
     }
 
     function test_verify() public view {

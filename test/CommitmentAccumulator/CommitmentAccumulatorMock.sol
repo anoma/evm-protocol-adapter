@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.27;
 
-import { MerkleTree } from "openzeppelin-contracts/utils/structs/MerkleTree.sol";
-import { MerkleProof } from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
-import { EnumerableSet } from "openzeppelin-contracts/utils/structs/EnumerableSet.sol";
+import {MerkleTree} from "@openzeppelin-contracts/utils/structs/MerkleTree.sol";
+import {MerkleProof} from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
-import { CommitmentAccumulator } from "../../src/state/CommitmentAccumulator.sol";
-import { SHA256 } from "../../src/libs/SHA256.sol";
+import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
 
-import { console } from "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 
 contract CommitmentAccumulatorMock is CommitmentAccumulator {
     using MerkleTree for MerkleTree.Bytes32PushTree;
@@ -21,7 +21,7 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
     error EmptyCommitment();
     error InvalidCommitmentIndexPanic(bytes32 commitment, uint256 index, uint256 nextLeafIndex);
 
-    constructor(uint8 treeDepth) CommitmentAccumulator(treeDepth) { }
+    constructor(uint8 treeDepth) CommitmentAccumulator(treeDepth) {}
 
     function computeMerklePath(bytes32 commitment) external view returns (bytes32[] memory path) {
         path = _computeMerklePath(commitment);
@@ -62,7 +62,7 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
             tree[d] = new bytes32[](nNodes);
 
             for (uint256 i = 0; i < nNodes; ++i) {
-                tree[d][i] = SHA256.commutativeHash({ a: tree[d - 1][(i * 2)], b: tree[d - 1][(i * 2) + 1] });
+                tree[d][i] = SHA256.commutativeHash({a: tree[d - 1][(i * 2)], b: tree[d - 1][(i * 2) + 1]});
             }
         }
     }

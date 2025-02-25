@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25 <0.9.0;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { MerkleProof } from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import {MerkleProof} from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 
-import { SHA256 } from "../../src/libs/SHA256.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
 
-import { CommitmentAccumulatorMock } from "./CommitmentAccumulatorMock.sol";
+import {CommitmentAccumulatorMock} from "./CommitmentAccumulatorMock.sol";
 
 contract FullTreeTest is Test, CommitmentAccumulatorMock {
     uint8 internal constant TREE_DEPTH = 2; // NOTE: 2^2 = 4 nodes
@@ -18,7 +18,7 @@ contract FullTreeTest is Test, CommitmentAccumulatorMock {
     bytes32[2] internal nodes;
     bytes32 internal root;
 
-    constructor() CommitmentAccumulatorMock(TREE_DEPTH) { }
+    constructor() CommitmentAccumulatorMock(TREE_DEPTH) {}
 
     function setUp() public {
         /*
@@ -90,7 +90,7 @@ contract FullTreeTest is Test, CommitmentAccumulatorMock {
         bytes32 invalidRoot = SHA256.commutativeHash(SHA256.commutativeHash(NON_EXISTENT_LEAF, leaves[1]), nodes[1]);
 
         bytes32 computedRoot =
-            MerkleProof.processProof({ proof: siblings[0], leaf: NON_EXISTENT_LEAF, hasher: SHA256.commutativeHash });
+            MerkleProof.processProof({proof: siblings[0], leaf: NON_EXISTENT_LEAF, hasher: SHA256.commutativeHash});
 
         assertNotEq(computedRoot, root);
         assertEq(computedRoot, invalidRoot);
