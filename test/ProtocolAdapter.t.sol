@@ -33,6 +33,7 @@ contract ProtocolAdapterTest is Test {
     bytes32 internal constant COMPLIANCE_CIRCUIT_ID = 0x0000000000000000000000000000000000000000000000000000000000000002;
 
     bytes32 internal constant ALWAYS_VALID_LOGIC_REF = bytes32(0);
+    bytes32 internal constant EMPTY_BLOB_REF = bytes32(0);
 
     IRiscZeroVerifier internal constant sepoliaVerifier =
         IRiscZeroVerifier(address(0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187));
@@ -68,8 +69,8 @@ contract ProtocolAdapterTest is Test {
         created = new Resource[](1);
         created[0] = Resource({
             logicRef: ALWAYS_VALID_LOGIC_REF,
-            labelRef: bytes32(0),
-            valueRef: bytes32(0),
+            labelRef: EMPTY_BLOB_REF,
+            valueRef: EMPTY_BLOB_REF,
             nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
             quantity: 1,
             nonce: 0,
@@ -204,4 +205,6 @@ contract ProtocolAdapterTest is Test {
             });
         }
     }
+
+    function _mockComplianceProofs() internal view returns (TagLogicProofPair[] memory logicProofs) {}
 }
