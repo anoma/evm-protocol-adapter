@@ -6,6 +6,19 @@ import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 
 contract EncodingTest is Test {
+    function test_empty_arr() public pure {
+        bytes32[] memory arr = new bytes32[](0);
+
+        console.logBytes(abi.encode(new bytes32[](0)));
+
+        console.logBytes(
+            abi.encode(
+                0x0000000000000000000000000000000000000000000000000000000000000020,
+                0x0000000000000000000000000000000000000000000000000000000000000000
+            )
+        );
+    }
+
     function test1() public view {
         bytes32[] memory list1 = new bytes32[](2);
         list1[0] = bytes32(uint256(1));

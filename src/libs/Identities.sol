@@ -4,9 +4,11 @@ pragma solidity >=0.8.27;
 library Universal {
     // https://www.rfctools.com/ethereum-address-test-tool/
 
+    uint256 internal constant SEED = 1;
+
     // 0- Private ECDSA Key:
     // 0000000000000000000000000000000000000000000000000000000000000001
-    bytes32 internal constant INTERNAL_IDENTITY = 0x0000000000000000000000000000000000000000000000000000000000000001;
+    bytes32 internal constant INTERNAL_IDENTITY = bytes32(SEED);
 
     // 1- Public ECDSA Key:
     // slither-disable-next-line max-line-length

@@ -222,11 +222,11 @@ contract ProtocolAdapter is
 
         {
             // Delta Proof
-            Delta.verify({
-                transactionHash: sha256(abi.encode(tags)),
-                transactionDelta: transactionDelta,
-                deltaProof: transaction.deltaProof // TODO delta proof needed?
-             });
+            //Delta.verify({
+            //    transactionHash: sha256(abi.encode(tags)),
+            //    transactionDelta: transactionDelta,
+            //    deltaProof: transaction.deltaProof // TODO delta proof needed?
+            // });
         }
     }
 

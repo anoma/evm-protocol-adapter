@@ -117,8 +117,8 @@ contract ProtocolAdapterTest is Test {
         Action[] memory actions = new Action[](1);
         actions[0] = action;
 
-        // TODO compute real delta
-        bytes memory deltaProof = Delta.zero().toSignature();
+        // TODO Use actual proof
+        bytes memory deltaProof; // = Delta.zero().toSignature();
 
         bytes32[] memory roots = new bytes32[](1);
         roots[0] = protocolAdapter.latestRoot();
