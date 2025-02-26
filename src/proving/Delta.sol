@@ -33,16 +33,6 @@ library Delta {
         return address(uint160(uint256(hashedKey)));
     }
 
-    /*function toSignature(uint256[2] memory delta, bool odd) internal pure returns (bytes memory) {
-        bytes32 r = bytes32(delta[0]);
-        bytes32 s = bytes32(delta[1]);
-        uint8 v = odd ? 27 : 28;
-
-        bytes memory sig = abi.encodePacked(r, s, v);
-
-        return sig;
-    }*/
-
     function add(uint256[2] memory p1, uint256[2] memory p2) internal pure returns (uint256[2] memory p3) {
         (p3[0], p3[1]) = EllipticCurveK256.ecAdd(p1[0], p1[1], p2[0], p2[1]);
     }
@@ -61,7 +51,7 @@ library Delta {
         // Convert the public key to an address
         address expected = toAddress(transactionDelta);
 
-        // Compare it with the  recovered address
+        // Compare it with the recovered address
         if (recovered != expected) {
             revert DeltaMismatch({ expected: expected, actual: recovered });
         }

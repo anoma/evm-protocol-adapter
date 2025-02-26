@@ -20,6 +20,8 @@ import {Delta} from "../src/proving/Delta.sol";
 
 import {AppData, TagAppDataPair} from "../src/libs/AppData.sol";
 
+import {MockRiscZeroProof} from "./MockRiscZeroProof.sol";
+
 contract ProtocolAdapterTest is Test {
     using ComputableComponents for Resource;
     using AppData for TagAppDataPair[];
@@ -29,8 +31,6 @@ contract ProtocolAdapterTest is Test {
     ProtocolAdapter internal protocolAdapter;
 
     uint8 internal constant TREE_DEPTH = 2 ^ 8;
-    bytes32 internal constant LOGIC_CIRCUIT_ID = 0x0000000000000000000000000000000000000000000000000000000000000001;
-    bytes32 internal constant COMPLIANCE_CIRCUIT_ID = 0x0000000000000000000000000000000000000000000000000000000000000002;
 
     bytes32 internal constant ALWAYS_VALID_LOGIC_REF = bytes32(0);
     bytes32 internal constant EMPTY_BLOB_REF = bytes32(0);
@@ -38,7 +38,7 @@ contract ProtocolAdapterTest is Test {
     IRiscZeroVerifier internal constant sepoliaVerifier =
         IRiscZeroVerifier(address(0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187));
 
-    RiscZeroMockVerifier mockVerifier = new RiscZeroMockVerifier(bytes4(0x12345678));
+    RiscZeroMockVerifier mockVerifier = new RiscZeroMockVerifier(MockRiscZeroProof.VERIFIER_SELECTOR);
 
     function setUp() public {
         protocolAdapter = new ProtocolAdapter({
@@ -171,7 +171,7 @@ contract ProtocolAdapterTest is Test {
             bytes32 verifyingKey = ALWAYS_VALID_LOGIC_REF;
 
             RiscZeroReceipt memory logicProofReceipt = mockVerifier.mockProve({
-                imageId: LOGIC_CIRCUIT_ID,
+                imageId: MockRiscZeroProof.IMAGE_ID_1,
                 journalDigest: sha256(abi.encode(verifyingKey, instance))
             });
 
@@ -195,7 +195,7 @@ contract ProtocolAdapterTest is Test {
             bytes32 verifyingKey = ALWAYS_VALID_LOGIC_REF;
 
             RiscZeroReceipt memory logicProofReceipt = mockVerifier.mockProve({
-                imageId: LOGIC_CIRCUIT_ID,
+                imageId: MockRiscZeroProof.IMAGE_ID_1,
                 journalDigest: sha256(abi.encode(verifyingKey, instance))
             });
 
@@ -206,5 +206,7 @@ contract ProtocolAdapterTest is Test {
         }
     }
 
-    function _mockComplianceProofs() internal view returns (TagLogicProofPair[] memory logicProofs) {}
+    function _mockComplianceProofs() internal view returns (TagLogicProofPair[] memory complianceProofs) {
+        revert("TODO");
+    }
 }
