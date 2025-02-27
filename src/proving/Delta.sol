@@ -4,13 +4,6 @@ pragma solidity >=0.8.27;
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { EllipticCurveK256 } from "../libs/EllipticCurveK256.sol";
 
-import { console } from "forge-std/console.sol";
-// TODO Remove?
-
-struct DeltaInstance {
-    uint256 expectedBalance; // Balance // pre-image
-}
-
 // slither-disable-next-line max-line-length
 /// @notice Uses the Pedersen commitment scheme (https://link.springer.com/content/pdf/10.1007/3-540-46766-1_9.pdf#page=3)
 library Delta {

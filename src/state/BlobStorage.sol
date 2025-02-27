@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.27;
 
+enum DeletionCriterion {
+    Immediately,
+    Never
+}
+
 // ExpirableBlob
 struct ExpirableBlob {
     DeletionCriterion deletionCriterion;
     bytes blob;
-}
-
-enum DeletionCriterion {
-    Immediately,
-    Never
 }
 
 contract BlobStorage {
