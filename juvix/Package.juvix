@@ -8,10 +8,7 @@ package : Package :=
     version := defaultVersion;
     dependencies :=
       [
-        defaultStdlib;
-        github
-          "anoma"
-          "anoma-applib"
-          "9ee273dd811c938d5a60aafacb1b869c7ab9ec44";
+        github "anoma" "juvix-stdlib" "v0.10.1";
+        github "anoma" "anoma-applib" "v0.8.1";
       ];
   };

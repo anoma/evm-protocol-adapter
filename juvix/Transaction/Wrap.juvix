@@ -1,0 +1,96 @@
+module Transaction.Wrap;
+
+import Stdlib.Prelude open;
+import Applib open;
+import ERC20Resource open;
+import ERC20WrapperContractResource open;
+
+import Anoma open using {module ExternalIdentity; module InternalIdentity};
+
+import Types open;
+import Helpers open;
+
+wrapErc20
+  {M : Type -> Type}
+  {{Monad M}}
+  {{Tx M}}
+  (wrapper : Resource)
+  (erc20ResourceLogic : Logic)
+  (quantity : Nat)
+  : M Transaction :=
+  do {
+    nonce1 <- genRandomNonce;
+    nonce2 <- genRandomNonce;
+    nonce3 <- genRandomNonce;
+    txCtx <- getTxContext;
+    let
+      caller := txCtx |> TxContext.caller |> Identity.external;
+
+      wrapperContract :=
+        wrapper
+          |> Resource.label
+          |> builtinAnomaDecode
+          |> FfiCall.address
+          |> builtinEvmDecode;
+      wrapperResourceKind := kind wrapper;
+
+      wrappedResourceLabel := builtinAnomaEncode wrapperResourceKind;
+      wrappedResourceKind := kind' erc20ResourceLogic wrappedResourceLabel;
+
+      updatedWrapper :=
+        mkERC20WrapperContractResource@{
+          logic := Resource.logic wrapper;
+          wrappedResourceKind;
+          ffiCall :=
+            mkFfiCall@{
+              address :=
+                ExternalIdentity.ExternalIdentity.unExternalIdentity
+                  wrapperContract;
+              input :=
+                transferFromEvmInput@{
+                  to := wrapperContract;
+                  from := caller;
+                  quantity;
+                };
+              output := transferFromEvmOutput;
+            };
+          nonce := Nonce.toNat nonce1;
+        };
+      token :=
+        mkErc20Resource@{
+          logic := erc20ResourceLogic;
+          wrapperResourceKind;
+          owner := caller;
+          quantity;
+          nonce := Nonce.toNat nonce2;
+        };
+    in
+    prepareStandardTransaction@{
+      consumed :=
+        [
+          wrapper;
+          token@Resource{
+            ephemeral := true;
+            nonce := Nonce.toNat nonce3;
+          };
+        ];
+      created := [updatedWrapper; token];
+    };
+  };
+
+ctx (latestRoot : Nat) : TxContext :=
+  mkTxContext@{
+    caller := Universal.identity;
+    currentRoot := mkRoot latestRoot;
+  };
+
+main
+  (wrapper : Resource)
+  (erc20ResourceLogic : Logic)
+  (quantity : Nat)
+  (latestRoot : Nat)
+  : TransactionRequest :=
+  buildTransactionRequest
+    0
+    (ctx latestRoot)
+    (wrapErc20 wrapper erc20ResourceLogic quantity);

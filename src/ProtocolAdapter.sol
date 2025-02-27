@@ -1,36 +1,33 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25;
 
-import { Address } from "@openzeppelin/contracts/utils/Address.sol";
-// import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
-// import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import { ReentrancyGuardTransient } from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
+import { ReentrancyGuardTransient } from "openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
+import { IRiscZeroVerifier } from "risc0-ethereum/IRiscZeroVerifier.sol";
 
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IWrapper } from "./interfaces/IWrapper.sol";
 import { ComputableComponents } from "./libs/ComputableComponents.sol";
 import { Reference } from "./libs/Reference.sol";
-import { Delta } from "./libs/Delta.sol";
 import { ArrayLookup } from "./libs/ArrayLookup.sol";
 
-//import { UNIVERSAL_NULLIFIER_KEY, WRAP_MAGIC_NUMBER, UNWRAP_MAGIC_NUMBER } from "./Constants.sol";
 import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
-import { BlobStorage } from "./state/BlobStorage.sol";
+import { BlobStorage, ExpirableBlob, DeletionCriterion } from "./state/BlobStorage.sol";
 
-import { IRiscZeroVerifier } from "@risc0-ethereum/contracts/src/IRiscZeroVerifier.sol";
+import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
+import { ComplianceUnit } from "./proving/Compliance.sol";
+import { Delta } from "./proving/Delta.sol";
+import { MockDelta } from "../test/MockDelta.sol"; // TODO remove
 
-import { ComplianceUnit, ComplianceInstance } from "./proving/Compliance.sol";
-import { DeltaInstance } from "./proving/Delta.sol";
-import { LogicProofMap, LogicInstance, LogicRefHashProofPair } from "./proving/Logic.sol";
+import { AppData } from "./libs/AppData.sol";
 
-import { Resource, Transaction, Action, AppDataMap, EVMCall } from "./Types.sol";
+import { Resource, Transaction, Action, TagAppDataPair, KindFFICallPair, FFICall } from "./Types.sol";
 import { UNIVERSAL_NULLIFIER_KEY_COMMITMENT } from "./Constants.sol";
+import { console } from "forge-std/console.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
     ReentrancyGuardTransient,
-    // TODO Factor out CommitmentAccumulator and NullifierSet
     CommitmentAccumulator,
     NullifierSet,
     BlobStorage
@@ -38,40 +35,38 @@ contract ProtocolAdapter is
     using ArrayLookup for bytes32[];
     using ComputableComponents for Resource;
     using Reference for bytes;
-    using AppDataMap for AppDataMap.TagAppDataPair[];
-    using LogicProofMap for LogicProofMap.TagLogicProofPair[];
-    using Delta for bytes32;
+    using AppData for TagAppDataPair[];
+    using LogicProofs for TagLogicProofPair[];
 
-    uint256 private constant BALANCED = uint256(0);
-
-    IRiscZeroVerifier private immutable RISC_ZERO_VERIFIER;
-    bytes32 private immutable COMPLIANCE_CIRCUIT_ID;
-    bytes32 private immutable LOGIC_CIRCUIT_ID;
-    /// @notice The binding reference to the logic of the wrapper contract resource.
-    bytes32 private immutable WRAPPER_LOGIC_REF;
+    IRiscZeroVerifier private immutable riscZeroVerifier;
+    bytes32 private immutable complianceCircuitID;
+    bytes32 private immutable logicCircuitID;
 
     uint256 private _txCount;
 
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
-    // TODO Add events
 
+    error InvalidRootRef(bytes32 root);
+    error InvalidNullifierRef(bytes32 nullifier);
+    error InvalidCommitmentRef(bytes32 commitment);
+    error FFICallOutputMismatch(bytes expected, bytes actual);
+
+    error WrapperResourceKindMismatch(bytes32 expected, bytes32 actual);
     error WrapperContractResourceLabelMismatch(bytes32 expected, bytes32 actual);
     error WrapperContractResourceCommitmentNotFound(bytes32 commitment);
+    error TransactionUnbalanced(uint256 expected, uint256 actual);
 
     constructor(
-        bytes32 logicCircuitID,
-        bytes32 complianceCircuitID,
-        bytes32 wrapperLogicRef,
-        address riscZeroVerifier,
-        uint8 treeDepth
+        IRiscZeroVerifier _riscZeroVerifier,
+        bytes32 _logicCircuitID,
+        bytes32 _complianceCircuitID,
+        uint8 _treeDepth
     )
-        CommitmentAccumulator(treeDepth)
+        CommitmentAccumulator(_treeDepth)
     {
-        COMPLIANCE_CIRCUIT_ID = complianceCircuitID;
-        LOGIC_CIRCUIT_ID = logicCircuitID;
-
-        WRAPPER_LOGIC_REF = wrapperLogicRef;
-        RISC_ZERO_VERIFIER = IRiscZeroVerifier(riscZeroVerifier);
+        riscZeroVerifier = _riscZeroVerifier;
+        logicCircuitID = _logicCircuitID;
+        complianceCircuitID = _complianceCircuitID;
     }
 
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
@@ -84,15 +79,14 @@ contract ProtocolAdapter is
     /// set, respectively.
     /// @param transaction The transaction to execute.
     /// @dev This function is non-reentrant.
+    // slither-disable-next-line reentrancy-no-eth
     function execute(Transaction calldata transaction) external nonReentrant {
         _verify(transaction);
 
+        emit TransactionExecuted({ id: _txCount++, transaction: transaction });
+
         for (uint256 i = 0; i < transaction.actions.length; ++i) {
             Action calldata action = transaction.actions[i];
-
-            for (uint256 j = 0; j < action.evmCalls.length; ++j) {
-                _executeEvmCall(action, action.evmCalls[j]);
-            }
 
             for (uint256 j = 0; j < action.tagAppDataPairs.length; ++j) {
                 _storeBlob(action.tagAppDataPairs[j].appData);
@@ -103,203 +97,215 @@ contract ProtocolAdapter is
             }
 
             for (uint256 j = 0; j < action.commitments.length; ++j) {
-                _addCommitment(action.commitments[j]);
+                // Commitment pre-existence was already checked in `_verify(transaction);` at the top.
+                _addCommitmentUnchecked(action.commitments[j]);
+            }
+
+            for (uint256 j = 0; j < action.kindFFICallPairs.length; ++j) {
+                _executeFFICall(action.kindFFICallPairs[j].ffiCall);
             }
         }
-        emit TransactionExecuted({ id: _txCount++, transaction: transaction });
     }
 
     /// @notice Creates a wrapper contract resource object and adds the commitment to the commitment accumulator
-    // @param wrappedResourceKind The wrapped resource kind (that must not be confused with the wrapper contract resource kind).
-    /// @param wrapper The wrapper contract.
-    function createWrapperContractResource(IWrapper wrapper) external {
-        _addCommitment(
-            _wrapperContractResourceCommitment({
-                labelRef: _computeWrapperLabelRefWithIntegrityCheck(wrapper),
-                valueRef: _computeWrapperValueRef(wrapper.wrappedResourceKind(), bytes(""), bytes("")),
-                nonce: 0
-            })
-        );
+    /// @param wrapperContract The wrapper contract.
+    function createWrapperContractResource(IWrapper wrapperContract) external {
+        _createWrapperContractResource(wrapperContract);
     }
 
-    function _computeWrapperValueRef(
-        bytes32 wrappedResourceKind,
-        bytes memory input,
-        bytes memory output
-    )
-        internal
-        pure
-        returns (bytes32)
-    {
-        return abi.encode(wrappedResourceKind, input, output).toRefCalldata();
-    }
-
+    // slither-disable-next-line code-complexity
     function _verify(Transaction calldata transaction) internal view {
-        // compute delta
-        bytes32 transactionDelta;
+        // Can also be named DeltaHash (which is what Yulia does).
+        uint256[2] memory transactionDelta = Delta.zero();
 
-        // Verify resource logics and compliance proofs.
+        // Helper variable
+        uint256 resourceCount;
+
         for (uint256 i; i < transaction.actions.length; ++i) {
-            transactionDelta = transactionDelta.add(_actionDelta(transaction.actions[i]));
+            resourceCount += transaction.actions[i].commitments.length;
+            resourceCount += transaction.actions[i].nullifiers.length;
+        }
+        bytes32[] memory tags = new bytes32[](resourceCount);
+        // Reset resource count for later use.
+        resourceCount = 0;
 
-            _verifyAction(transaction.actions[i]);
+        for (uint256 i; i < transaction.actions.length; ++i) {
+            Action calldata action = transaction.actions[i];
+
+            for (uint256 j; j < action.kindFFICallPairs.length; ++j) {
+                _verifyFFICall(action.kindFFICallPairs[j]);
+            }
+
+            // Compliance Proofs
+            for (uint256 j; j < action.complianceUnits.length; ++j) {
+                ComplianceUnit calldata unit = action.complianceUnits[j];
+
+                // Check consumed resources
+                if (!transaction.roots.contains(unit.instance.consumed.rootRef)) {
+                    revert InvalidRootRef(unit.instance.consumed.rootRef);
+                }
+                _checkRootPreExistence(unit.instance.consumed.rootRef);
+
+                if (!action.nullifiers.contains(unit.instance.consumed.nullifierRef)) {
+                    revert InvalidNullifierRef(unit.instance.consumed.nullifierRef);
+                }
+                _checkNullifierNonExistence(unit.instance.consumed.nullifierRef);
+
+                // Check created resources
+                if (!action.commitments.contains(unit.instance.created.commitmentRef)) {
+                    revert InvalidCommitmentRef(unit.instance.created.commitmentRef);
+                }
+                _checkCommitmentNonExistence(unit.instance.created.commitmentRef);
+
+                riscZeroVerifier.verify({
+                    seal: unit.proof,
+                    imageId: complianceCircuitID,
+                    journalDigest: sha256(abi.encode(unit.verifyingKey, unit.instance))
+                });
+
+                // Prepare delta proof
+                transactionDelta = Delta.add({ p1: transactionDelta, p2: unit.instance.unitDelta });
+            }
+
+            // Logic Proofs
+            {
+                LogicInstance memory instance = LogicInstance({
+                    tag: bytes32(0),
+                    isConsumed: true,
+                    consumed: action.nullifiers,
+                    created: action.commitments,
+                    appDataForTag: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: bytes("") })
+                });
+                LogicRefProofPair memory logicRefProofPair;
+
+                // Check consumed resources
+                for (uint256 j; j < action.nullifiers.length; ++j) {
+                    bytes32 tag = action.nullifiers[j];
+
+                    tags[resourceCount] = tag;
+                    resourceCount++;
+
+                    instance.tag = tag;
+                    instance.appDataForTag = action.tagAppDataPairs.lookupCalldata(tag);
+
+                    {
+                        logicRefProofPair = action.logicProofs.lookup(tag);
+                        riscZeroVerifier.verify({
+                            seal: logicRefProofPair.proof,
+                            imageId: logicCircuitID,
+                            journalDigest: sha256(abi.encode( /*verifying key*/ logicRefProofPair.logicRef, instance))
+                        });
+                    }
+                }
+                // Check created resources
+                instance.isConsumed = false;
+                for (uint256 j; j < action.commitments.length; ++j) {
+                    bytes32 tag = action.commitments[j];
+
+                    tags[resourceCount] = tag;
+                    resourceCount++;
+
+                    instance.tag = tag;
+                    instance.appDataForTag = action.tagAppDataPairs.lookup(tag);
+
+                    {
+                        logicRefProofPair = action.logicProofs.lookup(tag);
+                        riscZeroVerifier.verify({
+                            seal: logicRefProofPair.proof,
+                            imageId: logicCircuitID,
+                            journalDigest: sha256(abi.encode( /*verifying key*/ logicRefProofPair.logicRef, instance))
+                        });
+                    }
+                }
+            }
         }
 
-        _verifyDelta(transactionDelta, transaction.deltaProof);
+        // Delta Proof
+        // TODO: THIS IS A TEMPORARY MOCK PROOF AND MUST BE REMOVED.
+        // NOTE: The `transactionHash(tags)` and `transactionDelta` are not used here.
+        MockDelta.verify({ deltaProof: transaction.deltaProof });
+        /*
+        Delta.verify({
+            transactionHash: _transactionHash(tags),
+            transactionDelta: transactionDelta,
+            deltaProof: transaction.deltaProof
+         });
+        */
     }
 
-    function _verifyAction(Action calldata action) internal view {
-        for (uint256 i; i < action.complianceUnits.length; ++i) {
-            _verifyComplianceUnit(action.complianceUnits[i]);
-        }
+    function transactionHash(bytes32[] calldata tags) external pure returns (bytes32) {
+        return _transactionHash(tags);
+    }
 
-        for (uint256 i; i < action.commitments.length; ++i) {
-            _verifyLogicProof({ tag: action.commitments[i], action: action, isConsumed: false });
-        }
+    function _transactionHash(bytes32[] memory tags) internal pure returns (bytes32) {
+        return sha256(abi.encode(tags));
+    }
 
-        for (uint256 i; i < action.nullifiers.length; ++i) {
-            _verifyLogicProof({ tag: action.nullifiers[i], action: action, isConsumed: true });
+    function _verifyFFICall(KindFFICallPair calldata kindFFICallPair) internal view {
+        bytes32 passedKind = kindFFICallPair.kind;
+        bytes32 fetchedKind = kindFFICallPair.ffiCall.wrapperContract.wrapperResourceKind();
+
+        if (passedKind != fetchedKind) {
+            revert WrapperResourceKindMismatch({ expected: fetchedKind, actual: passedKind });
         }
     }
 
-    function _actionDelta(Action calldata action) internal pure returns (bytes32 delta) {
-        for (uint256 i; i < action.complianceUnits.length; ++i) {
-            delta = delta.add(action.complianceUnits[i].refInstance.referencedComplianceInstance.unitDelta);
+    // TODO Consider DoS attacks https://detectors.auditbase.com/avoid-external-calls-in-unbounded-loops-solidity
+    // slither-disable-next-line calls-loop
+    function _executeFFICall(FFICall calldata ffiCall) internal {
+        bytes memory output = ffiCall.wrapperContract.evmCall(ffiCall.input);
+
+        if (keccak256(output) != keccak256(ffiCall.output)) {
+            revert FFICallOutputMismatch({ expected: ffiCall.output, actual: output });
         }
     }
 
-    function _verifyDelta(bytes32 computedDelta, bytes calldata deltaProof) internal pure {
-        DeltaInstance memory instance = DeltaInstance({ delta: computedDelta, expectedBalance: 0 });
-        bytes32 verifyingKey = bytes32(sha256("TODO")); // Signature of verifying key, public key
-
-        {
-            //TODO
-            deltaProof;
-            verifyingKey;
-            instance;
-        }
-
-        // Proof is signature over the verifying key.
-        // Public key that signs the message is derived from some values.
-        // -> Yulia: https://research.anoma.net/t/sapling-binding-signature/121
-        // Xuyang can tell me what to do concretely.
+    function _computeWrapperLabelRef(IWrapper wrapperContract) internal pure returns (bytes32) {
+        return abi.encode(wrapperContract).toRefCalldata();
     }
 
-    function _verifyComplianceUnit(ComplianceUnit calldata complianceUnit) internal view {
-        ComplianceInstance calldata instance = complianceUnit.refInstance.referencedComplianceInstance;
-        // Note: referenced, because the instance contains things that we use in other places (see definiton of compliance instance).
-        // Note: If we provide a copy, we have to ensure that both things are really the same.
-
-        for (uint256 i; i < instance.consumed.length; ++i) {
-            _checkRootPreExistence(instance.consumed[i].rootRef);
-            _checkNullifierNonExistence(instance.consumed[i].nullifierRef);
-        }
-
-        for (uint256 i; i < instance.created.length; ++i) {
-            _checkCommitmentNonExistence(instance.created[i].commitmentRef);
-        }
-
-        RISC_ZERO_VERIFIER.verify({
-            seal: complianceUnit.proof,
-            imageId: COMPLIANCE_CIRCUIT_ID,
-            journalDigest: sha256(abi.encode(complianceUnit.verifyingKey, instance))
-        });
-    }
-
-    function _verifyLogicProof(bytes32 tag, Action calldata action, bool isConsumed) internal view {
-        LogicRefHashProofPair calldata logicRefHashProofPair = action.logicProofs.lookupCalldata(tag);
-        // hash of the logifRef -> function privacy requires and additional layer of verification.
-
-        bytes calldata proof = logicRefHashProofPair.proof;
-        // NOTE: Yulia: The following is NOT correct.
-        // //bytes32 verifyingKey = logicRefHashProofPair.logicRefHash;
-
-        // For below, see https://research.anoma.net/t/zkvm-compilers-goals/459.
-        // TODO Yulia, specs will change. Afterwards, the transaction object will most likely contain the verifying key in some form. Alternatively, the verifying key could be part of app data, but this should be avoided to not overcomplicate things/lookups.
-        bytes32 verifyingKey = sha256("TODO - REQUIRES SPECS UPDATE");
-
-        // NOTE: Yulia: The instance
-        LogicInstance memory instance = LogicInstance({
-            tag: tag,
-            isConsumed: isConsumed,
-            consumed: action.nullifiers,
-            created: action.commitments,
-            appDataForTag: action.tagAppDataPairs.lookupCalldata(tag)
-        });
-
-        // NOTE: Yulia: This is a outer proof (recursive proof) verifying that the resource logic proof was verified.
-        // Accordingly, this doesn't receive the LogicInstance as defined above.
-        RISC_ZERO_VERIFIER.verify({
-            seal: proof,
-            imageId: LOGIC_CIRCUIT_ID,
-            journalDigest: sha256(abi.encode(verifyingKey, instance))
-        });
-    }
-
-    /// @notice This call expects the consumed & created wrapper resource to be already part of the transaction object and to be proven.
-    function _executeEvmCall(Action memory action, EVMCall memory evmCall) internal {
-        IWrapper wrapperContract = IWrapper(evmCall.wrapperContract);
-
-        bytes32 labelRef = _computeWrapperLabelRefWithIntegrityCheck(wrapperContract);
-
-        // Execute EVM call and put call in- and output in the wrapper resource value field.
-        bytes32 valueRef = _computeWrapperValueRef({
-            wrappedResourceKind: wrapperContract.wrappedResourceKind(),
-            input: evmCall.input,
-            output: wrapperContract.evmCall(evmCall.input)
-        });
-
-        // NOTE: The full protocol adapter can store the label, and value data as blobs.
-        //bytes32 valueRef = _storeBlob(abi.encode(evmCall.input, output), DeletionCriterion.AfterTransaction);
-
-        // Create a new wrapper contract resource.
-        // NOTE: The delta proof requires the old wrapper contract to be consumed.
-        bytes32 commitment =
-            _wrapperContractResourceCommitment({ valueRef: valueRef, labelRef: labelRef, nonce: evmCall.nonce });
-
-        // Check that the commitment is part of the commitment set.
-        bool commitmentLookupSuccess = action.commitments.contains(commitment);
-        if (!commitmentLookupSuccess) revert WrapperContractResourceCommitmentNotFound(commitment);
-    }
     /// @notice Computes the commitment of a wrapper contract resource that can be consumed by the universal identity.
+    // @param logicRef The wrapper contract logic reference.
     /// @param labelRef The wrapper contract label reference.
-    /// @param nonce The resource nonce.
-
+    /// @param valueRef The wrapper contract value reference.
     function _wrapperContractResourceCommitment(
+        IWrapper wrapperContract,
         bytes32 labelRef,
-        bytes32 valueRef,
-        uint256 nonce
+        bytes32 valueRef
     )
         internal
-        view
         returns (bytes32)
     {
         return Resource({
-            logicRef: WRAPPER_LOGIC_REF,
+            logicRef: wrapperContract.wrapperResourceLogicRef(),
             labelRef: labelRef,
             valueRef: valueRef,
             nullifierKeyCommitment: UNIVERSAL_NULLIFIER_KEY_COMMITMENT,
             quantity: 1,
-            nonce: nonce,
+            nonce: wrapperContract.newNonce(),
             randSeed: 0,
             ephemeral: false
         }).commitment();
     }
 
-    function _computeWrapperLabelRef(address wrapperContract) internal pure returns (bytes32) {
-        return abi.encode(wrapperContract).toRefCalldata();
-    }
-
-    function _computeWrapperLabelRefWithIntegrityCheck(IWrapper wrapperContract) internal view returns (bytes32) {
-        bytes32 computedWrapperLabelRef = _computeWrapperLabelRef(address(wrapperContract));
+    function _createWrapperContractResource(IWrapper wrapperContract) internal {
+        bytes32 computedWrapperLabelRef = _computeWrapperLabelRef(wrapperContract);
         bytes32 expectedWrapperLabelRef = wrapperContract.wrapperResourceLabelRef();
 
+        // Check integrity
         if (computedWrapperLabelRef != expectedWrapperLabelRef) {
             revert WrapperContractResourceLabelMismatch({
                 expected: expectedWrapperLabelRef,
                 actual: computedWrapperLabelRef
             });
         }
-        return computedWrapperLabelRef;
+
+        _addCommitment(
+            _wrapperContractResourceCommitment({
+                wrapperContract: wrapperContract,
+                labelRef: computedWrapperLabelRef,
+                valueRef: abi.encode(wrapperContract.wrappedResourceKind(), bytes(""), bytes("")).toRefCalldata()
+            })
+        );
     }
 }

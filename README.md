@@ -1,5 +1,16 @@
 # EVM Protocol Adapter
 
+1. User calls transaction function written in Juvix
+2. Creates and consumes resources
+
+- computes commitments and nullifiers
+- populates appData
+- populates FFICall fields
+
+3. Generates proofs
+
+- Logic: `prove(logicRef, pub, priv)`
+- Compliance: `prove()`
 
 ## Protocol Adapter Deployment
 
@@ -19,15 +30,14 @@ sequenceDiagram
     participant r0 as  RISZ Zero Verifier Contract
   end
   # Preparation
-  wr -->> pa : logic reference  
+  wr -->> pa : logic reference
   rm -->> pa : logic circuit ID
   rm -->> pa : compliance circuit ID
   r0 -->> pa : address
-  
+
   # Steps
   dep ->> pa : deploy
 ```
-
 
 ## Wrapper Contract Deployment
 
@@ -56,9 +66,7 @@ sequenceDiagram
   end
 ```
 
-
 ## Transaction with EVM call
-
 
 ```mermaid
 sequenceDiagram
@@ -101,6 +109,7 @@ sequenceDiagram
 ```
 
 ### Limitations
+
 - A wrapper contract must be deployed by a 3rd party
 - 1 EVM call per wrapper contract per block
 - EVM call return values must be known at proving time

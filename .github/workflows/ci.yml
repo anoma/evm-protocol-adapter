@@ -1,94 +1,73 @@
-name: "CI"
-
-env:
-  API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
-  FOUNDRY_PROFILE: "ci"
+name: CI
 
 on:
-  workflow_dispatch:
-  pull_request:
   push:
-    branches:
-      - "main"
+  pull_request:
+  workflow_dispatch:
 
 jobs:
-  lint:
-    runs-on: "ubuntu-latest"
+  foundry:
+    env:
+      FOUNDRY_PROFILE: ci
+
+    strategy:
+      fail-fast: true
+
+    name: Foundry project
+    runs-on: ubuntu-latest
     steps:
-      - name: "Check out the repo"
-        uses: "actions/checkout@v4"
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: "Install Foundry"
-        uses: "foundry-rs/foundry-toolchain@v1"
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
 
-      - name: "Install Bun"
-        uses: "oven-sh/setup-bun@v1"
+      - name: Show Forge version
+        run: forge --version
 
-      - name: "Install the Node.js dependencies"
-        run: "bun install"
+      - name: Install Slither
+        run: pip install slither-analyzer
 
-      - name: "Lint the code"
-        run: "bun run lint"
+      - name: Show Slither version
+        run: slither --version
 
-      - name: "Add lint summary"
-        run: |
-          echo "## Lint result" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
+      - name: Run Forge fmt
+        run: forge fmt --check
+        id: fmt
 
-  build:
-    runs-on: "ubuntu-latest"
+      - name: Run Slither
+        run: slither .
+        id: analyze
+
+      - name: Run Forge build
+        run: forge build --sizes
+        id: build
+
+      - name: Run Forge tests
+        run: forge test -vvv
+        id: test
+
+  juvix:
+    strategy:
+      fail-fast: true
+
+    name: Juvix project
+    runs-on: ubuntu-latest
     steps:
-      - name: "Check out the repo"
-        uses: "actions/checkout@v4"
+      - uses: actions/checkout@v4
 
-      - name: "Install Foundry"
-        uses: "foundry-rs/foundry-toolchain@v1"
+      - name: Download latest nightly Juvix binary
+        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        with:
+          repo: anoma/juvix-nightly-builds
+          tag: nightly-2025-02-13-0.6.9-8b06157
+          cache: enable
 
-      - name: "Install Bun"
-        uses: "oven-sh/setup-bun@v1"
+      - name: Run Juvix typecheck
+        run: juvix dependencies update
+        working-directory: ./juvix
 
-      - name: "Install the Node.js dependencies"
-        run: "bun install"
-
-      - name: "Build the contracts and print their size"
-        run: "forge build --sizes"
-
-      - name: "Add build summary"
-        run: |
-          echo "## Build result" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
-
-  test:
-    needs: ["lint", "build"]
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "Check out the repo"
-        uses: "actions/checkout@v4"
-
-      - name: "Install Foundry"
-        uses: "foundry-rs/foundry-toolchain@v1"
-
-      - name: "Install Bun"
-        uses: "oven-sh/setup-bun@v1"
-
-      - name: "Install the Node.js dependencies"
-        run: "bun install"
-
-      - name: "Show the Foundry config"
-        run: "forge config"
-
-      - name:
-          "Generate a fuzz seed that changes weekly to avoid burning through RPC
-          allowance"
-        run: >
-          echo "FOUNDRY_FUZZ_SEED=$(
-            echo $(($EPOCHSECONDS - $EPOCHSECONDS % 604800))
-          )" >> $GITHUB_ENV
-
-      - name: "Run the tests"
-        run: "forge test"
-
-      - name: "Add test summary"
-        run: |
-          echo "## Tests result" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
+      - name: Run Juvix typecheck
+        run: juvix typecheck
+        working-directory: ./juvix
