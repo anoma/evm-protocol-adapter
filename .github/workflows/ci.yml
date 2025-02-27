@@ -23,13 +23,17 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
+      - name: Show Forge version
+        run: |
+          forge --version
+
       - name: Install Slither
         run: |
           pip install slither-analyzer
 
-      - name: Show Forge version
+      - name: Show Slither version
         run: |
-          forge --version
+          slither --version
 
       - name: Run Forge fmt
         run: |
