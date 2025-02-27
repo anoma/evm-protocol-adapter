@@ -9,7 +9,7 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  check:
+  solidity:
     strategy:
       fail-fast: true
 
@@ -24,33 +24,46 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Show Forge version
-        run: |
-          forge --version
+        run: forge --version
 
       - name: Install Slither
-        run: |
-          pip install slither-analyzer
+        run: pip install slither-analyzer
 
       - name: Show Slither version
-        run: |
-          slither --version
+        run: slither --version
 
       - name: Run Forge fmt
-        run: |
-          forge fmt --check
+        run: forge fmt --check
         id: fmt
 
       - name: Run Slither
-        run: |
-          slither .
+        run: slither .
         id: analyze
 
       - name: Run Forge build
-        run: |
-          forge build --sizes
+        run: forge build --sizes
         id: build
 
       - name: Run Forge tests
-        run: |
-          forge test -vvv
+        run: forge test -vvv
         id: test
+
+  juvix:
+    strategy:
+      fail-fast: true
+
+    name: Juvix project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download latest nightly Juvix binary
+        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        with:
+          repo: anoma/juvix-nightly-builds
+          tag: nightly-2025-02-13-0.6.9-8b06157
+          cache: enable
+
+      - name: Run Juvix typecheck
+        run: juvix typecheck
+        working-directory: ./juvix
