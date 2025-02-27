@@ -65,5 +65,9 @@ jobs:
           cache: enable
 
       - name: Run Juvix typecheck
+        run: juvix dependencies update
+        working-directory: ./juvix
+
+      - name: Run Juvix typecheck
         run: juvix typecheck
         working-directory: ./juvix
