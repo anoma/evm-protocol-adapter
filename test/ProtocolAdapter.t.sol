@@ -22,10 +22,15 @@ import {AppData, TagAppDataPair} from "../src/libs/AppData.sol";
 
 import {MockRiscZeroProof} from "./MockRiscZeroProof.sol";
 
+import {Log} from "./Logging.sol";
+
 contract ProtocolAdapterTest is Test {
     using ComputableComponents for Resource;
     using AppData for TagAppDataPair[];
     using Delta for uint256[2];
+
+    using Log for Resource;
+    using Log for LogicInstance;
 
     uint256 internal testNumber;
     ProtocolAdapter internal protocolAdapter;
@@ -55,13 +60,23 @@ contract ProtocolAdapterTest is Test {
         protocolAdapter.verify(_mockTransaction({consumed: consumed, created: created}));
     }
 
-    function test_verify() public view {
+    function test_verify_tx() public view {
         (Resource[] memory consumed, Resource[] memory created) = _mockResources();
+
+        for (uint256 i = 0; i < consumed.length; ++i) {
+            consumed[i].log();
+        }
+
+        for (uint256 i = 0; i < created.length; ++i) {
+            created[i].log();
+        }
+
         protocolAdapter.verify(_mockTransaction({consumed: consumed, created: created}));
     }
 
     function test_execute() public {
         (Resource[] memory consumed, Resource[] memory created) = _mockResources();
+
         protocolAdapter.execute(_mockTransaction({consumed: consumed, created: created}));
     }
 
@@ -79,8 +94,16 @@ contract ProtocolAdapterTest is Test {
         });
 
         consumed = new Resource[](1);
-        consumed[0] = created[0];
-        consumed[0].ephemeral = true;
+        consumed[0] = Resource({
+            logicRef: ALWAYS_VALID_LOGIC_REF,
+            labelRef: EMPTY_BLOB_REF,
+            valueRef: EMPTY_BLOB_REF,
+            nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
+            quantity: 1,
+            nonce: 0,
+            randSeed: 0,
+            ephemeral: true
+        });
     }
 
     function _mockTransaction(Resource[] memory consumed, Resource[] memory created)
@@ -167,6 +190,7 @@ contract ProtocolAdapterTest is Test {
                 created: commitments,
                 appDataForTag: appData.lookup(tag)
             });
+            instance.log();
 
             bytes32 verifyingKey = ALWAYS_VALID_LOGIC_REF;
 
@@ -191,6 +215,7 @@ contract ProtocolAdapterTest is Test {
                 created: commitments,
                 appDataForTag: appData.lookup(tag)
             });
+            instance.log();
 
             bytes32 verifyingKey = ALWAYS_VALID_LOGIC_REF;
 

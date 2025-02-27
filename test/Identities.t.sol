@@ -7,7 +7,7 @@ import {Universal} from "../src/libs/Identities.sol";
 
 import {EllipticCurveK256} from "../src/libs/EllipticCurveK256.sol";
 
-contract UniversalIdentity is Test {
+contract UniversalIdentityTest is Test {
     bytes32 constant privateKey = bytes32(uint256(1));
     bytes internal publicKey;
     bytes32 internal hashedKey;
@@ -22,19 +22,23 @@ contract UniversalIdentity is Test {
         account = address(uint160(uint256(hashedKey)));
     }
 
-    function test_private_key() public pure {
+    function testPrivateKey() public pure {
         assertEq(Universal.INTERNAL_IDENTITY, privateKey);
     }
 
-    function test_public_key() public view {
+    function testPublicKey() public view {
         assertEq(Universal.PUBLIC_KEY, publicKey);
     }
 
-    function test_external_identity() public view {
+    function testPublicKeyComponents() public pure {
+        assertEq(abi.encode(Universal.PUBLIC_KEY_X, Universal.PUBLIC_KEY_Y), Universal.PUBLIC_KEY);
+    }
+
+    function testExternalIdentity() public view {
         assertEq(Universal.EXTERNAL_IDENTITY, hashedKey);
     }
 
-    function test_account() public view {
+    function testAccount() public view {
         assertEq(Universal.ACCOUNT, account);
     }
 }

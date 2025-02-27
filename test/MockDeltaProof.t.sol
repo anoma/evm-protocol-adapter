@@ -8,12 +8,15 @@ import {Universal} from "../src/libs/Identities.sol";
 
 library MockDeltaProof {
     // Message
-    /* The empty array
+    /* The empty array "[]"
     abi.encode(
         0x0000000000000000000000000000000000000000000000000000000000000020,
         0x0000000000000000000000000000000000000000000000000000000000000000
     );*/
-    bytes internal constant MSG = abi.encode(new bytes32[](0));
+    // abi.encode(new bytes32[](0));
+    bytes internal constant MSG =
+        hex"00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000";
+
     bytes32 internal constant MSG_HASH = keccak256(MSG);
 
     // Signer
@@ -25,12 +28,9 @@ library MockDeltaProof {
     uint8 internal constant V = 0x1c; // 28
     bytes internal constant SIG = abi.encodePacked(R, S, V);
 
-    uint256 internal constant TRANSACTION_DELTA_X = uint256(R);
-    uint256 internal constant TRANSACTION_DELTA_Y = uint256(S);
-
     function transactionDelta() internal pure returns (uint256[2] memory txDelta) {
-        txDelta[0] = TRANSACTION_DELTA_X;
-        txDelta[1] = TRANSACTION_DELTA_Y;
+        txDelta[0] = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798;
+        txDelta[1] = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8;
     }
 }
 

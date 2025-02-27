@@ -9,8 +9,6 @@ import {IRiscZeroVerifier, Receipt as RiscZeroReceipt, VerificationFailed} from 
 import {RiscZeroMockVerifier, SelectorMismatch} from "risc0-ethereum/test/RiscZeroMockVerifier.sol";
 import {MockRiscZeroProof} from "./MockRiscZeroProof.sol";
 
-import {console} from "forge-std/console.sol";
-
 contract MockRiscZeroProofTest is Test {
     using Bytes for bytes;
 
@@ -26,12 +24,14 @@ contract MockRiscZeroProofTest is Test {
         });
     }
 
-    /// @notice Checks that the proof has the expected bytes4 selector of the verifier prepended.
+    /// @notice should have the expected bytes4 verifier selector prepended.
     function test_proof_has_selector() public view {
         bytes4 selector = bytes4(proof.seal.slice(0, 4));
+
         assertEq(selector, MockRiscZeroProof.VERIFIER_SELECTOR);
     }
 
+    /// @notice It should verify correct proofs.
     function test_correct_proof() public view {
         mockVerifier.verify({
             seal: proof.seal,
@@ -40,6 +40,7 @@ contract MockRiscZeroProofTest is Test {
         });
     }
 
+    /// @notice Verification
     function test_wrong_image_id() public {
         vm.expectRevert(VerificationFailed.selector);
         mockVerifier.verify({
