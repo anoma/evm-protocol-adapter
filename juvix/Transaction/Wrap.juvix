@@ -43,7 +43,9 @@ wrapErc20
           wrappedResourceKind;
           ffiCall :=
             mkFfiCall@{
-              address := ExternalIdentity.ExternalIdentity.unExternalIdentity wrapperContract;
+              address :=
+                ExternalIdentity.ExternalIdentity.unExternalIdentity
+                  wrapperContract;
               input :=
                 transferFromEvmInput@{
                   to := wrapperContract;

@@ -12,7 +12,16 @@ library AppData {
     error AppDataTagNotFound(bytes32 tag);
     error AppDataIndexOutBounds(uint256 index, uint256 max);
 
-    function lookup(TagAppDataPair[] calldata map, bytes32 tag) internal pure returns (ExpirableBlob memory) {
+    function lookupCalldata(TagAppDataPair[] calldata map, bytes32 tag) internal pure returns (ExpirableBlob memory) {
+        for (uint256 i = 0; i < map.length; i++) {
+            if (map[i].tag == tag) {
+                return (map[i].appData);
+            }
+        }
+        revert AppDataTagNotFound(tag);
+    }
+
+    function lookup(TagAppDataPair[] memory map, bytes32 tag) internal pure returns (ExpirableBlob memory) {
         for (uint256 i = 0; i < map.length; i++) {
             if (map[i].tag == tag) {
                 return (map[i].appData);

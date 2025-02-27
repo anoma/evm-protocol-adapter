@@ -8,42 +8,26 @@ import { IWrapper } from "./interfaces/IWrapper.sol";
 /// A contract owning EVM state and executing EVM calls.
 abstract contract WrapperBase is IWrapper, Ownable {
     /// @notice The binding reference to the logic of the wrapper contract resource.
-    bytes32 internal immutable WRAPPER_RESOURCE_LOGIC_REF;
+    bytes32 public immutable wrapperResourceLogicRef;
 
     /// @notice The binding reference to the label of the wrapper contract resource.
     /// @dev Determined by the protocol adapter on deployment.
-    bytes32 internal immutable WRAPPER_RESOURCE_LABEL_REF;
+    bytes32 public immutable wrapperResourceLabelRef;
 
     /// @notice The kind of the wrapper resource kind.
-    bytes32 internal immutable WRAPPER_RESOURCE_KIND;
+    bytes32 public immutable wrapperResourceKind;
 
     /// @notice The kind of the EVM state wrapping resource kind.
-    bytes32 internal immutable WRAPPED_RESOURCE_KIND;
+    bytes32 public immutable wrappedResourceKind;
 
     uint256 private nonce;
 
     constructor(address protocolAdapter, bytes32 wrapperLogicRef, bytes32 wrappedKind) Ownable(protocolAdapter) {
-        WRAPPER_RESOURCE_LOGIC_REF = wrapperLogicRef;
-        WRAPPER_RESOURCE_LABEL_REF = sha256(abi.encode(address(this), wrappedKind));
-        WRAPPER_RESOURCE_KIND = sha256(abi.encode(WRAPPER_RESOURCE_LOGIC_REF, WRAPPER_RESOURCE_LABEL_REF));
+        wrapperResourceLogicRef = wrapperLogicRef;
+        wrapperResourceLabelRef = sha256(abi.encode(address(this), wrappedKind));
+        wrapperResourceKind = sha256(abi.encode(wrapperResourceLogicRef, wrapperResourceLabelRef));
 
-        WRAPPED_RESOURCE_KIND = wrappedKind;
-    }
-
-    function wrapperResourceLogicRef() external view returns (bytes32) {
-        return WRAPPER_RESOURCE_LOGIC_REF;
-    }
-
-    function wrapperResourceLabelRef() external view returns (bytes32) {
-        return WRAPPER_RESOURCE_LABEL_REF;
-    }
-
-    function wrapperResourceKind() external view returns (bytes32) {
-        return WRAPPED_RESOURCE_KIND;
-    }
-
-    function wrappedResourceKind() external view returns (bytes32) {
-        return WRAPPED_RESOURCE_KIND;
+        wrappedResourceKind = wrappedKind;
     }
 
     function evmCall(bytes calldata input) external onlyOwner returns (bytes memory output) {

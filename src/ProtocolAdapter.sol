@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25;
 
-import { ReentrancyGuardTransient } from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
+import { ReentrancyGuardTransient } from "openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
+import { IRiscZeroVerifier } from "risc0-ethereum/IRiscZeroVerifier.sol";
 
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IWrapper } from "./interfaces/IWrapper.sol";
@@ -11,18 +12,18 @@ import { ArrayLookup } from "./libs/ArrayLookup.sol";
 
 import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
-import { BlobStorage } from "./state/BlobStorage.sol";
+import { BlobStorage, ExpirableBlob, DeletionCriterion } from "./state/BlobStorage.sol";
 
-import { IRiscZeroVerifier } from "risc0-ethereum/contracts/src/IRiscZeroVerifier.sol";
-
-import { ComplianceInstance, ComplianceUnit } from "./proving/Compliance.sol";
-import { Delta } from "./proving/Delta.sol";
 import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
+import { ComplianceUnit } from "./proving/Compliance.sol";
+import { Delta } from "./proving/Delta.sol";
+import { MockDelta } from "../test/MockDelta.sol"; // TODO remove
 
 import { AppData } from "./libs/AppData.sol";
 
 import { Resource, Transaction, Action, TagAppDataPair, KindFFICallPair, FFICall } from "./Types.sol";
 import { UNIVERSAL_NULLIFIER_KEY_COMMITMENT } from "./Constants.sol";
+import { console } from "forge-std/console.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
@@ -37,15 +38,18 @@ contract ProtocolAdapter is
     using AppData for TagAppDataPair[];
     using LogicProofs for TagLogicProofPair[];
 
-    IRiscZeroVerifier private immutable RISC_ZERO_VERIFIER;
-    bytes32 private immutable COMPLIANCE_CIRCUIT_ID;
-    bytes32 private immutable LOGIC_CIRCUIT_ID;
-    uint256 private immutable ZERO_DELTA_X;
-    uint256 private immutable ZERO_DELTA_Y;
+    IRiscZeroVerifier private immutable riscZeroVerifier;
+    bytes32 private immutable complianceCircuitID;
+    bytes32 private immutable logicCircuitID;
 
     uint256 private _txCount;
 
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
+
+    error InvalidRootRef(bytes32 root);
+    error InvalidNullifierRef(bytes32 nullifier);
+    error InvalidCommitmentRef(bytes32 commitment);
+    error FFICallOutputMismatch(bytes expected, bytes actual);
 
     error WrapperResourceKindMismatch(bytes32 expected, bytes32 actual);
     error WrapperContractResourceLabelMismatch(bytes32 expected, bytes32 actual);
@@ -53,21 +57,16 @@ contract ProtocolAdapter is
     error TransactionUnbalanced(uint256 expected, uint256 actual);
 
     constructor(
-        bytes32 logicCircuitID,
-        bytes32 complianceCircuitID,
-        address riscZeroVerifier,
-        uint8 treeDepth
+        IRiscZeroVerifier _riscZeroVerifier,
+        bytes32 _logicCircuitID,
+        bytes32 _complianceCircuitID,
+        uint8 _treeDepth
     )
-        CommitmentAccumulator(treeDepth)
+        CommitmentAccumulator(_treeDepth)
     {
-        COMPLIANCE_CIRCUIT_ID = complianceCircuitID;
-        LOGIC_CIRCUIT_ID = logicCircuitID;
-
-        uint256[2] memory zeroDelta = Delta.zero();
-        ZERO_DELTA_X = zeroDelta[0];
-        ZERO_DELTA_Y = zeroDelta[1];
-
-        RISC_ZERO_VERIFIER = IRiscZeroVerifier(riscZeroVerifier);
+        riscZeroVerifier = _riscZeroVerifier;
+        logicCircuitID = _logicCircuitID;
+        complianceCircuitID = _complianceCircuitID;
     }
 
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
@@ -76,21 +75,18 @@ contract ProtocolAdapter is
         _verify(transaction);
     }
 
-    function lookupFFICall() external { }
-
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
     /// @param transaction The transaction to execute.
     /// @dev This function is non-reentrant.
+    // slither-disable-next-line reentrancy-no-eth
     function execute(Transaction calldata transaction) external nonReentrant {
         _verify(transaction);
 
+        emit TransactionExecuted({ id: _txCount++, transaction: transaction });
+
         for (uint256 i = 0; i < transaction.actions.length; ++i) {
             Action calldata action = transaction.actions[i];
-
-            for (uint256 j = 0; j < action.kindFFICallPairs.length; ++j) {
-                _executeFFICall(action.kindFFICallPairs[j].ffiCall);
-            }
 
             for (uint256 j = 0; j < action.tagAppDataPairs.length; ++j) {
                 _storeBlob(action.tagAppDataPairs[j].appData);
@@ -101,10 +97,14 @@ contract ProtocolAdapter is
             }
 
             for (uint256 j = 0; j < action.commitments.length; ++j) {
-                _addCommitment(action.commitments[j]);
+                // Commitment pre-existence was already checked in `_verify(transaction);` at the top.
+                _addCommitmentUnchecked(action.commitments[j]);
+            }
+
+            for (uint256 j = 0; j < action.kindFFICallPairs.length; ++j) {
+                _executeFFICall(action.kindFFICallPairs[j].ffiCall);
             }
         }
-        emit TransactionExecuted({ id: _txCount++, transaction: transaction });
     }
 
     /// @notice Creates a wrapper contract resource object and adds the commitment to the commitment accumulator
@@ -113,78 +113,132 @@ contract ProtocolAdapter is
         _createWrapperContractResource(wrapperContract);
     }
 
-    function _zeroDelta() internal view returns (uint256[2] memory zeroDelta) {
-        zeroDelta[0] = ZERO_DELTA_X;
-        zeroDelta[1] = ZERO_DELTA_Y;
-    }
-
-    function _transactionDigest(Transaction calldata transaction) internal pure returns (bytes32) {
-        uint256 commitmentCount = 0;
-        uint256 nullifierCount = 0;
-
-        for (uint256 i; i < transaction.actions.length; ++i) {
-            commitmentCount += transaction.actions[i].commitments.length;
-            nullifierCount += transaction.actions[i].nullifiers.length;
-        }
-
-        bytes32[] memory cmsAndNfs = new bytes32[](commitmentCount + nullifierCount);
-
-        for (uint256 i; i < transaction.actions.length; ++i) {
-            for (uint256 j; j < commitmentCount; ++j) {
-                cmsAndNfs[j] = transaction.actions[i].commitments[j];
-            }
-            for (uint256 j; j < nullifierCount; ++j) {
-                cmsAndNfs[nullifierCount + j] = transaction.actions[i].nullifiers[j];
-            }
-        }
-
-        return sha256(abi.encode(cmsAndNfs));
-    }
-
+    // slither-disable-next-line code-complexity
     function _verify(Transaction calldata transaction) internal view {
         // Can also be named DeltaHash (which is what Yulia does).
-        uint256[2] memory transactionDelta = _zeroDelta();
+        uint256[2] memory transactionDelta = Delta.zero();
+
+        // Helper variable
+        uint256 resourceCount;
 
         for (uint256 i; i < transaction.actions.length; ++i) {
-            // Compute the transaction delta
-            transactionDelta = Delta.add({ p1: transactionDelta, p2: _actionDelta(transaction.actions[i]) });
+            resourceCount += transaction.actions[i].commitments.length;
+            resourceCount += transaction.actions[i].nullifiers.length;
+        }
+        bytes32[] memory tags = new bytes32[](resourceCount);
+        // Reset resource count for later use.
+        resourceCount = 0;
 
-            // Verify resource logics and compliance proofs.
-            _verifyAction(transaction.actions[i]);
+        for (uint256 i; i < transaction.actions.length; ++i) {
+            Action calldata action = transaction.actions[i];
+
+            for (uint256 j; j < action.kindFFICallPairs.length; ++j) {
+                _verifyFFICall(action.kindFFICallPairs[j]);
+            }
+
+            // Compliance Proofs
+            for (uint256 j; j < action.complianceUnits.length; ++j) {
+                ComplianceUnit calldata unit = action.complianceUnits[j];
+
+                // Check consumed resources
+                if (!transaction.roots.contains(unit.instance.consumed.rootRef)) {
+                    revert InvalidRootRef(unit.instance.consumed.rootRef);
+                }
+                _checkRootPreExistence(unit.instance.consumed.rootRef);
+
+                if (!action.nullifiers.contains(unit.instance.consumed.nullifierRef)) {
+                    revert InvalidNullifierRef(unit.instance.consumed.nullifierRef);
+                }
+                _checkNullifierNonExistence(unit.instance.consumed.nullifierRef);
+
+                // Check created resources
+                if (!action.commitments.contains(unit.instance.created.commitmentRef)) {
+                    revert InvalidCommitmentRef(unit.instance.created.commitmentRef);
+                }
+                _checkCommitmentNonExistence(unit.instance.created.commitmentRef);
+
+                riscZeroVerifier.verify({
+                    seal: unit.proof,
+                    imageId: complianceCircuitID,
+                    journalDigest: sha256(abi.encode(unit.verifyingKey, unit.instance))
+                });
+
+                // Prepare delta proof
+                transactionDelta = Delta.add({ p1: transactionDelta, p2: unit.instance.unitDelta });
+            }
+
+            // Logic Proofs
+            {
+                LogicInstance memory instance = LogicInstance({
+                    tag: bytes32(0),
+                    isConsumed: true,
+                    consumed: action.nullifiers,
+                    created: action.commitments,
+                    appDataForTag: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: bytes("") })
+                });
+                LogicRefProofPair memory logicRefProofPair;
+
+                // Check consumed resources
+                for (uint256 j; j < action.nullifiers.length; ++j) {
+                    bytes32 tag = action.nullifiers[j];
+
+                    tags[resourceCount] = tag;
+                    resourceCount++;
+
+                    instance.tag = tag;
+                    instance.appDataForTag = action.tagAppDataPairs.lookupCalldata(tag);
+
+                    {
+                        logicRefProofPair = action.logicProofs.lookup(tag);
+                        riscZeroVerifier.verify({
+                            seal: logicRefProofPair.proof,
+                            imageId: logicCircuitID,
+                            journalDigest: sha256(abi.encode( /*verifying key*/ logicRefProofPair.logicRef, instance))
+                        });
+                    }
+                }
+                // Check created resources
+                instance.isConsumed = false;
+                for (uint256 j; j < action.commitments.length; ++j) {
+                    bytes32 tag = action.commitments[j];
+
+                    tags[resourceCount] = tag;
+                    resourceCount++;
+
+                    instance.tag = tag;
+                    instance.appDataForTag = action.tagAppDataPairs.lookup(tag);
+
+                    {
+                        logicRefProofPair = action.logicProofs.lookup(tag);
+                        riscZeroVerifier.verify({
+                            seal: logicRefProofPair.proof,
+                            imageId: logicCircuitID,
+                            journalDigest: sha256(abi.encode( /*verifying key*/ logicRefProofPair.logicRef, instance))
+                        });
+                    }
+                }
+            }
         }
 
-        bytes32 transactionDigest = sha256(abi.encode(transaction)); // TODO Use _transactionDigest instead
-
-        _verifyDelta(transactionDigest, transactionDelta, transaction.deltaProof);
+        // Delta Proof
+        // TODO: THIS IS A TEMPORARY MOCK PROOF AND MUST BE REMOVED.
+        // NOTE: The `transactionHash(tags)` and `transactionDelta` are not used here.
+        MockDelta.verify({ deltaProof: transaction.deltaProof });
+        /*
+        Delta.verify({
+            transactionHash: _transactionHash(tags),
+            transactionDelta: transactionDelta,
+            deltaProof: transaction.deltaProof
+         });
+        */
     }
 
-    function _actionDelta(Action calldata action) internal view returns (uint256[2] memory delta) {
-        delta = _zeroDelta();
-
-        for (uint256 i; i < action.complianceUnits.length; ++i) {
-            delta = Delta.add({
-                p1: delta,
-                p2: action.complianceUnits[i].refInstance.referencedComplianceInstance.unitDelta
-            });
-        }
+    function transactionHash(bytes32[] calldata tags) external pure returns (bytes32) {
+        return _transactionHash(tags);
     }
 
-    function _verifyAction(Action calldata action) internal view {
-        for (uint256 i; i < action.kindFFICallPairs.length; ++i) {
-            _verifyFFICall(action.kindFFICallPairs[i]);
-        }
-
-        for (uint256 i; i < action.complianceUnits.length; ++i) {
-            _verifyComplianceUnit(action.complianceUnits[i]);
-        }
-
-        for (uint256 i; i < action.nullifiers.length; ++i) {
-            _verifyLogicProof({ tag: action.nullifiers[i], action: action, isConsumed: true });
-        }
-
-        for (uint256 i; i < action.commitments.length; ++i) {
-            _verifyLogicProof({ tag: action.commitments[i], action: action, isConsumed: false });
-        }
+    function _transactionHash(bytes32[] memory tags) internal pure returns (bytes32) {
+        return sha256(abi.encode(tags));
     }
 
     function _verifyFFICall(KindFFICallPair calldata kindFFICallPair) internal view {
@@ -196,77 +250,14 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Checks the
-    /// For ephemeral resources, the check is skipped in the circuit. Still, a fake root can be provided.
-    function _verifyComplianceUnit(ComplianceUnit calldata complianceUnit) internal view {
-        ComplianceInstance calldata instance = complianceUnit.refInstance.referencedComplianceInstance;
-        // Note: referenced, because the instance contains data that we use in other places.
-        // Note: If we provide a copy, we have to ensure that both things are really the same.
-
-        for (uint256 i; i < instance.consumed.length; ++i) {
-            _checkRootPreExistence(instance.consumed[i].rootRef);
-            // NOTE: For ephemeral resources, a fake root is provided.
-            // Initial root of the empty tree.
-
-            // TODO Is it ok if we make these checks for ephemeral resources?
-            _checkNullifierNonExistence(instance.consumed[i].nullifierRef);
-        }
-
-        for (uint256 i; i < instance.created.length; ++i) {
-            // TODO Is it ok if we make these checks for ephemeral resources?
-            _checkCommitmentNonExistence(instance.created[i].commitmentRef);
-        }
-
-        RISC_ZERO_VERIFIER.verify({
-            seal: complianceUnit.proof,
-            imageId: COMPLIANCE_CIRCUIT_ID,
-            journalDigest: sha256(abi.encode(complianceUnit.verifyingKey, instance))
-        });
-    }
-
-    function _verifyLogicProof(bytes32 tag, Action calldata action, bool isConsumed) internal view {
-        LogicRefProofPair memory logicRefProofPair = action.logicProofs.lookup(tag);
-
-        bytes memory proof = logicRefProofPair.proof;
-
-        bytes32 verifyingKey = logicRefProofPair.logicRef;
-
-        LogicInstance memory instance = LogicInstance({
-            tag: tag,
-            isConsumed: isConsumed,
-            consumed: action.nullifiers,
-            created: action.commitments,
-            appDataForTag: action.tagAppDataPairs.lookup(tag)
-        });
-
-        RISC_ZERO_VERIFIER.verify({
-            seal: proof,
-            imageId: LOGIC_CIRCUIT_ID,
-            journalDigest: sha256(abi.encode(verifyingKey, instance))
-        });
-    }
-
-    function _verifyDelta(
-        bytes32 transactionDigest,
-        uint256[2] memory delta, // deltaHash,
-        bytes calldata deltaProof
-    )
-        internal
-        view
-    {
-        Delta.verify(transactionDigest, delta, deltaProof);
-
-        // TODO needed?
-        if (delta[0] != ZERO_DELTA_X) {
-            revert TransactionUnbalanced({ expected: ZERO_DELTA_X, actual: delta[0] });
-        }
-        if (delta[1] != ZERO_DELTA_Y) {
-            revert TransactionUnbalanced({ expected: ZERO_DELTA_Y, actual: delta[1] });
-        }
-    }
-
+    // TODO Consider DoS attacks https://detectors.auditbase.com/avoid-external-calls-in-unbounded-loops-solidity
+    // slither-disable-next-line calls-loop
     function _executeFFICall(FFICall calldata ffiCall) internal {
-        ffiCall.wrapperContract.evmCall(ffiCall.input);
+        bytes memory output = ffiCall.wrapperContract.evmCall(ffiCall.input);
+
+        if (keccak256(output) != keccak256(ffiCall.output)) {
+            revert FFICallOutputMismatch({ expected: ffiCall.output, actual: output });
+        }
     }
 
     function _computeWrapperLabelRef(IWrapper wrapperContract) internal pure returns (bytes32) {

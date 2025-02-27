@@ -13,28 +13,29 @@ contract CommitmentAccumulator {
 
     using Arrays for bytes32[];
 
-    // TODO Why does this offset exist in `EnumerableSet`?
-    uint256 internal constant COMMITMENT_INDEX_OFFSET = 1;
-
-    bytes32 internal constant EMPTY_LEAF_HASH = sha256("EMPTY_LEAF");
+    // slither-disable-next-line max-line-length
+    bytes32 internal constant EMPTY_LEAF_HASH = 0x283d1bb3a401a7e0302d0ffb9102c8fc1f4730c2715a2bfd46a9d9209d5965e0; // sha256("EMPTY_LEAF");
 
     MerkleTree.Bytes32PushTree internal merkleTree;
     EnumerableSet.Bytes32Set internal roots;
+
+    // TODO Use a better merkle tree implementation that doesn't require maintaining a set for fast retrieval.
     EnumerableSet.Bytes32Set internal commitments;
 
     error NonExistingRoot(bytes32 root);
     error PreExistingRoot(bytes32 root);
     error InvalidRoot(bytes32 expected, bytes32 actual);
-    error EmptyCommitment();
+
     error NonExistingCommitment(bytes32 commitment);
-    error InvalidCommitmentIndexPanic(bytes32 commitment, uint256 index, uint256 nextLeafIndex);
     error PreExistingCommitment(bytes32 commitment);
 
     event CommitmentAdded(bytes32 indexed commitment, uint256 indexed index, bytes32 root);
 
     constructor(uint8 treeDepth) {
         bytes32 initialRoot = merkleTree.setup(treeDepth, EMPTY_LEAF_HASH, SHA256.commutativeHash);
-        roots.add(initialRoot);
+
+        bool success = roots.add(initialRoot);
+        if (!success) revert PreExistingRoot(initialRoot);
     }
 
     function latestRoot() external view returns (bytes32) {
@@ -43,22 +44,6 @@ contract CommitmentAccumulator {
 
     function containsRoot(bytes32 root) external view returns (bool) {
         return _containsRoot(root);
-    }
-
-    /// @notice This is provided for debugging purposes. The merkle path is proven in the compliance proof.
-    function _checkMerklePath(
-        bytes32 root, // proof
-        bytes32 commitment, // verifying key
-        bytes32[] memory path // instance
-    )
-        internal
-        view
-    {
-        bytes32 computedRoot =
-            MerkleProof.processProof({ proof: path, leaf: commitment, hasher: SHA256.commutativeHash });
-        if (root != computedRoot) {
-            revert InvalidRoot({ expected: root, actual: computedRoot });
-        }
     }
 
     function _checkRootPreExistence(bytes32 root) internal view {
@@ -76,18 +61,36 @@ contract CommitmentAccumulator {
         }
     }
 
+    // TODO
+    // slither-disable-next-line dead-code
     function _checkCommitmentPreExistence(bytes32 commitment) internal view {
         if (!commitments.contains(commitment)) {
             revert NonExistingCommitment(commitment);
         }
     }
 
-    function _addCommitment(bytes32 commitment) internal {
-        _checkCommitmentPreExistence(commitment);
+    function _addCommitmentUnchecked(bytes32 commitment) internal {
+        // slither-disable-next-line unused-return
+        commitments.add(commitment);
 
         (uint256 index, bytes32 newRoot) = merkleTree.push(commitment, SHA256.commutativeHash);
 
+        // slither-disable-next-line unused-return
         roots.add(newRoot);
+
+        emit CommitmentAdded({ commitment: commitment, index: index, root: newRoot });
+    }
+
+    function _addCommitment(bytes32 commitment) internal {
+        if (!commitments.add(commitment)) {
+            revert PreExistingCommitment(commitment);
+        }
+
+        (uint256 index, bytes32 newRoot) = merkleTree.push(commitment, SHA256.commutativeHash);
+
+        if (!roots.add(newRoot)) {
+            revert PreExistingRoot(newRoot);
+        }
 
         emit CommitmentAdded({ commitment: commitment, index: index, root: newRoot });
     }

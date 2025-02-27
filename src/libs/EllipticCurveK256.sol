@@ -3,7 +3,7 @@ pragma solidity >=0.8.25;
 
 import { EllipticCurve } from "elliptic-curve-solidity/contracts/EllipticCurve.sol";
 
-// solhint-disable-next-line max-line-length
+// slither-disable-next-line max-line-length
 /// @notice The secp256k1 (K-256) elliptic curve taken from https://github.com/witnet/elliptic-curve-solidity/blob/347547890840fd501809dfe0b855206407136ec0/examples/Secp256k1.sol
 library EllipticCurveK256 {
     /// @notice The x-coordinate of the curve generator point.

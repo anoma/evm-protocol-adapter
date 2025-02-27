@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25 <0.9.0;
 
-import { Test } from "forge-std/src/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import { MerkleProof } from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 
 import { SHA256 } from "../../src/libs/SHA256.sol";
 
 import { CommitmentAccumulatorMock, CommitmentAccumulator } from "./CommitmentAccumulatorMock.sol";
+
+contract ExtCallFake {
+    function extCall() external pure { }
+}
 
 contract PartiallyFullTreeTest is Test, CommitmentAccumulatorMock {
     uint8 internal constant TREE_DEPTH = 2; // NOTE: 2^2 = 4 nodes
@@ -80,7 +84,8 @@ contract PartiallyFullTreeTest is Test, CommitmentAccumulatorMock {
     // https://book.getfoundry.sh/cheatcodes/expect-revert?highlight=revert#description
     /// forge-config: default.allow_internal_expect_revert = true
     function test_find_commitment_index_reverts_for_empty_commitment() public {
-        vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.EmptyCommitment.selector));
+        vm.expectRevert(CommitmentAccumulatorMock.EmptyCommitment.selector);
+
         _findCommitmentIndex(EMPTY_LEAF_HASH);
     }
 

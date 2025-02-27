@@ -3,14 +3,14 @@ pragma solidity >=0.8.27;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+//import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { WrapperBase } from "./WrapperBase.sol";
 
 contract ERC20Wrapper is Ownable, WrapperBase {
     using Address for address;
 
-    address internal immutable ERC20_CONTRACT;
+    address internal immutable erc20Contract;
 
     constructor(
         address protocolAdapter,
@@ -20,12 +20,13 @@ contract ERC20Wrapper is Ownable, WrapperBase {
     )
         WrapperBase(protocolAdapter, wrapperLogicRef, wrappedKind)
     {
-        ERC20_CONTRACT = erc20;
+        require(erc20 != address(0));
+        erc20Contract = erc20;
     }
 
     // TODO make generic proxy, allow native ETH transfers
     function _evmCall(bytes calldata input) internal override returns (bytes memory output) {
-        output = ERC20_CONTRACT.functionCall(input);
+        output = erc20Contract.functionCall(input);
     }
 
     // Native ETH transfer

@@ -1,6 +1,6 @@
 pragma solidity >=0.8.25 <0.9.0;
 
-import { Test } from "forge-std/src/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 import { BlobStorage, DeletionCriterion } from "../src/state/BlobStorage.sol";
 
@@ -37,7 +37,7 @@ contract BlobStorageTest is Test {
     }
 
     function test_store_delete_never_should_revert_for_empty_blob() public {
-        vm.expectRevert(abi.encodeWithSelector(BlobStorage.BlobEmpty.selector));
+        vm.expectRevert(BlobStorage.BlobEmpty.selector);
         bs.storeBlob(EMPTY_BLOB, DeletionCriterion.Never);
     }
 
