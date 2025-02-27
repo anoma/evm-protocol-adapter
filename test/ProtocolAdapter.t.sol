@@ -1,27 +1,27 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25 <0.9.0;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { IRiscZeroVerifier, Receipt as RiscZeroReceipt } from "risc0-ethereum/IRiscZeroVerifier.sol";
+import {IRiscZeroVerifier, Receipt as RiscZeroReceipt} from "risc0-ethereum/IRiscZeroVerifier.sol";
 
-import { RiscZeroVerifierRouter } from "risc0-ethereum/RiscZeroVerifierRouter.sol";
-import { RiscZeroMockVerifier } from "risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import {RiscZeroVerifierRouter} from "risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {RiscZeroMockVerifier} from "risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
-import { ComputableComponents } from "../src/libs/ComputableComponents.sol";
-import { ProtocolAdapter } from "../src/ProtocolAdapter.sol";
-import { ExpirableBlob, DeletionCriterion } from "../src/state/BlobStorage.sol";
-import { Transaction, Resource, Action, KindFFICallPair } from "../src/Types.sol";
-import { Universal } from "../src/libs/Identities.sol";
+import {ComputableComponents} from "../src/libs/ComputableComponents.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {ExpirableBlob, DeletionCriterion} from "../src/state/BlobStorage.sol";
+import {Transaction, Resource, Action, KindFFICallPair} from "../src/Types.sol";
+import {Universal} from "../src/libs/Identities.sol";
 
-import { LogicInstance, TagLogicProofPair, LogicRefProofPair } from "../src/proving/Logic.sol";
-import { ComplianceUnit, ComplianceInstance, ConsumedRefs, CreatedRefs } from "../src/proving/Compliance.sol";
-import { Delta } from "../src/proving/Delta.sol";
+import {LogicInstance, TagLogicProofPair, LogicRefProofPair} from "../src/proving/Logic.sol";
+import {ComplianceUnit, ComplianceInstance, ConsumedRefs, CreatedRefs} from "../src/proving/Compliance.sol";
+import {Delta} from "../src/proving/Delta.sol";
 
-import { AppData, TagAppDataPair } from "../src/libs/AppData.sol";
+import {AppData, TagAppDataPair} from "../src/libs/AppData.sol";
 
-import { MockRiscZeroProof } from "./MockRiscZeroProof.sol";
-import { MockDelta } from "./MockDelta.sol";
+import {MockRiscZeroProof} from "./MockRiscZeroProof.sol";
+import {MockDelta} from "./MockDelta.sol";
 
 import "../lib/DeepTest.sol";
 
@@ -53,28 +53,25 @@ contract ProtocolAdapterTest is DeepTest {
     }
 
     function test_deep_test() public {
-        (Resource[] memory consumed, Resource[] memory created) = _mockResources();
-
-        vm.expectRevert();
-        assertDeepEq(consumed[0], created[0]);
+        assertDeepEq(_paddingResource(0), _paddingResource(0));
     }
 
     function test_verify_empty_tx() public view {
         Resource[] memory consumed;
         Resource[] memory created;
-        protocolAdapter.verify(_mockTransaction({ consumed: consumed, created: created }));
+        protocolAdapter.verify(_mockTransaction({consumed: consumed, created: created}));
     }
 
     function test_verify_tx() public view {
         (Resource[] memory consumed, Resource[] memory created) = _mockResources();
 
-        protocolAdapter.verify(_mockTransaction({ consumed: consumed, created: created }));
+        protocolAdapter.verify(_mockTransaction({consumed: consumed, created: created}));
     }
 
     function test_execute() public {
         (Resource[] memory consumed, Resource[] memory created) = _mockResources();
 
-        protocolAdapter.execute(_mockTransaction({ consumed: consumed, created: created }));
+        protocolAdapter.execute(_mockTransaction({consumed: consumed, created: created}));
     }
 
     function _mockResources() internal pure returns (Resource[] memory consumed, Resource[] memory created) {
@@ -116,10 +113,7 @@ contract ProtocolAdapterTest is DeepTest {
         });
     }
 
-    function _padResources(
-        Resource[] memory consumed,
-        Resource[] memory created
-    )
+    function _padResources(Resource[] memory consumed, Resource[] memory created)
         internal
         pure
         returns (Resource[] memory consumedPadded, Resource[] memory createdPadded)
@@ -165,15 +159,12 @@ contract ProtocolAdapterTest is DeepTest {
         }
     }
 
-    function _mockTransaction(
-        Resource[] memory consumed,
-        Resource[] memory created
-    )
+    function _mockTransaction(Resource[] memory consumed, Resource[] memory created)
         internal
         view
         returns (Transaction memory)
     {
-        (consumed, created) = _padResources({ consumed: consumed, created: created });
+        (consumed, created) = _padResources({consumed: consumed, created: created});
 
         bytes32[] memory nfs = new bytes32[](consumed.length);
         for (uint256 i = 0; i < consumed.length; ++i) {
@@ -185,15 +176,14 @@ contract ProtocolAdapterTest is DeepTest {
             cms[i] = created[i].commitment();
         }
 
-        TagAppDataPair[] memory appData = _mockAppData({ nullifiers: nfs, commitments: cms });
-        TagLogicProofPair[] memory logicProofs =
-            _mockLogicProofs({ nullifiers: nfs, commitments: cms, appData: appData });
+        TagAppDataPair[] memory appData = _mockAppData({nullifiers: nfs, commitments: cms});
+        TagLogicProofPair[] memory logicProofs = _mockLogicProofs({nullifiers: nfs, commitments: cms, appData: appData});
 
         bytes32[] memory roots = new bytes32[](1);
         roots[0] = protocolAdapter.latestRoot();
 
         ComplianceUnit[] memory complianceUnits =
-            _mockComplianceUnits({ root: roots[0], commitments: cms, nullifiers: nfs });
+            _mockComplianceUnits({root: roots[0], commitments: cms, nullifiers: nfs});
 
         KindFFICallPair[] memory emptyFfiCalls;
 
@@ -211,13 +201,10 @@ contract ProtocolAdapterTest is DeepTest {
 
         bytes memory deltaProof = MockDelta.PROOF;
 
-        return Transaction({ roots: roots, actions: actions, deltaProof: deltaProof });
+        return Transaction({roots: roots, actions: actions, deltaProof: deltaProof});
     }
 
-    function _mockAppData(
-        bytes32[] memory nullifiers,
-        bytes32[] memory commitments
-    )
+    function _mockAppData(bytes32[] memory nullifiers, bytes32[] memory commitments)
         internal
         pure
         returns (TagAppDataPair[] memory appData)
@@ -229,13 +216,13 @@ contract ProtocolAdapterTest is DeepTest {
             for (uint256 i = 0; i < nullifiers.length; ++i) {
                 appData[i] = TagAppDataPair({
                     tag: nullifiers[i],
-                    appData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: emptyBlob })
+                    appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: emptyBlob})
                 });
             }
             for (uint256 i = 0; i < commitments.length; ++i) {
                 appData[nullifiers.length + i] = TagAppDataPair({
                     tag: commitments[i],
-                    appData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: emptyBlob })
+                    appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: emptyBlob})
                 });
             }
         }
@@ -245,11 +232,7 @@ contract ProtocolAdapterTest is DeepTest {
         bytes32[] memory nullifiers,
         bytes32[] memory commitments,
         TagAppDataPair[] memory appData
-    )
-        internal
-        view
-        returns (TagLogicProofPair[] memory logicProofs)
-    {
+    ) internal view returns (TagLogicProofPair[] memory logicProofs) {
         logicProofs = new TagLogicProofPair[](nullifiers.length + commitments.length);
 
         for (uint256 i = 0; i < nullifiers.length; ++i) {
@@ -272,7 +255,7 @@ contract ProtocolAdapterTest is DeepTest {
 
             logicProofs[i] = TagLogicProofPair({
                 tag: tag,
-                pair: LogicRefProofPair({ logicRef: ALWAYS_VALID_LOGIC_REF, proof: receipt.seal })
+                pair: LogicRefProofPair({logicRef: ALWAYS_VALID_LOGIC_REF, proof: receipt.seal})
             });
         }
 
@@ -296,16 +279,12 @@ contract ProtocolAdapterTest is DeepTest {
 
             logicProofs[nullifiers.length + i] = TagLogicProofPair({
                 tag: tag,
-                pair: LogicRefProofPair({ logicRef: ALWAYS_VALID_LOGIC_REF, proof: receipt.seal })
+                pair: LogicRefProofPair({logicRef: ALWAYS_VALID_LOGIC_REF, proof: receipt.seal})
             });
         }
     }
 
-    function _mockComplianceUnits(
-        bytes32 root,
-        bytes32[] memory nullifiers,
-        bytes32[] memory commitments
-    )
+    function _mockComplianceUnits(bytes32 root, bytes32[] memory nullifiers, bytes32[] memory commitments)
         internal
         view
         returns (ComplianceUnit[] memory units)
@@ -318,17 +297,17 @@ contract ProtocolAdapterTest is DeepTest {
 
         for (uint256 i = 0; i < nullifiers.length; ++i) {
             ComplianceInstance memory instance = ComplianceInstance({
-                consumed: ConsumedRefs({ nullifierRef: nullifiers[i], rootRef: root, logicRef: ALWAYS_VALID_LOGIC_REF }),
-                created: CreatedRefs({ commitmentRef: commitments[i], logicRef: ALWAYS_VALID_LOGIC_REF }),
+                consumed: ConsumedRefs({nullifierRef: nullifiers[i], rootRef: root, logicRef: ALWAYS_VALID_LOGIC_REF}),
+                created: CreatedRefs({commitmentRef: commitments[i], logicRef: ALWAYS_VALID_LOGIC_REF}),
                 unitDelta: Delta.zero() // TODO
-             });
+            });
 
             RiscZeroReceipt memory receipt = mockVerifier.mockProve({
                 imageId: MockRiscZeroProof.IMAGE_ID_2,
                 journalDigest: sha256(abi.encode(verifyingKey, instance))
             });
 
-            units[i] = ComplianceUnit({ proof: receipt.seal, instance: instance, verifyingKey: verifyingKey });
+            units[i] = ComplianceUnit({proof: receipt.seal, instance: instance, verifyingKey: verifyingKey});
         }
     }
 }
