@@ -21,6 +21,7 @@ import {Delta} from "../src/proving/Delta.sol";
 import {AppData, TagAppDataPair} from "../src/libs/AppData.sol";
 
 import {MockRiscZeroProof} from "./MockRiscZeroProof.sol";
+import {MockDelta} from "./MockDelta.sol";
 
 import {Log} from "./Logging.sol";
 
@@ -47,8 +48,8 @@ contract ProtocolAdapterTest is Test {
 
     function setUp() public {
         protocolAdapter = new ProtocolAdapter({
-            logicCircuitID: bytes32(0),
-            complianceCircuitID: bytes32(0),
+            logicCircuitID: MockRiscZeroProof.IMAGE_ID_1,
+            complianceCircuitID: MockRiscZeroProof.IMAGE_ID_2,
             riscZeroVerifier: mockVerifier,
             treeDepth: TREE_DEPTH
         });
@@ -62,14 +63,6 @@ contract ProtocolAdapterTest is Test {
 
     function test_verify_tx() public view {
         (Resource[] memory consumed, Resource[] memory created) = _mockResources();
-
-        for (uint256 i = 0; i < consumed.length; ++i) {
-            consumed[i].log();
-        }
-
-        for (uint256 i = 0; i < created.length; ++i) {
-            created[i].log();
-        }
 
         protocolAdapter.verify(_mockTransaction({consumed: consumed, created: created}));
     }
@@ -140,8 +133,7 @@ contract ProtocolAdapterTest is Test {
         Action[] memory actions = new Action[](1);
         actions[0] = action;
 
-        // TODO Use actual proof
-        bytes memory deltaProof; // = Delta.zero().toSignature();
+        bytes memory deltaProof = MockDelta.PROOF;
 
         bytes32[] memory roots = new bytes32[](1);
         roots[0] = protocolAdapter.latestRoot();
@@ -190,7 +182,6 @@ contract ProtocolAdapterTest is Test {
                 created: commitments,
                 appDataForTag: appData.lookup(tag)
             });
-            instance.log();
 
             bytes32 verifyingKey = ALWAYS_VALID_LOGIC_REF;
 
@@ -215,7 +206,6 @@ contract ProtocolAdapterTest is Test {
                 created: commitments,
                 appDataForTag: appData.lookup(tag)
             });
-            instance.log();
 
             bytes32 verifyingKey = ALWAYS_VALID_LOGIC_REF;
 

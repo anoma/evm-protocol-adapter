@@ -60,7 +60,7 @@ contract FullTreeTest is Test, CommitmentAccumulatorMock {
     }
 
     // /// forge-config: default.allow_internal_expect_revert = true
-    function testFail_should_revert_if_max_nodes_are_reached_after() public {
+    function test_should_revert_if_max_nodes_are_reached_after() public {
         vm.expectRevert();
         // TODO find out how to expect this error with foundry.
         //vm.expectRevert("panic: memory allocation error (0x41)");

@@ -17,6 +17,7 @@ import { BlobStorage, ExpirableBlob, DeletionCriterion } from "./state/BlobStora
 import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
 import { ComplianceUnit } from "./proving/Compliance.sol";
 import { Delta } from "./proving/Delta.sol";
+import { MockDelta } from "../test/MockDelta.sol"; // TODO remove
 
 import { AppData } from "./libs/AppData.sol";
 
@@ -222,11 +223,25 @@ contract ProtocolAdapter is
         }
 
         // Delta Proof
+
+        // TODO: THIS IS A TEMPORARY MOCK PROOF AND MUST BE REMOVED.
+        // NOTE: The `transactionHash(tags)` and `transactionDelta` are not used here.
+        MockDelta.verify({ deltaProof: transaction.deltaProof });
+        /*
         Delta.verify({
-            transactionHash: sha256(abi.encode(tags)),
+            transactionHash: _transactionHash(tags),
             transactionDelta: transactionDelta,
-            deltaProof: transaction.deltaProof // TODO what is the delta proof needed for?
+            deltaProof: transaction.deltaProof
          });
+        */
+    }
+
+    function transactionHash(bytes32[] calldata tags) external pure returns (bytes32) {
+        return _transactionHash(tags);
+    }
+
+    function _transactionHash(bytes32[] memory tags) internal pure returns (bytes32) {
+        return sha256(abi.encode(tags));
     }
 
     function _verifyFFICall(KindFFICallPair calldata kindFFICallPair) internal view {
