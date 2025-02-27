@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  solidity:
+  foundry:
     env:
       FOUNDRY_PROFILE: ci
 
