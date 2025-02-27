@@ -22,6 +22,7 @@ import { AppData } from "./libs/AppData.sol";
 
 import { Resource, Transaction, Action, TagAppDataPair, KindFFICallPair, FFICall } from "./Types.sol";
 import { UNIVERSAL_NULLIFIER_KEY_COMMITMENT } from "./Constants.sol";
+import { console } from "forge-std/console.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
@@ -220,14 +221,12 @@ contract ProtocolAdapter is
             }
         }
 
-        {
-            // Delta Proof
-            Delta.verify({
-                transactionHash: sha256(abi.encode(tags)),
-                transactionDelta: transactionDelta,
-                deltaProof: transaction.deltaProof // TODO what is the delta proof needed for?
-             });
-        }
+        // Delta Proof
+        Delta.verify({
+            transactionHash: sha256(abi.encode(tags)),
+            transactionDelta: transactionDelta,
+            deltaProof: transaction.deltaProof // TODO what is the delta proof needed for?
+         });
     }
 
     function _verifyFFICall(KindFFICallPair calldata kindFFICallPair) internal view {
