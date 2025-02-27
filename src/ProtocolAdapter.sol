@@ -243,7 +243,7 @@ contract ProtocolAdapter is
 
     function _verifyFFICall(KindFFICallPair calldata kindFFICallPair) internal view {
         bytes32 passedKind = kindFFICallPair.kind;
-        bytes32 fetchedKind = kindFFICallPair.ffiCall.wrapperContract.wrapperResourceKind();
+        bytes32 fetchedKind = IWrapper(kindFFICallPair.ffiCall.wrapperContract).wrapperResourceKind();
 
         if (passedKind != fetchedKind) {
             revert WrapperResourceKindMismatch({ expected: fetchedKind, actual: passedKind });
@@ -253,7 +253,7 @@ contract ProtocolAdapter is
     // TODO Consider DoS attacks https://detectors.auditbase.com/avoid-external-calls-in-unbounded-loops-solidity
     // slither-disable-next-line calls-loop
     function _executeFFICall(FFICall calldata ffiCall) internal {
-        bytes memory output = ffiCall.wrapperContract.evmCall(ffiCall.input);
+        bytes memory output = IWrapper(ffiCall.wrapperContract).evmCall(ffiCall.input);
 
         if (keccak256(output) != keccak256(ffiCall.output)) {
             revert FFICallOutputMismatch({ expected: ffiCall.output, actual: output });

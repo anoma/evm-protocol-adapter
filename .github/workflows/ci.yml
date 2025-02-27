@@ -26,6 +26,12 @@ jobs:
       - name: Show Forge version
         run: forge --version
 
+      - name: "Install Bun"
+        uses: "oven-sh/setup-bun@v1"
+
+      - name: Show Bun version
+        run: bun --version
+
       - name: Install Slither
         run: pip install slither-analyzer
 
@@ -41,7 +47,7 @@ jobs:
         id: analyze
 
       - name: Run Forge build
-        run: forge build --sizes
+        run: forge build --sizes --ast
         id: build
 
       - name: Run Forge tests

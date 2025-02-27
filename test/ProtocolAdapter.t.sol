@@ -23,15 +23,12 @@ import { AppData, TagAppDataPair } from "../src/libs/AppData.sol";
 import { MockRiscZeroProof } from "./MockRiscZeroProof.sol";
 import { MockDelta } from "./MockDelta.sol";
 
-import { Log } from "./Logging.sol";
+import "../lib/DeepTest.sol";
 
-contract ProtocolAdapterTest is Test {
+contract ProtocolAdapterTest is DeepTest {
     using ComputableComponents for Resource;
     using AppData for TagAppDataPair[];
     using Delta for uint256[2];
-
-    using Log for Resource;
-    using Log for LogicInstance;
 
     uint256 internal testNumber;
     ProtocolAdapter internal protocolAdapter;
@@ -53,6 +50,10 @@ contract ProtocolAdapterTest is Test {
             _complianceCircuitID: MockRiscZeroProof.IMAGE_ID_2,
             _treeDepth: treeDepth
         });
+    }
+
+    function test_deep_test() public {
+        assertDeepEq(_paddingResource(0), _paddingResource(0));
     }
 
     function test_verify_empty_tx() public view {
