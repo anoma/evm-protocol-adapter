@@ -8,8 +8,8 @@ struct ComplianceUnit {
 }
 
 struct ComplianceInstance {
-    ConsumedRefs[] consumed;
-    CreatedRefs[] created;
+    ConsumedRefs consumed;
+    CreatedRefs created;
     uint256[2] unitDelta; // DeltaHash ? TODO
 }
 

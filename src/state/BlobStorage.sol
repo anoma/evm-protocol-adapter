@@ -23,8 +23,6 @@ contract BlobStorage {
     bytes internal constant EMPTY_BLOB = bytes("");
     bytes32 internal constant EMPTY_BLOB_HASH = sha256(EMPTY_BLOB);
 
-    bytes32 internal constant ZERO_BYTES = bytes32(0);
-
     function getBlob(bytes32 blobHash) external view returns (bytes memory) {
         return _getBlob(blobHash);
     }

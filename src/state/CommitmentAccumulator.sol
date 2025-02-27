@@ -33,7 +33,9 @@ contract CommitmentAccumulator {
 
     constructor(uint8 treeDepth) {
         bytes32 initialRoot = merkleTree.setup(treeDepth, EMPTY_LEAF_HASH, SHA256.commutativeHash);
-        roots.add(initialRoot);
+
+        bool success = roots.add(initialRoot);
+        if (!success) revert PreExistingRoot(initialRoot);
     }
 
     function latestRoot() external view returns (bytes32) {
@@ -42,22 +44,6 @@ contract CommitmentAccumulator {
 
     function containsRoot(bytes32 root) external view returns (bool) {
         return _containsRoot(root);
-    }
-
-    /// @notice This is provided for debugging purposes. The merkle path is proven in the compliance proof.
-    function _checkMerklePath(
-        bytes32 root, // proof
-        bytes32 commitment, // verifying key
-        bytes32[] memory path // instance
-    )
-        internal
-        view
-    {
-        bytes32 computedRoot =
-            MerkleProof.processProof({ proof: path, leaf: commitment, hasher: SHA256.commutativeHash });
-        if (root != computedRoot) {
-            revert InvalidRoot({ expected: root, actual: computedRoot });
-        }
     }
 
     function _checkRootPreExistence(bytes32 root) internal view {
@@ -75,23 +61,27 @@ contract CommitmentAccumulator {
         }
     }
 
+    // TODO
+    // slither-disable-next-line dead-code
     function _checkCommitmentPreExistence(bytes32 commitment) internal view {
         if (!commitments.contains(commitment)) {
             revert NonExistingCommitment(commitment);
         }
     }
 
-    function _addCommitment(bytes32 commitment) internal {
+    function _addCommitmentUnchecked(bytes32 commitment) internal {
+        // slither-disable-next-line unused-return
         commitments.add(commitment);
 
         (uint256 index, bytes32 newRoot) = merkleTree.push(commitment, SHA256.commutativeHash);
 
+        // slither-disable-next-line unused-return
         roots.add(newRoot);
 
         emit CommitmentAdded({ commitment: commitment, index: index, root: newRoot });
     }
 
-    function _addCommitmentChecked(bytes32 commitment) internal {
+    function _addCommitment(bytes32 commitment) internal {
         if (!commitments.add(commitment)) {
             revert PreExistingCommitment(commitment);
         }

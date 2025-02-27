@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.27;
 
-import {Test} from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-import {console} from "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
 
 contract SigningExample {
     using ECDSA for bytes32;
@@ -50,7 +50,7 @@ contract SigningExampleTest is Test {
 
         address signer = vm.addr(signerPrivateKey);
 
-        signingExample = new SigningExample({_authorizedAddress: signer});
+        signingExample = new SigningExample({ _authorizedAddress: signer });
     }
 
     function testPurchase() public {

@@ -38,15 +38,18 @@ contract ProtocolAdapter is
     using AppData for TagAppDataPair[];
     using LogicProofs for TagLogicProofPair[];
 
-    IRiscZeroVerifier private immutable RISC_ZERO_VERIFIER;
-    bytes32 private immutable COMPLIANCE_CIRCUIT_ID;
-    bytes32 private immutable LOGIC_CIRCUIT_ID;
-    uint256 private immutable ZERO_DELTA_X;
-    uint256 private immutable ZERO_DELTA_Y;
+    IRiscZeroVerifier private immutable riscZeroVerifier;
+    bytes32 private immutable complianceCircuitID;
+    bytes32 private immutable logicCircuitID;
 
     uint256 private _txCount;
 
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
+
+    error InvalidRootRef(bytes32 root);
+    error InvalidNullifierRef(bytes32 nullifier);
+    error InvalidCommitmentRef(bytes32 commitment);
+    error FFICallOutputMismatch(bytes expected, bytes actual);
 
     error WrapperResourceKindMismatch(bytes32 expected, bytes32 actual);
     error WrapperContractResourceLabelMismatch(bytes32 expected, bytes32 actual);
@@ -54,21 +57,16 @@ contract ProtocolAdapter is
     error TransactionUnbalanced(uint256 expected, uint256 actual);
 
     constructor(
-        bytes32 logicCircuitID,
-        bytes32 complianceCircuitID,
-        IRiscZeroVerifier riscZeroVerifier,
-        uint8 treeDepth
+        IRiscZeroVerifier _riscZeroVerifier,
+        bytes32 _logicCircuitID,
+        bytes32 _complianceCircuitID,
+        uint8 _treeDepth
     )
-        CommitmentAccumulator(treeDepth)
+        CommitmentAccumulator(_treeDepth)
     {
-        LOGIC_CIRCUIT_ID = logicCircuitID;
-        COMPLIANCE_CIRCUIT_ID = complianceCircuitID;
-
-        uint256[2] memory zeroDelta = Delta.zero();
-        ZERO_DELTA_X = zeroDelta[0];
-        ZERO_DELTA_Y = zeroDelta[1];
-
-        RISC_ZERO_VERIFIER = riscZeroVerifier;
+        riscZeroVerifier = _riscZeroVerifier;
+        logicCircuitID = _logicCircuitID;
+        complianceCircuitID = _complianceCircuitID;
     }
 
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
@@ -81,15 +79,14 @@ contract ProtocolAdapter is
     /// set, respectively.
     /// @param transaction The transaction to execute.
     /// @dev This function is non-reentrant.
+    // slither-disable-next-line reentrancy-no-eth
     function execute(Transaction calldata transaction) external nonReentrant {
         _verify(transaction);
 
+        emit TransactionExecuted({ id: _txCount++, transaction: transaction });
+
         for (uint256 i = 0; i < transaction.actions.length; ++i) {
             Action calldata action = transaction.actions[i];
-
-            for (uint256 j = 0; j < action.kindFFICallPairs.length; ++j) {
-                _executeFFICall(action.kindFFICallPairs[j].ffiCall);
-            }
 
             for (uint256 j = 0; j < action.tagAppDataPairs.length; ++j) {
                 _storeBlob(action.tagAppDataPairs[j].appData);
@@ -100,10 +97,14 @@ contract ProtocolAdapter is
             }
 
             for (uint256 j = 0; j < action.commitments.length; ++j) {
-                _addCommitment(action.commitments[j]);
+                // Commitment pre-existence was already checked in `_verify(transaction);` at the top.
+                _addCommitmentUnchecked(action.commitments[j]);
+            }
+
+            for (uint256 j = 0; j < action.kindFFICallPairs.length; ++j) {
+                _executeFFICall(action.kindFFICallPairs[j].ffiCall);
             }
         }
-        emit TransactionExecuted({ id: _txCount++, transaction: transaction });
     }
 
     /// @notice Creates a wrapper contract resource object and adds the commitment to the commitment accumulator
@@ -112,15 +113,10 @@ contract ProtocolAdapter is
         _createWrapperContractResource(wrapperContract);
     }
 
-    function _zeroDelta() internal view returns (uint256[2] memory zeroDelta) {
-        zeroDelta[0] = ZERO_DELTA_X;
-        zeroDelta[1] = ZERO_DELTA_Y;
-    }
-
     // slither-disable-next-line code-complexity
     function _verify(Transaction calldata transaction) internal view {
         // Can also be named DeltaHash (which is what Yulia does).
-        uint256[2] memory transactionDelta = _zeroDelta();
+        uint256[2] memory transactionDelta = Delta.zero();
 
         // Helper variable
         uint256 resourceCount;
@@ -144,29 +140,31 @@ contract ProtocolAdapter is
             for (uint256 j; j < action.complianceUnits.length; ++j) {
                 ComplianceUnit calldata unit = action.complianceUnits[j];
 
-                // Prepare delta proof
-                transactionDelta = Delta.add({ p1: transactionDelta, p2: unit.instance.unitDelta });
-
                 // Check consumed resources
-                for (uint256 k; k < unit.instance.consumed.length; ++k) {
-                    transaction.roots.contains(unit.instance.consumed[k].rootRef);
-                    _checkRootPreExistence(unit.instance.consumed[k].rootRef);
-
-                    action.nullifiers.contains(unit.instance.consumed[k].nullifierRef);
-                    _checkNullifierNonExistence(unit.instance.consumed[k].nullifierRef);
+                if (!transaction.roots.contains(unit.instance.consumed.rootRef)) {
+                    revert InvalidRootRef(unit.instance.consumed.rootRef);
                 }
+                _checkRootPreExistence(unit.instance.consumed.rootRef);
+
+                if (!action.nullifiers.contains(unit.instance.consumed.nullifierRef)) {
+                    revert InvalidNullifierRef(unit.instance.consumed.nullifierRef);
+                }
+                _checkNullifierNonExistence(unit.instance.consumed.nullifierRef);
 
                 // Check created resources
-                for (uint256 k; k < unit.instance.created.length; ++k) {
-                    action.commitments.contains(unit.instance.created[k].commitmentRef);
-                    _checkCommitmentNonExistence(unit.instance.created[k].commitmentRef);
+                if (!action.commitments.contains(unit.instance.created.commitmentRef)) {
+                    revert InvalidCommitmentRef(unit.instance.created.commitmentRef);
                 }
+                _checkCommitmentNonExistence(unit.instance.created.commitmentRef);
 
-                RISC_ZERO_VERIFIER.verify({
+                riscZeroVerifier.verify({
                     seal: unit.proof,
-                    imageId: COMPLIANCE_CIRCUIT_ID,
+                    imageId: complianceCircuitID,
                     journalDigest: sha256(abi.encode(unit.verifyingKey, unit.instance))
                 });
+
+                // Prepare delta proof
+                transactionDelta = Delta.add({ p1: transactionDelta, p2: unit.instance.unitDelta });
             }
 
             // Logic Proofs
@@ -192,9 +190,9 @@ contract ProtocolAdapter is
 
                     {
                         logicRefProofPair = action.logicProofs.lookup(tag);
-                        RISC_ZERO_VERIFIER.verify({
+                        riscZeroVerifier.verify({
                             seal: logicRefProofPair.proof,
-                            imageId: LOGIC_CIRCUIT_ID,
+                            imageId: logicCircuitID,
                             journalDigest: sha256(abi.encode( /*verifying key*/ logicRefProofPair.logicRef, instance))
                         });
                     }
@@ -212,9 +210,9 @@ contract ProtocolAdapter is
 
                     {
                         logicRefProofPair = action.logicProofs.lookup(tag);
-                        RISC_ZERO_VERIFIER.verify({
+                        riscZeroVerifier.verify({
                             seal: logicRefProofPair.proof,
-                            imageId: LOGIC_CIRCUIT_ID,
+                            imageId: logicCircuitID,
                             journalDigest: sha256(abi.encode( /*verifying key*/ logicRefProofPair.logicRef, instance))
                         });
                     }
@@ -223,7 +221,6 @@ contract ProtocolAdapter is
         }
 
         // Delta Proof
-
         // TODO: THIS IS A TEMPORARY MOCK PROOF AND MUST BE REMOVED.
         // NOTE: The `transactionHash(tags)` and `transactionDelta` are not used here.
         MockDelta.verify({ deltaProof: transaction.deltaProof });
@@ -253,8 +250,14 @@ contract ProtocolAdapter is
         }
     }
 
+    // TODO Consider DoS attacks https://detectors.auditbase.com/avoid-external-calls-in-unbounded-loops-solidity
+    // slither-disable-next-line calls-loop
     function _executeFFICall(FFICall calldata ffiCall) internal {
-        ffiCall.wrapperContract.evmCall(ffiCall.input);
+        bytes memory output = ffiCall.wrapperContract.evmCall(ffiCall.input);
+
+        if (keccak256(output) != keccak256(ffiCall.output)) {
+            revert FFICallOutputMismatch({ expected: ffiCall.output, actual: output });
+        }
     }
 
     function _computeWrapperLabelRef(IWrapper wrapperContract) internal pure returns (bytes32) {

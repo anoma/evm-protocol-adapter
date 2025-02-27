@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25 <0.9.0;
 
-import {Test} from "forge-std/Test.sol";
-import {console} from "forge-std/console.sol";
+import { Test } from "forge-std/Test.sol";
+import { console } from "forge-std/console.sol";
 
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import {Transaction, Resource, Action} from "../src/Types.sol";
-import {LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair} from "../src/proving/Logic.sol";
+import { Transaction, Resource, Action } from "../src/Types.sol";
+import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "../src/proving/Logic.sol";
 
 library Log {
     using Strings for uint256;
@@ -57,7 +57,12 @@ library Log {
         }
     }
 
-    function wrap(string memory start, string memory content, string memory end, uint256 level)
+    function wrap(
+        string memory start,
+        string memory content,
+        string memory end,
+        uint256 level
+    )
         internal
         pure
         returns (string memory)

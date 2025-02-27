@@ -1,8 +1,8 @@
 pragma solidity >=0.8.25 <0.9.0;
 
-import {Test} from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import {BlobStorage, DeletionCriterion} from "../src/state/BlobStorage.sol";
+import { BlobStorage, DeletionCriterion } from "../src/state/BlobStorage.sol";
 
 contract BlobStorageMock is BlobStorage {
     function storeBlob(bytes calldata blob, DeletionCriterion deletionCriterion) external returns (bytes32 blobHash) {

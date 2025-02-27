@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.8.25 <0.9.0;
 
-import {Test} from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import {SHA256} from "../../src/libs/SHA256.sol";
+import { SHA256 } from "../../src/libs/SHA256.sol";
 
-import {CommitmentAccumulatorMock} from "./CommitmentAccumulatorMock.sol";
+import { CommitmentAccumulatorMock } from "./CommitmentAccumulatorMock.sol";
 
 /// @dev If this is your first time with Forge, read this tutorial in the Foundry Book:
 /// https://book.getfoundry.sh/forge/writing-tests
@@ -16,7 +16,7 @@ contract LargeTreeTest is Test, CommitmentAccumulatorMock {
     bytes32[] internal leaves;
     bytes32 internal root;
 
-    constructor() CommitmentAccumulatorMock(TREE_DEPTH) {}
+    constructor() CommitmentAccumulatorMock(TREE_DEPTH) { }
 
     function setUp() public {
         /*

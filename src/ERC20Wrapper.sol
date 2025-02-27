@@ -10,7 +10,7 @@ import { WrapperBase } from "./WrapperBase.sol";
 contract ERC20Wrapper is Ownable, WrapperBase {
     using Address for address;
 
-    address internal immutable ERC20_CONTRACT;
+    address internal immutable erc20Contract;
 
     constructor(
         address protocolAdapter,
@@ -20,12 +20,13 @@ contract ERC20Wrapper is Ownable, WrapperBase {
     )
         WrapperBase(protocolAdapter, wrapperLogicRef, wrappedKind)
     {
-        ERC20_CONTRACT = erc20;
+        require(erc20 != address(0));
+        erc20Contract = erc20;
     }
 
     // TODO make generic proxy, allow native ETH transfers
     function _evmCall(bytes calldata input) internal override returns (bytes memory output) {
-        output = ERC20_CONTRACT.functionCall(input);
+        output = erc20Contract.functionCall(input);
     }
 
     // Native ETH transfer
