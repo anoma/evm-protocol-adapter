@@ -18,7 +18,9 @@ transferSelector : ByteArray := todo;
 transferEvmInput (to : ExternalIdentity) (quantity : Nat) : ByteArray :=
   builtinEvmEncode
     (transferSelector
-      , (to |> ExternalIdentity.ExternalIdentity.unExternalIdentity |> builtinEvmEncode)
+      , (to
+        |> ExternalIdentity.ExternalIdentity.unExternalIdentity
+        |> builtinEvmEncode)
       , builtinEvmEncode quantity);
 
 -- 0x23b872dd
@@ -31,8 +33,12 @@ transferFromEvmInput
   (from to : ExternalIdentity) (quantity : Nat) : ByteArray :=
   builtinEvmEncode
     (transferFromSelector
-      , (from |> ExternalIdentity.ExternalIdentity.unExternalIdentity |> builtinEvmEncode)
-      , (to |> ExternalIdentity.ExternalIdentity.unExternalIdentity |> builtinEvmEncode)
+      , (from
+        |> ExternalIdentity.ExternalIdentity.unExternalIdentity
+        |> builtinEvmEncode)
+      , (to
+        |> ExternalIdentity.ExternalIdentity.unExternalIdentity
+        |> builtinEvmEncode)
       , builtinEvmEncode quantity);
 
 transferFromEvmOutput : ByteArray := builtinEvmEncode true;

@@ -15,7 +15,6 @@ builtinEvmEncode {A : Type} (data : A) : ByteArray := todo;
 
 kind' (logic : Logic) (label : Nat) : Kind := todo;
 
-
 slice
   (data : ByteArray) (start : Nat) {offset : Nat := size data} : ByteArray :=
   todo;
