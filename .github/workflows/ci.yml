@@ -5,11 +5,11 @@ on:
   pull_request:
   workflow_dispatch:
 
-env:
-  FOUNDRY_PROFILE: ci
-
 jobs:
   solidity:
+    env:
+      FOUNDRY_PROFILE: ci
+
     strategy:
       fail-fast: true
 
