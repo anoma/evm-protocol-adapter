@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ECDSA} from "openzeppelin-contracts/utils/cryptography/ECDSA.sol";
-import {Universal} from "../src/libs/Identities.sol";
-import {Delta} from "../src/proving/Delta.sol";
+import { ECDSA } from "openzeppelin-contracts/utils/cryptography/ECDSA.sol";
+import { Universal } from "../src/libs/Identities.sol";
+import { Delta } from "../src/proving/Delta.sol";
 
 library MockDelta {
     using Delta for uint256[2];
@@ -39,6 +39,6 @@ library MockDelta {
     function verify(bytes memory deltaProof) internal pure {
         require(keccak256(deltaProof) == keccak256(PROOF));
 
-        Delta.verify({transactionHash: MESSAGE_HASH, transactionDelta: transactionDelta(), deltaProof: deltaProof});
+        Delta.verify({ transactionHash: MESSAGE_HASH, transactionDelta: transactionDelta(), deltaProof: deltaProof });
     }
 }
