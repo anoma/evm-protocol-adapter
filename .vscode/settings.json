@@ -1,10 +1,10 @@
 {
   "[solidity]": {
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": true
   },
   "[toml]": {
     "editor.defaultFormatter": "tamasfe.even-better-toml"
   },
   "solidity.formatter": "forge",
-  "cSpell.words": ["expirable", "Hashers", "treaple"]
+  "cSpell.words": ["expirable", "Hashers", "treaple", "solhint"]
 }

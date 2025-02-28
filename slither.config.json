@@ -1,3 +1,4 @@
 {
-  "filter_paths": "lib"
+  "filter_paths": "lib/",
+  "detectors_to_exclude": ["pragma", "naming-convention"]
 }

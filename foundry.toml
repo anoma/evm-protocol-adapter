@@ -2,17 +2,19 @@
 
 [profile.default]
 auto_detect_solc = false
-block_timestamp = 1_680_220_800    # March 31, 2023 at 00:00 GMT
+block_timestamp = 1_680_220_800 # March 31, 2023 at 00:00 GMT
 bytecode_hash = "none"
 evm_version = "cancun"
 fuzz = { runs = 1_000 }
 gas_reports = ["*"]
 optimizer = true
+via_ir = false
 optimizer_runs = 10_000
+# gas_limit = 100_000_000 # ETH is 30M, but we use a higher value.
 gas_limit = "18446744073709551615" # u64::MAX
 #memory_limit = 1073741824 # 1 GB
 memory_limit = 4294967296
-# gas_limit = 100_000_000 # ETH is 30M, but we use a higher value.
+
 out = "out"
 script = "script"
 solc = "0.8.28"

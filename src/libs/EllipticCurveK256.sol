@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.25;
+pragma solidity ^0.8.27;
 
 import { EllipticCurve } from "elliptic-curve-solidity/contracts/EllipticCurve.sol";
 
-// slither-disable-next-line max-line-length
+// solhint-disable-next-line max-line-length
 /// @notice The secp256k1 (K-256) elliptic curve taken from https://github.com/witnet/elliptic-curve-solidity/blob/347547890840fd501809dfe0b855206407136ec0/examples/Secp256k1.sol
 library EllipticCurveK256 {
     /// @notice The x-coordinate of the curve generator point.
@@ -22,11 +22,11 @@ library EllipticCurveK256 {
     uint256 internal constant PP = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
 
     // TODO needed?
-    function derivePubKey(uint256 privKey) public pure returns (uint256 qx, uint256 qy) {
-        (qx, qy) = EllipticCurve.ecMul(privKey, GX, GY, AA, PP);
+    function derivePubKey(uint256 privateKey) internal pure returns (uint256 qx, uint256 qy) {
+        (qx, qy) = EllipticCurve.ecMul({ _k: privateKey, _x: GX, _y: GY, _aa: AA, _pp: PP });
     }
 
-    function ecAdd(uint256 x1, uint256 y1, uint256 x2, uint256 y2) public pure returns (uint256 x3, uint256 y3) {
-        (x3, y3) = EllipticCurve.ecAdd(x1, y1, x2, y2, AA, PP);
+    function ecAdd(uint256 x1, uint256 y1, uint256 x2, uint256 y2) internal pure returns (uint256 x3, uint256 y3) {
+        (x3, y3) = EllipticCurve.ecAdd({ _x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: AA, _pp: PP });
     }
 }

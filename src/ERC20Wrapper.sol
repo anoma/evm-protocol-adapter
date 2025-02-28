@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.27;
+pragma solidity ^0.8.27;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Address } from "@openzeppelin/contracts/utils/Address.sol";
-//import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Ownable } from "@openzeppelin-contracts/access/Ownable.sol";
+import { Address } from "@openzeppelin-contracts/utils/Address.sol";
+//import { IERC20 } from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 import { WrapperBase } from "./WrapperBase.sol";
 
 contract ERC20Wrapper is Ownable, WrapperBase {
     using Address for address;
 
-    address internal immutable erc20Contract;
+    address internal immutable _ERC20_CONTRACT;
+
+    error ZeroAddressNotAllowed();
 
     constructor(
         address protocolAdapter,
@@ -20,13 +22,13 @@ contract ERC20Wrapper is Ownable, WrapperBase {
     )
         WrapperBase(protocolAdapter, wrapperLogicRef, wrappedKind)
     {
-        require(erc20 != address(0));
-        erc20Contract = erc20;
+        if (erc20 == address(0)) revert ZeroAddressNotAllowed();
+        _ERC20_CONTRACT = erc20;
     }
 
     // TODO make generic proxy, allow native ETH transfers
     function _evmCall(bytes calldata input) internal override returns (bytes memory output) {
-        output = erc20Contract.functionCall(input);
+        output = _ERC20_CONTRACT.functionCall(input);
     }
 
     // Native ETH transfer
