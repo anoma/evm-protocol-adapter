@@ -3,42 +3,40 @@ pragma solidity ^0.8.27;
 
 import { Test } from "forge-std/Test.sol";
 
+import { EllipticCurveK256 } from "../src/libs/EllipticCurveK256.sol";
 import { Universal } from "../src/libs/Identities.sol";
 
-import { EllipticCurveK256 } from "../src/libs/EllipticCurveK256.sol";
-
 contract UniversalIdentityTest is Test {
-    bytes32 constant privateKey = bytes32(uint256(1));
-    bytes internal publicKey;
-    bytes32 internal hashedKey;
-    address internal account;
+    bytes internal _publicKey;
+    bytes32 internal _hashedKey;
+    address internal _account;
 
     function setUp() public {
-        (uint256 x, uint256 y) = EllipticCurveK256.derivePubKey({ privKey: uint256(privateKey) });
-        publicKey = abi.encode(bytes32(x), bytes32(y));
+        (uint256 x, uint256 y) = EllipticCurveK256.derivePubKey({ privateKey: Universal.PRIVATE_KEY });
+        _publicKey = abi.encode(bytes32(x), bytes32(y));
 
-        hashedKey = keccak256(publicKey);
+        _hashedKey = keccak256(_publicKey);
 
-        account = address(uint160(uint256(hashedKey)));
-    }
-
-    function testPrivateKey() public pure {
-        assertEq(Universal.INTERNAL_IDENTITY, privateKey);
+        _account = address(uint160(uint256(_hashedKey)));
     }
 
     function testPublicKey() public view {
-        assertEq(Universal.PUBLIC_KEY, publicKey);
+        assertEq(Universal.PUBLIC_KEY, _publicKey);
+    }
+
+    function testExternalIdentity() public view {
+        assertEq(Universal.EXTERNAL_IDENTITY, _hashedKey);
+    }
+
+    function testAccount() public view {
+        assertEq(Universal.ACCOUNT, _account);
+    }
+
+    function testPrivateKey() public pure {
+        assertEq(Universal.INTERNAL_IDENTITY, bytes32(Universal.PRIVATE_KEY));
     }
 
     function testPublicKeyComponents() public pure {
         assertEq(abi.encode(Universal.PUBLIC_KEY_X, Universal.PUBLIC_KEY_Y), Universal.PUBLIC_KEY);
-    }
-
-    function testExternalIdentity() public view {
-        assertEq(Universal.EXTERNAL_IDENTITY, hashedKey);
-    }
-
-    function testAccount() public view {
-        assertEq(Universal.ACCOUNT, account);
     }
 }

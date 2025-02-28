@@ -25,20 +25,35 @@ library LogicProofs {
     error LogicProofTagNotFound(bytes32 tag);
     error LogicProofIndexOutBounds(uint256 index, uint256 max);
 
-    function lookup(TagLogicProofPair[] calldata map, bytes32 tag) internal pure returns (LogicRefProofPair memory) {
-        for (uint256 i = 0; i < map.length; i++) {
+    function lookup(
+        TagLogicProofPair[] calldata map,
+        bytes32 tag
+    )
+        internal
+        pure
+        returns (LogicRefProofPair memory elem)
+    {
+        uint256 len = map.length;
+        for (uint256 i = 0; i < len; ++i) {
             if (map[i].tag == tag) {
-                return (map[i].pair);
+                return elem = (map[i].pair);
             }
         }
         revert LogicProofTagNotFound(tag);
     }
 
-    function at(TagLogicProofPair[] calldata map, uint256 index) internal pure returns (LogicRefProofPair memory) {
+    function at(
+        TagLogicProofPair[] calldata map,
+        uint256 index
+    )
+        internal
+        pure
+        returns (LogicRefProofPair memory elem)
+    {
         uint256 lastIndex = map.length - 1;
         if (index > lastIndex) {
             revert LogicProofIndexOutBounds({ index: index, max: lastIndex });
         }
-        return map[index].pair;
+        elem = map[index].pair;
     }
 }

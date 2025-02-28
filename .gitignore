@@ -1,6 +1,7 @@
 # Directories
 cache/
 out/
+node_modules/
 .juvix-build
 .vscode/*
 

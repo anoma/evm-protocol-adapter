@@ -9,14 +9,16 @@ import { CommitmentAccumulatorMock } from "./CommitmentAccumulatorMock.sol";
 
 /// @dev If this is your first time with Forge, read this tutorial in the Foundry Book:
 /// https://book.getfoundry.sh/forge/writing-tests
-contract LargeTreeTest is Test, CommitmentAccumulatorMock {
-    uint8 internal constant TREE_DEPTH = 10; // Use 20
-    bytes32 internal constant NON_EXISTENT_LEAF = sha256("NON_EXISTENT");
+contract LargeTreeTest is Test {
+    uint8 internal constant _TREE_DEPTH = 10; // Use 20
 
-    bytes32[] internal leaves;
-    bytes32 internal root;
+    bytes32[] internal _leaves;
+    bytes32 internal _root;
+    CommitmentAccumulatorMock internal _cmAcc;
 
-    constructor() CommitmentAccumulatorMock(TREE_DEPTH) { }
+    constructor() {
+        _cmAcc = new CommitmentAccumulatorMock(_TREE_DEPTH);
+    }
 
     function setUp() public {
         /*
@@ -26,18 +28,18 @@ contract LargeTreeTest is Test, CommitmentAccumulatorMock {
            / \   / \
           0  1  2  3
         */
-        leaves = new bytes32[](2 ** TREE_DEPTH);
-        for (uint256 i = 0; i < 2 ** TREE_DEPTH; ++i) {
-            leaves[i] = SHA256.hash(bytes32(i));
-            _addCommitment(leaves[i]);
+        _leaves = new bytes32[](2 ** _TREE_DEPTH);
+        for (uint256 i = 0; i < 2 ** _TREE_DEPTH; ++i) {
+            _leaves[i] = SHA256.hash(bytes32(i));
+            _cmAcc.addCommitment(_leaves[i]);
         }
     }
 
-    function test_check_path() public view {
+    function test_checkPath() public view {
         bytes32 cm = SHA256.hash(bytes32(0));
-        bytes32 rt = _latestRoot();
-        bytes32[] memory path = _computeMerklePath(cm);
+        bytes32 rt = _cmAcc.latestRoot();
+        bytes32[] memory path = _cmAcc.computeMerklePath(cm);
 
-        _checkMerklePath(rt, cm, path);
+        _cmAcc.checkMerklePath(rt, cm, path);
     }
 }

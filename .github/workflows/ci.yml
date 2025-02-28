@@ -26,11 +26,9 @@ jobs:
       - name: Show Forge version
         run: forge --version
 
-      - name: "Install Bun"
-        uses: "oven-sh/setup-bun@v1"
-
-      - name: Show Bun version
-        run: bun --version
+      - name: Run Forge fmt
+        run: forge fmt --check
+        id: fmt
 
       - name: Install Slither
         run: pip install slither-analyzer
@@ -38,13 +36,25 @@ jobs:
       - name: Show Slither version
         run: slither --version
 
-      - name: Run Forge fmt
-        run: forge fmt --check
-        id: fmt
-
       - name: Run Slither
         run: slither .
-        id: analyze
+        id: slither
+
+      - name: "Install Bun"
+        uses: "oven-sh/setup-bun@v1"
+
+      - name: Show Bun version
+        run: bun --version
+
+      - name: Install Solhint
+        run: bun install solhint
+
+      - name: Show Solhint version
+        run: bunx --bun solhint --version
+
+      - name: Show Solhint version
+        run: bunx --bun solhint 'src/**/*.sol'
+        id: solhint
 
       - name: Run Forge build
         run: forge build --sizes --ast

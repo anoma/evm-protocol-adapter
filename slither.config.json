@@ -1,6 +1,4 @@
 {
-  "detectors_to_run": "all",
-  "filter_paths": "lib",
-  "include_paths": "libs",
-  "detectors_to_exclude": "pragma"
+  "filter_paths": "lib/",
+  "detectors_to_exclude": ["pragma", "naming-convention"]
 }
