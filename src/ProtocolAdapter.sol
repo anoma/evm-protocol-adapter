@@ -5,7 +5,7 @@ pragma solidity ^0.8.27;
 import { ReentrancyGuardTransient } from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
 import { IRiscZeroVerifier as TrustedRiscZeroVerifier } from "@risc0-ethereum/IRiscZeroVerifier.sol";
 
-import { MockDelta } from "../test/MockDelta.sol"; // TODO remove
+import { MockDelta } from "../test/mocks/MockDelta.sol"; // TODO remove
 
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IWrapper as UntrustedWrapper } from "./interfaces/IWrapper.sol";

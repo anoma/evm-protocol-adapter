@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { Test } from "forge-std/Test.sol";
 
-import { NullifierSetMock, NullifierSet } from "./NullifierSetMock.sol";
+import { NullifierSetMock, NullifierSet } from "../mocks/NullifierSetMock.sol";
 
 /// @dev If this is your first time with Forge, read this tutorial in the Foundry Book:
 /// https://book.getfoundry.sh/forge/writing-tests

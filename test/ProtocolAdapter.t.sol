@@ -17,8 +17,8 @@ import { LogicInstance, TagLogicProofPair, LogicRefProofPair } from "./../src/pr
 import { ExpirableBlob, DeletionCriterion } from "./../src/state/BlobStorage.sol";
 import { Action, KindFFICallPair, Resource, Transaction } from "./../src/Types.sol";
 
-import { MockDelta } from "./MockDelta.sol";
-import { MockRiscZeroProof } from "./MockRiscZeroProof.sol";
+import { MockDelta } from "./mocks/MockDelta.sol";
+import { MockRiscZeroProof } from "./mocks/MockRiscZeroProof.sol";
 
 contract ProtocolAdapterTest is DeepTest {
     using ComputableComponents for Resource;

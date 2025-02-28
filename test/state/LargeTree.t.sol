@@ -5,7 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { SHA256 } from "../../src/libs/SHA256.sol";
 
-import { CommitmentAccumulatorMock } from "./CommitmentAccumulatorMock.sol";
+import { CommitmentAccumulatorMock } from "../mocks/CommitmentAccumulatorMock.sol";
 
 /// @dev If this is your first time with Forge, read this tutorial in the Foundry Book:
 /// https://book.getfoundry.sh/forge/writing-tests

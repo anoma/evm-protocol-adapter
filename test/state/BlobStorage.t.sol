@@ -5,7 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { BlobStorage, DeletionCriterion } from "../../src/state/BlobStorage.sol";
 
-import { BlobStorageMock } from "./BlobStorageMock.sol";
+import { BlobStorageMock } from "../mocks/BlobStorageMock.sol";
 
 /// @dev If this is your first time with Forge, read this tutorial in the Foundry Book:
 /// https://book.getfoundry.sh/forge/writing-tests
