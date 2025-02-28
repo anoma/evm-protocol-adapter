@@ -3,7 +3,7 @@ pragma solidity >=0.8.27;
 
 import { Test } from "forge-std/Test.sol";
 
-import { Bytes } from "@openzeppelin/contracts/utils/Bytes.sol";
+import { Bytes } from "openzeppelin-contracts/utils/Bytes.sol";
 
 import { IRiscZeroVerifier, Receipt as RiscZeroReceipt, VerificationFailed } from "risc0-ethereum/IRiscZeroVerifier.sol";
 import { RiscZeroMockVerifier, SelectorMismatch } from "risc0-ethereum/test/RiscZeroMockVerifier.sol";

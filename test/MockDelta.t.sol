@@ -3,7 +3,7 @@ pragma solidity >=0.8.27;
 
 import { Test } from "forge-std/Test.sol";
 import { Delta } from "../src/proving/Delta.sol";
-import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { ECDSA } from "openzeppelin-contracts/utils/cryptography/ECDSA.sol";
 
 import { MockDelta } from "./MockDelta.sol";
 

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.27;
 
-import { MerkleTree } from "@openzeppelin/contracts/utils/structs/MerkleTree.sol";
-import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import { Arrays } from "@openzeppelin/contracts/utils/Arrays.sol";
-import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { MerkleTree } from "openzeppelin-contracts/utils/structs/MerkleTree.sol";
+import { MerkleProof } from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import { Arrays } from "openzeppelin-contracts/utils/Arrays.sol";
+import { EnumerableSet } from "openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 import { SHA256 } from "../libs/SHA256.sol";
 
 contract CommitmentAccumulator {
