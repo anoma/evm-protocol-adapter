@@ -23,22 +23,22 @@ contract UniversalIdentityTest is Test {
     }
 
     function testPrivateKey() public pure {
-        assertEq(Universal.internalIdentity, privateKey);
+        assertEq(Universal.INTERNAL_IDENTITY, privateKey);
     }
 
     function testPublicKey() public view {
-        assertEq(Universal.publicKey, publicKey);
+        assertEq(Universal.PUBLIC_KEY, publicKey);
     }
 
     function testPublicKeyComponents() public pure {
-        assertEq(abi.encode(Universal.publicKeyX, Universal.publicKeyY), Universal.publicKey);
+        assertEq(abi.encode(Universal.PUBLIC_KEY_X, Universal.PUBLIC_KEY_Y), Universal.PUBLIC_KEY);
     }
 
     function testExternalIdentity() public view {
-        assertEq(Universal.externalIdentity, hashedKey);
+        assertEq(Universal.EXTERNAL_IDENTITY, hashedKey);
     }
 
     function testAccount() public view {
-        assertEq(Universal.account, account);
+        assertEq(Universal.ACCOUNT, account);
     }
 }

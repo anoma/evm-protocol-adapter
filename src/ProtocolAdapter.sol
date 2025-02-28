@@ -18,12 +18,9 @@ import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from
 import { ComplianceUnit } from "./proving/Compliance.sol";
 import { Delta } from "./proving/Delta.sol";
 import { MockDelta } from "../test/MockDelta.sol"; // TODO remove
-
 import { AppData } from "./libs/AppData.sol";
-
+import { Universal } from "./libs/Identities.sol";
 import { Resource, Transaction, Action, TagAppDataPair, KindFFICallPair, FFICall } from "./Types.sol";
-import { UNIVERSAL_NULLIFIER_KEY_COMMITMENT } from "./Constants.sol";
-import { console } from "forge-std/console.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
@@ -280,7 +277,7 @@ contract ProtocolAdapter is
             logicRef: wrapperContract.wrapperResourceLogicRef(),
             labelRef: labelRef,
             valueRef: valueRef,
-            nullifierKeyCommitment: UNIVERSAL_NULLIFIER_KEY_COMMITMENT,
+            nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
             quantity: 1,
             nonce: wrapperContract.newNonce(),
             randSeed: 0,

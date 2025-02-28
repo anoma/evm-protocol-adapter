@@ -21,8 +21,8 @@ library MockDelta {
     bytes32 internal constant MESSAGE_HASH = keccak256(MESSAGE);
 
     // Signer
-    address internal constant SIGNER_ACCOUNT = Universal.account;
-    uint256 internal constant SIGNER_PRIVATE_KEY = Universal.privateKey;
+    address internal constant SIGNER_ACCOUNT = Universal.ACCOUNT;
+    uint256 internal constant SIGNER_PRIVATE_KEY = Universal.PRIVATE_KEY;
 
     // Signature
     // obtained from `(uint8 v, bytes32 r, bytes32 s) = vm.sign(SIGNER_PRIVATE_KEY, MESSAGE_HASH);`

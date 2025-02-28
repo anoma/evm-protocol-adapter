@@ -80,7 +80,7 @@ contract ProtocolAdapterTest is DeepTest {
             logicRef: ALWAYS_VALID_LOGIC_REF,
             labelRef: EMPTY_BLOB_REF,
             valueRef: EMPTY_BLOB_REF,
-            nullifierKeyCommitment: Universal.externalIdentity,
+            nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
             quantity: 1,
             nonce: 0,
             randSeed: 0,
@@ -92,7 +92,7 @@ contract ProtocolAdapterTest is DeepTest {
             logicRef: ALWAYS_VALID_LOGIC_REF,
             labelRef: EMPTY_BLOB_REF,
             valueRef: EMPTY_BLOB_REF,
-            nullifierKeyCommitment: Universal.externalIdentity,
+            nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
             quantity: 1,
             nonce: 0,
             randSeed: 0,
@@ -105,7 +105,7 @@ contract ProtocolAdapterTest is DeepTest {
             logicRef: ALWAYS_VALID_LOGIC_REF,
             labelRef: EMPTY_BLOB_REF,
             valueRef: EMPTY_BLOB_REF,
-            nullifierKeyCommitment: Universal.externalIdentity,
+            nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
             quantity: 0,
             nonce: nonce,
             randSeed: 0,
@@ -168,7 +168,7 @@ contract ProtocolAdapterTest is DeepTest {
 
         bytes32[] memory nfs = new bytes32[](consumed.length);
         for (uint256 i = 0; i < consumed.length; ++i) {
-            nfs[i] = consumed[i].nullifier(Universal.internalIdentity);
+            nfs[i] = consumed[i].nullifier(Universal.INTERNAL_IDENTITY);
         }
 
         bytes32[] memory cms = new bytes32[](created.length);
