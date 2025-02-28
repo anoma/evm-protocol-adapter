@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.27;
 
 // TODO In Juvix, Elixir, the nullifier key is 64 bytes and contains the public key.
