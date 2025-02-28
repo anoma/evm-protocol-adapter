@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.27;
+pragma solidity ^0.8.27;
 
 import { MerkleTree } from "openzeppelin-contracts/utils/structs/MerkleTree.sol";
 import { MerkleProof } from "openzeppelin-contracts/utils/cryptography/MerkleProof.sol";

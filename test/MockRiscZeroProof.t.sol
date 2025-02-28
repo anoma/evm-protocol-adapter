@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.27;
+pragma solidity ^0.8.27;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { Bytes } from "openzeppelin-contracts/utils/Bytes.sol";
+import {Bytes} from "openzeppelin-contracts/utils/Bytes.sol";
 
-import { IRiscZeroVerifier, Receipt as RiscZeroReceipt, VerificationFailed } from "risc0-ethereum/IRiscZeroVerifier.sol";
-import { RiscZeroMockVerifier, SelectorMismatch } from "risc0-ethereum/test/RiscZeroMockVerifier.sol";
-import { MockRiscZeroProof } from "./MockRiscZeroProof.sol";
+import {IRiscZeroVerifier, Receipt as RiscZeroReceipt, VerificationFailed} from "risc0-ethereum/IRiscZeroVerifier.sol";
+import {RiscZeroMockVerifier, SelectorMismatch} from "risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import {MockRiscZeroProof} from "./MockRiscZeroProof.sol";
 
 contract MockRiscZeroProofTest is Test {
     using Bytes for bytes;
@@ -78,6 +78,6 @@ contract MockRiscZeroProofTest is Test {
         bytes32 wrongDigest = bytes32(0);
 
         vm.expectRevert(VerificationFailed.selector);
-        mockVerifier.verify({ seal: proof.seal, imageId: MockRiscZeroProof.IMAGE_ID_1, journalDigest: wrongDigest });
+        mockVerifier.verify({seal: proof.seal, imageId: MockRiscZeroProof.IMAGE_ID_1, journalDigest: wrongDigest});
     }
 }

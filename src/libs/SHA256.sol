@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.27;
+pragma solidity ^0.8.27;
 
 library SHA256 {
     function hash(bytes32 a) internal pure returns (bytes32) {

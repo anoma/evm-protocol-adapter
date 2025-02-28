@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.27;
+pragma solidity ^0.8.27;
 
 import { TagLogicProofPair } from "./proving/Logic.sol";
 import { ComplianceUnit } from "./proving/Compliance.sol";
