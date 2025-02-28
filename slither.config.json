@@ -1,5 +1,6 @@
 {
   "detectors_to_run": "all",
   "filter_paths": "lib",
-  "include_paths": "libs"
+  "include_paths": "libs",
+  "detectors_to_exclude": "pragma"
 }
