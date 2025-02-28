@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.27;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { Universal } from "../src/libs/Identities.sol";
+import {Universal} from "../src/libs/Identities.sol";
 
-import { EllipticCurveK256 } from "../src/libs/EllipticCurveK256.sol";
+import {EllipticCurveK256} from "../src/libs/EllipticCurveK256.sol";
 
 contract UniversalIdentityTest is Test {
     bytes32 constant privateKey = bytes32(uint256(1));
@@ -14,7 +14,7 @@ contract UniversalIdentityTest is Test {
     address internal account;
 
     function setUp() public {
-        (uint256 x, uint256 y) = EllipticCurveK256.derivePubKey({ privKey: uint256(privateKey) });
+        (uint256 x, uint256 y) = EllipticCurveK256.derivePubKey({privKey: uint256(privateKey)});
         publicKey = abi.encode(bytes32(x), bytes32(y));
 
         hashedKey = keccak256(publicKey);
@@ -23,22 +23,22 @@ contract UniversalIdentityTest is Test {
     }
 
     function testPrivateKey() public pure {
-        assertEq(Universal.INTERNAL_IDENTITY, privateKey);
+        assertEq(Universal.internalIdentity, privateKey);
     }
 
     function testPublicKey() public view {
-        assertEq(Universal.PUBLIC_KEY, publicKey);
+        assertEq(Universal.publicKey, publicKey);
     }
 
     function testPublicKeyComponents() public pure {
-        assertEq(abi.encode(Universal.PUBLIC_KEY_X, Universal.PUBLIC_KEY_Y), Universal.PUBLIC_KEY);
+        assertEq(abi.encode(Universal.publicKeyX, Universal.publicKeyY), Universal.publicKey);
     }
 
     function testExternalIdentity() public view {
-        assertEq(Universal.EXTERNAL_IDENTITY, hashedKey);
+        assertEq(Universal.externalIdentity, hashedKey);
     }
 
     function testAccount() public view {
-        assertEq(Universal.ACCOUNT, account);
+        assertEq(Universal.account, account);
     }
 }
