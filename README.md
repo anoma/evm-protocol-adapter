@@ -1,115 +1,26 @@
 # EVM Protocol Adapter
 
-1. User calls transaction function written in Juvix
-2. Creates and consumes resources
+## Produce DeepTest
 
-- computes commitments and nullifiers
-- populates appData
-- populates FFICall fields
-
-3. Generates proofs
-
-- Logic: `prove(logicRef, pub, priv)`
-- Compliance: `prove()`
-
-## Protocol Adapter Deployment
-
-```mermaid
-sequenceDiagram
-  box ARM
-    participant rm as RM Interface
-    participant app as Juvix App
-    participant wr as Wrapper Resource
-    participant er as ERC20 Resource
-  end
-  actor dep as Deployer
-  box EVM
-    participant pa as Protocol Adapter Contract
-    participant wc as Wrapper Contract
-    participant ec as  ERC20 Contract
-    participant r0 as  RISZ Zero Verifier Contract
-  end
-  # Preparation
-  wr -->> pa : logic reference
-  rm -->> pa : logic circuit ID
-  rm -->> pa : compliance circuit ID
-  r0 -->> pa : address
-
-  # Steps
-  dep ->> pa : deploy
+```sh
+forge build --ast
 ```
 
-## Wrapper Contract Deployment
-
-```mermaid
-sequenceDiagram
-  box ARM
-    participant rm as RM Interface
-    participant app as Juvix App
-    participant wr as Wrapper Resource
-    participant er as ERC20 Resource
-  end
-  actor dep as Deployer
-  box EVM
-    participant pa as Protocol Adapter Contract
-    participant wc as Wrapper Contract
-    participant ec as  ERC20 Contract
-    participant r0 as  RISZ Zero Verifier Contract
-  end
-
-  dep ->> wc : 1. deploy
-
-  par Wrapper Resource Creation
-    dep ->> pa : 2. createWrapperContractResource(address wrapperContract)
-    pa ->> wr : create resource
-    pa ->> pa : store resource commitment
-  end
+```sh
+bunx --bun forge-deep
 ```
 
-## Transaction with EVM call
+make sure that all the types are used
 
-```mermaid
-sequenceDiagram
-  box ARM
-    participant rm as RM Interface
-    participant app as Juvix App
-    participant wr as Wrapper Resource
-    participant er as ERC20 Resource
-  end
-  #participant ip as Intent Pool
-  #participant mp as Mem Pool
-  actor a as Alice
-  #actor b as Bob
-  box EVM
-    participant pa as Protocol Adapter Contract
-    participant wc as Wrapper Contract
-    participant ec as  ERC20 Contract
-    participant r0 as  RISZ Zero Verifier Contract
-  end
+## Deployment
 
-  par Step 1
-    a ->> app : call transaction function <br> wrap (erc20 : Address) (quantity : Nat) <br> or unwrap (erc20 : resource)
-    app -->> wr : consume & create wrapper resource NFT
-    app -->> er : initialize or finalize ERC20 resource
-    app -->> rm : computeProofs()
-    rm -->> app : proofs
-    app ->> a : transaction object
-  end
-
-  par Step 2
-    a ->> pa : execute transaction object
-    pa ->> pa : do out-of-circuit checks
-    pa ->> r0 : verify in-circuit proofs
-    pa ->> wc : evmCall(bytes input) : bytes output
-    wc ->> ec : call external function <br>transferFrom(address from, address to, uint256 value) : bool success <br> or transfer(address to, uint256 value) : bool success
-    pa ->> pa : store blobs
-    pa ->> pa : add nullifiers & commitments to the <br> commitment and nullifier accumulators
-
-  end
+```shell
+forge create \
+   --broadcast \
+   --rpc-url https://sepolia.infura.io/v3/d64bc77ca96a4a3ea1a70e64e17660a2 \
+   src/HelloWorld.sol:HelloWorld \
+   --private-key 0xfb8d2aabbba7855ced487dbc6dba4352c637471698690d904f733278ba3d336d \
+   --constructor-args 0xbeC907C237c5d27c7D4cB37b2c17CBB227B5f335 "Hello Jan" \
+   --etherscan-api-key VHFVV93PAHZPGVQWWICJRA4MFAHFPXVSV4 \
+   --verify
 ```
-
-### Limitations
-
-- A wrapper contract must be deployed by a 3rd party
-- 1 EVM call per wrapper contract per block
-- EVM call return values must be known at proving time

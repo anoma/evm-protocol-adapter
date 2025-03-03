@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import { Ownable } from "@openzeppelin-contracts/access/Ownable.sol";
 
 import { IWrapper } from "./interfaces/IWrapper.sol";
+import { ComputableComponents } from "./libs/ComputableComponents.sol";
 
 /// A contract owning EVM state and executing EVM calls.
 abstract contract WrapperBase is IWrapper, Ownable {
@@ -20,23 +21,17 @@ abstract contract WrapperBase is IWrapper, Ownable {
     /// @notice The EVM state wrapping resource kind.
     bytes32 internal immutable _WRAPPED_RESOURCE_KIND;
 
-    uint256 private _nonce;
-
     constructor(address protocolAdapter, bytes32 wrapperLogicRef, bytes32 wrappedKind) Ownable(protocolAdapter) {
         _WRAPPER_RESOURCE_LOGIC_REF = wrapperLogicRef;
-        _WRAPPER_RESOURCE_LABEL_REF = sha256(abi.encode(address(this), wrappedKind));
-        _WRAPPER_RESOURCE_KIND = sha256(abi.encode(_WRAPPER_RESOURCE_LOGIC_REF, _WRAPPER_RESOURCE_LABEL_REF));
+        _WRAPPER_RESOURCE_LABEL_REF = sha256(abi.encode(address(this)));
+        _WRAPPER_RESOURCE_KIND =
+            ComputableComponents.kind({ logicRef: _WRAPPER_RESOURCE_LOGIC_REF, labelRef: _WRAPPER_RESOURCE_LABEL_REF });
 
         _WRAPPED_RESOURCE_KIND = wrappedKind;
     }
 
-    function evmCall(bytes calldata input) external onlyOwner returns (bytes memory output) {
-        output = _evmCall(input);
-    }
-
-    // TODO can be used to grief transactions
-    function newNonce() external returns (uint256 nonce) {
-        nonce = _newNonce();
+    function ffiCall(bytes calldata input) external onlyOwner returns (bytes memory output) {
+        output = _ffiCall(input);
     }
 
     /// @inheritdoc IWrapper
@@ -59,9 +54,5 @@ abstract contract WrapperBase is IWrapper, Ownable {
         wrappedKind = _WRAPPED_RESOURCE_KIND;
     }
 
-    function _evmCall(bytes calldata input) internal virtual returns (bytes memory output);
-
-    function _newNonce() internal returns (uint256 nonce) {
-        nonce = ++_nonce;
-    }
+    function _ffiCall(bytes calldata input) internal virtual returns (bytes memory output);
 }

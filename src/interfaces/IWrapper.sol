@@ -7,10 +7,7 @@ interface IWrapper {
     /// @notice Conducts an external call to read or write EVM state.
     /// @param input The `bytes` encoded calldata (including the `bytes4` function selector).
     /// @return output The `bytes` encoded output of the call.
-    function evmCall(bytes memory input) external returns (bytes memory output);
-
-    // TODO Remove or document
-    function newNonce() external returns (uint256 nonce);
+    function ffiCall(bytes memory input) external returns (bytes memory output);
 
     /// @notice Returns the binding reference to the logic of the wrapper contract resource.
     /// @return wrapperLogicRef The binding logic reference.
