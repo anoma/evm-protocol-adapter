@@ -29,21 +29,16 @@ transferFromSelector : ByteArray := todo;
 --  mkByteArray
 --  [0x23; 0xb8; 0x72; 0xdd];
 
-transferFromEvmInput
-  (from to : ExternalIdentity) (quantity : Nat) : ByteArray :=
+transferFromEvmInput (from to : Address) (quantity : Nat) : ByteArray :=
   builtinEvmEncode
     (transferFromSelector
-      , (from
-        |> ExternalIdentity.ExternalIdentity.unExternalIdentity
-        |> builtinEvmEncode)
-      , (to
-        |> ExternalIdentity.ExternalIdentity.unExternalIdentity
-        |> builtinEvmEncode)
+      , (from |> Address.unAddress |> builtinEvmEncode)
+      , (to |> Address.unAddress |> builtinEvmEncode)
       , builtinEvmEncode quantity);
 
 transferFromEvmOutput : ByteArray := builtinEvmEncode true;
 
-transferEvmOutput : ByteArray := transferFromEvmOutput;
+transferEvmOutput : ByteArray := builtinEvmEncode true;
 
 {- LOGIC -}
 erc20WrapperContractLogic (pub : Instance) (priv : Witness) : Bool :=
@@ -129,12 +124,12 @@ creationLogic (self : Resource) (priv : Witness) : Bool :=
 checkTransferFromCompliance
   (input output : ByteArray) (consumedWC createdERC20 : Resource) : Bool :=
   let
-    ((from, to), value) : Pair (Pair ExternalIdentity ExternalIdentity) Nat :=
+    ((from, to), value) : Pair (Pair Address Address) Nat :=
       builtinEvmDecode input;
     evmCallSuccess : Bool := builtinEvmDecode output;
-    wrapperContract : ExternalIdentity :=
+    wrapperContract : Address :=
       decodeWrapperContractAddressFromLabel consumedWC;
-    createdERC20Owner := createdERC20 |> erc20Owner;
+    createdERC20Owner := createdERC20 |> erc20Owner |> toAddress;
     createdERC20Quantity := createdERC20 |> Resource.quantity;
   in evmCallSuccess
     -- The funds must be transferred to the wrapper contract.
@@ -170,7 +165,7 @@ mkERC20WrapperContractResource
   : Resource :=
   mkResource@{
     logic;
-    label := builtinAnomaEncode (FfiCall.address ffiCall);
+    label := builtinAnomaEncode (FfiCall.address ffiCall, wrappedResourceKind);
     value :=
       builtinAnomaEncode
         (wrappedResourceKind, FfiCall.input ffiCall, FfiCall.output ffiCall);
@@ -182,6 +177,8 @@ mkERC20WrapperContractResource
     randSeed := 0;
   };
 
-decodeWrapperContractAddressFromLabel
-  (wrapperResource : Resource) : ExternalIdentity :=
-  wrapperResource |> Resource.label |> builtinAnomaDecode;
+decodeWrapperContractAddressFromLabel (wrapperResource : Resource) : Address :=
+  let
+    pair : Pair Address Kind :=
+      wrapperResource |> Resource.label |> builtinAnomaDecode;
+  in fst pair;

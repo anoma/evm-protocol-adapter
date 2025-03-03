@@ -112,8 +112,8 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
-    function createWrapperContractResource(UntrustedWrapper wrapperContract) external override {
-        _createWrapperContractResource(wrapperContract);
+    function createWrapperContractResource(UntrustedWrapper untrustedWrapperContract) external override {
+        _createWrapperContractResource(untrustedWrapperContract);
     }
 
     /// @inheritdoc IProtocolAdapter
