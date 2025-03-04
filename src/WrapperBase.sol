@@ -24,7 +24,7 @@ abstract contract WrapperBase is IWrapper, Ownable {
 
     constructor(address protocolAdapter, bytes32 wrapperLogicRef, bytes32 wrappedKind) Ownable(protocolAdapter) {
         _WRAPPER_RESOURCE_LOGIC_REF = wrapperLogicRef;
-        _WRAPPER_RESOURCE_LABEL_REF = sha256(abi.encode(address(this), wrappedKind));
+        _WRAPPER_RESOURCE_LABEL_REF = sha256(abi.encode(address(this)));
         _WRAPPER_RESOURCE_KIND = sha256(abi.encode(_WRAPPER_RESOURCE_LOGIC_REF, _WRAPPER_RESOURCE_LABEL_REF));
 
         _WRAPPED_RESOURCE_KIND = wrappedKind;

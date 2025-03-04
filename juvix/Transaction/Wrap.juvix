@@ -41,12 +41,12 @@ wrapErc20
             mkFfiCall@{
               address := wrapperContract;
               input :=
-                transferFromEvmInput@{
+                safeTransferFromEvmInput@{
                   to := wrapperContract;
                   from := caller |> toAddress;
                   quantity;
                 };
-              output := transferFromEvmOutput;
+              output := safeTransferFromEvmOutput;
             };
           nonce := Nonce.toNat nonce1;
         };

@@ -131,30 +131,6 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Computes the commitment of a wrapper contract resource that can be consumed by the universal identity.
-    // @param logicRef The wrapper contract logic reference.
-    /// @param labelRef The wrapper contract label reference.
-    /// @param valueRef The wrapper contract value reference.
-    function _wrapperContractResourceCommitment(
-        UntrustedWrapper untrustedWrapperContract,
-        bytes32 labelRef,
-        bytes32 valueRef
-    )
-        internal
-        returns (bytes32 wrapperResource)
-    {
-        wrapperResource = Resource({
-            logicRef: untrustedWrapperContract.wrapperResourceLogicRef(),
-            labelRef: labelRef,
-            valueRef: valueRef,
-            nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
-            quantity: 1,
-            nonce: untrustedWrapperContract.newNonce(),
-            randSeed: 0,
-            ephemeral: false
-        }).commitment();
-    }
-
     function _createWrapperContractResource(UntrustedWrapper untrustedWrapperContract) internal {
         bytes32 computedWrapperLabelRef = _computeWrapperLabelRef(untrustedWrapperContract);
         bytes32 expectedWrapperLabelRef = untrustedWrapperContract.wrapperResourceLabelRef();
@@ -175,6 +151,31 @@ contract ProtocolAdapter is
                 valueRef: abi.encode(untrustedWrapperContract.wrappedResourceKind(), empty, empty).toRefCalldata()
             })
         );
+    }
+
+    /// @notice Computes the commitment of a wrapper contract resource that can be consumed by the universal identity.
+    // @param logicRef The wrapper contract logic reference.
+    /// @param labelRef The wrapper contract label reference.
+    /// @param valueRef The wrapper contract value reference.
+    function _wrapperContractResourceCommitment(
+        UntrustedWrapper untrustedWrapperContract,
+        bytes32 labelRef,
+        bytes32 valueRef
+    )
+        internal
+        view
+        returns (bytes32 wrapperResource)
+    {
+        wrapperResource = Resource({
+            logicRef: untrustedWrapperContract.wrapperResourceLogicRef(),
+            labelRef: labelRef,
+            valueRef: valueRef,
+            nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
+            quantity: 1,
+            nonce: 0,
+            randSeed: 0,
+            ephemeral: false
+        }).commitment();
     }
 
     // solhint-disable-next-line function-max-lines

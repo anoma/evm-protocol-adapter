@@ -10,35 +10,39 @@ import Helpers open;
 import Anoma open using {module ExternalIdentity; module InternalIdentity};
 
 -- 0xa9059cbb;
-transferSelector : ByteArray := todo;
--- functionSelectorFromString("function transfer(address, uint256) returns (bool)");
---  mkByteArray
---  [0xa9; 0x5; 0x9c; 0xbb];
+safeTransferSelector : ByteArray := todo;
+-- functionSelectorFromString("function safeTransfer(address, uint256) returns");
+--  mkByteArray todo;
 
-transferEvmInput (to : ExternalIdentity) (quantity : Nat) : ByteArray :=
+-- functionSelectorFromString("function transfer(address, uint256) returns (bool)");
+--  mkByteArray todo;
+
+safeTransferEvmInput (to : ExternalIdentity) (quantity : Nat) : ByteArray :=
   builtinEvmEncode
-    (transferSelector
+    (safeTransferSelector
       , (to
         |> ExternalIdentity.ExternalIdentity.unExternalIdentity
         |> builtinEvmEncode)
       , builtinEvmEncode quantity);
 
 -- 0x23b872dd
-transferFromSelector : ByteArray := todo;
+safeTransferFromSelector : ByteArray := todo;
+-- functionSelectorFromString("function safeTransferFrom(address, address, uint256)");
+
 -- functionSelectorFromString("function transferFrom(address, address, uint256) returns (bool)");
 --  mkByteArray
 --  [0x23; 0xb8; 0x72; 0xdd];
 
-transferFromEvmInput (from to : Address) (quantity : Nat) : ByteArray :=
+safeTransferFromEvmInput (from to : Address) (quantity : Nat) : ByteArray :=
   builtinEvmEncode
-    (transferFromSelector
+    (safeTransferFromSelector
       , (from |> Address.unAddress |> builtinEvmEncode)
       , (to |> Address.unAddress |> builtinEvmEncode)
       , builtinEvmEncode quantity);
 
-transferFromEvmOutput : ByteArray := builtinEvmEncode true;
+safeTransferFromEvmOutput : ByteArray := mkByteArray [];
 
-transferEvmOutput : ByteArray := builtinEvmEncode true;
+safeTransferEvmOutput : ByteArray := mkByteArray [];
 
 {- LOGIC -}
 erc20WrapperContractLogic (pub : Instance) (priv : Witness) : Bool :=
@@ -97,7 +101,7 @@ creationLogic (self : Resource) (priv : Witness) : Bool :=
                 {- ERC20 resource initialization -}
                 | false, true :=
                   if
-                    | selector == transferFromSelector :=
+                    | selector == safeTransferFromSelector :=
                       checkTransferFromCompliance@{
                         input;
                         output;
@@ -108,7 +112,7 @@ creationLogic (self : Resource) (priv : Witness) : Bool :=
                 {- ERC20 resource finalization -}
                 | true, false :=
                   if
-                    | selector == transferSelector :=
+                    | selector == safeTransferSelector :=
                       checkTransferCompliance@{
                         input;
                         output;
@@ -143,12 +147,11 @@ checkTransferCompliance
   (input output : ByteArray) (consumedWC consumedERC20 : Resource) : Bool :=
   let
     (to, value) : Pair ExternalIdentity Nat := builtinEvmDecode input;
-    evmCallSuccess : Bool := builtinEvmDecode output;
     consumedERC20Owner := consumedERC20 |> erc20Owner;
     consumedERC20Quantity := consumedERC20 |> Resource.quantity;
-  in evmCallSuccess
-    -- The consumed non-ephemeral resource must be owned by the `to` address to which the wrapper contract will transfer the funds.
-    && consumedERC20Owner == to
+  in -- The consumed non-ephemeral resource must be owned by the `to` address to which the wrapper contract will transfer the funds.
+      consumedERC20Owner
+      == to
     -- The quantity of the non-ephemeral resource must equal the value that has been transferred.
     && consumedERC20Quantity == value;
 
@@ -165,7 +168,7 @@ mkERC20WrapperContractResource
   : Resource :=
   mkResource@{
     logic;
-    label := builtinAnomaEncode (FfiCall.address ffiCall, wrappedResourceKind);
+    label := builtinAnomaEncode (FfiCall.address ffiCall);
     value :=
       builtinAnomaEncode
         (wrappedResourceKind, FfiCall.input ffiCall, FfiCall.output ffiCall);
