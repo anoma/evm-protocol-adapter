@@ -7,7 +7,7 @@ interface IWrapper {
     /// @notice Conducts an external call to read or write EVM state.
     /// @param input The `bytes` encoded calldata (including the `bytes4` function selector).
     /// @return output The `bytes` encoded output of the call.
-    function evmCall(bytes memory input) external returns (bytes memory output);
+    function ffiCall(bytes memory input) external returns (bytes memory output);
 
     // TODO Remove or document
     function newNonce() external returns (uint256 nonce);

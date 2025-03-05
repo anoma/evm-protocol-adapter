@@ -130,12 +130,12 @@ checkTransferFromCompliance
   let
     ((from, to), value) : Pair (Pair Address Address) Nat :=
       builtinEvmDecode input;
-    evmCallSuccess : Bool := builtinEvmDecode output;
+    ffiCallSuccess : Bool := builtinEvmDecode output;
     wrapperContract : Address :=
       decodeWrapperContractAddressFromLabel consumedWC;
     createdERC20Owner := createdERC20 |> erc20Owner |> toAddress;
     createdERC20Quantity := createdERC20 |> Resource.quantity;
-  in evmCallSuccess
+  in ffiCallSuccess
     -- The funds must be transferred to the wrapper contract.
     && wrapperContract == to
     -- The created non-ephemeral resource must be owned by the `from` address from which the funds were transferred.

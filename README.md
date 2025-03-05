@@ -100,7 +100,7 @@ sequenceDiagram
     a ->> pa : execute transaction object
     pa ->> pa : do out-of-circuit checks
     pa ->> r0 : verify in-circuit proofs
-    pa ->> wc : evmCall(bytes input) : bytes output
+    pa ->> wc : ffiCall(bytes input) : bytes output
     wc ->> ec : call external function <br>transferFrom(address from, address to, uint256 value) : bool success <br> or transfer(address to, uint256 value) : bool success
     pa ->> pa : store blobs
     pa ->> pa : add nullifiers & commitments to the <br> commitment and nullifier accumulators

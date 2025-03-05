@@ -124,7 +124,7 @@ contract ProtocolAdapter is
     // TODO Consider DoS attacks https://detectors.auditbase.com/avoid-external-calls-in-unbounded-loops-solidity
     // slither-disable-next-line calls-loop
     function _executeFFICall(FFICall calldata ffiCall) internal {
-        bytes memory output = UntrustedWrapper(ffiCall.wrapperContract).evmCall(ffiCall.input);
+        bytes memory output = UntrustedWrapper(ffiCall.untrustedWrapperContract).ffiCall(ffiCall.input);
 
         if (keccak256(output) != keccak256(ffiCall.output)) {
             revert FFICallOutputMismatch({ expected: ffiCall.output, actual: output });
@@ -132,22 +132,34 @@ contract ProtocolAdapter is
     }
 
     function _createWrapperContractResource(UntrustedWrapper untrustedWrapperContract) internal {
-        bytes32 computedWrapperLabelRef = _computeWrapperLabelRef(untrustedWrapperContract);
-        bytes32 expectedWrapperLabelRef = untrustedWrapperContract.wrapperResourceLabelRef();
+        bytes32 computedLabelRef = _computeWrapperLabelRef(untrustedWrapperContract);
 
-        // Check integrity
-        if (computedWrapperLabelRef != expectedWrapperLabelRef) {
-            revert WrapperContractResourceLabelMismatch({
-                expected: expectedWrapperLabelRef,
-                actual: computedWrapperLabelRef
+        // Label integrity check
+        {
+            bytes32 storedLabelRef = untrustedWrapperContract.wrapperResourceLabelRef();
+            if (computedLabelRef != storedLabelRef) {
+                revert WrapperContractResourceLabelMismatch({ expected: computedLabelRef, actual: storedLabelRef });
+            }
+        }
+
+        // Kind integrity check
+        {
+            bytes32 storedKind = untrustedWrapperContract.wrapperResourceKind();
+            bytes32 computedKind = ComputableComponents.kind({
+                logicRef: untrustedWrapperContract.wrapperResourceLogicRef(),
+                labelRef: computedLabelRef
             });
+
+            if (computedKind != storedKind) {
+                revert WrapperResourceKindMismatch({ expected: computedKind, actual: storedKind });
+            }
         }
 
         bytes memory empty = bytes("");
         _addCommitment(
             _wrapperContractResourceCommitment({
                 untrustedWrapperContract: untrustedWrapperContract,
-                labelRef: computedWrapperLabelRef,
+                labelRef: computedLabelRef,
                 valueRef: abi.encode(untrustedWrapperContract.wrappedResourceKind(), empty, empty).toRefCalldata()
             })
         );
@@ -306,7 +318,7 @@ contract ProtocolAdapter is
 
     function _verifyFFICall(KindFFICallPair calldata kindFFICallPair) internal view {
         bytes32 passedKind = kindFFICallPair.kind;
-        bytes32 fetchedKind = UntrustedWrapper(kindFFICallPair.ffiCall.wrapperContract).wrapperResourceKind();
+        bytes32 fetchedKind = UntrustedWrapper(kindFFICallPair.ffiCall.untrustedWrapperContract).wrapperResourceKind();
 
         if (passedKind != fetchedKind) {
             revert WrapperResourceKindMismatch({ expected: fetchedKind, actual: passedKind });
