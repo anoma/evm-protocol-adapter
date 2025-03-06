@@ -9,9 +9,6 @@ interface IWrapper {
     /// @return output The `bytes` encoded output of the call.
     function ffiCall(bytes memory input) external returns (bytes memory output);
 
-    // TODO Remove or document
-    function newNonce() external returns (uint256 nonce);
-
     /// @notice Returns the binding reference to the logic of the wrapper contract resource.
     /// @return wrapperLogicRef The binding logic reference.
     function wrapperResourceLogicRef() external view returns (bytes32 wrapperLogicRef);

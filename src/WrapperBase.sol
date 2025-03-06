@@ -21,8 +21,6 @@ abstract contract WrapperBase is IWrapper, Ownable {
     /// @notice The EVM state wrapping resource kind.
     bytes32 internal immutable _WRAPPED_RESOURCE_KIND;
 
-    uint256 private _nonce;
-
     constructor(address protocolAdapter, bytes32 wrapperLogicRef, bytes32 wrappedKind) Ownable(protocolAdapter) {
         _WRAPPER_RESOURCE_LOGIC_REF = wrapperLogicRef;
         _WRAPPER_RESOURCE_LABEL_REF = sha256(abi.encode(address(this)));
@@ -57,8 +55,4 @@ abstract contract WrapperBase is IWrapper, Ownable {
     }
 
     function _ffiCall(bytes calldata input) internal virtual returns (bytes memory output);
-
-    function _newNonce() internal returns (uint256 nonce) {
-        nonce = ++_nonce;
-    }
 }
