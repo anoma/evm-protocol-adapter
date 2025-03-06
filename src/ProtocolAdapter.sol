@@ -83,29 +83,31 @@ contract ProtocolAdapter is
 
         emit TransactionExecuted({ id: ++_txCount, transaction: transaction });
 
-        uint256 nActions = transaction.actions.length;
-        for (uint256 i = 0; i < nActions; ++i) {
+        uint256 n = transaction.actions.length;
+        uint256 m;
+        uint256 j;
+        for (uint256 i = 0; i < n; ++i) {
             Action calldata action = transaction.actions[i];
 
-            uint256 len = action.tagAppDataPairs.length;
-            for (uint256 j = 0; j < len; ++j) {
+            m = action.tagAppDataPairs.length;
+            for (j = 0; j < m; ++j) {
                 _storeBlob(action.tagAppDataPairs[j].appData);
             }
 
-            len = action.nullifiers.length;
-            for (uint256 j = 0; j < len; ++j) {
+            m = action.nullifiers.length;
+            for (j = 0; j < m; ++j) {
                 // Nullifier non-existence was already checked in `_verify(transaction);` at the top.
                 _addNullifierUnchecked(action.nullifiers[j]);
             }
 
-            len = action.commitments.length;
-            for (uint256 j = 0; j < len; ++j) {
+            m = action.commitments.length;
+            for (j = 0; j < m; ++j) {
                 // Commitment non-existence was already checked in `_verify(transaction);` at the top.
                 _addCommitmentUnchecked(action.commitments[j]);
             }
 
-            len = action.kindFFICallPairs.length;
-            for (uint256 j = 0; j < len; ++j) {
+            m = action.kindFFICallPairs.length;
+            for (j = 0; j < m; ++j) {
                 _executeFFICall(action.kindFFICallPairs[j].ffiCall);
             }
         }

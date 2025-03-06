@@ -14,7 +14,7 @@ gas_reports = [
     "BlobStorageMock",
 ]
 optimizer = true
-via_ir = false
+via_ir = true
 optimizer_runs = 10_000
 # gas_limit = 100_000_000 # ETH is 30M, but we use a higher value.
 gas_limit = "18446744073709551615" # u64::MAX
