@@ -15,21 +15,17 @@ import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulatorMock.sol"
 import {ImprovedCommitmentAccumulatorMock} from "../mocks/ImprovedCommitmentAccumulatorMock.sol";
 import {ICommitmentAccumulatorMock} from "../mocks/ICommitmentAccumulatorMock.sol";
 
-import {console} from "forge-std/console.sol";
-
 contract Base is Test {
     uint8 internal constant _TREE_DEPTH = 2; // NOTE: 2^2 = 4 _nodes
 
-    /// @dev sha256("NON_EXISTENT");
-    bytes32 internal constant _NON_EXISTENT_LEAF = 0x876515d057234b0fd4991e64ba758c5971d578d2385f182a5a264f6019761dd6;
-
     uint256 internal constant N_LEAFS = 2 ** _TREE_DEPTH;
     uint256 internal constant N_NODES = 2 ** (_TREE_DEPTH - 1);
+    uint256 internal constant N_ROOTS = N_LEAFS + 1;
 
-    bytes32[4][4] internal _leaves;
-    bytes32[][4][4] internal _siblings; // 2
-    bytes32[2][4] internal _nodes;
-    bytes32[4] internal _roots;
+    bytes32[4][5] internal _leaves;
+    bytes32[][4][5] internal _siblings; // 2
+    bytes32[2][5] internal _nodes;
+    bytes32[5] internal _roots;
 
     ICommitmentAccumulatorMock _cmAcc;
 
@@ -46,16 +42,15 @@ contract Base is Test {
           0  1  2  3
         */
 
-        bytes32 emptyLeafHash = ImprovedMerkleTree._EMPTY_LEAF_HASH;
+        bytes32 emptyLeafHash = _cmAcc.emptyLeafHash();
 
-        for (uint256 i = 0; i < N_LEAFS; ++i) {
-            for (uint256 j = 0; j <= i; ++j) {
+        for (uint256 i = 0; i < N_ROOTS; ++i) {
+            for (uint256 j = 0; j < i; ++j) {
                 _leaves[i][j] = SHA256.hash(bytes32(j));
-                //console.log(i, j, vm.toString(_leaves[i][j]));
             }
-            for (uint256 j = i + 1; j < N_LEAFS; ++j) {
+
+            for (uint256 j = i; j < N_ROOTS - 1; ++j) {
                 _leaves[i][j] = emptyLeafHash;
-                //console.log(i, j, "'", vm.toString(_leaves[i][j]));
             }
 
             _nodes[i][0] = SHA256.commutativeHash(_leaves[i][0], _leaves[i][1]);
@@ -81,57 +76,54 @@ contract Base is Test {
     }
 
     function test_latestRoot_should_return_correct_roots() public {
+        bytes32 initialRoot = _cmAcc.latestRoot();
+
+        assertEq(initialRoot, _roots[0]);
+        assertEq(initialRoot, _cmAcc.initialRoot());
+
         for (uint256 i = 0; i < N_LEAFS; ++i) {
-            _cmAcc.addCommitment(_leaves[i][i]);
-            assertEq(_cmAcc.latestRoot(), _roots[i]);
+            assertEq(_cmAcc.addCommitment(_leaves[i + 1][i]), _roots[i + 1]);
         }
+    }
+
+    function test_computeMerklePath_reverts_for_empty_hash() public {
+        bytes32 emptyLeafHash = _cmAcc.emptyLeafHash();
+        vm.expectRevert(ICommitmentAccumulator.EmptyCommitment.selector);
+        _cmAcc.computeMerklePath(emptyLeafHash);
     }
 
     function test_computeMerklePath_should_return_correct_siblings() public {
         for (uint256 i = 0; i < N_LEAFS; ++i) {
-            _cmAcc.addCommitment(_leaves[i][i]);
+            _cmAcc.addCommitment(_leaves[i + 1][i]);
 
-            for (uint256 j = 0; j <= i; ++j) {
-                assertEq(_cmAcc.computeMerklePath(_leaves[i][j]), _siblings[i][j]);
+            for (uint256 j = 0; j < i; ++j) {
+                assertEq(_cmAcc.computeMerklePath(_leaves[i + 1][j]), _siblings[i + 1][j]);
             }
         }
     }
 
     function test_findCommitmentIndex_should_return_correct_indices() public {
         for (uint256 i = 0; i < N_LEAFS; ++i) {
-            _cmAcc.addCommitment(_leaves[i][i]);
+            _cmAcc.addCommitment(_leaves[i + 1][i]);
 
             for (uint256 j = 0; j <= i; ++j) {
-                assertEq(j, _cmAcc.findCommitmentIndex(_leaves[i][j]));
+                assertEq(j, _cmAcc.findCommitmentIndex(_leaves[i + 1][j]));
             }
         }
     }
 
-    function test_findCommitmentIndex_should_revert_on_empty_commitment() public {
+    function test_findCommitmentIndex_reverts_on_empty_commitment() public {
         bytes32 emptyLeafHash = _cmAcc.emptyLeafHash();
         vm.expectRevert(ICommitmentAccumulator.EmptyCommitment.selector);
         _cmAcc.findCommitmentIndex(emptyLeafHash);
     }
-
-    // function test_findCommitmentIndex_should_panic() public {
-    //     uint256 cmCount = _cmAcc.commitmentCount();
-    //     uint256 index = 0;
-    //
-    //     //vm.expectRevert(
-    //     //    abi.encodeWithSelector(ICommitmentAccumulator.CommitmentIndexOutOfBounds.selector, index, cmCount)
-    //     //);
-    //
-    //     vm.expectRevert(abi.encodeWithSelector(ICommitmentAccumulator.NonExistingCommitment.selector, cm));
-    //
-    //     _cmAcc.findCommitmentIndex(_NON_EXISTENT_LEAF);
-    // }
 
     function test_addCommitment_should_add_commitments() public {
         uint256 prevCount = 0;
         uint256 newCount = 0;
 
         for (uint256 i = 0; i < N_LEAFS; ++i) {
-            _cmAcc.addCommitment(_leaves[i][i]);
+            _cmAcc.addCommitment(_leaves[i + 1][i]);
             newCount = _cmAcc.commitmentCount();
 
             assertEq(newCount, ++prevCount);
@@ -147,14 +139,15 @@ contract Base is Test {
         _cmAcc.addCommitment(cm);
     }
 
-    function test_findCommitmentIndex_should_revert_on_non_existent_commitment() public {
+    function test_findCommitmentIndex_reverts_on_non_existent_commitment() public {
+        bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
         vm.expectRevert(
-            abi.encodeWithSelector(ICommitmentAccumulator.NonExistingCommitment.selector, _NON_EXISTENT_LEAF)
+            abi.encodeWithSelector(ICommitmentAccumulator.NonExistingCommitment.selector, nonExistentCommitment)
         );
-        _cmAcc.findCommitmentIndex(_NON_EXISTENT_LEAF);
+        _cmAcc.findCommitmentIndex(nonExistentCommitment);
     }
 
-    function test_commitmentAtIndex_should_revert_on_non_existent_index() public {
+    function test_commitmentAtIndex_reverts_on_non_existent_index() public {
         for (uint256 i = 0; i < N_LEAFS; ++i) {
             uint256 commitmentCount = _cmAcc.commitmentCount();
 
@@ -165,27 +158,35 @@ contract Base is Test {
         }
     }
 
-    /*
-    function test_findCommitmentIndex_reverts_on_non_existent_leaf() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(CommitmentAccumulator.NonExistingCommitment.selector, _NON_EXISTENT_LEAF)
-        );
-        _cmAcc.findCommitmentIndex(_NON_EXISTENT_LEAF);
-    }
-    */
     function test_should_produce_an_invalid_root_for_a_non_existent_leaf() public {
+        bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
+
+        // Test empty tree
+        bytes32 root = _cmAcc.initialRoot();
+        bytes32 invalidRoot = SHA256.commutativeHash(
+            SHA256.commutativeHash(nonExistentCommitment, _siblings[0][0][0]), _siblings[0][0][1]
+        );
+
+        bytes32 computedRoot = MerkleProof.processProof({
+            proof: _siblings[0][0],
+            leaf: nonExistentCommitment,
+            hasher: SHA256.commutativeHash
+        });
+        assertNotEq(computedRoot, root);
+        assertEq(computedRoot, invalidRoot);
+
+        // Populated tree
         for (uint256 i = 0; i < N_LEAFS; ++i) {
-            _cmAcc.addCommitment(_leaves[i][i]);
-            bytes32 root = _cmAcc.latestRoot();
+            root = _cmAcc.addCommitment(_leaves[i + 1][i]);
 
             for (uint256 j = 0; j <= i; ++j) {
-                bytes32 invalidRoot = SHA256.commutativeHash(
-                    SHA256.commutativeHash(_NON_EXISTENT_LEAF, _siblings[i][j][0]), _siblings[i][j][1]
+                invalidRoot = SHA256.commutativeHash(
+                    SHA256.commutativeHash(nonExistentCommitment, _siblings[i + 1][j][0]), _siblings[i + 1][j][1]
                 );
 
-                bytes32 computedRoot = MerkleProof.processProof({
-                    proof: _siblings[i][j],
-                    leaf: _NON_EXISTENT_LEAF,
+                computedRoot = MerkleProof.processProof({
+                    proof: _siblings[i + 1][j],
+                    leaf: nonExistentCommitment,
                     hasher: SHA256.commutativeHash
                 });
 

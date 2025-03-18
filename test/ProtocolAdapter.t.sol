@@ -14,8 +14,10 @@ import {Resource, Transaction} from "./../src/Types.sol";
 import {MockRiscZeroProof} from "./mocks/MockRiscZeroProof.sol";
 import {MockTypes} from "./mocks/MockTypes.sol";
 
+import {console} from "forge-std/console.sol";
+
 contract ProtocolAdapterTest is Test {
-    uint8 internal constant _TREE_DEPTH = 2 ^ 8;
+    uint8 internal constant _TREE_DEPTH = 2 ^ 32;
     // IRiscZeroVerifier internal constant _SEPOLIA_VERIFIER =
     //     IRiscZeroVerifier(address(0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187));
 
@@ -34,7 +36,7 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_benchmark() public {
-        uint16[2] memory n = [uint16(5), uint16(50)];
+        uint16[1] memory n = [uint16(50)];
 
         for (uint256 i = 0; i < n.length; ++i) {
             (Resource[] memory consumed, Resource[] memory created) = MockTypes.mockResources({
@@ -57,7 +59,7 @@ contract ProtocolAdapterTest is Test {
         }
     }
 
-    function test_execute() public view {
+    function test_execute() public {
         (Resource[] memory consumed, Resource[] memory created) =
             MockTypes.mockResources({nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0});
 
@@ -68,7 +70,7 @@ contract ProtocolAdapterTest is Test {
             created: created
         });
 
-        _pa.verify(txn);
+        _pa.execute(txn);
     }
 
     function test_verifyEmptyTx() public view {
@@ -82,7 +84,7 @@ contract ProtocolAdapterTest is Test {
         _pa.verify(txn);
     }
 
-    function test_verifyTx() public view {
+    function test_verify() public view {
         (Resource[] memory consumed, Resource[] memory created) =
             MockTypes.mockResources({nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0});
 

@@ -4,10 +4,8 @@ pragma solidity ^0.8.27;
 import { Arrays } from "@openzeppelin-contracts/utils/Arrays.sol";
 import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
-import { ImprovedMerkleTree } from "./ImprovedMerkleTree.sol";
 import { ICommitmentAccumulator } from "../interfaces/ICommitmentAccumulator.sol";
-
-import { SHA256 } from "../libs/SHA256.sol";
+import { ImprovedMerkleTree } from "./ImprovedMerkleTree.sol";
 
 contract ImprovedCommitmentAccumulator is ICommitmentAccumulator {
     using ImprovedMerkleTree for ImprovedMerkleTree.Tree;
@@ -24,11 +22,11 @@ contract ImprovedCommitmentAccumulator is ICommitmentAccumulator {
     constructor(uint8 treeDepth) {
         bytes32 initialRoot = _merkleTree.setup(treeDepth);
 
-        _roots.add(initialRoot);
+        if (!_roots.add(initialRoot)) revert PreExistingRoot(initialRoot);
     }
 
     /// @inheritdoc ICommitmentAccumulator
-    function latestRoot() external view returns (bytes32 root) {
+    function latestRoot() external view override returns (bytes32 root) {
         root = _latestRoot();
     }
 
@@ -37,20 +35,19 @@ contract ImprovedCommitmentAccumulator is ICommitmentAccumulator {
         isContained = _containsRoot(root);
     }
 
-    function _addCommitmentUnchecked(bytes32 commitment) internal {
-        (uint256 index, bytes32 newRoot) = _merkleTree.push(commitment);
+    function _addCommitmentUnchecked(bytes32 commitment) internal returns (bytes32 newRoot) {
+        uint256 index;
+        (index, newRoot) = _merkleTree.push(commitment);
         _indices[commitment] = index + _COMMITMENT_INDEX_OFFSET; // Add 1 to use 0 as a sentinel value
 
-        // slither-disable-next-line unused-return
-        _roots.add(newRoot);
-
-        emit CommitmentAdded({ commitment: commitment, index: index, root: newRoot });
+        // TODO
+        //emit CommitmentAdded({ commitment: commitment, index: index, root: newRoot });
     }
 
-    function _addCommitment(bytes32 commitment) internal {
+    function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
         _checkCommitmentNonExistence(commitment);
 
-        _addCommitmentUnchecked(commitment);
+        newRoot = _addCommitmentUnchecked(commitment);
     }
 
     function _isContained(bytes32 commitment) internal view returns (bool isContained) {
@@ -79,7 +76,7 @@ contract ImprovedCommitmentAccumulator is ICommitmentAccumulator {
     }
 
     function _commitmentAtIndex(uint256 index) internal view returns (bytes32 commitment) {
-        if (index >= _merkleTree._nextLeafIndex) {
+        if (index + 1 > _merkleTree._nextLeafIndex) {
             revert CommitmentIndexOutOfBounds({ current: index, limit: _merkleTree._nextLeafIndex });
         }
 
@@ -114,7 +111,8 @@ contract ImprovedCommitmentAccumulator is ICommitmentAccumulator {
     }
 
     function _latestRoot() internal view returns (bytes32 root) {
-        root = _merkleTree._root();
+        // TODO Remove? TODO root = _merkleTree._root();
+        root = _roots.at(_roots.length() - 1);
     }
 
     function _containsRoot(bytes32 root) internal view returns (bool isContained) {

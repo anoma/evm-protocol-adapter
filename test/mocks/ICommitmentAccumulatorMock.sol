@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ICommitmentAccumulator} from "../../src/interfaces/ICommitmentAccumulator.sol";
+import { ICommitmentAccumulator } from "../../src/interfaces/ICommitmentAccumulator.sol";
 
 interface ICommitmentAccumulatorMock is ICommitmentAccumulator {
-    function addCommitment(bytes32 commitment) external;
+    function addCommitment(bytes32 commitment) external returns (bytes32 newRoot);
 
-    function addCommitmentUnchecked(bytes32 commitment) external;
+    function addCommitmentUnchecked(bytes32 commitment) external returns (bytes32 newRoot);
 
     function checkMerklePath(bytes32 root, bytes32 commitment, bytes32[] calldata path) external view;
 

@@ -19,24 +19,28 @@ contract ImprovedCommitmentAccumulatorMock is ICommitmentAccumulatorMock, Improv
 
     constructor(uint8 treeDepth) ImprovedCommitmentAccumulator(treeDepth) {}
 
-    function addCommitment(bytes32 commitment) external {
-        _addCommitment(commitment);
+    function addCommitment(bytes32 commitment) external returns (bytes32 newRoot) {
+        newRoot = _addCommitment(commitment);
     }
 
-    function addCommitmentUnchecked(bytes32 commitment) external {
-        _addCommitmentUnchecked(commitment);
+    function addCommitmentUnchecked(bytes32 commitment) external returns (bytes32 newRoot) {
+        newRoot = _addCommitmentUnchecked(commitment);
     }
 
-    function merkleTreeZero(uint8 level) public view returns (bytes32 zeroHash) {
+    function merkleTreeZero(uint8 level) external view returns (bytes32 zeroHash) {
+        zeroHash = _merkleTreeZero(level);
+    }
+
+    function _merkleTreeZero(uint256 level) internal view returns (bytes32 zeroHash) {
         zeroHash = _merkleTree._zeros[level];
     }
 
     function emptyLeafHash() public view returns (bytes32 hash) {
-        hash = merkleTreeZero(0);
+        hash = _merkleTreeZero(0);
     }
 
     function initialRoot() public view returns (bytes32 hash) {
-        hash = merkleTreeZero(_merkleTree._depth());
+        hash = _roots.at(0);
     }
 
     function checkMerklePath(bytes32 root, bytes32 commitment, bytes32[] calldata path) external view {

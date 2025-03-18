@@ -11,8 +11,6 @@ import { SHA256 } from "../libs/SHA256.sol";
 
 import { ImprovedMerkleTree } from "./ImprovedMerkleTree.sol";
 
-import { console } from "forge-std/console.sol";
-
 contract CommitmentAccumulator is ICommitmentAccumulator {
     using MerkleTree for MerkleTree.Bytes32PushTree;
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -29,12 +27,11 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     constructor(uint8 treeDepth) {
         bytes32 initialRoot = _merkleTree.setup(treeDepth, ImprovedMerkleTree._EMPTY_LEAF_HASH, SHA256.commutativeHash);
 
-        bool success = _roots.add(initialRoot);
-        if (!success) revert PreExistingRoot(initialRoot);
+        if (!_roots.add(initialRoot)) revert PreExistingRoot(initialRoot);
     }
 
     /// @inheritdoc ICommitmentAccumulator
-    function latestRoot() external view returns (bytes32 root) {
+    function latestRoot() external view override returns (bytes32 root) {
         root = _latestRoot();
     }
 
@@ -43,30 +40,24 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         isContained = _containsRoot(root);
     }
 
-    function _addCommitmentUnchecked(bytes32 commitment) internal {
+    function _addCommitmentUnchecked(bytes32 commitment) internal returns (bytes32 newRoot) {
         // slither-disable-next-line unused-return
         _commitments.add(commitment);
 
-        (uint256 index, bytes32 newRoot) = _merkleTree.push(commitment, SHA256.commutativeHash);
+        uint256 index;
+        (index, newRoot) = _merkleTree.push(commitment, SHA256.commutativeHash);
 
-        // slither-disable-next-line unused-return
-        _roots.add(newRoot);
-
-        emit CommitmentAdded({ commitment: commitment, index: index, root: newRoot });
+        emit CommitmentAdded({ commitment: commitment, index: index });
     }
 
-    function _addCommitment(bytes32 commitment) internal {
+    function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
         if (!_commitments.add(commitment)) {
             revert PreExistingCommitment(commitment);
         }
+        uint256 index;
+        (index, newRoot) = _merkleTree.push(commitment, SHA256.commutativeHash);
 
-        (uint256 index, bytes32 newRoot) = _merkleTree.push(commitment, SHA256.commutativeHash);
-
-        if (!_roots.add(newRoot)) {
-            revert PreExistingRoot(newRoot);
-        }
-
-        emit CommitmentAdded({ commitment: commitment, index: index, root: newRoot });
+        emit CommitmentAdded({ commitment: commitment, index: index });
     }
 
     function _findCommitmentIndex(bytes32 commitment) internal view returns (uint256 index) {
@@ -90,7 +81,8 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
 
     function _commitmentAtIndex(uint256 index) internal view returns (bytes32 commitment) {
         uint256 nextIndex = _merkleTree._nextLeafIndex;
-        if (index >= nextIndex) {
+        // TODO test: index >= nextIndex
+        if (index + 1 > nextIndex) {
             revert CommitmentIndexOutOfBounds({ current: index, limit: nextIndex });
         }
 
@@ -133,8 +125,7 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     }
 
     /// @dev Tree's depth (set at initialization)
-    function _depth(MerkleTree.Bytes32PushTree storage self) internal view returns (uint8) {
-        // TODO safecast
-        return uint8(self._zeros.length);
+    function _depth(MerkleTree.Bytes32PushTree storage self) internal view returns (uint256 depth) {
+        depth = self._zeros.length;
     }
 }

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { ReentrancyGuardTransient } from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
+import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 import { IRiscZeroVerifier as TrustedRiscZeroVerifier } from "@risc0-ethereum/IRiscZeroVerifier.sol";
 
 import { MockDelta } from "../test/mocks/MockDelta.sol"; // TODO remove
@@ -20,7 +21,8 @@ import { Delta } from "./proving/Delta.sol";
 import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
 
 import { BlobStorage, DeletionCriterion, ExpirableBlob } from "./state/BlobStorage.sol";
-import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
+import { ImprovedCommitmentAccumulator as CommitmentAccumulator } from "./state/ImprovedCommitmentAccumulator.sol";
+// TODO import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
 
 import { Action, FFICall, KindFFICallPair, Resource, TagAppDataPair, Transaction } from "./Types.sol";
@@ -37,6 +39,7 @@ contract ProtocolAdapter is
     using Reference for bytes;
     using AppData for TagAppDataPair[];
     using LogicProofs for TagLogicProofPair[];
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
     TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
     bytes32 internal immutable _COMPLIANCE_CIRCUIT_ID;
@@ -80,6 +83,7 @@ contract ProtocolAdapter is
         uint256 n = transaction.actions.length;
         uint256 m;
         uint256 j;
+        bytes32 newRoot = 0;
         for (uint256 i = 0; i < n; ++i) {
             Action calldata action = transaction.actions[i];
 
@@ -95,9 +99,10 @@ contract ProtocolAdapter is
             }
 
             m = action.commitments.length;
+
             for (j = 0; j < m; ++j) {
                 // Commitment non-existence was already checked in `_verify(transaction);` at the top.
-                _addCommitmentUnchecked(action.commitments[j]);
+                newRoot = _addCommitmentUnchecked(action.commitments[j]);
             }
 
             m = action.kindFFICallPairs.length;
@@ -105,6 +110,12 @@ contract ProtocolAdapter is
                 _executeFFICall(action.kindFFICallPairs[j].ffiCall);
             }
         }
+
+        // Add new root.
+        if (!_roots.add(newRoot)) {
+            revert PreExistingRoot(newRoot);
+        }
+        emit RootAdded(newRoot);
     }
 
     /// @inheritdoc IProtocolAdapter

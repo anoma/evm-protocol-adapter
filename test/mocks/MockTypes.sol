@@ -68,43 +68,66 @@ library MockTypes {
         Resource[] memory consumed,
         Resource[] memory created
     ) internal view returns (Transaction memory transaction) {
-        (consumed, created) = padResources({consumed: consumed, created: created});
-
-        uint256 nNfs = consumed.length;
-        bytes32[] memory nfs = new bytes32[](nNfs);
-        for (uint256 i = 0; i < nNfs; ++i) {
-            nfs[i] = consumed[i].nullifier(Universal.INTERNAL_IDENTITY);
-        }
-
-        uint256 nCms = created.length;
-        bytes32[] memory cms = new bytes32[](nCms);
-        for (uint256 i = 0; i < nCms; ++i) {
-            cms[i] = created[i].commitment();
-        }
-
-        TagAppDataPair[] memory appData = mockAppData({nullifiers: nfs, commitments: cms});
-        TagLogicProofPair[] memory rlProofs =
-            _mockLogicProofs({mockVerifier: mockVerifier, nullifiers: nfs, commitments: cms, appData: appData});
-
         bytes32[] memory roots = new bytes32[](1);
         roots[0] = root;
 
-        ComplianceUnit[] memory complianceUnits =
-            mockComplianceUnits({mockVerifier: mockVerifier, root: roots[0], commitments: cms, nullifiers: nfs});
+        (consumed, created) = padResources({consumed: consumed, created: created});
 
-        KindFFICallPair[] memory emptyFfiCalls;
+        if (consumed.length != created.length) revert SevereError();
 
-        Action memory action = Action({
-            commitments: cms,
-            nullifiers: nfs,
-            logicProofs: rlProofs,
-            complianceUnits: complianceUnits,
-            tagAppDataPairs: appData,
-            kindFFICallPairs: emptyFfiCalls
-        });
+        uint256 chunkSize = 5;
+        uint256 nChunks = consumed.length / chunkSize;
+        uint256 remainder = consumed.length % chunkSize;
 
-        Action[] memory actions = new Action[](1);
-        actions[0] = action;
+        uint256 nActions = nChunks + (remainder != 0 ? 1 : 0);
+        Action[] memory actions = new Action[](nActions);
+
+        bytes32[] memory nfs;
+        bytes32[] memory cms;
+
+        for (uint256 a = 0; a < nActions; ++a) {
+            if (a < nChunks) {
+                nfs = new bytes32[](chunkSize);
+                for (uint256 i = 0; i < chunkSize; ++i) {
+                    nfs[i] = consumed[a * chunkSize + i].nullifier(Universal.INTERNAL_IDENTITY);
+                }
+            } else if (remainder != 0) {
+                nfs = new bytes32[](remainder);
+                for (uint256 i = 0; i < remainder; ++i) {
+                    nfs[i] = consumed[a * chunkSize + i].nullifier(Universal.INTERNAL_IDENTITY);
+                }
+            }
+
+            if (a < nChunks) {
+                cms = new bytes32[](chunkSize);
+                for (uint256 i = 0; i < chunkSize; ++i) {
+                    cms[i] = created[a * chunkSize + i].commitment();
+                }
+            } else if (remainder != 0) {
+                cms = new bytes32[](remainder);
+                for (uint256 i = 0; i < remainder; ++i) {
+                    cms[i] = created[a * chunkSize + i].commitment();
+                }
+            }
+
+            TagAppDataPair[] memory appData = mockAppData({nullifiers: nfs, commitments: cms});
+            TagLogicProofPair[] memory rlProofs =
+                _mockLogicProofs({mockVerifier: mockVerifier, nullifiers: nfs, commitments: cms, appData: appData});
+
+            ComplianceUnit[] memory complianceUnits =
+                mockComplianceUnits({mockVerifier: mockVerifier, root: roots[0], commitments: cms, nullifiers: nfs});
+
+            KindFFICallPair[] memory emptyFfiCalls;
+
+            actions[a] = Action({
+                commitments: cms,
+                nullifiers: nfs,
+                logicProofs: rlProofs,
+                complianceUnits: complianceUnits,
+                tagAppDataPairs: appData,
+                kindFFICallPairs: emptyFfiCalls
+            });
+        }
 
         bytes memory deltaProof = MockDelta.PROOF;
 
