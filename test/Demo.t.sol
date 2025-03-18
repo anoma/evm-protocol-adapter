@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Test } from "forge-std/Test.sol";
+import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { RiscZeroMockVerifier } from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {Resource, Transaction} from "../src/Types.sol";
 
-import { ProtocolAdapter } from "./../src/ProtocolAdapter.sol";
-import { Resource, Transaction } from "./../src/Types.sol";
-
-import { MockRiscZeroProof } from "./mocks/MockRiscZeroProof.sol";
-import { MockTypes } from "./mocks/MockTypes.sol";
+import {MockRiscZeroProof} from "./mocks/MockRiscZeroProof.sol";
+import {MockTypes} from "./mocks/MockTypes.sol";
 
 contract ProtocolAdapterDemo is Test {
     ProtocolAdapter internal _pa;
@@ -26,7 +25,7 @@ contract ProtocolAdapterDemo is Test {
         });
 
         (Resource[] memory consumed, Resource[] memory created) =
-            MockTypes.mockResources({ nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0 });
+            MockTypes.mockResources({nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0});
 
         _txn = MockTypes.mockTransaction({
             mockVerifier: mockVerifier,

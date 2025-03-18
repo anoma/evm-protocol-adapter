@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {IRiscZeroVerifier, Receipt as RiscZeroReceipt} from "@risc0-ethereum/IRiscZeroVerifier.sol";
+import {Receipt as RiscZeroReceipt} from "@risc0-ethereum/IRiscZeroVerifier.sol";
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
 import {AppData, TagAppDataPair} from "../../src/libs/AppData.sol";
@@ -27,40 +27,6 @@ library MockTypes {
     bytes32 internal constant _EMPTY_BLOB_REF = bytes32(0);
 
     error SevereError();
-
-    function mockResources(uint16 nConsumed, bool ephConsumed, uint16 nCreated, bool ephCreated, uint256 seed)
-        internal
-        pure
-        returns (Resource[] memory consumed, Resource[] memory created)
-    {
-        consumed = new Resource[](nConsumed);
-        for (uint256 i = 0; i < nConsumed; ++i) {
-            consumed[i] = Resource({
-                logicRef: _ALWAYS_VALID_LOGIC_REF,
-                labelRef: _EMPTY_BLOB_REF,
-                valueRef: _EMPTY_BLOB_REF,
-                nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
-                quantity: 1,
-                nonce: uint256(keccak256(abi.encodePacked(seed, i))),
-                randSeed: 0,
-                ephemeral: ephConsumed
-            });
-        }
-
-        created = new Resource[](nCreated);
-        for (uint256 i = 0; i < nCreated; ++i) {
-            created[i] = Resource({
-                logicRef: _ALWAYS_VALID_LOGIC_REF,
-                labelRef: _EMPTY_BLOB_REF,
-                valueRef: _EMPTY_BLOB_REF,
-                nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
-                quantity: 1,
-                nonce: uint256(keccak256(abi.encodePacked(i, seed))),
-                randSeed: 0,
-                ephemeral: ephCreated
-            });
-        }
-    }
 
     function mockTransaction(
         RiscZeroMockVerifier mockVerifier,
@@ -220,6 +186,40 @@ library MockTypes {
             });
 
             units[i] = ComplianceUnit({proof: receipt.seal, instance: instance, verifyingKey: verifyingKey});
+        }
+    }
+
+    function mockResources(uint16 nConsumed, bool ephConsumed, uint16 nCreated, bool ephCreated, uint256 seed)
+        internal
+        pure
+        returns (Resource[] memory consumed, Resource[] memory created)
+    {
+        consumed = new Resource[](nConsumed);
+        for (uint256 i = 0; i < nConsumed; ++i) {
+            consumed[i] = Resource({
+                logicRef: _ALWAYS_VALID_LOGIC_REF,
+                labelRef: _EMPTY_BLOB_REF,
+                valueRef: _EMPTY_BLOB_REF,
+                nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
+                quantity: 1,
+                nonce: uint256(keccak256(abi.encodePacked(seed, i))),
+                randSeed: 0,
+                ephemeral: ephConsumed
+            });
+        }
+
+        created = new Resource[](nCreated);
+        for (uint256 i = 0; i < nCreated; ++i) {
+            created[i] = Resource({
+                logicRef: _ALWAYS_VALID_LOGIC_REF,
+                labelRef: _EMPTY_BLOB_REF,
+                valueRef: _EMPTY_BLOB_REF,
+                nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
+                quantity: 1,
+                nonce: uint256(keccak256(abi.encodePacked(i, seed))),
+                randSeed: 0,
+                ephemeral: ephCreated
+            });
         }
     }
 

@@ -4,30 +4,26 @@ pragma solidity ^0.8.27;
 import {MerkleProof} from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 import {Test} from "forge-std/Test.sol";
 
+import {ICommitmentAccumulator} from "../../src/interfaces/ICommitmentAccumulator.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
 
-import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
-import {ICommitmentAccumulator} from "../../src/interfaces/ICommitmentAccumulator.sol";
-import {ImprovedCommitmentAccumulator} from "../../src/state/ImprovedCommitmentAccumulator.sol";
-import {ImprovedMerkleTree} from "../../src/state/ImprovedMerkleTree.sol";
-
 import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulatorMock.sol";
-import {ImprovedCommitmentAccumulatorMock} from "../mocks/ImprovedCommitmentAccumulatorMock.sol";
 import {ICommitmentAccumulatorMock} from "../mocks/ICommitmentAccumulatorMock.sol";
+import {ImprovedCommitmentAccumulatorMock} from "../mocks/ImprovedCommitmentAccumulatorMock.sol";
 
 contract Base is Test {
     uint8 internal constant _TREE_DEPTH = 2; // NOTE: 2^2 = 4 _nodes
 
-    uint256 internal constant N_LEAFS = 2 ** _TREE_DEPTH;
-    uint256 internal constant N_NODES = 2 ** (_TREE_DEPTH - 1);
-    uint256 internal constant N_ROOTS = N_LEAFS + 1;
+    uint256 internal constant _N_LEAFS = 2 ** _TREE_DEPTH;
+    uint256 internal constant _N_NODES = 2 ** (_TREE_DEPTH - 1);
+    uint256 internal constant _N_ROOTS = _N_LEAFS + 1;
 
     bytes32[4][5] internal _leaves;
     bytes32[][4][5] internal _siblings; // 2
     bytes32[2][5] internal _nodes;
     bytes32[5] internal _roots;
 
-    ICommitmentAccumulatorMock _cmAcc;
+    ICommitmentAccumulatorMock internal _cmAcc;
 
     constructor(ICommitmentAccumulatorMock cmAcc) {
         _cmAcc = cmAcc;
@@ -44,12 +40,12 @@ contract Base is Test {
 
         bytes32 emptyLeafHash = _cmAcc.emptyLeafHash();
 
-        for (uint256 i = 0; i < N_ROOTS; ++i) {
+        for (uint256 i = 0; i < _N_ROOTS; ++i) {
             for (uint256 j = 0; j < i; ++j) {
                 _leaves[i][j] = SHA256.hash(bytes32(j));
             }
 
-            for (uint256 j = i; j < N_ROOTS - 1; ++j) {
+            for (uint256 j = i; j < _N_ROOTS - 1; ++j) {
                 _leaves[i][j] = emptyLeafHash;
             }
 
@@ -81,7 +77,7 @@ contract Base is Test {
         assertEq(initialRoot, _roots[0]);
         assertEq(initialRoot, _cmAcc.initialRoot());
 
-        for (uint256 i = 0; i < N_LEAFS; ++i) {
+        for (uint256 i = 0; i < _N_LEAFS; ++i) {
             assertEq(_cmAcc.addCommitment(_leaves[i + 1][i]), _roots[i + 1]);
         }
     }
@@ -93,7 +89,7 @@ contract Base is Test {
     }
 
     function test_computeMerklePath_should_return_correct_siblings() public {
-        for (uint256 i = 0; i < N_LEAFS; ++i) {
+        for (uint256 i = 0; i < _N_LEAFS; ++i) {
             _cmAcc.addCommitment(_leaves[i + 1][i]);
 
             for (uint256 j = 0; j < i; ++j) {
@@ -103,7 +99,7 @@ contract Base is Test {
     }
 
     function test_findCommitmentIndex_should_return_correct_indices() public {
-        for (uint256 i = 0; i < N_LEAFS; ++i) {
+        for (uint256 i = 0; i < _N_LEAFS; ++i) {
             _cmAcc.addCommitment(_leaves[i + 1][i]);
 
             for (uint256 j = 0; j <= i; ++j) {
@@ -122,7 +118,7 @@ contract Base is Test {
         uint256 prevCount = 0;
         uint256 newCount = 0;
 
-        for (uint256 i = 0; i < N_LEAFS; ++i) {
+        for (uint256 i = 0; i < _N_LEAFS; ++i) {
             _cmAcc.addCommitment(_leaves[i + 1][i]);
             newCount = _cmAcc.commitmentCount();
 
@@ -140,7 +136,7 @@ contract Base is Test {
     }
 
     function test_findCommitmentIndex_reverts_on_non_existent_commitment() public {
-        bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
+        bytes32 nonExistentCommitment = sha256("NO_N_EXISTENT");
         vm.expectRevert(
             abi.encodeWithSelector(ICommitmentAccumulator.NonExistingCommitment.selector, nonExistentCommitment)
         );
@@ -148,7 +144,7 @@ contract Base is Test {
     }
 
     function test_commitmentAtIndex_reverts_on_non_existent_index() public {
-        for (uint256 i = 0; i < N_LEAFS; ++i) {
+        for (uint256 i = 0; i < _N_LEAFS; ++i) {
             uint256 commitmentCount = _cmAcc.commitmentCount();
 
             vm.expectRevert(
@@ -159,7 +155,7 @@ contract Base is Test {
     }
 
     function test_should_produce_an_invalid_root_for_a_non_existent_leaf() public {
-        bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
+        bytes32 nonExistentCommitment = sha256("NO_N_EXISTENT");
 
         // Test empty tree
         bytes32 root = _cmAcc.initialRoot();
@@ -176,7 +172,7 @@ contract Base is Test {
         assertEq(computedRoot, invalidRoot);
 
         // Populated tree
-        for (uint256 i = 0; i < N_LEAFS; ++i) {
+        for (uint256 i = 0; i < _N_LEAFS; ++i) {
             root = _cmAcc.addCommitment(_leaves[i + 1][i]);
 
             for (uint256 j = 0; j <= i; ++j) {

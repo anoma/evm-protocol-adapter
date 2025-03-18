@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Arrays} from "@openzeppelin-contracts/utils/Arrays.sol";
 import {MerkleProof} from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 
 import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
@@ -33,18 +32,6 @@ contract CommitmentAccumulatorMock is ICommitmentAccumulatorMock, CommitmentAccu
         zeroHash = _merkleTreeZero(level);
     }
 
-    function _merkleTreeZero(uint256 level) internal view returns (bytes32 zeroHash) {
-        zeroHash = _merkleTree._zeros[level];
-    }
-
-    function initialRoot() public view returns (bytes32 hash) {
-        hash = _roots.at(0);
-    }
-
-    function emptyLeafHash() public view returns (bytes32 hash) {
-        hash = _merkleTreeZero(0);
-    }
-
     function checkMerklePath(bytes32 root, bytes32 commitment, bytes32[] calldata path) external view {
         bytes32 computedRoot = path.processProof(commitment, SHA256.commutativeHash);
         if (root != computedRoot) {
@@ -55,7 +42,7 @@ contract CommitmentAccumulatorMock is ICommitmentAccumulatorMock, CommitmentAccu
     function computeMerklePath(bytes32 commitment) external view returns (bytes32[] memory path) {
         uint256 leafIndex = _findCommitmentIndex(commitment);
 
-        bytes32[][] memory nodes = computeFullTree();
+        bytes32[][] memory nodes = _computeFullTree();
 
         uint256 treeDepth = _merkleTree.depth();
         path = new bytes32[](treeDepth);
@@ -81,8 +68,32 @@ contract CommitmentAccumulatorMock is ICommitmentAccumulatorMock, CommitmentAccu
         return path;
     }
 
+    function commitmentCount() external view returns (uint256 count) {
+        count = _merkleTree._nextLeafIndex;
+    }
+
+    function initialRoot() external view returns (bytes32 hash) {
+        hash = _roots.at(0);
+    }
+
+    function emptyLeafHash() external view returns (bytes32 hash) {
+        hash = _merkleTreeZero(0);
+    }
+
+    function findCommitmentIndex(bytes32 commitment) external view returns (uint256 index) {
+        index = _findCommitmentIndex(commitment);
+    }
+
+    function commitmentAtIndex(uint256 index) external view returns (bytes32 commitment) {
+        commitment = _commitmentAtIndex(index);
+    }
+
+    function _merkleTreeZero(uint256 level) internal view returns (bytes32 zeroHash) {
+        zeroHash = _merkleTree._zeros[level];
+    }
+
     /// @notice This implementation is very inefficient for large tree depths.
-    function computeFullTree() internal view returns (bytes32[][] memory tree) {
+    function _computeFullTree() internal view returns (bytes32[][] memory tree) {
         uint256 treeDepth = _merkleTree.depth();
 
         tree = new bytes32[][](treeDepth);
@@ -114,17 +125,5 @@ contract CommitmentAccumulatorMock is ICommitmentAccumulatorMock, CommitmentAccu
                 tree[d][i] = SHA256.commutativeHash({a: tree[d - 1][(i * 2)], b: tree[d - 1][(i * 2) + 1]});
             }
         }
-    }
-
-    function commitmentCount() external view returns (uint256 count) {
-        count = _merkleTree._nextLeafIndex;
-    }
-
-    function findCommitmentIndex(bytes32 commitment) external view returns (uint256 index) {
-        index = _findCommitmentIndex(commitment);
-    }
-
-    function commitmentAtIndex(uint256 index) external view returns (bytes32 commitment) {
-        commitment = _commitmentAtIndex(index);
     }
 }

@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Arrays} from "@openzeppelin-contracts/utils/Arrays.sol";
 import {MerkleProof} from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
-
 import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
-import {ImprovedMerkleTree} from "../../src/state/ImprovedMerkleTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
 import {ImprovedCommitmentAccumulator} from "../../src/state/ImprovedCommitmentAccumulator.sol";
+import {ImprovedMerkleTree} from "../../src/state/ImprovedMerkleTree.sol";
 
 import {ICommitmentAccumulatorMock} from "./ICommitmentAccumulatorMock.sol";
 
@@ -31,18 +29,6 @@ contract ImprovedCommitmentAccumulatorMock is ICommitmentAccumulatorMock, Improv
         zeroHash = _merkleTreeZero(level);
     }
 
-    function _merkleTreeZero(uint256 level) internal view returns (bytes32 zeroHash) {
-        zeroHash = _merkleTree._zeros[level];
-    }
-
-    function emptyLeafHash() public view returns (bytes32 hash) {
-        hash = _merkleTreeZero(0);
-    }
-
-    function initialRoot() public view returns (bytes32 hash) {
-        hash = _roots.at(0);
-    }
-
     function checkMerklePath(bytes32 root, bytes32 commitment, bytes32[] calldata path) external view {
         bytes32 computedRoot = path.processProof(commitment, SHA256.commutativeHash);
         if (root != computedRoot) {
@@ -59,11 +45,23 @@ contract ImprovedCommitmentAccumulatorMock is ICommitmentAccumulatorMock, Improv
         count = _merkleTree._leafCount();
     }
 
+    function initialRoot() external view returns (bytes32 hash) {
+        hash = _roots.at(0);
+    }
+
+    function emptyLeafHash() external view returns (bytes32 hash) {
+        hash = _merkleTreeZero(0);
+    }
+
     function findCommitmentIndex(bytes32 commitment) external view returns (uint256 index) {
         index = _findCommitmentIndex(commitment);
     }
 
     function commitmentAtIndex(uint256 index) external view returns (bytes32 commitment) {
         commitment = _commitmentAtIndex(index);
+    }
+
+    function _merkleTreeZero(uint256 level) internal view returns (bytes32 zeroHash) {
+        zeroHash = _merkleTree._zeros[level];
     }
 }

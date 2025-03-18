@@ -1,20 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 import {Test} from "forge-std/Test.sol";
 
-// import {IRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
-import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
-
-//import { DeepTest } from "./../lib/DeepTest.sol";
-
-import {ProtocolAdapter} from "./../src/ProtocolAdapter.sol";
-import {Resource, Transaction} from "./../src/Types.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {Resource, Transaction} from "../src/Types.sol";
 
 import {MockRiscZeroProof} from "./mocks/MockRiscZeroProof.sol";
 import {MockTypes} from "./mocks/MockTypes.sol";
-
-import {console} from "forge-std/console.sol";
 
 contract ProtocolAdapterTest is Test {
     uint8 internal constant _TREE_DEPTH = 2 ^ 32;
