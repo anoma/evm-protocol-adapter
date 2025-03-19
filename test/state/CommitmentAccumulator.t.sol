@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {MerkleProof} from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
-import {Test} from "forge-std/Test.sol";
+import { MerkleProof } from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import { Test } from "forge-std/Test.sol";
 
-import {SHA256} from "../../src/libs/SHA256.sol";
-import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
+import { SHA256 } from "../../src/libs/SHA256.sol";
+import { CommitmentAccumulator } from "../../src/state/CommitmentAccumulator.sol";
 
-import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulatorMock.sol";
+import { CommitmentAccumulatorMock } from "../mocks/CommitmentAccumulatorMock.sol";
 
 contract CommitmentAccumulatorTest is Test {
     using MerkleProof for bytes32[];
@@ -199,14 +199,14 @@ contract CommitmentAccumulatorTest is Test {
 
         (bytes32[] memory path, bytes32 latestRoot) = _cmAcc.merkleProof(cm);
 
-        _cmAcc.verifyMerkleProof({root: latestRoot, commitment: cm, path: path});
+        _cmAcc.verifyMerkleProof({ root: latestRoot, commitment: cm, path: path });
     }
 
     function test_checkPath_reverts_on_non_existent_root() public {
         bytes32 nonExistingRoot = sha256("NON_EXISTENT_ROOT");
 
         vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.NonExistingRoot.selector, nonExistingRoot));
-        _cmAcc.verifyMerkleProof({root: nonExistingRoot, commitment: 0, path: new bytes32[](_TREE_DEPTH)});
+        _cmAcc.verifyMerkleProof({ root: nonExistingRoot, commitment: 0, path: new bytes32[](_TREE_DEPTH) });
     }
 
     function test_checkPath_reverts_on_non_existent_commitment() public {
@@ -232,7 +232,7 @@ contract CommitmentAccumulatorTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(CommitmentAccumulator.InvalidPathLength.selector, _TREE_DEPTH, wrongPath.length)
         );
-        _cmAcc.verifyMerkleProof({root: 0, commitment: 0, path: wrongPath});
+        _cmAcc.verifyMerkleProof({ root: 0, commitment: 0, path: wrongPath });
     }
 
     function test_checkPath_reverts_on_wrong_path() public {
@@ -246,6 +246,6 @@ contract CommitmentAccumulatorTest is Test {
         bytes32 invalidRoot = wrongPath.processProof(commitment, SHA256.commutativeHash);
 
         vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, invalidRoot));
-        _cmAcc.verifyMerkleProof({root: newRoot, commitment: commitment, path: wrongPath});
+        _cmAcc.verifyMerkleProof({ root: newRoot, commitment: commitment, path: wrongPath });
     }
 }
