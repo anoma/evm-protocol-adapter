@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
-import {Test} from "forge-std/Test.sol";
+import { RiscZeroMockVerifier } from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import { Test } from "forge-std/Test.sol";
 
-import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Resource, Transaction} from "../src/Types.sol";
+import { ProtocolAdapter } from "../src/ProtocolAdapter.sol";
+import { Resource, Transaction } from "../src/Types.sol";
 
-import {MockRiscZeroProof} from "./mocks/MockRiscZeroProof.sol";
-import {MockTypes} from "./mocks/MockTypes.sol";
+import { MockRiscZeroProof } from "./mocks/MockRiscZeroProof.sol";
+import { MockTypes } from "./mocks/MockTypes.sol";
 
 contract ProtocolAdapterTest is Test {
     uint8 internal constant _TREE_DEPTH = 2 ^ 32;
@@ -55,7 +55,7 @@ contract ProtocolAdapterTest is Test {
 
     function test_execute() public {
         (Resource[] memory consumed, Resource[] memory created) =
-            MockTypes.mockResources({nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0});
+            MockTypes.mockResources({ nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0 });
 
         Transaction memory txn = MockTypes.mockTransaction({
             mockVerifier: _mockVerifier,
@@ -80,7 +80,7 @@ contract ProtocolAdapterTest is Test {
 
     function test_verify() public view {
         (Resource[] memory consumed, Resource[] memory created) =
-            MockTypes.mockResources({nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0});
+            MockTypes.mockResources({ nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0 });
 
         Transaction memory txn = MockTypes.mockTransaction({
             mockVerifier: _mockVerifier,

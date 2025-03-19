@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Test} from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import {SHA256} from "../../src/libs/SHA256.sol";
+import { SHA256 } from "../../src/libs/SHA256.sol";
 
-import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulatorMock.sol";
+import { CommitmentAccumulatorMock } from "../mocks/CommitmentAccumulatorMock.sol";
 
-import {ICommitmentAccumulatorMock} from "../mocks/ICommitmentAccumulatorMock.sol";
+import { ICommitmentAccumulatorMock } from "../mocks/ICommitmentAccumulatorMock.sol";
 
-import {ImprovedCommitmentAccumulatorMock} from "../mocks/ImprovedCommitmentAccumulatorMock.sol";
+import { ImprovedCommitmentAccumulatorMock } from "../mocks/ImprovedCommitmentAccumulatorMock.sol";
 
 contract Base is Test {
     uint8 internal constant _TREE_DEPTH = 10; // Use 20
@@ -34,14 +34,14 @@ contract Base is Test {
 
     function test_checkPath() public view {
         bytes32 cm = SHA256.hash(bytes32(0));
-        _cmAcc.checkMerklePath({root: _latestRoot, commitment: cm, path: _cmAcc.computeMerklePath(cm)});
+        _cmAcc.checkMerklePath({ root: _latestRoot, commitment: cm, path: _cmAcc.computeMerklePath(cm) });
     }
 }
 
 contract ImprovedCommitmentAccumulatorBenchmark is Base {
-    constructor() Base(new ImprovedCommitmentAccumulatorMock(_TREE_DEPTH)) {}
+    constructor() Base(new ImprovedCommitmentAccumulatorMock(_TREE_DEPTH)) { }
 }
 
 contract CommitmentAccumulatorBenchmark is Base {
-    constructor() Base(new CommitmentAccumulatorMock(_TREE_DEPTH)) {}
+    constructor() Base(new CommitmentAccumulatorMock(_TREE_DEPTH)) { }
 }

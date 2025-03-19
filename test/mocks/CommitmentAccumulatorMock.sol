@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {MerkleProof} from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import { MerkleProof } from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 
-import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
-import {MerkleTree} from "@openzeppelin-contracts/utils/structs/MerkleTree.sol";
+import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
+import { MerkleTree } from "@openzeppelin-contracts/utils/structs/MerkleTree.sol";
 
-import {SHA256} from "../../src/libs/SHA256.sol";
+import { SHA256 } from "../../src/libs/SHA256.sol";
 
-import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
-import {ImprovedMerkleTree} from "../../src/state/ImprovedMerkleTree.sol";
+import { CommitmentAccumulator } from "../../src/state/CommitmentAccumulator.sol";
+import { ImprovedMerkleTree } from "../../src/state/ImprovedMerkleTree.sol";
 
-import {ICommitmentAccumulatorMock} from "./ICommitmentAccumulatorMock.sol";
+import { ICommitmentAccumulatorMock } from "./ICommitmentAccumulatorMock.sol";
 
 contract CommitmentAccumulatorMock is ICommitmentAccumulatorMock, CommitmentAccumulator {
     using MerkleTree for MerkleTree.Bytes32PushTree;
     using MerkleProof for bytes32[];
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    constructor(uint8 treeDepth) CommitmentAccumulator(treeDepth) {}
+    constructor(uint8 treeDepth) CommitmentAccumulator(treeDepth) { }
 
     function addCommitment(bytes32 commitment) external returns (bytes32 newRoot) {
         newRoot = _addCommitment(commitment);
@@ -35,7 +35,7 @@ contract CommitmentAccumulatorMock is ICommitmentAccumulatorMock, CommitmentAccu
     function checkMerklePath(bytes32 root, bytes32 commitment, bytes32[] calldata path) external view {
         bytes32 computedRoot = path.processProof(commitment, SHA256.commutativeHash);
         if (root != computedRoot) {
-            revert InvalidRoot({expected: root, actual: computedRoot});
+            revert InvalidRoot({ expected: root, actual: computedRoot });
         }
     }
 
@@ -122,7 +122,7 @@ contract CommitmentAccumulatorMock is ICommitmentAccumulatorMock, CommitmentAccu
             tree[d] = new bytes32[](nNodes);
 
             for (uint256 i = 0; i < nNodes; ++i) {
-                tree[d][i] = SHA256.commutativeHash({a: tree[d - 1][(i * 2)], b: tree[d - 1][(i * 2) + 1]});
+                tree[d][i] = SHA256.commutativeHash({ a: tree[d - 1][(i * 2)], b: tree[d - 1][(i * 2) + 1] });
             }
         }
     }

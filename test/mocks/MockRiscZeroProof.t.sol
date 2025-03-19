@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Bytes} from "@openzeppelin-contracts/utils/Bytes.sol";
-import {Receipt as RiscZeroReceipt, VerificationFailed} from "@risc0-ethereum/IRiscZeroVerifier.sol";
-import {RiscZeroMockVerifier, SelectorMismatch} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import { Bytes } from "@openzeppelin-contracts/utils/Bytes.sol";
+import { Receipt as RiscZeroReceipt, VerificationFailed } from "@risc0-ethereum/IRiscZeroVerifier.sol";
+import { RiscZeroMockVerifier, SelectorMismatch } from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
-import {Test} from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import {MockRiscZeroProof} from "./MockRiscZeroProof.sol";
+import { MockRiscZeroProof } from "./MockRiscZeroProof.sol";
 
 contract MockRiscZeroProofTest is Test {
     using Bytes for bytes;
@@ -62,7 +62,7 @@ contract MockRiscZeroProofTest is Test {
         bytes32 wrongDigest = bytes32(0);
 
         vm.expectRevert(VerificationFailed.selector);
-        _MOCK_VERIFIER.verify({seal: _proof.seal, imageId: MockRiscZeroProof.IMAGE_ID_1, journalDigest: wrongDigest});
+        _MOCK_VERIFIER.verify({ seal: _proof.seal, imageId: MockRiscZeroProof.IMAGE_ID_1, journalDigest: wrongDigest });
     }
     /// @notice It should verify correct _proofs.
 
