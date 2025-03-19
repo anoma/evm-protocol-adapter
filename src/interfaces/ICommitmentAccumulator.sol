@@ -3,18 +3,7 @@ pragma solidity ^0.8.27;
 
 interface ICommitmentAccumulator {
     event CommitmentAdded(bytes32 indexed commitment, uint256 indexed index);
-
     event RootAdded(bytes32 indexed root);
-
-    error EmptyCommitment();
-    error NonExistingCommitment(bytes32 commitment);
-    error PreExistingCommitment(bytes32 commitment);
-    error CommitmentMismatch(bytes32 expected, bytes32 actual);
-    error CommitmentIndexOutOfBounds(uint256 current, uint256 limit);
-
-    error NonExistingRoot(bytes32 root);
-    error PreExistingRoot(bytes32 root);
-    error InvalidRoot(bytes32 expected, bytes32 actual);
 
     /// @notice Returns the latest  commitment tree state root.
     /// @return root The latest commitment tree state root.
@@ -24,4 +13,10 @@ interface ICommitmentAccumulator {
     /// @param root The root to check.
     /// @return isContained Whether the root exists or not.
     function containsRoot(bytes32 root) external view returns (bool isContained);
+
+    function verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path) external view;
+
+    /// @notice Returns the Merkle proof for a commitment in the tree.
+    /// @return proof The Merkle proof for the latest root.
+    function merkleProof(bytes32 commitment) external view returns (bytes32[] memory proof, bytes32 root);
 }

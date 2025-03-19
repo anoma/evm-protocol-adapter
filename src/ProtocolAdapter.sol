@@ -111,11 +111,7 @@ contract ProtocolAdapter is
             }
         }
 
-        // Add new root.
-        if (!_roots.add(newRoot)) {
-            revert PreExistingRoot(newRoot);
-        }
-        emit RootAdded(newRoot);
+        _storeRoot(newRoot);
     }
 
     /// @inheritdoc IProtocolAdapter

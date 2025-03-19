@@ -2,13 +2,16 @@
 pragma solidity ^0.8.27;
 
 import { Arrays } from "@openzeppelin-contracts/utils/Arrays.sol";
+import { MerkleProof } from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
+import { SHA256 } from "../../src/libs/SHA256.sol";
 import { ICommitmentAccumulator } from "../interfaces/ICommitmentAccumulator.sol";
 import { MerkleTree } from "./MerkleTree.sol";
 
 contract CommitmentAccumulator is ICommitmentAccumulator {
     using MerkleTree for MerkleTree.Tree;
+    using MerkleProof for bytes32[];
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using Arrays for bytes32[];
 
@@ -18,6 +21,17 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     EnumerableSet.Bytes32Set internal _roots;
 
     mapping(bytes32 commitment => uint256 index) internal _indices;
+
+    error EmptyCommitment();
+    error NonExistingCommitment(bytes32 commitment);
+    error PreExistingCommitment(bytes32 commitment);
+    error CommitmentMismatch(bytes32 expected, bytes32 actual);
+    error CommitmentIndexOutOfBounds(uint256 current, uint256 limit);
+
+    error NonExistingRoot(bytes32 root);
+    error PreExistingRoot(bytes32 root);
+    error InvalidRoot(bytes32 expected, bytes32 actual);
+    error InvalidPathLength(uint256 expected, uint256 actual);
 
     constructor(uint8 treeDepth) {
         bytes32 initialRoot = _merkleTree.setup(treeDepth);
@@ -35,6 +49,14 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         isContained = _containsRoot(root);
     }
 
+    function verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path) external view override {
+        _verifyMerkleProof({ root: root, commitment: commitment, path: path });
+    }
+
+    function merkleProof(bytes32 commitment) external view override returns (bytes32[] memory proof, bytes32 root) {
+        (proof, root) = _merkleProof(commitment);
+    }
+
     function _addCommitmentUnchecked(bytes32 commitment) internal returns (bytes32 newRoot) {
         uint256 index;
         (index, newRoot) = _merkleTree.push(commitment);
@@ -48,6 +70,36 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         _checkCommitmentNonExistence(commitment);
 
         newRoot = _addCommitmentUnchecked(commitment);
+    }
+
+    function _storeRoot(bytes32 root) internal {
+        if (!_roots.add(root)) {
+            revert PreExistingRoot(root);
+        }
+        emit RootAdded(root);
+    }
+
+    function _verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path) internal view {
+        // Check length.
+        uint256 pathLength = path.length;
+        uint256 treeDepth = _merkleTree.depth();
+        if (pathLength != treeDepth) {
+            revert InvalidPathLength({ expected: treeDepth, actual: pathLength });
+        }
+
+        // Check root existence.
+        if (!_roots.contains(root)) revert NonExistingRoot(root);
+
+        // Check that the leaf and path reproduce the root.
+        bytes32 computedRoot = path.processProof(commitment, SHA256.commutativeHash);
+        if (root != computedRoot) {
+            revert InvalidRoot({ expected: root, actual: computedRoot });
+        }
+    }
+
+    function _merkleProof(bytes32 commitment) internal view returns (bytes32[] memory proof, bytes32 root) {
+        uint256 leafIndex = _findCommitmentIndex(commitment);
+        (proof, root) = (_merkleTree.getProof(leafIndex), _latestRoot());
     }
 
     function _isContained(bytes32 commitment) internal view returns (bool isContained) {

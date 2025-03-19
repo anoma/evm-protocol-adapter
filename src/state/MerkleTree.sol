@@ -39,15 +39,13 @@ library MerkleTree {
     }
 
     function push(Tree storage self, bytes32 leaf) internal returns (uint256 index, bytes32 newRoot) {
-        uint256 treeDepth = _depth(self);
+        uint256 treeDepth = depth(self);
 
-        // Get leaf index
-        // NOTE: `_nextLeafIndex` is incremented after the assignment.
+        // Get the leaf's index. Note, that `_nextLeafIndex` is incremented AFTER the assignment.
         // solhint-disable-next-line gas-increment-by-one
         index = self._nextLeafIndex++;
 
         // Check if tree is full.
-        // solhint-disable-next-line gas-increment-by-one
         if (index + 1 > 1 << treeDepth) {
             revert FullTree();
         }
@@ -61,20 +59,17 @@ library MerkleTree {
             self._nodes[i][currentIndex] = currentHash;
 
             // Get left sibling if it's a right child
-            bytes32 sibling = _isLeft(currentIndex) ? self._zeros[i] : self._nodes[i][currentIndex - 1];
+            bytes32 sibling = isLeft(currentIndex) ? self._zeros[i] : self._nodes[i][currentIndex - 1];
 
             currentHash = SHA256.commutativeHash(currentHash, sibling);
 
             currentIndex >>= 1;
         }
         newRoot = currentHash;
-
-        // Store the new root // TODO TODO remove?
-        self._nodes[treeDepth][0] = newRoot;
     }
 
     function getProof(Tree storage self, uint256 index) internal view returns (bytes32[] memory proof) {
-        uint256 treeDepth = _depth(self);
+        uint256 treeDepth = depth(self);
 
         if (index + 1 > self._nextLeafIndex) revert NonExistentLeafIndex(index);
 
@@ -85,7 +80,7 @@ library MerkleTree {
         bytes32 empty = 0;
 
         for (uint256 i = 0; i < treeDepth; ++i) {
-            if (_isLeft(currentIndex)) {
+            if (isLeft(currentIndex)) {
                 // Left sibling
                 sibling = self._nodes[i][currentIndex + 1];
             } else {
@@ -98,20 +93,15 @@ library MerkleTree {
         }
     }
 
-    //function _root(Tree storage self) internal view returns (bytes32 root) {
-    //    root = self._nodes[_depth(self)][0];
-    //}
-
-    function _depth(Tree storage self) internal view returns (uint256 depth) {
-        depth = uint256(self._zeros.length);
+    function depth(Tree storage self) internal view returns (uint256 treeDepth) {
+        treeDepth = self._zeros.length;
     }
 
-    // TODO move?
-    function _leafCount(Tree storage self) internal view returns (uint256 leafCount) {
-        leafCount = self._nextLeafIndex;
+    function leafCount(Tree storage self) internal view returns (uint256 numberOfLeafs) {
+        numberOfLeafs = self._nextLeafIndex;
     }
 
-    function _isLeft(uint256 index) internal pure returns (bool isLeft) {
-        isLeft = index % 2 == 0;
+    function isLeft(uint256 index) internal pure returns (bool isIndexLeft) {
+        isIndexLeft = index % 2 == 0;
     }
 }
