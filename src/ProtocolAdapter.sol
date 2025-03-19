@@ -21,7 +21,7 @@ import { Delta } from "./proving/Delta.sol";
 import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
 
 import { BlobStorage, DeletionCriterion, ExpirableBlob } from "./state/BlobStorage.sol";
-import { ImprovedCommitmentAccumulator as CommitmentAccumulator } from "./state/ImprovedCommitmentAccumulator.sol";
+import { CommitmentAccumulator as CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 // TODO import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
 

@@ -5,7 +5,7 @@ import { Arrays } from "@openzeppelin-contracts/utils/Arrays.sol";
 
 import { SHA256 } from "../libs/SHA256.sol";
 
-library ImprovedMerkleTree {
+library MerkleTree {
     struct Tree {
         uint256 _nextLeafIndex;
         mapping(uint256 level => mapping(uint256 index => bytes32 node)) _nodes;

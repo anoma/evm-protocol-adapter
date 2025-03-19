@@ -8,10 +8,8 @@ import { ICommitmentAccumulator } from "../../src/interfaces/ICommitmentAccumula
 import { SHA256 } from "../../src/libs/SHA256.sol";
 
 import { CommitmentAccumulatorMock } from "../mocks/CommitmentAccumulatorMock.sol";
-import { ICommitmentAccumulatorMock } from "../mocks/ICommitmentAccumulatorMock.sol";
-import { ImprovedCommitmentAccumulatorMock } from "../mocks/ImprovedCommitmentAccumulatorMock.sol";
 
-contract Base is Test {
+contract CommitmentAccumulatorTest is Test {
     uint8 internal constant _TREE_DEPTH = 2; // NOTE: 2^2 = 4 _nodes
 
     uint256 internal constant _N_LEAFS = 2 ** _TREE_DEPTH;
@@ -23,10 +21,10 @@ contract Base is Test {
     bytes32[2][5] internal _nodes;
     bytes32[5] internal _roots;
 
-    ICommitmentAccumulatorMock internal _cmAcc;
+    CommitmentAccumulatorMock internal _cmAcc;
 
-    constructor(ICommitmentAccumulatorMock cmAcc) {
-        _cmAcc = cmAcc;
+    constructor() {
+        _cmAcc = new CommitmentAccumulatorMock(_TREE_DEPTH);
     }
 
     function setUp() public {
@@ -191,12 +189,4 @@ contract Base is Test {
             }
         }
     }
-}
-
-contract ImprovedCommitmentAccumulatorTest is Base {
-    constructor() Base(new ImprovedCommitmentAccumulatorMock(_TREE_DEPTH)) { }
-}
-
-contract CommitmentAccumulatorTest is Base {
-    constructor() Base(new CommitmentAccumulatorMock(_TREE_DEPTH)) { }
 }
