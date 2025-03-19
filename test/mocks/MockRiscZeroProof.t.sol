@@ -12,13 +12,13 @@ import { MockRiscZeroProof } from "./MockRiscZeroProof.sol";
 contract MockRiscZeroProofTest is Test {
     using Bytes for bytes;
 
-    RiscZeroMockVerifier internal immutable _mockVerifier;
+    RiscZeroMockVerifier internal immutable _MOCK_VERIFIER;
     RiscZeroReceipt internal _proof;
 
     constructor() {
-        _mockVerifier = new RiscZeroMockVerifier(MockRiscZeroProof.VERIFIER_SELECTOR);
+        _MOCK_VERIFIER = new RiscZeroMockVerifier(MockRiscZeroProof.VERIFIER_SELECTOR);
 
-        _proof = _mockVerifier.mockProve({
+        _proof = _MOCK_VERIFIER.mockProve({
             imageId: MockRiscZeroProof.IMAGE_ID_1,
             journalDigest: MockRiscZeroProof.JOURNAL_DIGEST
         });
@@ -27,7 +27,7 @@ contract MockRiscZeroProofTest is Test {
     /// @notice Verification
     function test_wrongImageId() public {
         vm.expectRevert(VerificationFailed.selector);
-        _mockVerifier.verify({
+        _MOCK_VERIFIER.verify({
             seal: _proof.seal,
             imageId: MockRiscZeroProof.IMAGE_ID_2,
             journalDigest: MockRiscZeroProof.JOURNAL_DIGEST
@@ -38,7 +38,7 @@ contract MockRiscZeroProofTest is Test {
         bytes memory wrongSeal = abi.encode(MockRiscZeroProof.VERIFIER_SELECTOR, "WRONG_DATA");
 
         vm.expectRevert(VerificationFailed.selector);
-        _mockVerifier.verify({
+        _MOCK_VERIFIER.verify({
             seal: wrongSeal,
             imageId: MockRiscZeroProof.IMAGE_ID_1,
             journalDigest: MockRiscZeroProof.JOURNAL_DIGEST
@@ -51,7 +51,7 @@ contract MockRiscZeroProofTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(SelectorMismatch.selector, wrongSelector, MockRiscZeroProof.VERIFIER_SELECTOR)
         );
-        _mockVerifier.verify({
+        _MOCK_VERIFIER.verify({
             seal: abi.encode(wrongSelector),
             imageId: MockRiscZeroProof.IMAGE_ID_1,
             journalDigest: MockRiscZeroProof.JOURNAL_DIGEST
@@ -62,12 +62,12 @@ contract MockRiscZeroProofTest is Test {
         bytes32 wrongDigest = bytes32(0);
 
         vm.expectRevert(VerificationFailed.selector);
-        _mockVerifier.verify({ seal: _proof.seal, imageId: MockRiscZeroProof.IMAGE_ID_1, journalDigest: wrongDigest });
+        _MOCK_VERIFIER.verify({ seal: _proof.seal, imageId: MockRiscZeroProof.IMAGE_ID_1, journalDigest: wrongDigest });
     }
     /// @notice It should verify correct _proofs.
 
     function test_correctProof() public view {
-        _mockVerifier.verify({
+        _MOCK_VERIFIER.verify({
             seal: _proof.seal,
             imageId: MockRiscZeroProof.IMAGE_ID_1,
             journalDigest: MockRiscZeroProof.JOURNAL_DIGEST

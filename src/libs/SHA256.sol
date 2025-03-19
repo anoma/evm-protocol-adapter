@@ -17,4 +17,8 @@ library SHA256 {
     function commutativeHash(bytes32 a, bytes32 b) internal pure returns (bytes32 habOrBa) {
         habOrBa = a < b ? hash(a, b) : hash(b, a);
     }
+
+    function commutativeHash3(bytes32 a, bytes32 b, bytes32 c) internal pure returns (bytes32 habcOrAcb) {
+        habcOrAcb = a < b ? hash3(a, b, c) : hash3(a, c, b);
+    }
 }

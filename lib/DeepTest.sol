@@ -1625,7 +1625,7 @@ abstract contract DeepTest is Test {
         returns (string memory)
     {
         string memory str = _tab(prefix.concat("{\n"), recursionDepth);
-        str = str.concat(_prettyPrint(a.wrapperContract, "wrapperContract: ", ",\n", recursionDepth + 1, false));
+        str = str.concat(_prettyPrint(a.untrustedWrapperContract, "untrustedWrapperContract: ", ",\n", recursionDepth + 1, false));
             str = str.concat(_prettyPrint(a.input, "input: ", ",\n", recursionDepth + 1, false));
             str = str.concat(_prettyPrint(a.output, "output: ", ",\n", recursionDepth + 1, false));
         str = str.concat(_tab("}", recursionDepth));
@@ -1645,7 +1645,7 @@ abstract contract DeepTest is Test {
     {
         comparison.a = comparison.a.concat(_tab(prefix.concat("{\n"), recursionDepth));
         comparison.b = comparison.b.concat(_tab(prefix.concat("{\n"), recursionDepth));
-        _comparePrint(a.wrapperContract, b.wrapperContract, "wrapperContract: ", ",\n", recursionDepth + 1, comparison);
+        _comparePrint(a.untrustedWrapperContract, b.untrustedWrapperContract, "untrustedWrapperContract: ", ",\n", recursionDepth + 1, comparison);
             _comparePrint(a.input, b.input, "input: ", ",\n", recursionDepth + 1, comparison);
             _comparePrint(a.output, b.output, "output: ", ",\n", recursionDepth + 1, comparison);
         comparison.a = comparison.a.concat(_tab("}", recursionDepth)).concat(suffix);

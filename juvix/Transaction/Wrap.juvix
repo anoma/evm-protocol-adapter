@@ -27,11 +27,7 @@ wrapErc20
       caller := txCtx |> TxContext.caller |> Identity.external;
 
       wrapperContract :=
-        wrapper
-          |> Resource.label
-          |> builtinAnomaDecode
-          |> FfiCall.address
-          |> builtinEvmDecode;
+        wrapper |> Resource.label |> builtinAnomaDecode |> FfiCall.address;
       wrapperResourceKind := kind wrapper;
 
       wrappedResourceLabel := builtinAnomaEncode wrapperResourceKind;
@@ -43,16 +39,14 @@ wrapErc20
           wrappedResourceKind;
           ffiCall :=
             mkFfiCall@{
-              address :=
-                ExternalIdentity.ExternalIdentity.unExternalIdentity
-                  wrapperContract;
+              address := wrapperContract;
               input :=
-                transferFromEvmInput@{
+                safeTransferFromEvmInput@{
                   to := wrapperContract;
-                  from := caller;
+                  from := caller |> toAddress;
                   quantity;
                 };
-              output := transferFromEvmOutput;
+              output := safeTransferFromEvmOutput;
             };
           nonce := Nonce.toNat nonce1;
         };

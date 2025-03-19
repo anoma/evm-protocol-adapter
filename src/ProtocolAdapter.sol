@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-// External imports
 import { ReentrancyGuardTransient } from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
+import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 import { IRiscZeroVerifier as TrustedRiscZeroVerifier } from "@risc0-ethereum/IRiscZeroVerifier.sol";
 
 import { MockDelta } from "../test/mocks/MockDelta.sol"; // TODO remove
@@ -10,26 +10,21 @@ import { MockDelta } from "../test/mocks/MockDelta.sol"; // TODO remove
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IWrapper as UntrustedWrapper } from "./interfaces/IWrapper.sol";
 
-// Libraries
 import { AppData } from "./libs/AppData.sol";
 import { ArrayLookup } from "./libs/ArrayLookup.sol";
 import { ComputableComponents } from "./libs/ComputableComponents.sol";
 import { Universal } from "./libs/Identities.sol";
 import { Reference } from "./libs/Reference.sol";
 
-// State-related modules
-
 import { ComplianceUnit } from "./proving/Compliance.sol";
 import { Delta } from "./proving/Delta.sol";
 import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
 
 import { BlobStorage, DeletionCriterion, ExpirableBlob } from "./state/BlobStorage.sol";
-import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
+import { ImprovedCommitmentAccumulator as CommitmentAccumulator } from "./state/ImprovedCommitmentAccumulator.sol";
+// TODO import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
 
-// Proving-related modules
-
-// Types
 import { Action, FFICall, KindFFICallPair, Resource, TagAppDataPair, Transaction } from "./Types.sol";
 
 contract ProtocolAdapter is
@@ -44,6 +39,7 @@ contract ProtocolAdapter is
     using Reference for bytes;
     using AppData for TagAppDataPair[];
     using LogicProofs for TagLogicProofPair[];
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
     TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
     bytes32 internal immutable _COMPLIANCE_CIRCUIT_ID;
@@ -53,6 +49,7 @@ contract ProtocolAdapter is
 
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
 
+    // TODO error EmptyTransaction();
     error InvalidRootRef(bytes32 root);
     error InvalidNullifierRef(bytes32 nullifier);
     error InvalidCommitmentRef(bytes32 commitment);
@@ -83,37 +80,47 @@ contract ProtocolAdapter is
 
         emit TransactionExecuted({ id: ++_txCount, transaction: transaction });
 
-        uint256 nActions = transaction.actions.length;
-        for (uint256 i = 0; i < nActions; ++i) {
+        uint256 n = transaction.actions.length;
+        uint256 m;
+        uint256 j;
+        bytes32 newRoot = 0;
+        for (uint256 i = 0; i < n; ++i) {
             Action calldata action = transaction.actions[i];
 
-            uint256 len = action.tagAppDataPairs.length;
-            for (uint256 j = 0; j < len; ++j) {
+            m = action.tagAppDataPairs.length;
+            for (j = 0; j < m; ++j) {
                 _storeBlob(action.tagAppDataPairs[j].appData);
             }
 
-            len = action.nullifiers.length;
-            for (uint256 j = 0; j < len; ++j) {
+            m = action.nullifiers.length;
+            for (j = 0; j < m; ++j) {
                 // Nullifier non-existence was already checked in `_verify(transaction);` at the top.
                 _addNullifierUnchecked(action.nullifiers[j]);
             }
 
-            len = action.commitments.length;
-            for (uint256 j = 0; j < len; ++j) {
+            m = action.commitments.length;
+
+            for (j = 0; j < m; ++j) {
                 // Commitment non-existence was already checked in `_verify(transaction);` at the top.
-                _addCommitmentUnchecked(action.commitments[j]);
+                newRoot = _addCommitmentUnchecked(action.commitments[j]);
             }
 
-            len = action.kindFFICallPairs.length;
-            for (uint256 j = 0; j < len; ++j) {
+            m = action.kindFFICallPairs.length;
+            for (j = 0; j < m; ++j) {
                 _executeFFICall(action.kindFFICallPairs[j].ffiCall);
             }
         }
+
+        // Add new root.
+        if (!_roots.add(newRoot)) {
+            revert PreExistingRoot(newRoot);
+        }
+        emit RootAdded(newRoot);
     }
 
     /// @inheritdoc IProtocolAdapter
-    function createWrapperContractResource(UntrustedWrapper wrapperContract) external override {
-        _createWrapperContractResource(wrapperContract);
+    function createWrapperContractResource(UntrustedWrapper untrustedWrapperContract) external override {
+        _createWrapperContractResource(untrustedWrapperContract);
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -124,11 +131,45 @@ contract ProtocolAdapter is
     // TODO Consider DoS attacks https://detectors.auditbase.com/avoid-external-calls-in-unbounded-loops-solidity
     // slither-disable-next-line calls-loop
     function _executeFFICall(FFICall calldata ffiCall) internal {
-        bytes memory output = UntrustedWrapper(ffiCall.wrapperContract).evmCall(ffiCall.input);
+        bytes memory output = UntrustedWrapper(ffiCall.untrustedWrapperContract).ffiCall(ffiCall.input);
 
         if (keccak256(output) != keccak256(ffiCall.output)) {
             revert FFICallOutputMismatch({ expected: ffiCall.output, actual: output });
         }
+    }
+
+    function _createWrapperContractResource(UntrustedWrapper untrustedWrapperContract) internal {
+        bytes32 computedLabelRef = _computeWrapperLabelRef(untrustedWrapperContract);
+
+        // Label integrity check
+        {
+            bytes32 storedLabelRef = untrustedWrapperContract.wrapperResourceLabelRef();
+            if (computedLabelRef != storedLabelRef) {
+                revert WrapperContractResourceLabelMismatch({ expected: computedLabelRef, actual: storedLabelRef });
+            }
+        }
+
+        // Kind integrity check
+        {
+            bytes32 storedKind = untrustedWrapperContract.wrapperResourceKind();
+            bytes32 computedKind = ComputableComponents.kind({
+                logicRef: untrustedWrapperContract.wrapperResourceLogicRef(),
+                labelRef: computedLabelRef
+            });
+
+            if (computedKind != storedKind) {
+                revert WrapperResourceKindMismatch({ expected: computedKind, actual: storedKind });
+            }
+        }
+
+        bytes memory empty = bytes("");
+        _addCommitment(
+            _wrapperContractResourceCommitment({
+                untrustedWrapperContract: untrustedWrapperContract,
+                labelRef: computedLabelRef,
+                valueRef: abi.encode(untrustedWrapperContract.wrappedResourceKind(), empty, empty).toRefCalldata()
+            })
+        );
     }
 
     /// @notice Computes the commitment of a wrapper contract resource that can be consumed by the universal identity.
@@ -141,6 +182,7 @@ contract ProtocolAdapter is
         bytes32 valueRef
     )
         internal
+        view
         returns (bytes32 wrapperResource)
     {
         wrapperResource = Resource({
@@ -149,32 +191,10 @@ contract ProtocolAdapter is
             valueRef: valueRef,
             nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
             quantity: 1,
-            nonce: untrustedWrapperContract.newNonce(),
+            nonce: 0,
             randSeed: 0,
             ephemeral: false
         }).commitment();
-    }
-
-    function _createWrapperContractResource(UntrustedWrapper untrustedWrapperContract) internal {
-        bytes32 computedWrapperLabelRef = _computeWrapperLabelRef(untrustedWrapperContract);
-        bytes32 expectedWrapperLabelRef = untrustedWrapperContract.wrapperResourceLabelRef();
-
-        // Check integrity
-        if (computedWrapperLabelRef != expectedWrapperLabelRef) {
-            revert WrapperContractResourceLabelMismatch({
-                expected: expectedWrapperLabelRef,
-                actual: computedWrapperLabelRef
-            });
-        }
-
-        bytes memory empty = bytes("");
-        _addCommitment(
-            _wrapperContractResourceCommitment({
-                untrustedWrapperContract: untrustedWrapperContract,
-                labelRef: computedWrapperLabelRef,
-                valueRef: abi.encode(untrustedWrapperContract.wrappedResourceKind(), empty, empty).toRefCalldata()
-            })
-        );
     }
 
     // solhint-disable-next-line function-max-lines
@@ -191,6 +211,10 @@ contract ProtocolAdapter is
             resourceCount += transaction.actions[i].nullifiers.length;
         }
         bytes32[] memory tags = new bytes32[](resourceCount);
+
+        // Check for empty transaction
+        // TODO // if (resourceCount == 0) revert EmptyTransaction();
+
         // Reset resource count for later use.
         resourceCount = 0;
 
@@ -209,17 +233,20 @@ contract ProtocolAdapter is
                 ComplianceUnit calldata unit = action.complianceUnits[j];
 
                 // Check consumed resources
+                // TODO This check can be removed after Xuyang's and Artem's specs change proposal gets merged.
                 if (!transaction.roots.contains(unit.instance.consumed.rootRef)) {
                     revert InvalidRootRef(unit.instance.consumed.rootRef);
                 }
                 _checkRootPreExistence(unit.instance.consumed.rootRef);
 
+                // TODO This check can be removed after Xuyang's and Artem's specs change proposal gets merged.
                 if (!action.nullifiers.contains(unit.instance.consumed.nullifierRef)) {
                     revert InvalidNullifierRef(unit.instance.consumed.nullifierRef);
                 }
                 _checkNullifierNonExistence(unit.instance.consumed.nullifierRef);
 
                 // Check created resources
+                // TODO This check can be removed after Xuyang's and Artem's specs change proposal gets merged.
                 if (!action.commitments.contains(unit.instance.created.commitmentRef)) {
                     revert InvalidCommitmentRef(unit.instance.created.commitmentRef);
                 }
@@ -250,7 +277,7 @@ contract ProtocolAdapter is
             for (uint256 j; j < len; ++j) {
                 bytes32 tag = action.nullifiers[j];
 
-                tags[resourceCount] = tag;
+                tags[j] = tag;
                 ++resourceCount;
 
                 instance.tag = tag;
@@ -272,7 +299,7 @@ contract ProtocolAdapter is
             for (uint256 j; j < len; ++j) {
                 bytes32 tag = action.commitments[j];
 
-                tags[resourceCount] = tag;
+                tags[action.nullifiers.length + j] = tag;
                 ++resourceCount;
 
                 instance.tag = tag;
@@ -305,7 +332,7 @@ contract ProtocolAdapter is
 
     function _verifyFFICall(KindFFICallPair calldata kindFFICallPair) internal view {
         bytes32 passedKind = kindFFICallPair.kind;
-        bytes32 fetchedKind = UntrustedWrapper(kindFFICallPair.ffiCall.wrapperContract).wrapperResourceKind();
+        bytes32 fetchedKind = UntrustedWrapper(kindFFICallPair.ffiCall.untrustedWrapperContract).wrapperResourceKind();
 
         if (passedKind != fetchedKind) {
             revert WrapperResourceKindMismatch({ expected: fetchedKind, actual: passedKind });

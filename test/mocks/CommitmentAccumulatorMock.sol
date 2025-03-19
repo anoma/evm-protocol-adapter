@@ -2,35 +2,34 @@
 pragma solidity ^0.8.27;
 
 import { MerkleProof } from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+
 import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 import { MerkleTree } from "@openzeppelin-contracts/utils/structs/MerkleTree.sol";
 
 import { SHA256 } from "../../src/libs/SHA256.sol";
-import { CommitmentAccumulator } from "../../src/state/CommitmentAccumulator.sol";
 
-contract CommitmentAccumulatorMock is CommitmentAccumulator {
+import { CommitmentAccumulator } from "../../src/state/CommitmentAccumulator.sol";
+import { ImprovedMerkleTree } from "../../src/state/ImprovedMerkleTree.sol";
+
+import { ICommitmentAccumulatorMock } from "./ICommitmentAccumulatorMock.sol";
+
+contract CommitmentAccumulatorMock is ICommitmentAccumulatorMock, CommitmentAccumulator {
     using MerkleTree for MerkleTree.Bytes32PushTree;
     using MerkleProof for bytes32[];
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    // TODO Why does this offset exist in `EnumerableSet`?
-    uint256 internal constant _COMMITMENT_INDEX_OFFSET = 1;
-
-    error EmptyCommitment();
-    error InvalidCommitmentIndexPanic(bytes32 commitment, uint256 index, uint256 nextLeafIndex);
-
     constructor(uint8 treeDepth) CommitmentAccumulator(treeDepth) { }
 
-    function addCommitment(bytes32 commitment) external {
-        _addCommitment(commitment);
+    function addCommitment(bytes32 commitment) external returns (bytes32 newRoot) {
+        newRoot = _addCommitment(commitment);
     }
 
-    function addCommitmentUnchecked(bytes32 commitment) external {
-        _addCommitmentUnchecked(commitment);
+    function addCommitmentUnchecked(bytes32 commitment) external returns (bytes32 newRoot) {
+        newRoot = _addCommitmentUnchecked(commitment);
     }
 
     function merkleTreeZero(uint8 level) external view returns (bytes32 zeroHash) {
-        zeroHash = _merkleTree._zeros[level];
+        zeroHash = _merkleTreeZero(level);
     }
 
     function checkMerklePath(bytes32 root, bytes32 commitment, bytes32[] calldata path) external view {
@@ -41,16 +40,16 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
     }
 
     function computeMerklePath(bytes32 commitment) external view returns (bytes32[] memory path) {
-        uint256 leafIndex = findCommitmentIndex(commitment);
+        uint256 leafIndex = _findCommitmentIndex(commitment);
 
-        bytes32[][] memory nodes = computeFullTree();
+        bytes32[][] memory nodes = _computeFullTree();
 
         uint256 treeDepth = _merkleTree.depth();
         path = new bytes32[](treeDepth);
 
         uint256 currentIndex = leafIndex;
 
-        bool isLeft = currentIndex % 2 == 0;
+        bool isLeft;
         // Merkle Path
         for (uint256 d = 0; d < treeDepth; ++d) {
             isLeft = currentIndex % 2 == 0;
@@ -69,12 +68,32 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
         return path;
     }
 
-    function emptyLeafHash() external pure returns (bytes32 hash) {
-        hash = _EMPTY_LEAF_HASH;
+    function commitmentCount() external view returns (uint256 count) {
+        count = _merkleTree._nextLeafIndex;
+    }
+
+    function initialRoot() external view returns (bytes32 hash) {
+        hash = _roots.at(0);
+    }
+
+    function emptyLeafHash() external view returns (bytes32 hash) {
+        hash = _merkleTreeZero(0);
+    }
+
+    function findCommitmentIndex(bytes32 commitment) external view returns (uint256 index) {
+        index = _findCommitmentIndex(commitment);
+    }
+
+    function commitmentAtIndex(uint256 index) external view returns (bytes32 commitment) {
+        commitment = _commitmentAtIndex(index);
+    }
+
+    function _merkleTreeZero(uint256 level) internal view returns (bytes32 zeroHash) {
+        zeroHash = _merkleTree._zeros[level];
     }
 
     /// @notice This implementation is very inefficient for large tree depths.
-    function computeFullTree() public view returns (bytes32[][] memory tree) {
+    function _computeFullTree() internal view returns (bytes32[][] memory tree) {
         uint256 treeDepth = _merkleTree.depth();
 
         tree = new bytes32[][](treeDepth);
@@ -93,7 +112,7 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
 
             // Empty leaves
             for (uint256 i = nCMs; i < nNodes; ++i) {
-                tree[0][i] = _EMPTY_LEAF_HASH;
+                tree[0][i] = ImprovedMerkleTree._EMPTY_LEAF_HASH;
             }
         }
 
@@ -105,22 +124,6 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
             for (uint256 i = 0; i < nNodes; ++i) {
                 tree[d][i] = SHA256.commutativeHash({ a: tree[d - 1][(i * 2)], b: tree[d - 1][(i * 2) + 1] });
             }
-        }
-    }
-
-    function findCommitmentIndex(bytes32 commitment) public view returns (uint256 index) {
-        if (commitment == _EMPTY_LEAF_HASH) {
-            revert EmptyCommitment();
-        }
-
-        index = _commitments._inner._positions[commitment] - _COMMITMENT_INDEX_OFFSET;
-
-        if (index == 0 && _commitments.at(0) != commitment) {
-            revert NonExistingCommitment(commitment);
-        }
-
-        if (index >= _merkleTree._nextLeafIndex) {
-            revert InvalidCommitmentIndexPanic(commitment, index, _merkleTree._nextLeafIndex);
         }
     }
 }

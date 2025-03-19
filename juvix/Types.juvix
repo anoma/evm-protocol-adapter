@@ -3,11 +3,23 @@ module Types;
 import Stdlib.Prelude open;
 import Stdlib.Trait.Ord.Eq open using {fromOrdToEq};
 
+import Applib open;
 import Anoma.Builtin.ByteArray open;
+
+type Address :=
+  mkAddress@{
+    unAddress : ByteArray;
+  };
+
+deriving instance
+eqAddressI : Eq Address;
+
+--- Takes last 20 bytes of the public key
+toAddress (externalIdentity : ExternalIdentity) : Address := todo;
 
 type FfiCall :=
   mkFfiCall@{
-    address : ByteArray;
+    address : Address;
     -- function : Nat;
     input : ByteArray;
     output : ByteArray;

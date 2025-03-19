@@ -27,7 +27,7 @@ contract ERC20Wrapper is Ownable, WrapperBase {
     }
 
     // TODO make generic proxy, allow native ETH transfers
-    function _evmCall(bytes calldata input) internal override returns (bytes memory output) {
+    function _ffiCall(bytes calldata input) internal override returns (bytes memory output) {
         output = _ERC20_CONTRACT.functionCall(input);
     }
 

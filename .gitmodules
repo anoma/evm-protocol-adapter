@@ -14,13 +14,10 @@
 	path = lib/elliptic-curve-solidity
 	url = https://github.com/witnet/elliptic-curve-solidity
 	branch = master
-[submodule "lib/solidity-lib"]
-	path = lib/solidity-lib
-	url = https://github.com/dl-solarity/solidity-lib
-	branch = 3.0.0-rc.0
 [submodule "lib/forge-deep"]
 	path = lib/forge-deep
 	url = https://github.com/moodlezoup/forge-deep
 [submodule "lib/solady"]
 	path = lib/solady
 	url = https://github.com/Vectorized/solady
+
