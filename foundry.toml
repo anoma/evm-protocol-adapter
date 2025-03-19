@@ -10,7 +10,7 @@ fuzz = { runs = 1_000 }
 gas_reports = [
     "ProtocolAdapter",
     "CommitmentAccumulatorMock",
-    "ImprovedCommitmentAccumulatorMock",
+    "CommitmentAccumulatorMock",
     "NullifierSetMock",
     "BlobStorageMock",
 ]

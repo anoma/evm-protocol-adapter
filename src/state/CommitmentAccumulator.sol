@@ -2,30 +2,39 @@
 pragma solidity ^0.8.27;
 
 import { Arrays } from "@openzeppelin-contracts/utils/Arrays.sol";
+import { MerkleProof } from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
-import { MerkleTree } from "@openzeppelin-contracts/utils/structs/MerkleTree.sol";
 
+import { SHA256 } from "../../src/libs/SHA256.sol";
 import { ICommitmentAccumulator } from "../interfaces/ICommitmentAccumulator.sol";
-
-import { SHA256 } from "../libs/SHA256.sol";
-
-import { ImprovedMerkleTree } from "./ImprovedMerkleTree.sol";
+import { MerkleTree } from "./MerkleTree.sol";
 
 contract CommitmentAccumulator is ICommitmentAccumulator {
-    using MerkleTree for MerkleTree.Bytes32PushTree;
+    using MerkleTree for MerkleTree.Tree;
+    using MerkleProof for bytes32[];
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using Arrays for bytes32[];
 
     uint256 internal constant _COMMITMENT_INDEX_OFFSET = 1;
 
-    MerkleTree.Bytes32PushTree internal _merkleTree;
+    MerkleTree.Tree internal _merkleTree;
     EnumerableSet.Bytes32Set internal _roots;
 
-    // TODO Use a better merkle tree implementation that doesn't require maintaining a set for fast retrieval.
-    EnumerableSet.Bytes32Set internal _commitments;
+    mapping(bytes32 commitment => uint256 index) internal _indices;
+
+    error EmptyCommitment();
+    error NonExistingCommitment(bytes32 commitment);
+    error PreExistingCommitment(bytes32 commitment);
+    error CommitmentMismatch(bytes32 expected, bytes32 actual);
+    error CommitmentIndexOutOfBounds(uint256 current, uint256 limit);
+
+    error NonExistingRoot(bytes32 root);
+    error PreExistingRoot(bytes32 root);
+    error InvalidRoot(bytes32 expected, bytes32 actual);
+    error InvalidPathLength(uint256 expected, uint256 actual);
 
     constructor(uint8 treeDepth) {
-        bytes32 initialRoot = _merkleTree.setup(treeDepth, ImprovedMerkleTree._EMPTY_LEAF_HASH, SHA256.commutativeHash);
+        bytes32 initialRoot = _merkleTree.setup(treeDepth);
 
         if (!_roots.add(initialRoot)) revert PreExistingRoot(initialRoot);
     }
@@ -40,24 +49,63 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         isContained = _containsRoot(root);
     }
 
+    function verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path) external view override {
+        _verifyMerkleProof({ root: root, commitment: commitment, path: path });
+    }
+
+    function merkleProof(bytes32 commitment) external view override returns (bytes32[] memory proof, bytes32 root) {
+        (proof, root) = _merkleProof(commitment);
+    }
+
     function _addCommitmentUnchecked(bytes32 commitment) internal returns (bytes32 newRoot) {
-        // slither-disable-next-line unused-return
-        _commitments.add(commitment);
-
         uint256 index;
-        (index, newRoot) = _merkleTree.push(commitment, SHA256.commutativeHash);
+        (index, newRoot) = _merkleTree.push(commitment);
+        _indices[commitment] = index + _COMMITMENT_INDEX_OFFSET; // Add 1 to use 0 as a sentinel value
 
-        emit CommitmentAdded({ commitment: commitment, index: index });
+        // TODO
+        //emit CommitmentAdded({ commitment: commitment, index: index, root: newRoot });
     }
 
     function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
-        if (!_commitments.add(commitment)) {
-            revert PreExistingCommitment(commitment);
-        }
-        uint256 index;
-        (index, newRoot) = _merkleTree.push(commitment, SHA256.commutativeHash);
+        _checkCommitmentNonExistence(commitment);
 
-        emit CommitmentAdded({ commitment: commitment, index: index });
+        newRoot = _addCommitmentUnchecked(commitment);
+    }
+
+    function _storeRoot(bytes32 root) internal {
+        if (!_roots.add(root)) {
+            revert PreExistingRoot(root);
+        }
+        emit RootAdded(root);
+    }
+
+    function _verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path) internal view {
+        // Check length.
+        uint256 pathLength = path.length;
+        uint256 treeDepth = _merkleTree.depth();
+        if (pathLength != treeDepth) {
+            revert InvalidPathLength({ expected: treeDepth, actual: pathLength });
+        }
+
+        // Check root existence.
+        if (!_roots.contains(root)) revert NonExistingRoot(root);
+
+        // Check that the leaf and path reproduce the root.
+        bytes32 computedRoot = path.processProof(commitment, SHA256.commutativeHash);
+        if (root != computedRoot) {
+            revert InvalidRoot({ expected: root, actual: computedRoot });
+        }
+    }
+
+    function _merkleProof(bytes32 commitment) internal view returns (bytes32[] memory proof, bytes32 root) {
+        uint256 leafIndex = _findCommitmentIndex(commitment);
+        (proof, root) = (_merkleTree.getProof(leafIndex), _latestRoot());
+    }
+
+    function _isContained(bytes32 commitment) internal view returns (bool isContained) {
+        uint256 index = _indices[commitment];
+
+        isContained = index != 0;
     }
 
     function _findCommitmentIndex(bytes32 commitment) internal view returns (uint256 index) {
@@ -65,7 +113,7 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
             revert EmptyCommitment();
         }
 
-        index = _commitments._inner._positions[commitment];
+        index = _indices[commitment];
 
         if (index == 0) {
             revert NonExistingCommitment(commitment);
@@ -80,13 +128,25 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     }
 
     function _commitmentAtIndex(uint256 index) internal view returns (bytes32 commitment) {
-        uint256 nextIndex = _merkleTree._nextLeafIndex;
-        // TODO test: index >= nextIndex
-        if (index + 1 > nextIndex) {
-            revert CommitmentIndexOutOfBounds({ current: index, limit: nextIndex });
+        if (index + 1 > _merkleTree._nextLeafIndex) {
+            revert CommitmentIndexOutOfBounds({ current: index, limit: _merkleTree._nextLeafIndex });
         }
 
-        commitment = _commitments.at(index);
+        commitment = _merkleTree._nodes[0][index];
+    }
+
+    function _checkCommitmentNonExistence(bytes32 commitment) internal view {
+        if (_isContained(commitment)) {
+            revert PreExistingCommitment(commitment);
+        }
+    }
+
+    // TODO
+    // slither-disable-next-line dead-code
+    function _checkCommitmentPreExistence(bytes32 commitment) internal view {
+        if (!_isContained(commitment)) {
+            revert NonExistingCommitment(commitment);
+        }
     }
 
     function _checkRootPreExistence(bytes32 root) internal view {
@@ -98,34 +158,16 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         }
     }
 
-    function _checkCommitmentNonExistence(bytes32 commitment) internal view {
-        if (_commitments.contains(commitment)) {
-            revert PreExistingCommitment(commitment);
-        }
-    }
-
-    // TODO
-    // slither-disable-next-line dead-code
-    function _checkCommitmentPreExistence(bytes32 commitment) internal view {
-        if (!_commitments.contains(commitment)) {
-            revert NonExistingCommitment(commitment);
-        }
-    }
-
     function _emptyLeaf() internal view returns (bytes32 emptyLeaf) {
         emptyLeaf = _merkleTree._zeros[0];
     }
 
     function _latestRoot() internal view returns (bytes32 root) {
+        // TODO Remove? TODO root = _merkleTree._root();
         root = _roots.at(_roots.length() - 1);
     }
 
     function _containsRoot(bytes32 root) internal view returns (bool isContained) {
         isContained = _roots.contains(root);
-    }
-
-    /// @dev Tree's depth (set at initialization)
-    function _depth(MerkleTree.Bytes32PushTree storage self) internal view returns (uint256 depth) {
-        depth = self._zeros.length;
     }
 }
