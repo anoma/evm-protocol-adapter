@@ -96,6 +96,7 @@ mkErc20Resource
 
 {- HELPERS -}
 
+-- TODO FORMAT
 decodeWrapperResourceKindFromLabel (wrappedResource : Resource) : Kind :=
   let
     wrapperResourceKind := builtinAnomaDecode (Resource.label wrappedResource);
