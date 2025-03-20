@@ -9,8 +9,6 @@ import { SHA256 } from "../../src/libs/SHA256.sol";
 import { ICommitmentAccumulator } from "../interfaces/ICommitmentAccumulator.sol";
 import { MerkleTree } from "./MerkleTree.sol";
 
-contract RootStorage { }
-
 contract CommitmentAccumulator is ICommitmentAccumulator {
     using MerkleTree for MerkleTree.Tree;
     using MerkleProof for bytes32[];

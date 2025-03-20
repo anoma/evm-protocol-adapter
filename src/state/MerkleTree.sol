@@ -40,8 +40,8 @@ library MerkleTree {
         // Cache read
         uint256 treeDepth = depth(self);
 
-        // solhint-disable-next-line gas-increment-by-one
         // Get leaf index.
+        // solhint-disable-next-line gas-increment-by-one
         index = self._nextLeafIndex++;
 
         // Check if tree is full.
