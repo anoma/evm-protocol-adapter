@@ -1,7 +1,8 @@
 # EVM Protocol Adapter
 
-> [!WARNING] This repo features a prototype and is work in progress. Do NOT use
-> it in production.
+> [!WARNING]  
+> This repo features a prototype and is work in progress. Do NOT use in
+> production.
 
 For more information, see the
 [related Anoma Research Day talk](https://www.youtube.com/watch?v=rKFZsOw360U).
