@@ -8,9 +8,9 @@ For more information, see the
 
 <div align="left">
   <a href="https://www.youtube.com/watch?v=rKFZsOw360U">
-     <img src="https://img.youtube.com/vi/rKFZsOw360U/0.jpg" 
+     <img src="https://img.youtube.com/vi/rKFZsOw360U/maxresdefault.jpg" 
        alt="The EVM Protocol Adapter: Bringing Intent-Centric Apps to Ethereum - Anoma Research Day"
-       style="width:50%;">
+       style="width:67%;">
   </a>
 </div>
 
@@ -50,4 +50,4 @@ Parameters:
 
 - Commitment accumulator `treeDepth = 32`
 
-<img src=".assets/Benchmark.png" width=50% alt="Protocol adapter benchmark for a Merkle tree depth of 32.">
+<img src=".assets/Benchmark.png" width=67% alt="Protocol adapter benchmark for a Merkle tree depth of 32.">
