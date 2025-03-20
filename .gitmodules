@@ -17,7 +17,3 @@
 [submodule "lib/forge-deep"]
 	path = lib/forge-deep
 	url = https://github.com/moodlezoup/forge-deep
-[submodule "lib/solady"]
-	path = lib/solady
-	url = https://github.com/Vectorized/solady
-

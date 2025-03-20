@@ -30,7 +30,7 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_benchmark() public {
-        uint16[1] memory n = [uint16(50)];
+        uint16[3] memory n = [uint16(5), uint16(50), uint16(500)];
 
         for (uint256 i = 0; i < n.length; ++i) {
             (Resource[] memory consumed, Resource[] memory created) = MockTypes.mockResources({

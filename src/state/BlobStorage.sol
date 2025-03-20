@@ -35,18 +35,18 @@ contract BlobStorage is IBlobStorage {
     }
 
     function _storeBlob(bytes calldata blob, DeletionCriterion deletionCriterion) internal returns (bytes32 blobHash) {
+        // Compute the blob hash
+        blobHash = sha256(blob);
+
+        // Blob cannot be empty
+        if (blobHash == _EMPTY_BLOB_HASH) {
+            revert BlobEmpty();
+        }
+
         // Blob doesn't need to be stored
         if (deletionCriterion == DeletionCriterion.Immediately) {
             // Return zero
             return blobHash;
-        }
-
-        // Compute the blob hash
-        blobHash = sha256(blob);
-
-        // Blob is empty
-        if (blobHash == _EMPTY_BLOB_HASH) {
-            revert BlobEmpty();
         }
         // Blob is stored already
         else if (sha256(_blobs[blobHash]) != _EMPTY_BLOB_HASH) {

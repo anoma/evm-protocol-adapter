@@ -24,7 +24,8 @@ library MockTypes {
     using Delta for uint256[2];
 
     bytes32 internal constant _ALWAYS_VALID_LOGIC_REF = bytes32(0);
-    bytes32 internal constant _EMPTY_BLOB_REF = bytes32(0);
+    bytes internal constant _MOCK_BLOB = "MOCK_BLOB";
+    bytes32 internal constant _MOCK_BLOB_HASH = sha256(_MOCK_BLOB);
 
     error SevereError();
 
@@ -216,8 +217,8 @@ library MockTypes {
         for (uint256 i = 0; i < nConsumed; ++i) {
             consumed[i] = Resource({
                 logicRef: _ALWAYS_VALID_LOGIC_REF,
-                labelRef: _EMPTY_BLOB_REF,
-                valueRef: _EMPTY_BLOB_REF,
+                labelRef: _MOCK_BLOB_HASH,
+                valueRef: _MOCK_BLOB_HASH,
                 nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
                 quantity: 1,
                 nonce: uint256(keccak256(abi.encodePacked(seed, i))),
@@ -230,8 +231,8 @@ library MockTypes {
         for (uint256 i = 0; i < nCreated; ++i) {
             created[i] = Resource({
                 logicRef: _ALWAYS_VALID_LOGIC_REF,
-                labelRef: _EMPTY_BLOB_REF,
-                valueRef: _EMPTY_BLOB_REF,
+                labelRef: _MOCK_BLOB_HASH,
+                valueRef: _MOCK_BLOB_HASH,
                 nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
                 quantity: 1,
                 nonce: uint256(keccak256(abi.encodePacked(i, seed))),
@@ -251,20 +252,18 @@ library MockTypes {
     {
         appData = new TagAppDataPair[](nullifiers.length + commitments.length);
         {
-            bytes memory emptyBlob = bytes("");
-
             uint256 len = nullifiers.length;
             for (uint256 i = 0; i < len; ++i) {
                 appData[i] = TagAppDataPair({
                     tag: nullifiers[i],
-                    appData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: emptyBlob })
+                    appData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: _MOCK_BLOB })
                 });
             }
             len = commitments.length;
             for (uint256 i = 0; i < len; ++i) {
                 appData[nullifiers.length + i] = TagAppDataPair({
                     tag: commitments[i],
-                    appData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: emptyBlob })
+                    appData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: _MOCK_BLOB })
                 });
             }
         }
@@ -273,8 +272,8 @@ library MockTypes {
     function paddingResource(uint256 nonce) internal pure returns (Resource memory r) {
         r = Resource({
             logicRef: _ALWAYS_VALID_LOGIC_REF,
-            labelRef: _EMPTY_BLOB_REF,
-            valueRef: _EMPTY_BLOB_REF,
+            labelRef: _MOCK_BLOB_HASH,
+            valueRef: _MOCK_BLOB_HASH,
             nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
             quantity: 0,
             nonce: nonce,
