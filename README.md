@@ -3,7 +3,8 @@
 > [!WARNING] This repo features a prototype and is work in progress. Do NOT use
 > it in production.
 
-For more information, see the related Anoma Research Day talk.
+For more information, see the
+[related Anoma Research Day talk](https://www.youtube.com/watch?v=rKFZsOw360U).
 
 <div align="left">
   <a href="https://www.youtube.com/watch?v=rKFZsOw360U">
