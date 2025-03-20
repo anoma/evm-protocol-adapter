@@ -1,9 +1,5 @@
 # EVM Protocol Adapter
 
-> [!WARNING]  
-> This repo features a prototype and is work in progress. Do NOT use in
-> production.
-
 For more information, see the
 [related Anoma Research Day talk](https://www.youtube.com/watch?v=rKFZsOw360U).
 
@@ -14,6 +10,10 @@ For more information, see the
        style="width:67%;">
   </a>
 </div>
+
+> [!WARNING]  
+> This repo features a prototype and is work in progress. Do NOT use in
+> production.
 
 ## Installation
 
