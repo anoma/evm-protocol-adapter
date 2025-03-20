@@ -9,6 +9,8 @@ import { SHA256 } from "../../src/libs/SHA256.sol";
 import { ICommitmentAccumulator } from "../interfaces/ICommitmentAccumulator.sol";
 import { MerkleTree } from "./MerkleTree.sol";
 
+contract RootStorage { }
+
 contract CommitmentAccumulator is ICommitmentAccumulator {
     using MerkleTree for MerkleTree.Tree;
     using MerkleProof for bytes32[];
@@ -62,13 +64,11 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         (index, newRoot) = _merkleTree.push(commitment);
         _indices[commitment] = index + _COMMITMENT_INDEX_OFFSET; // Add 1 to use 0 as a sentinel value
 
-        // TODO
-        //emit CommitmentAdded({ commitment: commitment, index: index, root: newRoot });
+        emit CommitmentAdded({ commitment: commitment, index: index });
     }
 
     function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
         _checkCommitmentNonExistence(commitment);
-
         newRoot = _addCommitmentUnchecked(commitment);
     }
 
@@ -99,7 +99,7 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
 
     function _merkleProof(bytes32 commitment) internal view returns (bytes32[] memory proof, bytes32 root) {
         uint256 leafIndex = _findCommitmentIndex(commitment);
-        (proof, root) = (_merkleTree.getProof(leafIndex), _latestRoot());
+        (proof, root) = (_merkleTree.merkleProof(leafIndex), _latestRoot());
     }
 
     function _isContained(bytes32 commitment) internal view returns (bool isContained) {
@@ -141,7 +141,6 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         }
     }
 
-    // TODO
     // slither-disable-next-line dead-code
     function _checkCommitmentPreExistence(bytes32 commitment) internal view {
         if (!_isContained(commitment)) {
@@ -152,9 +151,6 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     function _checkRootPreExistence(bytes32 root) internal view {
         if (!_roots.contains(root)) {
             revert NonExistingRoot(root);
-            // NOTE by Xuyang: If `root` doesn't exist, the corresponding resource doesn't exist.
-            // In the compliance, we checked the root generation. This makes sure that the root corresponds to the
-            // resource.
         }
     }
 
@@ -163,7 +159,6 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     }
 
     function _latestRoot() internal view returns (bytes32 root) {
-        // TODO Remove? TODO root = _merkleTree._root();
         root = _roots.at(_roots.length() - 1);
     }
 

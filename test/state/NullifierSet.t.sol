@@ -3,46 +3,51 @@ pragma solidity ^0.8.27;
 
 import { Test } from "forge-std/Test.sol";
 
-import { NullifierSetMock, NullifierSet } from "../mocks/NullifierSetMock.sol";
+import { NullifierSet } from "../../src/state/NullifierSet.sol";
+import { NullifierSetMock } from "../mocks/NullifierSetMock.sol";
 
-/// @dev If this is your first time with Forge, read this tutorial in the Foundry Book:
-/// https://book.getfoundry.sh/forge/writing-tests
 contract NullifierSetTest is Test {
     bytes32 internal constant _EXAMPLE_NF = bytes32(0);
 
-    NullifierSetMock private _nfSet;
+    NullifierSetMock internal _nfSet;
 
     function setUp() public {
         _nfSet = new NullifierSetMock();
     }
 
-    // addNullifier
-    function test_addNullifier_shouldAdd() public {
+    function test_addNullifier_adds_nullifier() public {
         _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
         _nfSet.addNullifier(_EXAMPLE_NF);
-
-        vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _EXAMPLE_NF));
-        _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
     }
 
-    function test_addNullifier_shouldRevertOnDuplicate() public {
+    function test_addNullifier_reverts_on_duplicate() public {
         _nfSet.addNullifier(_EXAMPLE_NF);
 
         vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _EXAMPLE_NF));
         _nfSet.addNullifier(_EXAMPLE_NF);
     }
 
-    function test_addNullifierUnchecked_shouldAdd() public {
-        _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
+    function test_addNullifierUnchecked_adds_nullifier() public {
         _nfSet.addNullifierUnchecked(_EXAMPLE_NF);
 
         vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _EXAMPLE_NF));
         _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
     }
 
-    function test_addNullifierUnchecked_shouldNotRevertOnDuplicate() public {
+    function test_addNullifierUnchecked_does_not_revert_on_duplicate() public {
         _nfSet.addNullifierUnchecked(_EXAMPLE_NF);
 
         _nfSet.addNullifierUnchecked(_EXAMPLE_NF);
+    }
+
+    function test_checkNullifierNonExistence_passes_on_non_existent_nullifier() public view {
+        _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
+    }
+
+    function test_checkNullifierNonExistence_reverts_on_existent_nullifier() public {
+        _nfSet.addNullifier(_EXAMPLE_NF);
+
+        vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _EXAMPLE_NF));
+        _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
     }
 }

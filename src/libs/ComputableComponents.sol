@@ -8,7 +8,7 @@ library ComputableComponents {
         cm = sha256(abi.encode(resource));
     }
 
-    // TODO wrong format?
+    // TODO wrong format? We cannot use `abi.encodePacked` here.
     function nullifier(Resource memory resource, bytes32 nullifierKey) internal pure returns (bytes32 nf) {
         nf = sha256(abi.encode(resource, nullifierKey));
     }
