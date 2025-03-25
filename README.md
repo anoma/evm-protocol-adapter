@@ -5,8 +5,9 @@ For more information, see the
 
 <div align="left">
   <a href="https://www.youtube.com/watch?v=rKFZsOw360U">
-     <img src="https://img.youtube.com/vi/rKFZsOw360U/maxresdefault.jpg" 
+     <img src=".assets/Youtube_preview.png" 
        alt="The EVM Protocol Adapter: Bringing Intent-Centric Apps to Ethereum - Anoma Research Day"
+       border=1,
        style="width:67%;">
   </a>
 </div>
