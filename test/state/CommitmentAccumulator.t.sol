@@ -109,10 +109,15 @@ contract CommitmentAccumulatorTest is Test, MockTree {
 
         // Test empty tree
         bytes32 root = _cmAcc.initialRoot();
-        bytes32 invalidRoot = SHA256.hash2(SHA256.hash2(nonExistentCommitment, _siblings[0][0][0]), _siblings[0][0][1]);
+        bytes32 invalidRoot = SHA256.commutativeHash(
+            SHA256.commutativeHash(nonExistentCommitment, _siblings[0][0][0]), _siblings[0][0][1]
+        );
 
-        bytes32 computedRoot =
-            MerkleProof.processProof({ proof: _siblings[0][0], leaf: nonExistentCommitment, hasher: SHA256.hash2 });
+        bytes32 computedRoot = MerkleProof.processProof({
+            proof: _siblings[0][0],
+            leaf: nonExistentCommitment,
+            hasher: SHA256.commutativeHash
+        });
         assertNotEq(computedRoot, root);
         assertEq(computedRoot, invalidRoot);
 
@@ -121,13 +126,14 @@ contract CommitmentAccumulatorTest is Test, MockTree {
             root = _cmAcc.addCommitment(_leaves[i + 1][i]);
 
             for (uint256 j = 0; j <= i; ++j) {
-                invalidRoot =
-                    SHA256.hash2(SHA256.hash2(nonExistentCommitment, _siblings[i + 1][j][0]), _siblings[i + 1][j][1]);
+                invalidRoot = SHA256.commutativeHash(
+                    SHA256.commutativeHash(nonExistentCommitment, _siblings[i + 1][j][0]), _siblings[i + 1][j][1]
+                );
 
                 computedRoot = MerkleProof.processProof({
                     proof: _siblings[i + 1][j],
                     leaf: nonExistentCommitment,
-                    hasher: SHA256.hash2
+                    hasher: SHA256.commutativeHash
                 });
 
                 assertNotEq(computedRoot, root);
@@ -186,7 +192,7 @@ contract CommitmentAccumulatorTest is Test, MockTree {
         bytes32[] memory wrongPath = new bytes32[](_TREE_DEPTH);
 
         // Compute the expected, invalid root.
-        bytes32 invalidRoot = wrongPath.processProof(commitment, SHA256.hash2);
+        bytes32 invalidRoot = wrongPath.processProof(commitment, SHA256.commutativeHash);
 
         vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, invalidRoot));
         _cmAcc.verifyMerkleProof({ root: newRoot, commitment: commitment, path: wrongPath });
