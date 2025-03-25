@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {SHA256} from "../../src/libs/SHA256.sol";
+import { SHA256 } from "../../src/libs/SHA256.sol";
 
-import {MerkleTree} from "../../src/state/MerkleTree.sol";
+import { MerkleTree } from "../../src/state/MerkleTree.sol";
 
 contract MockTree {
     uint8 internal constant _TREE_DEPTH = 2;
