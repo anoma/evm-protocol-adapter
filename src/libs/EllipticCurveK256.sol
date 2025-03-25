@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { EllipticCurve } from "elliptic-curve-solidity/contracts/EllipticCurve.sol";
+import { EllipticCurve } from "@elliptic-curve-solidity/contracts/EllipticCurve.sol";
 
 /// @notice The secp256k1 (K-256) elliptic curve taken from
 /// https://github.com/witnet/elliptic-curve-solidity/blob/0.2.1/examples/Secp256k1.sol
