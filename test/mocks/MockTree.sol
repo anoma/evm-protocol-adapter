@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { SHA256 } from "../../src/libs/SHA256.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
 
-import { MerkleTree } from "../../src/state/MerkleTree.sol";
+import {MerkleTree} from "../../src/state/MerkleTree.sol";
 
 contract MockTree {
     uint8 internal constant _TREE_DEPTH = 2;
@@ -34,9 +34,9 @@ contract MockTree {
                 _leaves[i][j] = MerkleTree._EMPTY_LEAF_HASH;
             }
 
-            _nodes[i][0] = SHA256.commutativeHash(_leaves[i][0], _leaves[i][1]);
-            _nodes[i][1] = SHA256.commutativeHash(_leaves[i][2], _leaves[i][3]);
-            _roots[i] = SHA256.commutativeHash(_nodes[i][0], _nodes[i][1]);
+            _nodes[i][0] = SHA256.hash2(_leaves[i][0], _leaves[i][1]);
+            _nodes[i][1] = SHA256.hash2(_leaves[i][2], _leaves[i][3]);
+            _roots[i] = SHA256.hash2(_nodes[i][0], _nodes[i][1]);
 
             _siblings[i][0] = new bytes32[](2);
             _siblings[i][0][0] = _leaves[i][1];

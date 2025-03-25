@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { MerkleProof } from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
-import { Test } from "forge-std/Test.sol";
+import {MerkleProof} from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { SHA256 } from "../../src/libs/SHA256.sol";
-import { CommitmentAccumulator } from "../../src/state/CommitmentAccumulator.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
+import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
 
-import { CommitmentAccumulatorMock } from "../mocks/CommitmentAccumulatorMock.sol";
-import { MockTree } from "../mocks/MockTree.sol";
+import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulatorMock.sol";
+import {MockTree} from "../mocks/MockTree.sol";
 
 contract CommitmentAccumulatorTest is Test, MockTree {
     using MerkleProof for bytes32[];
@@ -109,15 +109,10 @@ contract CommitmentAccumulatorTest is Test, MockTree {
 
         // Test empty tree
         bytes32 root = _cmAcc.initialRoot();
-        bytes32 invalidRoot = SHA256.commutativeHash(
-            SHA256.commutativeHash(nonExistentCommitment, _siblings[0][0][0]), _siblings[0][0][1]
-        );
+        bytes32 invalidRoot = SHA256.hash2(SHA256.hash2(nonExistentCommitment, _siblings[0][0][0]), _siblings[0][0][1]);
 
-        bytes32 computedRoot = MerkleProof.processProof({
-            proof: _siblings[0][0],
-            leaf: nonExistentCommitment,
-            hasher: SHA256.commutativeHash
-        });
+        bytes32 computedRoot =
+            MerkleProof.processProof({proof: _siblings[0][0], leaf: nonExistentCommitment, hasher: SHA256.hash2});
         assertNotEq(computedRoot, root);
         assertEq(computedRoot, invalidRoot);
 
@@ -126,14 +121,13 @@ contract CommitmentAccumulatorTest is Test, MockTree {
             root = _cmAcc.addCommitment(_leaves[i + 1][i]);
 
             for (uint256 j = 0; j <= i; ++j) {
-                invalidRoot = SHA256.commutativeHash(
-                    SHA256.commutativeHash(nonExistentCommitment, _siblings[i + 1][j][0]), _siblings[i + 1][j][1]
-                );
+                invalidRoot =
+                    SHA256.hash2(SHA256.hash2(nonExistentCommitment, _siblings[i + 1][j][0]), _siblings[i + 1][j][1]);
 
                 computedRoot = MerkleProof.processProof({
                     proof: _siblings[i + 1][j],
                     leaf: nonExistentCommitment,
-                    hasher: SHA256.commutativeHash
+                    hasher: SHA256.hash2
                 });
 
                 assertNotEq(computedRoot, root);
@@ -148,14 +142,14 @@ contract CommitmentAccumulatorTest is Test, MockTree {
 
         (bytes32[] memory path, bytes32 latestRoot) = _cmAcc.merkleProof(cm);
 
-        _cmAcc.verifyMerkleProof({ root: latestRoot, commitment: cm, path: path });
+        _cmAcc.verifyMerkleProof({root: latestRoot, commitment: cm, path: path});
     }
 
     function test_checkPath_reverts_on_non_existent_root() public {
         bytes32 nonExistingRoot = sha256("NON_EXISTENT_ROOT");
 
         vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.NonExistingRoot.selector, nonExistingRoot));
-        _cmAcc.verifyMerkleProof({ root: nonExistingRoot, commitment: 0, path: new bytes32[](_TREE_DEPTH) });
+        _cmAcc.verifyMerkleProof({root: nonExistingRoot, commitment: 0, path: new bytes32[](_TREE_DEPTH)});
     }
 
     function test_checkPath_reverts_on_non_existent_commitment() public {
@@ -181,7 +175,7 @@ contract CommitmentAccumulatorTest is Test, MockTree {
         vm.expectRevert(
             abi.encodeWithSelector(CommitmentAccumulator.InvalidPathLength.selector, _TREE_DEPTH, wrongPath.length)
         );
-        _cmAcc.verifyMerkleProof({ root: 0, commitment: 0, path: wrongPath });
+        _cmAcc.verifyMerkleProof({root: 0, commitment: 0, path: wrongPath});
     }
 
     function test_checkPath_reverts_on_wrong_path() public {
@@ -192,9 +186,9 @@ contract CommitmentAccumulatorTest is Test, MockTree {
         bytes32[] memory wrongPath = new bytes32[](_TREE_DEPTH);
 
         // Compute the expected, invalid root.
-        bytes32 invalidRoot = wrongPath.processProof(commitment, SHA256.commutativeHash);
+        bytes32 invalidRoot = wrongPath.processProof(commitment, SHA256.hash2);
 
         vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, invalidRoot));
-        _cmAcc.verifyMerkleProof({ root: newRoot, commitment: commitment, path: wrongPath });
+        _cmAcc.verifyMerkleProof({root: newRoot, commitment: commitment, path: wrongPath});
     }
 }
