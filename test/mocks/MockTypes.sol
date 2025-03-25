@@ -127,7 +127,7 @@ library MockTypes {
                 isConsumed: true,
                 consumed: nullifiers,
                 created: commitments,
-                appDataForTag: appData.lookup(tag)
+                tagSpecificAppData: appData.lookup(tag)
             });
 
             bytes32 verifyingKey = _ALWAYS_VALID_LOGIC_REF;
@@ -152,7 +152,7 @@ library MockTypes {
                 isConsumed: false,
                 consumed: nullifiers,
                 created: commitments,
-                appDataForTag: appData.lookup(tag)
+                tagSpecificAppData: appData.lookup(tag)
             });
 
             bytes32 verifyingKey = _ALWAYS_VALID_LOGIC_REF;
