@@ -264,7 +264,7 @@ contract ProtocolAdapter is
                 isConsumed: true,
                 consumed: action.nullifiers,
                 created: action.commitments,
-                appDataForTag: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: bytes("") })
+                tagSpecificAppData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: bytes("") })
             });
             LogicRefProofPair memory logicRefProofPair;
 
@@ -277,7 +277,7 @@ contract ProtocolAdapter is
                 ++resourceCount;
 
                 instance.tag = tag;
-                instance.appDataForTag = action.tagAppDataPairs.lookupCalldata(tag);
+                instance.tagSpecificAppData = action.tagAppDataPairs.lookupCalldata(tag);
 
                 {
                     logicRefProofPair = action.logicProofs.lookup(tag);
@@ -299,7 +299,7 @@ contract ProtocolAdapter is
                 ++resourceCount;
 
                 instance.tag = tag;
-                instance.appDataForTag = action.tagAppDataPairs.lookup(tag);
+                instance.tagSpecificAppData = action.tagAppDataPairs.lookup(tag);
 
                 {
                     logicRefProofPair = action.logicProofs.lookup(tag);

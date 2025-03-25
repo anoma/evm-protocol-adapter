@@ -8,7 +8,7 @@ struct LogicInstance {
     bool isConsumed;
     bytes32[] consumed;
     bytes32[] created;
-    ExpirableBlob appDataForTag; // TODO Revisit.
+    ExpirableBlob tagSpecificAppData;
 }
 
 struct TagLogicProofPair {
