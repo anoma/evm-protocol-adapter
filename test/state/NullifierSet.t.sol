@@ -40,14 +40,14 @@ contract NullifierSetTest is Test {
         _nfSet.addNullifierUnchecked(_EXAMPLE_NF);
     }
 
-    function test_checkNullifierNonExistence_passes_on_non_existent_nullifier() public view {
-        _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
-    }
-
     function test_checkNullifierNonExistence_reverts_on_existent_nullifier() public {
         _nfSet.addNullifier(_EXAMPLE_NF);
 
         vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _EXAMPLE_NF));
+        _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
+    }
+
+    function test_checkNullifierNonExistence_passes_on_non_existent_nullifier() public view {
         _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
     }
 }

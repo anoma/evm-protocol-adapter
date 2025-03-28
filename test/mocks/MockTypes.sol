@@ -13,7 +13,7 @@ import { Delta } from "../../src/proving/Delta.sol";
 import { LogicInstance, TagLogicProofPair, LogicRefProofPair } from "../../src/proving/Logic.sol";
 
 import { ExpirableBlob, DeletionCriterion } from "../../src/state/BlobStorage.sol";
-import { Action, FFICall, WrapperFFICallPair, Resource, Transaction } from "../../src/Types.sol";
+import { Action, WrapperFFICallPair, Resource, Transaction } from "../../src/Types.sol";
 
 import { MockDelta } from "../mocks/MockDelta.sol";
 import { MockRiscZeroProof } from "../mocks/MockRiscZeroProof.sol";
