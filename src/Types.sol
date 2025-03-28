@@ -28,11 +28,15 @@ struct Action {
     TagLogicProofPair[] logicProofs;
     ComplianceUnit[] complianceUnits;
     TagAppDataPair[] tagAppDataPairs;
-    FFICall[] ffiCalls;
+    WrapperFFICallPair[] wrapperResourceFFICallPairs;
+}
+
+struct WrapperFFICallPair {
+    Resource wrapperResource;
+    FFICall ffiCall;
 }
 
 struct FFICall {
-    Resource wrapperResource;
     address untrustedWrapperContract;
     bytes input;
     bytes output;

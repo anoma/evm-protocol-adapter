@@ -105,9 +105,9 @@ contract ProtocolAdapter is
                 newRoot = _addCommitmentUnchecked(action.commitments[j]);
             }
 
-            m = action.ffiCalls.length;
+            m = action.wrapperResourceFFICallPairs.length;
             for (j = 0; j < m; ++j) {
-                _executeFFICall(action.ffiCalls[j]);
+                _executeFFICall(action.wrapperResourceFFICallPairs[j].ffiCall);
             }
         }
 
@@ -324,13 +324,14 @@ contract ProtocolAdapter is
     }
 
     function _verifyFFICalls(Action calldata action) internal view {
-        uint256 len = action.ffiCalls.length;
+        uint256 len = action.wrapperResourceFFICallPairs.length;
         for (uint256 j; j < len; ++j) {
-            FFICall calldata ffiCall = action.ffiCalls[j];
+            Resource calldata wrapperResource = action.wrapperResourceFFICallPairs[j].wrapperResource;
+            FFICall calldata ffiCall = action.wrapperResourceFFICallPairs[j].ffiCall;
 
             // Kind integrity check
             {
-                bytes32 passedKind = ffiCall.wrapperResource.kind();
+                bytes32 passedKind = wrapperResource.kind();
 
                 bytes32 fetchedKind = UntrustedWrapper(ffiCall.untrustedWrapperContract).wrapperResourceKind();
 
@@ -345,7 +346,7 @@ contract ProtocolAdapter is
                     keccak256(abi.encode(ffiCall.untrustedWrapperContract, ffiCall.input, ffiCall.output));
 
                 bytes32 actualAppDataHash =
-                    keccak256(action.tagAppDataPairs.lookup({ tag: ffiCall.wrapperResource.commitment() }).blob);
+                    keccak256(action.tagAppDataPairs.lookup({ tag: wrapperResource.commitment() }).blob);
 
                 if (actualAppDataHash != expectedAppDataHash) {
                     revert WrapperResourceAppDataMismatch({ actual: actualAppDataHash, expected: expectedAppDataHash });
