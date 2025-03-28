@@ -21,11 +21,10 @@ import { Delta } from "./proving/Delta.sol";
 import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
 
 import { BlobStorage, DeletionCriterion, ExpirableBlob } from "./state/BlobStorage.sol";
-import { CommitmentAccumulator as CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
-// TODO import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
+import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
 
-import { Action, FFICall, KindFFICallPair, Resource, TagAppDataPair, Transaction } from "./Types.sol";
+import { Action, FFICall, Resource, TagAppDataPair, Transaction } from "./Types.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,

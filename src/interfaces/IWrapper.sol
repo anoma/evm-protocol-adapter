@@ -22,6 +22,6 @@ interface IWrapper {
     function wrapperResourceKind() external view returns (bytes32 wrapperKind);
 
     /// @notice Returns the kind of the resource this contract is wrapping EVM state in.
-    /// @return wrappedKind The wrapped resource kind.
-    function wrappedResourceKind() external view returns (bytes32 wrappedKind);
+    /// @return wrappingKind The wrapping resource kind.
+    function wrappingResourceKind() external view returns (bytes32 wrappingKind);
 }

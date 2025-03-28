@@ -39,7 +39,6 @@ struct KindFFICallPair {
 
 struct FFICall {
     address untrustedWrapperContract;
-    //bytes4 functionSelector; // TODO add?
     bytes input;
     bytes output;
 }

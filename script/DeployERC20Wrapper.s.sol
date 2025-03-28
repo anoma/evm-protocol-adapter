@@ -16,13 +16,13 @@ contract DeployWrapper is BaseScript {
 
     function run() public broadcast {
         bytes32 wrapperLogicRef; // TODO
-        bytes32 wrappedKind; // TODO
+        bytes32 wrappingKind; // TODO
 
         ERC20Wrapper wrapper = new ERC20Wrapper{ salt: ZERO_SALT }({
             protocolAdapter: address(PROTOCOL_ADAPTER),
             erc20: ERC20,
             wrapperLogicRef: wrapperLogicRef,
-            wrappedKind: wrappedKind
+            wrappingKind: wrappingKind
         });
 
         PROTOCOL_ADAPTER.createWrapperContractResource({ untrustedWrapperContract: wrapper });

@@ -18,9 +18,9 @@ contract ERC20Wrapper is Ownable, WrapperBase {
         address protocolAdapter,
         address erc20,
         bytes32 wrapperLogicRef,
-        bytes32 wrappedKind
+        bytes32 wrappingKind
     )
-        WrapperBase(protocolAdapter, wrapperLogicRef, wrappedKind)
+        WrapperBase(protocolAdapter, wrapperLogicRef, wrappingKind)
     {
         if (erc20 == address(0)) revert ZeroAddressNotAllowed();
         _ERC20_CONTRACT = erc20;
