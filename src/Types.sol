@@ -28,16 +28,11 @@ struct Action {
     TagLogicProofPair[] logicProofs;
     ComplianceUnit[] complianceUnits;
     TagAppDataPair[] tagAppDataPairs;
-    KindFFICallPair[] kindFFICallPairs; // NOTE: This saves us from doing the subset check.
-        // FFICall[] ffiCalls;
-}
-
-struct KindFFICallPair {
-    bytes32 kind;
-    FFICall ffiCall;
+    FFICall[] ffiCalls;
 }
 
 struct FFICall {
+    Resource wrapperResource;
     address untrustedWrapperContract;
     bytes input;
     bytes output;
