@@ -97,10 +97,10 @@ mkErc20Resource
 {- HELPERS -}
 
 -- TODO FORMAT
-decodeWrapperResourceKindFromLabel (wrappedResource : Resource) : Kind :=
+decodeWrapperResourceKindFromLabel (wrappingResource : Resource) : Kind :=
   let
-    wrapperResourceKind := builtinAnomaDecode (Resource.label wrappedResource);
-  -- TODO remove -- (wrapperResourceKind, _) : Pair Kind Address := builtinAnomaDecode (Resource.label wrappedResource);
+    wrapperResourceKind := builtinAnomaDecode (Resource.label wrappingResource);
+  -- TODO remove -- (wrapperResourceKind, _) : Pair Kind Address := builtinAnomaDecode (Resource.label wrappingResource);
   in wrapperResourceKind;
 
 owner (resource : Resource) : ExternalIdentity :=

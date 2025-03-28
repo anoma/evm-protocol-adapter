@@ -19,15 +19,15 @@ abstract contract WrapperBase is IWrapper, Ownable {
     bytes32 internal immutable _WRAPPER_RESOURCE_KIND;
 
     /// @notice The EVM state wrapping resource kind.
-    bytes32 internal immutable _WRAPPED_RESOURCE_KIND;
+    bytes32 internal immutable _WRAPPING_RESOURCE_KIND;
 
-    constructor(address protocolAdapter, bytes32 wrapperLogicRef, bytes32 wrappedKind) Ownable(protocolAdapter) {
+    constructor(address protocolAdapter, bytes32 wrapperLogicRef, bytes32 wrappingKind) Ownable(protocolAdapter) {
         _WRAPPER_RESOURCE_LOGIC_REF = wrapperLogicRef;
         _WRAPPER_RESOURCE_LABEL_REF = sha256(abi.encode(address(this)));
         _WRAPPER_RESOURCE_KIND =
             ComputableComponents.kind({ logicRef: _WRAPPER_RESOURCE_LOGIC_REF, labelRef: _WRAPPER_RESOURCE_LABEL_REF });
 
-        _WRAPPED_RESOURCE_KIND = wrappedKind;
+        _WRAPPING_RESOURCE_KIND = wrappingKind;
     }
 
     function ffiCall(bytes calldata input) external onlyOwner returns (bytes memory output) {
@@ -50,8 +50,8 @@ abstract contract WrapperBase is IWrapper, Ownable {
     }
 
     /// @inheritdoc IWrapper
-    function wrappedResourceKind() external view returns (bytes32 wrappedKind) {
-        wrappedKind = _WRAPPED_RESOURCE_KIND;
+    function wrappingResourceKind() external view returns (bytes32 wrappingKind) {
+        wrappingKind = _WRAPPING_RESOURCE_KIND;
     }
 
     function _ffiCall(bytes calldata input) internal virtual returns (bytes memory output);
