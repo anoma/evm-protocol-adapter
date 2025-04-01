@@ -30,8 +30,8 @@ abstract contract WrapperBase is IWrapper, Ownable {
         _WRAPPING_RESOURCE_KIND = wrappingKind;
     }
 
-    function ffiCall(bytes calldata input) external onlyOwner returns (bytes memory output) {
-        output = _ffiCall(input);
+    function forwardCall(bytes calldata input) external onlyOwner returns (bytes memory output) {
+        output = _forwardCall(input);
     }
 
     /// @inheritdoc IWrapper
@@ -54,5 +54,5 @@ abstract contract WrapperBase is IWrapper, Ownable {
         wrappingKind = _WRAPPING_RESOURCE_KIND;
     }
 
-    function _ffiCall(bytes calldata input) internal virtual returns (bytes memory output);
+    function _forwardCall(bytes calldata input) internal virtual returns (bytes memory output);
 }

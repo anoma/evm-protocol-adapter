@@ -127,7 +127,7 @@ contract ProtocolAdapter is
     // TODO Consider DoS attacks https://detectors.auditbase.com/avoid-external-calls-in-unbounded-loops-solidity
     // slither-disable-next-line calls-loop
     function _executeFFICall(FFICall calldata ffiCall) internal {
-        bytes memory output = UntrustedWrapper(ffiCall.untrustedWrapperContract).ffiCall(ffiCall.input);
+        bytes memory output = UntrustedWrapper(ffiCall.untrustedWrapperContract).forwardCall(ffiCall.input);
 
         if (keccak256(output) != keccak256(ffiCall.output)) {
             revert FFICallOutputMismatch({ expected: ffiCall.output, actual: output });
