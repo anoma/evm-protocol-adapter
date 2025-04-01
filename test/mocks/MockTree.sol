@@ -36,9 +36,9 @@ contract MockTree {
                 _leaves[i][j] = MerkleTree._EMPTY_LEAF_HASH;
             }
 
-            _nodes[i][0] = SHA256.hash2(_leaves[i][0], _leaves[i][1]);
-            _nodes[i][1] = SHA256.hash2(_leaves[i][2], _leaves[i][3]);
-            _roots[i] = SHA256.hash2(_nodes[i][0], _nodes[i][1]);
+            _nodes[i][0] = SHA256.hash(_leaves[i][0], _leaves[i][1]);
+            _nodes[i][1] = SHA256.hash(_leaves[i][2], _leaves[i][3]);
+            _roots[i] = SHA256.hash(_nodes[i][0], _nodes[i][1]);
 
             _siblings[i][0] = new bytes32[](2);
             _siblings[i][0][0] = _leaves[i][1];

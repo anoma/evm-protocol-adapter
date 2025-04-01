@@ -111,7 +111,7 @@ contract CommitmentAccumulatorTest is Test, MockTree {
 
         // Test empty tree
         bytes32 root = _cmAcc.initialRoot();
-        bytes32 invalidRoot = SHA256.hash2(SHA256.hash2(nonExistentCommitment, _siblings[0][0][0]), _siblings[0][0][1]);
+        bytes32 invalidRoot = SHA256.hash(SHA256.hash(nonExistentCommitment, _siblings[0][0][0]), _siblings[0][0][1]);
 
         bytes32 computedRoot = MerkleTree.processProof({
             path: _siblings[0][0],
@@ -128,13 +128,13 @@ contract CommitmentAccumulatorTest is Test, MockTree {
             for (uint256 j = 0; j <= i; ++j) {
                 // Depth 0
                 invalidRoot = MerkleTree.isLeftSibling(_directionBits[j], 0)
-                    ? SHA256.hash2(_siblings[i + 1][j][0], nonExistentCommitment)
-                    : SHA256.hash2(nonExistentCommitment, _siblings[i + 1][j][0]);
+                    ? SHA256.hash(_siblings[i + 1][j][0], nonExistentCommitment)
+                    : SHA256.hash(nonExistentCommitment, _siblings[i + 1][j][0]);
 
                 // Depth 1
                 invalidRoot = MerkleTree.isLeftSibling(_directionBits[j], 1)
-                    ? SHA256.hash2(_siblings[i + 1][j][1], invalidRoot)
-                    : SHA256.hash2(invalidRoot, _siblings[i + 1][j][1]);
+                    ? SHA256.hash(_siblings[i + 1][j][1], invalidRoot)
+                    : SHA256.hash(invalidRoot, _siblings[i + 1][j][1]);
 
                 computedRoot = MerkleTree.processProof({
                     path: _siblings[i + 1][j],

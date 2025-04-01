@@ -28,7 +28,7 @@ library MerkleTree {
 
         for (uint256 i = 0; i < treeDepth; ++i) {
             Arrays.unsafeAccess(self._zeros, i).value = currentZero;
-            currentZero = SHA256.hash2(currentZero, currentZero);
+            currentZero = SHA256.hash(currentZero, currentZero);
         }
 
         initialRoot = currentZero;
@@ -57,10 +57,10 @@ library MerkleTree {
             // Reaching the parent node, is currentLevelHash the left child?
             if (isLeftIndex(currentIndex)) {
                 // Left sibling
-                currentLevelHash = SHA256.hash2(currentLevelHash, self._zeros[i]);
+                currentLevelHash = SHA256.hash(currentLevelHash, self._zeros[i]);
             } else {
                 // Right sibling
-                currentLevelHash = SHA256.hash2(self._nodes[i][currentIndex - 1], currentLevelHash);
+                currentLevelHash = SHA256.hash(self._nodes[i][currentIndex - 1], currentLevelHash);
             }
 
             currentIndex >>= 1;
@@ -131,10 +131,10 @@ library MerkleTree {
         for (uint256 i = 0; i < treeDepth; ++i) {
             if (isLeftSibling(directionBits, i)) {
                 // Left sibling
-                computedHash = SHA256.hash2(path[i], computedHash);
+                computedHash = SHA256.hash(path[i], computedHash);
             } else {
                 // Right sibling
-                computedHash = SHA256.hash2(computedHash, path[i]);
+                computedHash = SHA256.hash(computedHash, path[i]);
             }
         }
         root = computedHash;

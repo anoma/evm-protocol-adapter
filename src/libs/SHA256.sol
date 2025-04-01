@@ -6,7 +6,7 @@ library SHA256 {
         ha = sha256(abi.encode(a));
     }
 
-    function hash2(bytes32 a, bytes32 b) internal pure returns (bytes32 hab) {
+    function hash(bytes32 a, bytes32 b) internal pure returns (bytes32 hab) {
         hab = sha256(abi.encode(a, b));
     }
 }
