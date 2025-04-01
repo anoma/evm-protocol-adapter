@@ -56,7 +56,7 @@ erc20WrapperContractLogic (pub : Instance) (priv : Witness) : Bool :=
         | just self :=
           if
             {- initializing consumption -}
-            | Resource.ephemeral self := initializationLogic
+            | Resource.ephemeral self := false
             {- conventional consumption -}
             | else := true
       }
@@ -73,9 +73,6 @@ erc20WrapperContractLogic (pub : Instance) (priv : Witness) : Bool :=
       }
     | else := false;
 
---- Currently, the protocol adapter can create this resource directly and only once (with a fixed label, logic, value, quantity, and nonce).
---- TODO adapt eventually
-initializationLogic : Bool := false;
 
 creationLogic (self : Resource) (priv : Witness) : Bool :=
   case Witness.consumed priv, Witness.created priv of
@@ -83,14 +80,14 @@ creationLogic (self : Resource) (priv : Witness) : Bool :=
       let
         ((consumedWC, createdWC), consumedERC20, createdERC20) :=
           matchKinds self a b x y;
-        (wrappedResourceKindInSelf, inputWithSelector, output)
+        (wrappingResourceKindInSelf, inputWithSelector, output)
           : Pair Kind (Pair ByteArray ByteArray) :=
           builtinAnomaDecode (Resource.value self);
       in same-kind?
           [
             decodeWrappedResourceKindFromValue consumedWC;
             decodeWrappedResourceKindFromValue createdWC;
-            wrappedResourceKindInSelf;
+            wrappingResourceKindInSelf;
             kind consumedERC20;
             kind createdERC20;
           ]
@@ -161,7 +158,7 @@ checkTransferCompliance
 --- The wrapper logic and value  can be customized to correspond to other EVM state changes.
 mkERC20WrapperContractResource
   (logic : Logic)
-  (wrappedResourceKind : Kind)
+  (wrappingResourceKind : Kind)
   (ffiCall : FfiCall)
   (nonce : Nat)
   {ephemeral : Bool := false}
@@ -171,7 +168,7 @@ mkERC20WrapperContractResource
     label := builtinAnomaEncode (FfiCall.address ffiCall);
     value :=
       builtinAnomaEncode
-        (wrappedResourceKind, FfiCall.input ffiCall, FfiCall.output ffiCall);
+        (wrappingResourceKind, FfiCall.input ffiCall, FfiCall.output ffiCall);
     quantity := 1;
     ephemeral;
     nullifierKeyCommitment :=

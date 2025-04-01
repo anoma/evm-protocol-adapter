@@ -18,16 +18,16 @@ contract ERC20Wrapper is Ownable, WrapperBase {
         address protocolAdapter,
         address erc20,
         bytes32 wrapperLogicRef,
-        bytes32 wrappedKind
+        bytes32 wrappingKind
     )
-        WrapperBase(protocolAdapter, wrapperLogicRef, wrappedKind)
+        WrapperBase(protocolAdapter, wrapperLogicRef, wrappingKind)
     {
         if (erc20 == address(0)) revert ZeroAddressNotAllowed();
         _ERC20_CONTRACT = erc20;
     }
 
     // TODO make generic proxy, allow native ETH transfers
-    function _ffiCall(bytes calldata input) internal override returns (bytes memory output) {
+    function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
         output = _ERC20_CONTRACT.functionCall(input);
     }
 

@@ -30,13 +30,13 @@ wrapErc20
         wrapper |> Resource.label |> builtinAnomaDecode |> FfiCall.address;
       wrapperResourceKind := kind wrapper;
 
-      wrappedResourceLabel := builtinAnomaEncode wrapperResourceKind;
-      wrappedResourceKind := kind' erc20ResourceLogic wrappedResourceLabel;
+      wrappingResourceLabel := builtinAnomaEncode wrapperResourceKind;
+      wrappingResourceKind := kind' erc20ResourceLogic wrappingResourceLabel;
 
       updatedWrapper :=
         mkERC20WrapperContractResource@{
           logic := Resource.logic wrapper;
-          wrappedResourceKind;
+          wrappingResourceKind;
           ffiCall :=
             mkFfiCall@{
               address := wrapperContract;

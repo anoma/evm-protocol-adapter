@@ -84,6 +84,6 @@ isAuthorizedBy
 -- TODO Move
 decodeWrappedResourceKindFromValue (wrapper : Resource) : Kind :=
   let
-    (wrappedResourceKind, _) : Pair Kind (Pair ByteArray ByteArray) :=
+    (wrappingResourceKind, _) : Pair Kind (Pair ByteArray ByteArray) :=
       builtinAnomaDecode (Resource.value wrapper);
-  in wrappedResourceKind;
+  in wrappingResourceKind;

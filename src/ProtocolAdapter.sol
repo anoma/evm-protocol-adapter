@@ -21,11 +21,10 @@ import { Delta } from "./proving/Delta.sol";
 import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
 
 import { BlobStorage, DeletionCriterion, ExpirableBlob } from "./state/BlobStorage.sol";
-import { CommitmentAccumulator as CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
-// TODO import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
+import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
 
-import { Action, FFICall, KindFFICallPair, Resource, TagAppDataPair, Transaction } from "./Types.sol";
+import { Action, FFICall, Resource, TagAppDataPair, Transaction } from "./Types.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
@@ -56,6 +55,7 @@ contract ProtocolAdapter is
     error FFICallOutputMismatch(bytes expected, bytes actual);
 
     error WrapperResourceKindMismatch(bytes32 expected, bytes32 actual);
+    error WrapperResourceAppDataMismatch(bytes32 expected, bytes32 actual);
     error WrapperContractResourceLabelMismatch(bytes32 expected, bytes32 actual);
     error WrapperContractResourceCommitmentNotFound(bytes32 commitment);
     error TransactionUnbalanced(uint256 expected, uint256 actual);
@@ -105,9 +105,9 @@ contract ProtocolAdapter is
                 newRoot = _addCommitmentUnchecked(action.commitments[j]);
             }
 
-            m = action.kindFFICallPairs.length;
+            m = action.wrapperResourceFFICallPairs.length;
             for (j = 0; j < m; ++j) {
-                _executeFFICall(action.kindFFICallPairs[j].ffiCall);
+                _executeFFICall(action.wrapperResourceFFICallPairs[j].ffiCall);
             }
         }
 
@@ -127,7 +127,7 @@ contract ProtocolAdapter is
     // TODO Consider DoS attacks https://detectors.auditbase.com/avoid-external-calls-in-unbounded-loops-solidity
     // slither-disable-next-line calls-loop
     function _executeFFICall(FFICall calldata ffiCall) internal {
-        bytes memory output = UntrustedWrapper(ffiCall.untrustedWrapperContract).ffiCall(ffiCall.input);
+        bytes memory output = UntrustedWrapper(ffiCall.untrustedWrapperContract).forwardCall(ffiCall.input);
 
         if (keccak256(output) != keccak256(ffiCall.output)) {
             revert FFICallOutputMismatch({ expected: ffiCall.output, actual: output });
@@ -163,7 +163,7 @@ contract ProtocolAdapter is
             _wrapperContractResourceCommitment({
                 untrustedWrapperContract: untrustedWrapperContract,
                 labelRef: computedLabelRef,
-                valueRef: abi.encode(untrustedWrapperContract.wrappedResourceKind(), empty, empty).toRefCalldata()
+                valueRef: abi.encode(untrustedWrapperContract.wrappingResourceKind(), empty, empty).toRefCalldata()
             })
         );
     }
@@ -218,10 +218,7 @@ contract ProtocolAdapter is
         for (uint256 i; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
-            len = action.kindFFICallPairs.length;
-            for (uint256 j; j < len; ++j) {
-                _verifyFFICall(action.kindFFICallPairs[j]);
-            }
+            _verifyFFICalls(action);
 
             // Compliance Proofs
             len = action.complianceUnits.length;
@@ -326,12 +323,35 @@ contract ProtocolAdapter is
         */
     }
 
-    function _verifyFFICall(KindFFICallPair calldata kindFFICallPair) internal view {
-        bytes32 passedKind = kindFFICallPair.kind;
-        bytes32 fetchedKind = UntrustedWrapper(kindFFICallPair.ffiCall.untrustedWrapperContract).wrapperResourceKind();
+    function _verifyFFICalls(Action calldata action) internal view {
+        uint256 len = action.wrapperResourceFFICallPairs.length;
+        for (uint256 j; j < len; ++j) {
+            Resource calldata wrapperResource = action.wrapperResourceFFICallPairs[j].wrapperResource;
+            FFICall calldata ffiCall = action.wrapperResourceFFICallPairs[j].ffiCall;
 
-        if (passedKind != fetchedKind) {
-            revert WrapperResourceKindMismatch({ expected: fetchedKind, actual: passedKind });
+            // Kind integrity check
+            {
+                bytes32 passedKind = wrapperResource.kind();
+
+                bytes32 fetchedKind = UntrustedWrapper(ffiCall.untrustedWrapperContract).wrapperResourceKind();
+
+                if (passedKind != fetchedKind) {
+                    revert WrapperResourceKindMismatch({ expected: fetchedKind, actual: passedKind });
+                }
+            }
+
+            // AppData integrity check
+            {
+                bytes32 expectedAppDataHash =
+                    keccak256(abi.encode(ffiCall.untrustedWrapperContract, ffiCall.input, ffiCall.output));
+
+                bytes32 actualAppDataHash =
+                    keccak256(action.tagAppDataPairs.lookup({ tag: wrapperResource.commitment() }).blob);
+
+                if (actualAppDataHash != expectedAppDataHash) {
+                    revert WrapperResourceAppDataMismatch({ actual: actualAppDataHash, expected: expectedAppDataHash });
+                }
+            }
         }
     }
 
