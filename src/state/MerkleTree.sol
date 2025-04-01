@@ -20,7 +20,6 @@ library MerkleTree {
     error TreeCapacityExceeded();
     error NonExistentLeafIndex(uint256 index);
 
-    /// @dev The caller
     function setup(Tree storage self, uint8 treeDepth) internal returns (bytes32 initialRoot) {
         Arrays.unsafeSetLength(self._zeros, treeDepth);
 

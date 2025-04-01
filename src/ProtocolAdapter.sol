@@ -48,7 +48,6 @@ contract ProtocolAdapter is
 
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
 
-    // TODO error EmptyTransaction();
     error InvalidRootRef(bytes32 root);
     error InvalidNullifierRef(bytes32 nullifier);
     error InvalidCommitmentRef(bytes32 commitment);
@@ -207,9 +206,6 @@ contract ProtocolAdapter is
             resourceCount += transaction.actions[i].nullifiers.length;
         }
         bytes32[] memory tags = new bytes32[](resourceCount);
-
-        // Check for empty transaction
-        // TODO // if (resourceCount == 0) revert EmptyTransaction();
 
         // Reset resource count for later use.
         resourceCount = 0;
