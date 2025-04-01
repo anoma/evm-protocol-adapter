@@ -13,7 +13,7 @@ import { Delta } from "../../src/proving/Delta.sol";
 import { LogicInstance, TagLogicProofPair, LogicRefProofPair } from "../../src/proving/Logic.sol";
 
 import { ExpirableBlob, DeletionCriterion } from "../../src/state/BlobStorage.sol";
-import { Action, WrapperFFICallPair, Resource, Transaction } from "../../src/Types.sol";
+import { Action, WrapperResourceFFICallPair, Resource, Transaction } from "../../src/Types.sol";
 
 import { MockDelta } from "../mocks/MockDelta.sol";
 import { MockRiscZeroProof } from "../mocks/MockRiscZeroProof.sol";
@@ -88,7 +88,7 @@ library MockTypes {
             ComplianceUnit[] memory complianceUnits =
                 mockComplianceUnits({ mockVerifier: mockVerifier, root: roots[0], commitments: cms, nullifiers: nfs });
 
-            WrapperFFICallPair[] memory emptyWrapperFfiCalls;
+            WrapperResourceFFICallPair[] memory emptyWrapperFfiCalls;
 
             actions[a] = Action({
                 commitments: cms,

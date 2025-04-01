@@ -28,10 +28,10 @@ struct Action {
     TagLogicProofPair[] logicProofs;
     ComplianceUnit[] complianceUnits;
     TagAppDataPair[] tagAppDataPairs;
-    WrapperFFICallPair[] wrapperResourceFFICallPairs;
+    WrapperResourceFFICallPair[] wrapperResourceFFICallPairs;
 }
 
-struct WrapperFFICallPair {
+struct WrapperResourceFFICallPair {
     Resource wrapperResource;
     FFICall ffiCall;
 }
