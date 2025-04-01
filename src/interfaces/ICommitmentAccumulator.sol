@@ -14,14 +14,28 @@ interface ICommitmentAccumulator {
     /// @return isContained Whether the root exists or not.
     function containsRoot(bytes32 root) external view returns (bool isContained);
 
-    /// @notice Verifies a that a Merkle path (proof) and a commitment reproduces the given root.
+    /// @notice Verifies a that a Merkle path (proof) and a commitment leaf reproduces the given root.
     /// @param root The root to reproduce.
     /// @param commitment The commitment leaf to proof inclusion in the tree for.
-    /// @param root The siblings constituting the path from the leaf to the root.
-    function verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path) external view;
+    /// @param path The siblings constituting the path from the leaf to the root.
+    /// @param directionBits The direction bits for the proof.
 
-    /// @notice Returns the Merkle proof and associated root for a commitment in the tree.
-    /// @return proof The Merkle proof.
+    function verifyMerkleProof(
+        bytes32 root,
+        bytes32 commitment,
+        bytes32[] calldata path,
+        uint256 directionBits
+    )
+        external
+        view;
+
+    /// @notice Returns the Merkle proof and associated root for a commitment leaf in the tree.
+    /// @param commitment The commitment leaf to proof inclusion in the tree for.
+    /// @return path The siblings constituting the path from the commitment leaf to the root.
+    /// @return directionBits The direction bits for the proof.
     /// @return root The root associated with the Merkle proof.
-    function merkleProof(bytes32 commitment) external view returns (bytes32[] memory proof, bytes32 root);
+    function merkleProof(bytes32 commitment)
+        external
+        view
+        returns (bytes32[] memory path, uint256 directionBits, bytes32 root);
 }

@@ -5,8 +5,9 @@ import { Arrays } from "@openzeppelin-contracts/utils/Arrays.sol";
 
 import { SHA256 } from "../libs/SHA256.sol";
 
-/// @dev This is a modified version of the OpenZeppelin MerkleTree implementation.
+/// @dev This is a modified version of the OpenZeppelin `MerkleTree` and `MerkleProof` implementation.
 /// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.2.0/contracts/utils/structs/MerkleTree.sol
+/// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.2.0/contracts/utils/cryptography/MerkleProof.sol
 library MerkleTree {
     struct Tree {
         uint256 _nextLeafIndex;
@@ -27,7 +28,7 @@ library MerkleTree {
 
         for (uint256 i = 0; i < treeDepth; ++i) {
             Arrays.unsafeAccess(self._zeros, i).value = currentZero;
-            currentZero = SHA256.commutativeHash(currentZero, currentZero);
+            currentZero = SHA256.hash2(currentZero, currentZero);
         }
 
         initialRoot = currentZero;
@@ -54,16 +55,27 @@ library MerkleTree {
             self._nodes[i][currentIndex] = currentLevelHash;
 
             // Reaching the parent node, is currentLevelHash the left child?
-            bytes32 sibling = isLeft(currentIndex) ? self._zeros[i] : self._nodes[i][currentIndex - 1];
-
-            currentLevelHash = SHA256.commutativeHash(currentLevelHash, sibling);
+            if (isLeftIndex(currentIndex)) {
+                // Left sibling
+                currentLevelHash = SHA256.hash2(currentLevelHash, self._zeros[i]);
+            } else {
+                // Right sibling
+                currentLevelHash = SHA256.hash2(self._nodes[i][currentIndex - 1], currentLevelHash);
+            }
 
             currentIndex >>= 1;
         }
         newRoot = currentLevelHash;
     }
 
-    function merkleProof(Tree storage self, uint256 index) internal view returns (bytes32[] memory proof) {
+    function merkleProof(
+        Tree storage self,
+        uint256 index
+    )
+        internal
+        view
+        returns (bytes32[] memory proof, uint256 directionBits)
+    {
         uint256 treeDepth = depth(self);
 
         if (index + 1 > self._nextLeafIndex) revert NonExistentLeafIndex(index);
@@ -74,13 +86,17 @@ library MerkleTree {
         bytes32 sibling;
         bytes32 empty = 0;
 
+        directionBits = 0;
         for (uint256 i = 0; i < treeDepth; ++i) {
-            if (isLeft(currentIndex)) {
-                // Left sibling
+            if (isLeftIndex(currentIndex)) {
+                // Sibling is right
                 sibling = self._nodes[i][currentIndex + 1];
+                // Set the bit at position i to 1.
+                directionBits |= (1 << i);
             } else {
-                // Right sibling
+                // Sibling is left
                 sibling = self._nodes[i][currentIndex - 1];
+                // Leave the bit at position i as 0.
             }
             proof[i] = sibling == empty ? self._zeros[i] : sibling;
 
@@ -96,7 +112,35 @@ library MerkleTree {
         numberOfLeafs = self._nextLeafIndex;
     }
 
-    function isLeft(uint256 index) internal pure returns (bool isIndexLeft) {
-        isIndexLeft = index % 2 == 0;
+    function isLeftIndex(uint256 index) internal pure returns (bool isLeft) {
+        isLeft = index & 1 == 0;
+    }
+
+    function processProof(
+        bytes32[] memory path,
+        uint256 directionBits,
+        bytes32 leaf
+    )
+        internal
+        pure
+        returns (bytes32 root)
+    {
+        bytes32 computedHash = leaf;
+
+        uint256 treeDepth = path.length;
+        for (uint256 i = 0; i < treeDepth; ++i) {
+            if (isLeftSibling(directionBits, i)) {
+                // Left sibling
+                computedHash = SHA256.hash2(path[i], computedHash);
+            } else {
+                // Right sibling
+                computedHash = SHA256.hash2(computedHash, path[i]);
+            }
+        }
+        root = computedHash;
+    }
+
+    function isLeftSibling(uint256 directionBits, uint256 d) internal pure returns (bool isLeft) {
+        isLeft = (directionBits >> d) & 1 == 0;
     }
 }

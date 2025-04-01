@@ -13,6 +13,8 @@ contract MockTree {
 
     bytes32[4][5] internal _leaves;
     bytes32[][4][5] internal _siblings; // 2
+    uint256[4] internal _directionBits;
+
     bytes32[2][5] internal _nodes;
     bytes32[5] internal _roots;
 
@@ -34,25 +36,29 @@ contract MockTree {
                 _leaves[i][j] = MerkleTree._EMPTY_LEAF_HASH;
             }
 
-            _nodes[i][0] = SHA256.commutativeHash(_leaves[i][0], _leaves[i][1]);
-            _nodes[i][1] = SHA256.commutativeHash(_leaves[i][2], _leaves[i][3]);
-            _roots[i] = SHA256.commutativeHash(_nodes[i][0], _nodes[i][1]);
+            _nodes[i][0] = SHA256.hash2(_leaves[i][0], _leaves[i][1]);
+            _nodes[i][1] = SHA256.hash2(_leaves[i][2], _leaves[i][3]);
+            _roots[i] = SHA256.hash2(_nodes[i][0], _nodes[i][1]);
 
             _siblings[i][0] = new bytes32[](2);
             _siblings[i][0][0] = _leaves[i][1];
             _siblings[i][0][1] = _nodes[i][1];
+            _directionBits[0] = 3; // 11 = 3
 
             _siblings[i][1] = new bytes32[](2);
             _siblings[i][1][0] = _leaves[i][0];
             _siblings[i][1][1] = _nodes[i][1];
+            _directionBits[1] = 2; // 10 = 2
 
             _siblings[i][2] = new bytes32[](2);
             _siblings[i][2][0] = _leaves[i][3];
             _siblings[i][2][1] = _nodes[i][0];
+            _directionBits[2] = 1; // 01 = 1
 
             _siblings[i][3] = new bytes32[](2);
             _siblings[i][3][0] = _leaves[i][2];
             _siblings[i][3][1] = _nodes[i][0];
+            _directionBits[3] = 0; // 00 = 0
         }
     }
 }
