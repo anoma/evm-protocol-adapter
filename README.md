@@ -50,19 +50,16 @@ forge script script/Deploy.s.sol:Deploy \
    --rpc-url sepolia
 ```
 
-To broadcast the deployment on sepolia, add the `--broadcast` flag (and the optional `--verify`
-flag for subsequent Etherscan verification).
-
-```sh
-forge script script/Deploy.s.sol:Deploy \
-  --rpc-url sepolia \
-  --broadcast \
-  --verify
-```
+Append the
+- `--broadcast` flag to deploy on sepolia
+- `--verify` flag for subsequent contract verification on Etherscan
+- `--account <ACCOUNT_NAME>` flag to use a previously imported keystore (run
+  `cast wallet --help` for more info)
 
 #### Block Explorer Verification
 
 For post-deployment verification on Etherscan run
+
 ```sh
 forge verify-contract \
    <ADDRESS> \
