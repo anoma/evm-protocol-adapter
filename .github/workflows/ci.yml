@@ -52,13 +52,17 @@ jobs:
       - name: Show Solhint version
         run: bunx --bun solhint --version
 
-      - name: Run Solhint
+      - name: Run Solhint in `src` dir
         run: bunx --bun solhint --config .solhint.json 'src/**/*.sol'
         id: solhint-src
 
-      - name: Run Solhint
-        run: bunx --bun solhint --config .solhint.tests.json 'test/**/*.sol'
-        id: solhint-tests
+      - name: Run Solhint in `test` dir
+        run: bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
+        id: solhint-test
+
+      - name: Run Solhint in `script` dir
+        run: bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
+        id: solhint-script
 
       - name: Run Forge build
         run: forge build --sizes --ast

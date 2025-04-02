@@ -53,7 +53,7 @@ forge script script/Deploy.s.sol:Deploy \
 Append the
 - `--broadcast` flag to deploy on sepolia
 - `--verify` flag for subsequent contract verification on Etherscan
-- `--account <ACCOUNT_NAME>` flag to use a previously imported keystore (run
+- `--account <ACCOUNT_NAME>` flag to use a previously imported keystore (see
   `cast wallet --help` for more info)
 
 #### Block Explorer Verification
