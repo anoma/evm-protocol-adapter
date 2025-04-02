@@ -41,10 +41,37 @@ Run
 forge test
 ```
 
-### Deployments
+### Deployment
 
-> [!NOTE]  
-> Work in progress.
+To simulate deployment on sepolia, run
+
+```sh
+forge script script/Deploy.s.sol:Deploy \
+   --rpc-url sepolia
+```
+
+To broadcast the deployment on sepolia, add the `--broadcast` flag (and the optional `--verify`
+flag for subsequent Etherscan verification).
+
+```sh
+forge script script/Deploy.s.sol:Deploy \
+  --rpc-url sepolia \
+  --broadcast \
+  --verify
+```
+
+#### Block Explorer Verification
+
+For post-deployment verification on Etherscan run
+```sh
+forge verify-contract \
+   <ADDRESS> \
+   src/ProtocolAdapter.sol:ProtocolAdapter \
+   --chain sepolia \
+   --constructor-args-path script/constructor-args.txt
+```
+
+after replacing `<ADDRESS>` with the respective contract address.
 
 ## Benchmarks
 

@@ -1,6 +1,7 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
 
 [profile.default]
+fs_permissions = [{ access = "read", path = "./script/constructor-args.txt" }]
 cbor_metadata = false
 auto_detect_solc = false
 block_timestamp = 1_680_220_800 # March 31, 2023 at 00:00 GMT
@@ -9,7 +10,6 @@ evm_version = "cancun"
 fuzz = { runs = 1_000 }
 gas_reports = [
     "ProtocolAdapter",
-    "CommitmentAccumulatorMock",
     "CommitmentAccumulatorMock",
     "NullifierSetMock",
     "BlobStorageMock",
@@ -61,9 +61,8 @@ avalanche = "https://avalanche-mainnet.infura.io/v3/${API_KEY_INFURA}"
 base = "https://mainnet.base.org"
 bnb_smart_chain = "https://bsc-dataseed.binance.org"
 gnosis_chain = "https://rpc.gnosischain.com"
-goerli = "https://goerli.infura.io/v3/${API_KEY_INFURA}"
 localhost = "http://localhost:8545"
-mainnet = "https://eth-mainnet.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
+mainnet = "https://mainnet.infura.io/v3/${API_KEY_INFURA}"
 optimism = "https://optimism-mainnet.infura.io/v3/${API_KEY_INFURA}"
 polygon = "https://polygon-mainnet.infura.io/v3/${API_KEY_INFURA}"
 sepolia = "https://sepolia.infura.io/v3/${API_KEY_INFURA}"
