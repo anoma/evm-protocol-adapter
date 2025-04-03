@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Test, console} from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import {SHA256} from "../../src/libs/SHA256.sol";
-import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
-import {MerkleTree} from "../../src/state/MerkleTree.sol";
+import { SHA256 } from "../../src/libs/SHA256.sol";
+import { CommitmentAccumulator } from "../../src/state/CommitmentAccumulator.sol";
+import { MerkleTree } from "../../src/state/MerkleTree.sol";
 
-import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulatorMock.sol";
-import {MockTree} from "../mocks/MockTree.sol";
+import { CommitmentAccumulatorMock } from "../mocks/CommitmentAccumulatorMock.sol";
+import { MockTree } from "../mocks/MockTree.sol";
 
 contract CommitmentAccumulatorTest is Test, MockTree {
     using MerkleTree for bytes32[];
@@ -170,7 +170,7 @@ contract CommitmentAccumulatorTest is Test, MockTree {
 
         (bytes32[] memory path, uint256 directionBits) = _cmAcc.merkleProof(cm);
 
-        _cmAcc.verifyMerkleProof({root: latestRoot, commitment: cm, path: path, directionBits: directionBits});
+        _cmAcc.verifyMerkleProof({ root: latestRoot, commitment: cm, path: path, directionBits: directionBits });
     }
 
     function test_verifyMerkleProof_reverts_on_non_existent_root() public {
@@ -210,7 +210,7 @@ contract CommitmentAccumulatorTest is Test, MockTree {
         vm.expectRevert(
             abi.encodeWithSelector(CommitmentAccumulator.InvalidPathLength.selector, _TREE_DEPTH, wrongPath.length)
         );
-        _cmAcc.verifyMerkleProof({root: 0, commitment: 0, path: wrongPath, directionBits: 0});
+        _cmAcc.verifyMerkleProof({ root: 0, commitment: 0, path: wrongPath, directionBits: 0 });
     }
 
     function test_verifyMerkleProof_reverts_on_wrong_path() public {
@@ -221,9 +221,9 @@ contract CommitmentAccumulatorTest is Test, MockTree {
         bytes32[] memory wrongPath = new bytes32[](_TREE_DEPTH);
 
         // Compute the expected, invalid root.
-        bytes32 invalidRoot = wrongPath.processProof({directionBits: 0, leaf: commitment});
+        bytes32 invalidRoot = wrongPath.processProof({ directionBits: 0, leaf: commitment });
 
         vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, invalidRoot));
-        _cmAcc.verifyMerkleProof({root: newRoot, commitment: commitment, path: wrongPath, directionBits: 0});
+        _cmAcc.verifyMerkleProof({ root: newRoot, commitment: commitment, path: wrongPath, directionBits: 0 });
     }
 }
