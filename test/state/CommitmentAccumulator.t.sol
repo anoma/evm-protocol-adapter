@@ -167,6 +167,7 @@ contract CommitmentAccumulatorTest is Test, MockTree {
     function test_verifyMerkleProof_should_pass_on_valid_inputs() public {
         bytes32 cm = sha256("SOMETHING");
         bytes32 latestRoot = _cmAcc.addCommitment(cm);
+        _cmAcc.storeRoot(latestRoot);
 
         (bytes32[] memory path, uint256 directionBits) = _cmAcc.merkleProof(cm);
 
