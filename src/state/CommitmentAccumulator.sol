@@ -64,9 +64,9 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         external
         view
         override
-        returns (bytes32[] memory proof, uint256 directionBits, bytes32 root)
+        returns (bytes32[] memory proof, uint256 directionBits)
     {
-        (proof, directionBits, root) = _merkleProof(commitment);
+        (proof, directionBits) = _merkleProof(commitment);
     }
 
     function _addCommitmentUnchecked(bytes32 commitment) internal returns (bytes32 newRoot) {
@@ -114,14 +114,9 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         }
     }
 
-    function _merkleProof(bytes32 commitment)
-        internal
-        view
-        returns (bytes32[] memory proof, uint256 directionBits, bytes32 root)
-    {
+    function _merkleProof(bytes32 commitment) internal view returns (bytes32[] memory proof, uint256 directionBits) {
         uint256 leafIndex = _findCommitmentIndex(commitment);
         (proof, directionBits) = (_merkleTree.merkleProof(leafIndex));
-        root = _latestRoot();
     }
 
     function _isContained(bytes32 commitment) internal view returns (bool isContained) {

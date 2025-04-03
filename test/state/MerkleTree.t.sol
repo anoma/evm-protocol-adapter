@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { MerkleTree } from "../../src/state/MerkleTree.sol";
-import { MockTree } from "../mocks/MockTree.sol";
+import {MerkleTree} from "../../src/state/MerkleTree.sol";
+import {MockTree} from "../mocks/MockTree.sol";
 
 contract MerkleTreeTest is Test, MockTree {
     using MerkleTree for MerkleTree.Tree;
+    using MerkleTree for bytes32[];
 
     MerkleTree.Tree internal _merkleTree;
 

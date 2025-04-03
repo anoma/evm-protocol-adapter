@@ -67,15 +67,15 @@ library MerkleTree {
             // Store the node hash of depth `i`.
             self._nodes[i][currentIndex] = currentLevelHash;
 
-            // Compute the next level hash for depth `i+i`.
+            // Compute the next level hash for depth `i+1`.
             // Check whether the `currentIndex` node is the left or right child of its parent.
             if (isLeftChild(currentIndex)) {
-                // Compute the `currentLevelHash` using the right sibling,
-                // Because we fill the tree from left to right, this is the zero hash at depth `i`.
+                // Compute the `currentLevelHash` using the right sibling.
+                // Because we fill the tree from left to right, the right child is empty and we must use the depth `i` zero hash.
                 currentLevelHash = SHA256.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, i).value);
             } else {
                 // Compute the `currentLevelHash` using the left sibling.
-                // Because we fill the tree from left to right, this is the previous node at depth `i`.
+                // Because we fill the tree from left to right, the left child is the previous node at depth `i`.
                 currentLevelHash = SHA256.hash(self._nodes[i][currentIndex - 1], currentLevelHash);
             }
 
