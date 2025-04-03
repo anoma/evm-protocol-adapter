@@ -64,7 +64,7 @@ library MerkleTree {
         uint256 currentIndex = index;
         bytes32 currentLevelHash = leaf;
         for (uint256 i = 0; i < treeDepth; ++i) {
-            // Store the node hash of depth `i`.
+            // Store the current node hash at depth `i`.
             self._nodes[i][currentIndex] = currentLevelHash;
 
             // Compute the next level hash for depth `i+1`.
