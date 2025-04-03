@@ -2,16 +2,14 @@
 pragma solidity ^0.8.27;
 
 import { Arrays } from "@openzeppelin-contracts/utils/Arrays.sol";
-import { MerkleProof } from "@openzeppelin-contracts/utils/cryptography/MerkleProof.sol";
 import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
-import { SHA256 } from "../../src/libs/SHA256.sol";
 import { ICommitmentAccumulator } from "../interfaces/ICommitmentAccumulator.sol";
 import { MerkleTree } from "./MerkleTree.sol";
 
 contract CommitmentAccumulator is ICommitmentAccumulator {
     using MerkleTree for MerkleTree.Tree;
-    using MerkleProof for bytes32[];
+    using MerkleTree for bytes32[];
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using Arrays for bytes32[];
 
@@ -49,12 +47,26 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         isContained = _containsRoot(root);
     }
 
-    function verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path) external view override {
-        _verifyMerkleProof({ root: root, commitment: commitment, path: path });
+    function verifyMerkleProof(
+        bytes32 root,
+        bytes32 commitment,
+        bytes32[] calldata path,
+        uint256 directionBits
+    )
+        external
+        view
+        override
+    {
+        _verifyMerkleProof({ root: root, commitment: commitment, path: path, directionBits: directionBits });
     }
 
-    function merkleProof(bytes32 commitment) external view override returns (bytes32[] memory proof, bytes32 root) {
-        (proof, root) = _merkleProof(commitment);
+    function merkleProof(bytes32 commitment)
+        external
+        view
+        override
+        returns (bytes32[] memory proof, uint256 directionBits)
+    {
+        (proof, directionBits) = _merkleProof(commitment);
     }
 
     function _addCommitmentUnchecked(bytes32 commitment) internal returns (bytes32 newRoot) {
@@ -77,27 +89,34 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         emit RootAdded(root);
     }
 
-    function _verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path) internal view {
+    function _verifyMerkleProof(
+        bytes32 root,
+        bytes32 commitment,
+        bytes32[] calldata path,
+        uint256 directionBits
+    )
+        internal
+        view
+    {
         // Check length.
-        uint256 pathLength = path.length;
-        uint256 treeDepth = _merkleTree.depth();
-        if (pathLength != treeDepth) {
-            revert InvalidPathLength({ expected: treeDepth, actual: pathLength });
+        if (path.length != _merkleTree.depth()) {
+            revert InvalidPathLength({ expected: _merkleTree.depth(), actual: path.length });
         }
 
         // Check root existence.
         if (!_roots.contains(root)) revert NonExistingRoot(root);
 
-        // Check that the leaf and path reproduce the root.
-        bytes32 computedRoot = path.processProof(commitment, SHA256.commutativeHash);
+        // Check that the commitment leaf and path reproduce the root.
+        bytes32 computedRoot = path.processProof(directionBits, commitment);
+
         if (root != computedRoot) {
             revert InvalidRoot({ expected: root, actual: computedRoot });
         }
     }
 
-    function _merkleProof(bytes32 commitment) internal view returns (bytes32[] memory proof, bytes32 root) {
+    function _merkleProof(bytes32 commitment) internal view returns (bytes32[] memory proof, uint256 directionBits) {
         uint256 leafIndex = _findCommitmentIndex(commitment);
-        (proof, root) = (_merkleTree.merkleProof(leafIndex), _latestRoot());
+        (proof, directionBits) = (_merkleTree.merkleProof(leafIndex));
     }
 
     function _isContained(bytes32 commitment) internal view returns (bool isContained) {

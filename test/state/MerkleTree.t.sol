@@ -8,6 +8,7 @@ import { MockTree } from "../mocks/MockTree.sol";
 
 contract MerkleTreeTest is Test, MockTree {
     using MerkleTree for MerkleTree.Tree;
+    using MerkleTree for bytes32[];
 
     MerkleTree.Tree internal _merkleTree;
 
