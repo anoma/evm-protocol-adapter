@@ -139,6 +139,7 @@ contract ProtocolAdapter is
         // Label integrity check
         {
             bytes32 storedLabelRef = untrustedWrapperContract.wrapperResourceLabelRef();
+
             if (computedLabelRef != storedLabelRef) {
                 revert WrapperContractResourceLabelMismatch({ expected: computedLabelRef, actual: storedLabelRef });
             }

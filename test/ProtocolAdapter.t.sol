@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { RiscZeroMockVerifier } from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
-import { Test } from "forge-std/Test.sol";
+import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { ProtocolAdapter } from "../src/ProtocolAdapter.sol";
-import { Resource, Transaction } from "../src/Types.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {Resource, Transaction} from "../src/Types.sol";
+import {ERC20Wrapper} from "../src/ERC20Wrapper.sol";
 
-import { MockRiscZeroProof } from "./mocks/MockRiscZeroProof.sol";
-import { MockTypes } from "./mocks/MockTypes.sol";
+import {MockRiscZeroProof} from "./mocks/MockRiscZeroProof.sol";
+import {MockTypes} from "./mocks/MockTypes.sol";
 
 contract ProtocolAdapterTest is Test {
     uint8 internal constant _TREE_DEPTH = 2 ^ 32;
@@ -55,7 +56,7 @@ contract ProtocolAdapterTest is Test {
 
     function test_execute() public {
         (Resource[] memory consumed, Resource[] memory created) =
-            MockTypes.mockResources({ nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0 });
+            MockTypes.mockResources({nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0});
 
         Transaction memory txn = MockTypes.mockTransaction({
             mockVerifier: _mockVerifier,
@@ -65,6 +66,22 @@ contract ProtocolAdapterTest is Test {
         });
 
         _pa.execute(txn);
+    }
+
+    function test_createWrapperContractResource() public {
+        address _ERC20 = address(0x1111111111111111111111111111111111111111);
+
+        bytes32 wrapperLogicRef; // TODO
+        bytes32 wrappingKind; // TODO
+
+        ERC20Wrapper wrapper = new ERC20Wrapper{salt: sha256("WrapperExample123")}({
+            protocolAdapter: address(_pa),
+            erc20: _ERC20,
+            wrapperLogicRef: wrapperLogicRef,
+            wrappingKind: wrappingKind
+        });
+
+        _pa.createWrapperContractResource({untrustedWrapperContract: wrapper});
     }
 
     function test_verifyEmptyTx() public view {
@@ -80,7 +97,7 @@ contract ProtocolAdapterTest is Test {
 
     function test_verify() public view {
         (Resource[] memory consumed, Resource[] memory created) =
-            MockTypes.mockResources({ nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0 });
+            MockTypes.mockResources({nConsumed: 1, ephConsumed: true, nCreated: 1, ephCreated: false, seed: 0});
 
         Transaction memory txn = MockTypes.mockTransaction({
             mockVerifier: _mockVerifier,
