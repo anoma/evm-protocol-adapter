@@ -8,7 +8,7 @@ import { IRiscZeroVerifier as TrustedRiscZeroVerifier } from "@risc0-ethereum/IR
 import { MockDelta } from "../test/mocks/MockDelta.sol"; // TODO remove
 
 import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
-import { IWrapper as UntrustedWrapper } from "./interfaces/IWrapper.sol";
+import { IForwarder } from "./interfaces/IForwarder.sol";
 
 import { AppData } from "./libs/AppData.sol";
 import { ArrayLookup } from "./libs/ArrayLookup.sol";
@@ -24,7 +24,7 @@ import { BlobStorage, DeletionCriterion, ExpirableBlob } from "./state/BlobStora
 import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
 import { NullifierSet } from "./state/NullifierSet.sol";
 
-import { Action, FFICall, Resource, TagAppDataPair, Transaction } from "./Types.sol";
+import { Action, ForwarderCalldata, Resource, TagAppDataPair, Transaction } from "./Types.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
@@ -51,12 +51,12 @@ contract ProtocolAdapter is
     error InvalidRootRef(bytes32 root);
     error InvalidNullifierRef(bytes32 nullifier);
     error InvalidCommitmentRef(bytes32 commitment);
-    error FFICallOutputMismatch(bytes expected, bytes actual);
+    error ForwarderCallOutputMismatch(bytes expected, bytes actual);
 
-    error WrapperResourceKindMismatch(bytes32 expected, bytes32 actual);
-    error WrapperResourceAppDataMismatch(bytes32 expected, bytes32 actual);
-    error WrapperContractResourceLabelMismatch(bytes32 expected, bytes32 actual);
-    error WrapperContractResourceCommitmentNotFound(bytes32 commitment);
+    error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
+    error CalldataCarrierAppDataMismatch(bytes32 expected, bytes32 actual);
+    error CalldataCarrierLabelMismatch(bytes32 expected, bytes32 actual);
+    error CalldataCarrierCommitmentNotFound(bytes32 commitment);
     error TransactionUnbalanced(uint256 expected, uint256 actual);
 
     constructor(
@@ -104,9 +104,9 @@ contract ProtocolAdapter is
                 newRoot = _addCommitmentUnchecked(action.commitments[j]);
             }
 
-            m = action.wrapperResourceFFICallPairs.length;
+            m = action.resourceCalldataPairs.length;
             for (j = 0; j < m; ++j) {
-                _executeFFICall(action.wrapperResourceFFICallPairs[j].ffiCall);
+                _executeForwarderCall(action.resourceCalldataPairs[j].call);
             }
         }
 
@@ -114,8 +114,8 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
-    function createWrapperContractResource(UntrustedWrapper untrustedWrapperContract) external override {
-        _createWrapperContractResource(untrustedWrapperContract);
+    function createCalldataCarrierResource(IForwarder untrustedForwarder) external override {
+        _createCalldataCarrierResource(untrustedForwarder);
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -125,64 +125,65 @@ contract ProtocolAdapter is
 
     // TODO Consider DoS attacks https://detectors.auditbase.com/avoid-external-calls-in-unbounded-loops-solidity
     // slither-disable-next-line calls-loop
-    function _executeFFICall(FFICall calldata ffiCall) internal {
-        bytes memory output = UntrustedWrapper(ffiCall.untrustedWrapperContract).forwardCall(ffiCall.input);
+    function _executeForwarderCall(ForwarderCalldata calldata call) internal {
+        bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
 
-        if (keccak256(output) != keccak256(ffiCall.output)) {
-            revert FFICallOutputMismatch({ expected: ffiCall.output, actual: output });
+        if (keccak256(output) != keccak256(call.output)) {
+            revert ForwarderCallOutputMismatch({ expected: call.output, actual: output });
         }
     }
 
-    function _createWrapperContractResource(UntrustedWrapper untrustedWrapperContract) internal {
-        bytes32 computedLabelRef = _computeWrapperLabelRef(untrustedWrapperContract);
+    function _createCalldataCarrierResource(IForwarder untrustedForwarder) internal {
+        bytes32 computedLabelRef = _computeCalldataCarrierLabelRef(untrustedForwarder);
 
         // Label integrity check
         {
-            bytes32 storedLabelRef = untrustedWrapperContract.wrapperResourceLabelRef();
+            bytes32 storedLabelRef = untrustedForwarder.calldataCarrierResourceLabelRef();
 
             if (computedLabelRef != storedLabelRef) {
-                revert WrapperContractResourceLabelMismatch({ expected: computedLabelRef, actual: storedLabelRef });
+                revert CalldataCarrierLabelMismatch({ expected: computedLabelRef, actual: storedLabelRef });
             }
         }
 
         // Kind integrity check
         {
-            bytes32 storedKind = untrustedWrapperContract.wrapperResourceKind();
+            bytes32 storedKind = untrustedForwarder.calldataCarrierResourceKind();
             bytes32 computedKind = ComputableComponents.kind({
-                logicRef: untrustedWrapperContract.wrapperResourceLogicRef(),
+                logicRef: untrustedForwarder.calldataCarrierResourceLogicRef(),
                 labelRef: computedLabelRef
             });
 
             if (computedKind != storedKind) {
-                revert WrapperResourceKindMismatch({ expected: computedKind, actual: storedKind });
+                revert CalldataCarrierKindMismatch({ expected: computedKind, actual: storedKind });
             }
         }
 
         bytes memory empty = bytes("");
         _addCommitment(
-            _wrapperContractResourceCommitment({
-                untrustedWrapperContract: untrustedWrapperContract,
+            _calldataCarrierResourceCommitment({
+                untrustedForwarder: untrustedForwarder,
                 labelRef: computedLabelRef,
-                valueRef: abi.encode(untrustedWrapperContract.wrappingResourceKind(), empty, empty).toRefCalldata()
+                valueRef: abi.encode(untrustedForwarder.stateWrapperResourceKind(), empty, empty).toRefCalldata()
             })
         );
     }
 
-    /// @notice Computes the commitment of a wrapper contract resource that can be consumed by the universal identity.
-    // @param logicRef The wrapper contract logic reference.
-    /// @param labelRef The wrapper contract label reference.
-    /// @param valueRef The wrapper contract value reference.
-    function _wrapperContractResourceCommitment(
-        UntrustedWrapper untrustedWrapperContract,
+    /// @notice Computes the commitment of a calldata carrier resource that can be consumed by the universal identity.
+    // @param logicRef The calldata carrier logic reference.
+    /// @param labelRef The calldata carrier label reference.
+    /// @param valueRef The calldata carrier value reference.
+    /// @return calldataCarrierCommitment The computed commitment of the calldata carrier resource.
+    function _calldataCarrierResourceCommitment(
+        IForwarder untrustedForwarder,
         bytes32 labelRef,
         bytes32 valueRef
     )
         internal
         view
-        returns (bytes32 wrapperResource)
+        returns (bytes32 calldataCarrierCommitment)
     {
-        wrapperResource = Resource({
-            logicRef: untrustedWrapperContract.wrapperResourceLogicRef(),
+        calldataCarrierCommitment = Resource({
+            logicRef: untrustedForwarder.calldataCarrierResourceLogicRef(),
             labelRef: labelRef,
             valueRef: valueRef,
             nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
@@ -215,7 +216,7 @@ contract ProtocolAdapter is
         for (uint256 i; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
-            _verifyFFICalls(action);
+            _verifyForwarderCalls(action);
 
             // Compliance Proofs
             len = action.complianceUnits.length;
@@ -320,33 +321,31 @@ contract ProtocolAdapter is
         */
     }
 
-    function _verifyFFICalls(Action calldata action) internal view {
-        uint256 len = action.wrapperResourceFFICallPairs.length;
+    function _verifyForwarderCalls(Action calldata action) internal view {
+        uint256 len = action.resourceCalldataPairs.length;
         for (uint256 j; j < len; ++j) {
-            Resource calldata wrapperResource = action.wrapperResourceFFICallPairs[j].wrapperResource;
-            FFICall calldata ffiCall = action.wrapperResourceFFICallPairs[j].ffiCall;
+            Resource calldata carrier = action.resourceCalldataPairs[j].carrier;
+            ForwarderCalldata calldata call = action.resourceCalldataPairs[j].call;
 
             // Kind integrity check
             {
-                bytes32 passedKind = wrapperResource.kind();
+                bytes32 passedKind = carrier.kind();
 
-                bytes32 fetchedKind = UntrustedWrapper(ffiCall.untrustedWrapperContract).wrapperResourceKind();
+                bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
 
                 if (passedKind != fetchedKind) {
-                    revert WrapperResourceKindMismatch({ expected: fetchedKind, actual: passedKind });
+                    revert CalldataCarrierKindMismatch({ expected: fetchedKind, actual: passedKind });
                 }
             }
 
             // AppData integrity check
             {
-                bytes32 expectedAppDataHash =
-                    keccak256(abi.encode(ffiCall.untrustedWrapperContract, ffiCall.input, ffiCall.output));
+                bytes32 expectedAppDataHash = keccak256(abi.encode(call.untrustedForwarder, call.input, call.output));
 
-                bytes32 actualAppDataHash =
-                    keccak256(action.tagAppDataPairs.lookup({ tag: wrapperResource.commitment() }).blob);
+                bytes32 actualAppDataHash = keccak256(action.tagAppDataPairs.lookup({ tag: carrier.commitment() }).blob);
 
                 if (actualAppDataHash != expectedAppDataHash) {
-                    revert WrapperResourceAppDataMismatch({ actual: actualAppDataHash, expected: expectedAppDataHash });
+                    revert CalldataCarrierAppDataMismatch({ actual: actualAppDataHash, expected: expectedAppDataHash });
                 }
             }
         }
@@ -356,11 +355,12 @@ contract ProtocolAdapter is
         txHash = sha256(abi.encode(tags));
     }
 
-    function _computeWrapperLabelRef(UntrustedWrapper wrapperContract)
+    // TODO Refactor
+    function _computeCalldataCarrierLabelRef(IForwarder forwarder)
         internal
         pure
-        returns (bytes32 wrapperLabelRef)
+        returns (bytes32 calldataCarrierLabelRef)
     {
-        wrapperLabelRef = abi.encode(wrapperContract).toRefCalldata();
+        calldataCarrierLabelRef = abi.encode(forwarder).toRefCalldata();
     }
 }

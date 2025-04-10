@@ -6,7 +6,7 @@ import {Test} from "forge-std/Test.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Resource, Transaction} from "../src/Types.sol";
-import {ERC20Wrapper} from "../src/ERC20Wrapper.sol";
+import {ERC20Forwarder} from "../src/ERC20Forwarder.sol";
 
 import {MockRiscZeroProof} from "./mocks/MockRiscZeroProof.sol";
 import {MockTypes} from "./mocks/MockTypes.sol";
@@ -71,17 +71,17 @@ contract ProtocolAdapterTest is Test {
     function test_createWrapperContractResource() public {
         address _ERC20 = address(0x1111111111111111111111111111111111111111);
 
-        bytes32 wrapperLogicRef; // TODO
+        bytes32 calldataCarrierLogicRef; // TODO
         bytes32 wrappingKind; // TODO
 
-        ERC20Wrapper wrapper = new ERC20Wrapper{salt: sha256("WrapperExample123")}({
+        ERC20Forwarder forwarder = new ERC20Forwarder{salt: sha256("ERC20ForwarderExample123")}({
             protocolAdapter: address(_pa),
             erc20: _ERC20,
-            wrapperLogicRef: wrapperLogicRef,
+            calldataCarrierLogicRef: calldataCarrierLogicRef,
             wrappingKind: wrappingKind
         });
 
-        _pa.createWrapperContractResource({untrustedWrapperContract: wrapper});
+        _pa.createCalldataCarrierResource({untrustedForwarder: forwarder});
     }
 
     function test_verifyEmptyTx() public view {

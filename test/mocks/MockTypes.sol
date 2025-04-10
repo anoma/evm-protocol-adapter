@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Receipt as RiscZeroReceipt } from "@risc0-ethereum/IRiscZeroVerifier.sol";
-import { RiscZeroMockVerifier } from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import {Receipt as RiscZeroReceipt} from "@risc0-ethereum/IRiscZeroVerifier.sol";
+import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
-import { AppData, TagAppDataPair } from "../../src/libs/AppData.sol";
-import { ComputableComponents } from "../../src/libs/ComputableComponents.sol";
-import { Universal } from "../../src/libs/Identities.sol";
+import {AppData, TagAppDataPair} from "../../src/libs/AppData.sol";
+import {ComputableComponents} from "../../src/libs/ComputableComponents.sol";
+import {Universal} from "../../src/libs/Identities.sol";
 
-import { ComplianceUnit, ComplianceInstance, ConsumedRefs, CreatedRefs } from "../../src/proving/Compliance.sol";
-import { Delta } from "../../src/proving/Delta.sol";
-import { LogicInstance, TagLogicProofPair, LogicRefProofPair } from "../../src/proving/Logic.sol";
+import {ComplianceUnit, ComplianceInstance, ConsumedRefs, CreatedRefs} from "../../src/proving/Compliance.sol";
+import {Delta} from "../../src/proving/Delta.sol";
+import {LogicInstance, TagLogicProofPair, LogicRefProofPair} from "../../src/proving/Logic.sol";
 
-import { ExpirableBlob, DeletionCriterion } from "../../src/state/BlobStorage.sol";
-import { Action, WrapperResourceFFICallPair, Resource, Transaction } from "../../src/Types.sol";
+import {ExpirableBlob, DeletionCriterion} from "../../src/state/BlobStorage.sol";
+import {Action, ResourceForwarderCalldataPair, Resource, Transaction} from "../../src/Types.sol";
 
-import { MockDelta } from "../mocks/MockDelta.sol";
-import { MockRiscZeroProof } from "../mocks/MockRiscZeroProof.sol";
+import {MockDelta} from "../mocks/MockDelta.sol";
+import {MockRiscZeroProof} from "../mocks/MockRiscZeroProof.sol";
 
 library MockTypes {
     using ComputableComponents for Resource;
@@ -34,15 +34,11 @@ library MockTypes {
         bytes32 root,
         Resource[] memory consumed,
         Resource[] memory created
-    )
-        internal
-        view
-        returns (Transaction memory transaction)
-    {
+    ) internal view returns (Transaction memory transaction) {
         bytes32[] memory roots = new bytes32[](1);
         roots[0] = root;
 
-        (consumed, created) = padResources({ consumed: consumed, created: created });
+        (consumed, created) = padResources({consumed: consumed, created: created});
 
         if (consumed.length != created.length) revert SevereError();
 
@@ -81,14 +77,14 @@ library MockTypes {
                 }
             }
 
-            TagAppDataPair[] memory appData = mockAppData({ nullifiers: nfs, commitments: cms });
+            TagAppDataPair[] memory appData = mockAppData({nullifiers: nfs, commitments: cms});
             TagLogicProofPair[] memory rlProofs =
-                _mockLogicProofs({ mockVerifier: mockVerifier, nullifiers: nfs, commitments: cms, appData: appData });
+                _mockLogicProofs({mockVerifier: mockVerifier, nullifiers: nfs, commitments: cms, appData: appData});
 
             ComplianceUnit[] memory complianceUnits =
-                mockComplianceUnits({ mockVerifier: mockVerifier, root: roots[0], commitments: cms, nullifiers: nfs });
+                mockComplianceUnits({mockVerifier: mockVerifier, root: roots[0], commitments: cms, nullifiers: nfs});
 
-            WrapperResourceFFICallPair[] memory emptyWrapperFfiCalls;
+            ResourceForwarderCalldataPair[] memory emptyCalls;
 
             actions[a] = Action({
                 commitments: cms,
@@ -96,13 +92,13 @@ library MockTypes {
                 logicProofs: rlProofs,
                 complianceUnits: complianceUnits,
                 tagAppDataPairs: appData,
-                wrapperResourceFFICallPairs: emptyWrapperFfiCalls
+                resourceCalldataPairs: emptyCalls
             });
         }
 
         bytes memory deltaProof = MockDelta.PROOF;
 
-        transaction = Transaction({ roots: roots, actions: actions, deltaProof: deltaProof });
+        transaction = Transaction({roots: roots, actions: actions, deltaProof: deltaProof});
     }
 
     // solhint-disable-next-line function-max-lines
@@ -111,11 +107,7 @@ library MockTypes {
         bytes32[] memory nullifiers,
         bytes32[] memory commitments,
         TagAppDataPair[] memory appData
-    )
-        internal
-        view
-        returns (TagLogicProofPair[] memory logicProofs)
-    {
+    ) internal view returns (TagLogicProofPair[] memory logicProofs) {
         logicProofs = new TagLogicProofPair[](nullifiers.length + commitments.length);
 
         uint256 len = nullifiers.length;
@@ -139,7 +131,7 @@ library MockTypes {
 
             logicProofs[i] = TagLogicProofPair({
                 tag: tag,
-                pair: LogicRefProofPair({ logicRef: _ALWAYS_VALID_LOGIC_REF, proof: receipt.seal })
+                pair: LogicRefProofPair({logicRef: _ALWAYS_VALID_LOGIC_REF, proof: receipt.seal})
             });
         }
 
@@ -164,7 +156,7 @@ library MockTypes {
 
             logicProofs[nullifiers.length + i] = TagLogicProofPair({
                 tag: tag,
-                pair: LogicRefProofPair({ logicRef: _ALWAYS_VALID_LOGIC_REF, proof: receipt.seal })
+                pair: LogicRefProofPair({logicRef: _ALWAYS_VALID_LOGIC_REF, proof: receipt.seal})
             });
         }
     }
@@ -174,11 +166,7 @@ library MockTypes {
         bytes32 root,
         bytes32[] memory nullifiers,
         bytes32[] memory commitments
-    )
-        internal
-        view
-        returns (ComplianceUnit[] memory units)
-    {
+    ) internal view returns (ComplianceUnit[] memory units) {
         if (nullifiers.length != commitments.length) revert SevereError();
 
         bytes32 verifyingKey = MockRiscZeroProof.IMAGE_ID_2; // TODO
@@ -188,27 +176,21 @@ library MockTypes {
 
         for (uint256 i = 0; i < nUnits; ++i) {
             ComplianceInstance memory instance = ComplianceInstance({
-                consumed: ConsumedRefs({ nullifierRef: nullifiers[i], rootRef: root, logicRef: _ALWAYS_VALID_LOGIC_REF }),
-                created: CreatedRefs({ commitmentRef: commitments[i], logicRef: _ALWAYS_VALID_LOGIC_REF }),
+                consumed: ConsumedRefs({nullifierRef: nullifiers[i], rootRef: root, logicRef: _ALWAYS_VALID_LOGIC_REF}),
+                created: CreatedRefs({commitmentRef: commitments[i], logicRef: _ALWAYS_VALID_LOGIC_REF}),
                 unitDelta: Delta.zero() // TODO
-             });
+            });
 
             RiscZeroReceipt memory receipt = mockVerifier.mockProve({
                 imageId: MockRiscZeroProof.IMAGE_ID_2,
                 journalDigest: sha256(abi.encode(verifyingKey, instance))
             });
 
-            units[i] = ComplianceUnit({ proof: receipt.seal, instance: instance, verifyingKey: verifyingKey });
+            units[i] = ComplianceUnit({proof: receipt.seal, instance: instance, verifyingKey: verifyingKey});
         }
     }
 
-    function mockResources(
-        uint16 nConsumed,
-        bool ephConsumed,
-        uint16 nCreated,
-        bool ephCreated,
-        uint256 seed
-    )
+    function mockResources(uint16 nConsumed, bool ephConsumed, uint16 nCreated, bool ephCreated, uint256 seed)
         internal
         pure
         returns (Resource[] memory consumed, Resource[] memory created)
@@ -242,10 +224,7 @@ library MockTypes {
         }
     }
 
-    function mockAppData(
-        bytes32[] memory nullifiers,
-        bytes32[] memory commitments
-    )
+    function mockAppData(bytes32[] memory nullifiers, bytes32[] memory commitments)
         internal
         pure
         returns (TagAppDataPair[] memory appData)
@@ -256,14 +235,14 @@ library MockTypes {
             for (uint256 i = 0; i < len; ++i) {
                 appData[i] = TagAppDataPair({
                     tag: nullifiers[i],
-                    appData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: _MOCK_BLOB })
+                    appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: _MOCK_BLOB})
                 });
             }
             len = commitments.length;
             for (uint256 i = 0; i < len; ++i) {
                 appData[nullifiers.length + i] = TagAppDataPair({
                     tag: commitments[i],
-                    appData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: _MOCK_BLOB })
+                    appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: _MOCK_BLOB})
                 });
             }
         }
@@ -282,10 +261,7 @@ library MockTypes {
         });
     }
 
-    function padResources(
-        Resource[] memory consumed,
-        Resource[] memory created
-    )
+    function padResources(Resource[] memory consumed, Resource[] memory created)
         internal
         pure
         returns (Resource[] memory consumedPadded, Resource[] memory createdPadded)
