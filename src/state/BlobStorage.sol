@@ -8,7 +8,6 @@ enum DeletionCriterion {
     Never
 }
 
-// ExpirableBlob
 struct ExpirableBlob {
     DeletionCriterion deletionCriterion;
     bytes blob;

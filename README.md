@@ -1,7 +1,8 @@
 # EVM Protocol Adapter
 
-For more information, see the
-[related Anoma Research Day talk](https://www.youtube.com/watch?v=rKFZsOw360U).
+For more information on the EVM protocol adapter, find the related 
+- [Anoma Research Day talk](https://www.youtube.com/watch?v=rKFZsOw360U)
+- [Anoma Specs Page](https://specs.anoma.net/latest/arch/integrations/adapters/evm.html)
 
 <div align="left">
   <a href="https://www.youtube.com/watch?v=rKFZsOw360U">
@@ -51,6 +52,7 @@ forge script script/Deploy.s.sol:Deploy \
 ```
 
 Append the
+
 - `--broadcast` flag to deploy on sepolia
 - `--verify` flag for subsequent contract verification on Etherscan
 - `--account <ACCOUNT_NAME>` flag to use a previously imported keystore (see

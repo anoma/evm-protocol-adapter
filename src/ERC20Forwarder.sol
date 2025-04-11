@@ -5,9 +5,9 @@ import { Ownable } from "@openzeppelin-contracts/access/Ownable.sol";
 import { Address } from "@openzeppelin-contracts/utils/Address.sol";
 //import { IERC20 } from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
-import { WrapperBase } from "./WrapperBase.sol";
+import { ForwarderBase } from "./ForwarderBase.sol";
 
-contract ERC20Wrapper is Ownable, WrapperBase {
+contract ERC20Forwarder is Ownable, ForwarderBase {
     using Address for address;
 
     address internal immutable _ERC20_CONTRACT;
@@ -17,10 +17,9 @@ contract ERC20Wrapper is Ownable, WrapperBase {
     constructor(
         address protocolAdapter,
         address erc20,
-        bytes32 wrapperLogicRef,
-        bytes32 wrappingKind
+        bytes32 calldataCarrierLogicRef
     )
-        WrapperBase(protocolAdapter, wrapperLogicRef, wrappingKind)
+        ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
     {
         if (erc20 == address(0)) revert ZeroAddressNotAllowed();
         _ERC20_CONTRACT = erc20;
