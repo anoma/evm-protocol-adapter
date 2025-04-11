@@ -77,6 +77,7 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         emit CommitmentAdded({ commitment: commitment, index: index });
     }
 
+    // slither-disable-next-line dead-code
     function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
         _checkCommitmentNonExistence(commitment);
         newRoot = _addCommitmentUnchecked(commitment);

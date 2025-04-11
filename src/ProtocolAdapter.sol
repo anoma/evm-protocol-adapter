@@ -7,13 +7,12 @@ import { IRiscZeroVerifier as TrustedRiscZeroVerifier } from "@risc0-ethereum/IR
 
 import { MockDelta } from "../test/mocks/MockDelta.sol"; // TODO remove
 
-import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 import { IForwarder } from "./interfaces/IForwarder.sol";
+import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
 
 import { AppData } from "./libs/AppData.sol";
 import { ArrayLookup } from "./libs/ArrayLookup.sol";
 import { ComputableComponents } from "./libs/ComputableComponents.sol";
-import { Universal } from "./libs/Identities.sol";
 import { Reference } from "./libs/Reference.sol";
 
 import { ComplianceUnit } from "./proving/Compliance.sol";
@@ -276,7 +275,7 @@ contract ProtocolAdapter is
             {
                 bytes32 expectedAppDataHash = keccak256(abi.encode(call.untrustedForwarder, call.input, call.output));
 
-                bytes32 actualAppDataHash = keccak256(action.tagAppDataPairs.lookup({ tag: carrier.commitment() }).blob);
+                bytes32 actualAppDataHash = keccak256(action.tagAppDataPairs.lookup(carrier.commitment()).blob);
 
                 if (actualAppDataHash != expectedAppDataHash) {
                     revert CalldataCarrierAppDataMismatch({ actual: actualAppDataHash, expected: expectedAppDataHash });

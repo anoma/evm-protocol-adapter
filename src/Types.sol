@@ -36,7 +36,8 @@ struct ResourceForwarderCalldataPair {
     ForwarderCalldata call;
 }
 
-/// @notice A data structure containing the input data to be forwarded to the untrusted forwarder contract and the anticipated output data.
+/// @notice A data structure containing the input data to be forwarded to the untrusted forwarder contract
+/// and the anticipated output data.
 /// @param untrustedForwarder The forwarder contract forwarding the call.
 /// @param input The input data for the forwarded call that might or might not include the `bytes4` function selector.
 /// @param output The anticipated output data from the forwarded call.

@@ -11,13 +11,13 @@ contract DeployERC20Wrapper is BaseScript {
 
     address internal constant _ERC20 = address(0x1111111111111111111111111111111111111111);
 
-    bytes32 internal constant calldataCarrierLogicRef = bytes32(0);
+    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(0);
 
     function run() public broadcast {
         new ERC20Forwarder{ salt: sha256("ERC20ForwarderExample") }({
             protocolAdapter: address(_PROTOCOL_ADAPTER),
             erc20: _ERC20,
-            calldataCarrierLogicRef: calldataCarrierLogicRef
+            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
         });
     }
 }
