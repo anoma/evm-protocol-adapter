@@ -7,21 +7,17 @@ import { ProtocolAdapter } from "../src/ProtocolAdapter.sol";
 import { BaseScript } from "./Base.s.sol";
 
 contract DeployERC20Wrapper is BaseScript {
-    ProtocolAdapter internal constant _PROTOCOL_ADAPTER =
-        ProtocolAdapter(address(0x02158F6963cEacb9018684C27d1848bAf974818A));
+    ProtocolAdapter internal constant _PROTOCOL_ADAPTER = ProtocolAdapter(address(0));
+
     address internal constant _ERC20 = address(0x1111111111111111111111111111111111111111);
 
-    function run() public broadcast {
-        bytes32 calldataCarrierLogicRef; // TODO
-        bytes32 wrappingKind; // TODO
+    bytes32 internal constant calldataCarrierLogicRef = bytes32(0);
 
-        ERC20Forwarder forwarder = new ERC20Forwarder{ salt: sha256("WrapperExample1") }({
+    function run() public broadcast {
+        new ERC20Forwarder{ salt: sha256("ERC20ForwarderExample") }({
             protocolAdapter: address(_PROTOCOL_ADAPTER),
             erc20: _ERC20,
-            calldataCarrierLogicRef: calldataCarrierLogicRef,
-            wrappingKind: wrappingKind
+            calldataCarrierLogicRef: calldataCarrierLogicRef
         });
-
-        _PROTOCOL_ADAPTER.createCalldataCarrierResource({ untrustedForwarder: forwarder });
     }
 }

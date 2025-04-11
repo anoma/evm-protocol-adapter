@@ -18,26 +18,16 @@ abstract contract ForwarderBase is IForwarder, Ownable {
     /// @notice The the calldata carrier resource kind.
     bytes32 internal immutable _CALLDATA_CARRIER_RESOURCE_KIND;
 
-    /// @notice The EVM state wrapping resource kind.
-    bytes32 internal immutable _STATE_WRAPPER_RESOURCE_KIND;
-
-    constructor(
-        address protocolAdapter,
-        bytes32 calldataCarrierLogicRef,
-        bytes32 stateWrapperKind
-    )
-        Ownable(protocolAdapter)
-    {
+    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef) Ownable(protocolAdapter) {
         _CALLDATA_CARRIER_RESOURCE_LOGIC_REF = calldataCarrierLogicRef;
         _CALLDATA_CARRIER_RESOURCE_LABEL_REF = sha256(abi.encode(address(this)));
         _CALLDATA_CARRIER_RESOURCE_KIND = ComputableComponents.kind({
             logicRef: _CALLDATA_CARRIER_RESOURCE_LOGIC_REF,
             labelRef: _CALLDATA_CARRIER_RESOURCE_LABEL_REF
         });
-
-        _STATE_WRAPPER_RESOURCE_KIND = stateWrapperKind;
     }
 
+    /// @inheritdoc IForwarder
     function forwardCall(bytes calldata input) external onlyOwner returns (bytes memory output) {
         output = _forwardCall(input);
     }
@@ -55,11 +45,6 @@ abstract contract ForwarderBase is IForwarder, Ownable {
     /// @inheritdoc IForwarder
     function calldataCarrierResourceKind() external view returns (bytes32 calldataCarrierKind) {
         calldataCarrierKind = _CALLDATA_CARRIER_RESOURCE_KIND;
-    }
-
-    /// @inheritdoc IForwarder
-    function stateWrapperResourceKind() external view returns (bytes32 stateWrapperKind) {
-        stateWrapperKind = _STATE_WRAPPER_RESOURCE_KIND;
     }
 
     function _forwardCall(bytes calldata input) internal virtual returns (bytes memory output);

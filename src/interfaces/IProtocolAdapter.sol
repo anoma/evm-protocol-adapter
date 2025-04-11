@@ -10,11 +10,6 @@ interface IProtocolAdapter {
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 
-    /// @notice Creates a calldata carrier resource object corresponding to a forwarder contract
-    /// and adds the commitment to the commitment accumulator.
-    /// @param untrustedForwarder The forwarder contract.
-    function createCalldataCarrierResource(IForwarder untrustedForwarder) external;
-
     /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
     /// @param transaction The transaction to verify.
     function verify(Transaction calldata transaction) external view;

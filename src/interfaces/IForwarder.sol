@@ -20,8 +20,4 @@ interface IForwarder {
     /// @notice Returns the kind of the calldata carrier resource.
     /// @return calldataCarrierKind The calldata carrier kind.
     function calldataCarrierResourceKind() external view returns (bytes32 calldataCarrierKind);
-
-    /// @notice Returns the kind of the resource this contract is wrapping EVM state in.
-    /// @return stateWrapperKind The state-wrapping resource kind.
-    function stateWrapperResourceKind() external view returns (bytes32 stateWrapperKind);
 }

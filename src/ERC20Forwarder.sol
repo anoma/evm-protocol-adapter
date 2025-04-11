@@ -17,10 +17,9 @@ contract ERC20Forwarder is Ownable, ForwarderBase {
     constructor(
         address protocolAdapter,
         address erc20,
-        bytes32 calldataCarrierLogicRef,
-        bytes32 wrappingKind
+        bytes32 calldataCarrierLogicRef
     )
-        ForwarderBase(protocolAdapter, calldataCarrierLogicRef, wrappingKind)
+        ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
     {
         if (erc20 == address(0)) revert ZeroAddressNotAllowed();
         _ERC20_CONTRACT = erc20;

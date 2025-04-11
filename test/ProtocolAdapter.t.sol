@@ -68,22 +68,6 @@ contract ProtocolAdapterTest is Test {
         _pa.execute(txn);
     }
 
-    function test_createWrapperContractResource() public {
-        address _ERC20 = address(0x1111111111111111111111111111111111111111);
-
-        bytes32 calldataCarrierLogicRef; // TODO
-        bytes32 wrappingKind; // TODO
-
-        ERC20Forwarder forwarder = new ERC20Forwarder{salt: sha256("ERC20ForwarderExample123")}({
-            protocolAdapter: address(_pa),
-            erc20: _ERC20,
-            calldataCarrierLogicRef: calldataCarrierLogicRef,
-            wrappingKind: wrappingKind
-        });
-
-        _pa.createCalldataCarrierResource({untrustedForwarder: forwarder});
-    }
-
     function test_verifyEmptyTx() public view {
         Transaction memory txn = MockTypes.mockTransaction({
             mockVerifier: _mockVerifier,

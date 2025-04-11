@@ -114,11 +114,6 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
-    function createCalldataCarrierResource(IForwarder untrustedForwarder) external override {
-        _createCalldataCarrierResource(untrustedForwarder);
-    }
-
-    /// @inheritdoc IProtocolAdapter
     function verify(Transaction calldata transaction) external view override {
         _verify(transaction);
     }
@@ -131,67 +126,6 @@ contract ProtocolAdapter is
         if (keccak256(output) != keccak256(call.output)) {
             revert ForwarderCallOutputMismatch({ expected: call.output, actual: output });
         }
-    }
-
-    function _createCalldataCarrierResource(IForwarder untrustedForwarder) internal {
-        bytes32 computedLabelRef = _computeCalldataCarrierLabelRef(untrustedForwarder);
-
-        // Label integrity check
-        {
-            bytes32 storedLabelRef = untrustedForwarder.calldataCarrierResourceLabelRef();
-
-            if (computedLabelRef != storedLabelRef) {
-                revert CalldataCarrierLabelMismatch({ expected: computedLabelRef, actual: storedLabelRef });
-            }
-        }
-
-        // Kind integrity check
-        {
-            bytes32 storedKind = untrustedForwarder.calldataCarrierResourceKind();
-            bytes32 computedKind = ComputableComponents.kind({
-                logicRef: untrustedForwarder.calldataCarrierResourceLogicRef(),
-                labelRef: computedLabelRef
-            });
-
-            if (computedKind != storedKind) {
-                revert CalldataCarrierKindMismatch({ expected: computedKind, actual: storedKind });
-            }
-        }
-
-        bytes memory empty = bytes("");
-        _addCommitment(
-            _calldataCarrierResourceCommitment({
-                untrustedForwarder: untrustedForwarder,
-                labelRef: computedLabelRef,
-                valueRef: abi.encode(untrustedForwarder.stateWrapperResourceKind(), empty, empty).toRefCalldata()
-            })
-        );
-    }
-
-    /// @notice Computes the commitment of a calldata carrier resource that can be consumed by the universal identity.
-    // @param logicRef The calldata carrier logic reference.
-    /// @param labelRef The calldata carrier label reference.
-    /// @param valueRef The calldata carrier value reference.
-    /// @return calldataCarrierCommitment The computed commitment of the calldata carrier resource.
-    function _calldataCarrierResourceCommitment(
-        IForwarder untrustedForwarder,
-        bytes32 labelRef,
-        bytes32 valueRef
-    )
-        internal
-        view
-        returns (bytes32 calldataCarrierCommitment)
-    {
-        calldataCarrierCommitment = Resource({
-            logicRef: untrustedForwarder.calldataCarrierResourceLogicRef(),
-            labelRef: labelRef,
-            valueRef: valueRef,
-            nullifierKeyCommitment: Universal.EXTERNAL_IDENTITY,
-            quantity: 1,
-            nonce: 0,
-            randSeed: 0,
-            ephemeral: false
-        }).commitment();
     }
 
     // solhint-disable-next-line function-max-lines
@@ -353,14 +287,5 @@ contract ProtocolAdapter is
 
     function _transactionHash(bytes32[] memory tags) internal pure returns (bytes32 txHash) {
         txHash = sha256(abi.encode(tags));
-    }
-
-    // TODO Refactor
-    function _computeCalldataCarrierLabelRef(IForwarder forwarder)
-        internal
-        pure
-        returns (bytes32 calldataCarrierLabelRef)
-    {
-        calldataCarrierLabelRef = abi.encode(forwarder).toRefCalldata();
     }
 }
