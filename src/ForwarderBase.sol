@@ -8,38 +8,19 @@ import { ComputableComponents } from "./libs/ComputableComponents.sol";
 
 /// A contract owning EVM state and executing EVM calls.
 abstract contract ForwarderBase is IForwarder, Ownable {
-    /// @notice The binding reference to the logic of the calldata carrier resource.
-    bytes32 internal immutable _CALLDATA_CARRIER_RESOURCE_LOGIC_REF;
-
-    /// @notice The binding reference to the label of the calldata carrier resource.
-    /// @dev Determined by the protocol adapter on deployment.
-    bytes32 internal immutable _CALLDATA_CARRIER_RESOURCE_LABEL_REF;
-
     /// @notice The the calldata carrier resource kind.
     bytes32 internal immutable _CALLDATA_CARRIER_RESOURCE_KIND;
 
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef) Ownable(protocolAdapter) {
-        _CALLDATA_CARRIER_RESOURCE_LOGIC_REF = calldataCarrierLogicRef;
-        _CALLDATA_CARRIER_RESOURCE_LABEL_REF = sha256(abi.encode(address(this)));
         _CALLDATA_CARRIER_RESOURCE_KIND = ComputableComponents.kind({
-            logicRef: _CALLDATA_CARRIER_RESOURCE_LOGIC_REF,
-            labelRef: _CALLDATA_CARRIER_RESOURCE_LABEL_REF
+            logicRef: calldataCarrierLogicRef,
+            labelRef: sha256(abi.encode(address(this)))
         });
     }
 
     /// @inheritdoc IForwarder
     function forwardCall(bytes calldata input) external onlyOwner returns (bytes memory output) {
         output = _forwardCall(input);
-    }
-
-    /// @inheritdoc IForwarder
-    function calldataCarrierResourceLogicRef() external view returns (bytes32 calldataCarrierLogicRef) {
-        calldataCarrierLogicRef = _CALLDATA_CARRIER_RESOURCE_LOGIC_REF;
-    }
-
-    /// @inheritdoc IForwarder
-    function calldataCarrierResourceLabelRef() external view returns (bytes32 calldataCarrierLabelRef) {
-        calldataCarrierLabelRef = _CALLDATA_CARRIER_RESOURCE_LABEL_REF;
     }
 
     /// @inheritdoc IForwarder
