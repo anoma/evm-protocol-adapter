@@ -24,8 +24,8 @@ abstract contract ForwarderBase is IForwarder, Ownable {
     }
 
     /// @inheritdoc IForwarder
-    function calldataCarrierResourceKind() external view returns (bytes32 calldataCarrierKind) {
-        calldataCarrierKind = _CALLDATA_CARRIER_RESOURCE_KIND;
+    function calldataCarrierResourceKind() external view returns (bytes32 kind) {
+        kind = _CALLDATA_CARRIER_RESOURCE_KIND;
     }
 
     function _forwardCall(bytes calldata input) internal virtual returns (bytes memory output);
