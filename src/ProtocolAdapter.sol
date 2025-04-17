@@ -128,12 +128,13 @@ contract ProtocolAdapter is
     }
 
     // solhint-disable-next-line function-max-lines
+    // slither-disable-next-line calls-loop
     function _verify(Transaction calldata transaction) internal view {
         // Can also be named DeltaHash (which is what Yulia does).
         uint256[2] memory transactionDelta = Delta.zero();
 
         // Helper variable
-        uint256 resourceCount;
+        uint256 resourceCount = 0;
 
         uint256 nActions = transaction.actions.length;
         for (uint256 i; i < nActions; ++i) {
@@ -209,6 +210,7 @@ contract ProtocolAdapter is
 
                 {
                     logicRefProofPair = action.logicProofs.lookup(tag);
+
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
                         seal: logicRefProofPair.proof,
                         imageId: _LOGIC_CIRCUIT_ID,
@@ -254,6 +256,7 @@ contract ProtocolAdapter is
         */
     }
 
+    // slither-disable-next-line calls-loop
     function _verifyForwarderCalls(Action calldata action) internal view {
         uint256 len = action.resourceCalldataPairs.length;
         for (uint256 j; j < len; ++j) {
