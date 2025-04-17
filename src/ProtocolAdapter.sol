@@ -210,6 +210,7 @@ contract ProtocolAdapter is
 
                 {
                     logicRefProofPair = action.logicProofs.lookup(tag);
+
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
                         seal: logicRefProofPair.proof,
                         imageId: _LOGIC_CIRCUIT_ID,

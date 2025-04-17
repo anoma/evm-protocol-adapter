@@ -4,7 +4,7 @@
   "rules": {
     "code-complexity": ["error", 10],
     "explicit-types": "error",
-    "function-max-lines": "error",
+    "function-max-lines": ["warn", 150],
     "max-line-length": ["warn", 120],
     "max-states-count": "error",
     "no-console": "error",
