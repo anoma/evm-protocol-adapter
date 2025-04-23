@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Arrays } from "@openzeppelin-contracts/utils/Arrays.sol";
+import {Arrays} from "@openzeppelin-contracts/utils/Arrays.sol";
 
-import { SHA256 } from "../libs/SHA256.sol";
+import {SHA256} from "../libs/SHA256.sol";
 
 /// @notice A Merkle tree implementation populating a tree of variable depth from left to right
 /// and providing on-chain Merkle proofs.
@@ -92,10 +92,7 @@ library MerkleTree {
     /// @param index The index of the leaf.
     /// @return siblings The siblings of the leaf to proof inclusion for.
     /// @return directionBits The direction bits indicating whether the siblings are left of right.
-    function merkleProof(
-        Tree storage self,
-        uint256 index
-    )
+    function merkleProof(Tree storage self, uint256 index)
         internal
         view
         returns (bytes32[] memory siblings, uint256 directionBits)
@@ -165,11 +162,7 @@ library MerkleTree {
     /// @param directionBits The direction bits indicating whether the siblings are left of right.
     /// @param leaf The leaf.
     /// @return root The resulting root obtained by processing the leaf, siblings, and direction bits.
-    function processProof(
-        bytes32[] memory siblings,
-        uint256 directionBits,
-        bytes32 leaf
-    )
+    function processProof(bytes32[] memory siblings, uint256 directionBits, bytes32 leaf)
         internal
         pure
         returns (bytes32 root)

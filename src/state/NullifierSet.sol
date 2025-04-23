@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
 contract NullifierSet {
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -18,14 +18,14 @@ contract NullifierSet {
         if (!success) {
             revert PreExistingNullifier(nullifier);
         }
-        emit NullifierAdded({ nullifier: nullifier, index: _nullifierSet.length() - 1 });
+        emit NullifierAdded({nullifier: nullifier, index: _nullifierSet.length() - 1});
     }
 
     function _addNullifierUnchecked(bytes32 nullifier) internal {
         // slither-disable-next-line unused-return
         _nullifierSet.add(nullifier);
 
-        emit NullifierAdded({ nullifier: nullifier, index: _nullifierSet.length() - 1 });
+        emit NullifierAdded({nullifier: nullifier, index: _nullifierSet.length() - 1});
     }
 
     function _checkNullifierNonExistence(bytes32 nullifier) internal view {

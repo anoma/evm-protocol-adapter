@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { BlobStorage, DeletionCriterion } from "../../src/state/BlobStorage.sol";
+import {BlobStorage, DeletionCriterion} from "../../src/state/BlobStorage.sol";
 
-import { BlobStorageMock } from "../mocks/BlobStorageMock.sol";
+import {BlobStorageMock} from "../mocks/BlobStorageMock.sol";
 
 contract BlobStorageTest is Test {
     string internal constant _BLOB_CONTENT = "Blob";

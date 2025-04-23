@@ -19,12 +19,7 @@ interface ICommitmentAccumulator {
     /// @param commitment The commitment leaf to proof inclusion in the tree for.
     /// @param siblings The siblings constituting the path from the leaf to the root.
     /// @param directionBits The direction bits indicating whether the siblings are left of right.
-    function verifyMerkleProof(
-        bytes32 root,
-        bytes32 commitment,
-        bytes32[] calldata siblings,
-        uint256 directionBits
-    )
+    function verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata siblings, uint256 directionBits)
         external
         view;
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { NullifierSet } from "../../src/state/NullifierSet.sol";
+import {NullifierSet} from "../../src/state/NullifierSet.sol";
 
 contract NullifierSetMock is NullifierSet {
     function addNullifier(bytes32 nullifier) external {

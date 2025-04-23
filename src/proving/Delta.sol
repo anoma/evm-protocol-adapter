@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { ECDSA } from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
-import { EllipticCurveK256 } from "../libs/EllipticCurveK256.sol";
+import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
+import {EllipticCurveK256} from "../libs/EllipticCurveK256.sol";
 
 /// @notice A library for addition and verification of delta values.
 /// @dev This uses the Pedersen commitment scheme
@@ -12,7 +12,7 @@ library Delta {
     error DeltaMismatch(address expected, address actual);
 
     function zero() internal pure returns (uint256[2] memory p) {
-        (p[0], p[1]) = EllipticCurveK256.derivePubKey({ privateKey: 0 });
+        (p[0], p[1]) = EllipticCurveK256.derivePubKey({privateKey: 0});
     }
 
     function toBytes(uint256[2] memory delta) internal pure returns (bytes memory bytesDelta) {
@@ -31,23 +31,19 @@ library Delta {
         (p3[0], p3[1]) = EllipticCurveK256.ecAdd(p1[0], p1[1], p2[0], p2[1]);
     }
 
-    function verify(
-        bytes32 transactionHash,
-        uint256[2] memory transactionDelta,
-        bytes memory deltaProof
-    )
+    function verify(bytes32 transactionHash, uint256[2] memory transactionDelta, bytes memory deltaProof)
         internal
         pure
     {
         // Verify the delta proof using the ECDSA.recover API to obtain the address
-        address recovered = ECDSA.recover({ hash: transactionHash, signature: deltaProof });
+        address recovered = ECDSA.recover({hash: transactionHash, signature: deltaProof});
 
         // Convert the public key to an address
         address expected = toAccount(transactionDelta);
 
         // Compare it with the recovered address
         if (recovered != expected) {
-            revert DeltaMismatch({ expected: expected, actual: recovered });
+            revert DeltaMismatch({expected: expected, actual: recovered});
         }
     }
 }

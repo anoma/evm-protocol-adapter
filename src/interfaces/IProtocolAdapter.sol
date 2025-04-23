@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Transaction } from "../Types.sol";
+import {Transaction} from "../Types.sol";
 
 interface IProtocolAdapter {
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier

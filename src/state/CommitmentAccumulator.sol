@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Arrays } from "@openzeppelin-contracts/utils/Arrays.sol";
-import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
+import {Arrays} from "@openzeppelin-contracts/utils/Arrays.sol";
+import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
-import { ICommitmentAccumulator } from "../interfaces/ICommitmentAccumulator.sol";
-import { MerkleTree } from "./MerkleTree.sol";
+import {ICommitmentAccumulator} from "../interfaces/ICommitmentAccumulator.sol";
+import {MerkleTree} from "./MerkleTree.sol";
 
 contract CommitmentAccumulator is ICommitmentAccumulator {
     using MerkleTree for MerkleTree.Tree;
@@ -47,17 +47,12 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         isContained = _containsRoot(root);
     }
 
-    function verifyMerkleProof(
-        bytes32 root,
-        bytes32 commitment,
-        bytes32[] calldata path,
-        uint256 directionBits
-    )
+    function verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path, uint256 directionBits)
         external
         view
         override
     {
-        _verifyMerkleProof({ root: root, commitment: commitment, path: path, directionBits: directionBits });
+        _verifyMerkleProof({root: root, commitment: commitment, path: path, directionBits: directionBits});
     }
 
     function merkleProof(bytes32 commitment)
@@ -74,7 +69,7 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         (index, newRoot) = _merkleTree.push(commitment);
         _indices[commitment] = index + _COMMITMENT_INDEX_OFFSET; // Add 1 to use 0 as a sentinel value
 
-        emit CommitmentAdded({ commitment: commitment, index: index });
+        emit CommitmentAdded({commitment: commitment, index: index});
     }
 
     // slither-disable-next-line dead-code
@@ -90,18 +85,13 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         emit RootAdded(root);
     }
 
-    function _verifyMerkleProof(
-        bytes32 root,
-        bytes32 commitment,
-        bytes32[] calldata path,
-        uint256 directionBits
-    )
+    function _verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path, uint256 directionBits)
         internal
         view
     {
         // Check length.
         if (path.length != _merkleTree.depth()) {
-            revert InvalidPathLength({ expected: _merkleTree.depth(), actual: path.length });
+            revert InvalidPathLength({expected: _merkleTree.depth(), actual: path.length});
         }
 
         // Check root existence.
@@ -111,7 +101,7 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         bytes32 computedRoot = path.processProof(directionBits, commitment);
 
         if (root != computedRoot) {
-            revert InvalidRoot({ expected: root, actual: computedRoot });
+            revert InvalidRoot({expected: root, actual: computedRoot});
         }
     }
 
@@ -141,13 +131,13 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
 
         bytes32 retrieved = _commitmentAtIndex(index);
         if (retrieved != commitment) {
-            revert CommitmentMismatch({ expected: commitment, actual: retrieved });
+            revert CommitmentMismatch({expected: commitment, actual: retrieved});
         }
     }
 
     function _commitmentAtIndex(uint256 index) internal view returns (bytes32 commitment) {
         if (index + 1 > _merkleTree._nextLeafIndex) {
-            revert CommitmentIndexOutOfBounds({ current: index, limit: _merkleTree._nextLeafIndex });
+            revert CommitmentIndexOutOfBounds({current: index, limit: _merkleTree._nextLeafIndex});
         }
 
         commitment = _merkleTree._nodes[0][index];

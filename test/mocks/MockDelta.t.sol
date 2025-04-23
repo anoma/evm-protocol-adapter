@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { ECDSA } from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
-import { Test } from "forge-std/Test.sol";
+import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { Delta } from "../../src/proving/Delta.sol";
-import { MockDelta } from "./MockDelta.sol";
+import {Delta} from "../../src/proving/Delta.sol";
+import {MockDelta} from "./MockDelta.sol";
 
 contract MockDeltaTest is Test {
     function test_signatureIntegrity() public pure {
@@ -16,7 +16,7 @@ contract MockDeltaTest is Test {
     }
 
     function test_signatureRecovery() public pure {
-        address recovered = ECDSA.recover({ hash: MockDelta.MESSAGE_HASH, signature: MockDelta.PROOF });
+        address recovered = ECDSA.recover({hash: MockDelta.MESSAGE_HASH, signature: MockDelta.PROOF});
         assertEq(recovered, MockDelta.SIGNER_ACCOUNT);
     }
 
