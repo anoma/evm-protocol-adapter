@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Universal } from "../../src/libs/Identities.sol";
-import { Delta } from "../../src/proving/Delta.sol";
+import {Universal} from "../../src/libs/Identities.sol";
+import {Delta} from "../../src/proving/Delta.sol";
 
 library MockDelta {
     using Delta for uint256[2];
@@ -47,6 +47,6 @@ library MockDelta {
         // for the mock verification to work
         if (keccak256(deltaProof) != keccak256(PROOF)) revert WrongUsage();
 
-        Delta.verify({ transactionHash: MESSAGE_HASH, transactionDelta: transactionDelta(), deltaProof: deltaProof });
+        Delta.verify({transactionHash: MESSAGE_HASH, transactionDelta: transactionDelta(), deltaProof: deltaProof});
     }
 }

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Test } from "forge-std/Test.sol";
-import { VmSafe } from "forge-std/Vm.sol";
+import {Test} from "forge-std/Test.sol";
+import {VmSafe} from "forge-std/Vm.sol";
 
-import { EllipticCurveK256 } from "../src/libs/EllipticCurveK256.sol";
-import { Universal } from "../src/libs/Identities.sol";
+import {EllipticCurveK256} from "../src/libs/EllipticCurveK256.sol";
+import {Universal} from "../src/libs/Identities.sol";
 
 contract UniversalIdentityTest is Test {
     bytes internal _publicKey;
@@ -13,7 +13,7 @@ contract UniversalIdentityTest is Test {
     address internal _account;
 
     function setUp() public {
-        (uint256 x, uint256 y) = EllipticCurveK256.derivePubKey({ privateKey: Universal.PRIVATE_KEY });
+        (uint256 x, uint256 y) = EllipticCurveK256.derivePubKey({privateKey: Universal.PRIVATE_KEY});
         _publicKey = abi.encode(bytes32(x), bytes32(y));
 
         _hashedKey = keccak256(_publicKey);

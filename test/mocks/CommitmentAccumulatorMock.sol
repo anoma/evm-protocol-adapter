@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
-import { CommitmentAccumulator } from "../../src/state/CommitmentAccumulator.sol";
-import { MerkleTree } from "../../src/state/MerkleTree.sol";
+import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
+import {MerkleTree} from "../../src/state/MerkleTree.sol";
 
 contract CommitmentAccumulatorMock is CommitmentAccumulator {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using MerkleTree for MerkleTree.Tree;
 
-    constructor(uint8 treeDepth) CommitmentAccumulator(treeDepth) { }
+    constructor(uint8 treeDepth) CommitmentAccumulator(treeDepth) {}
 
     function addCommitment(bytes32 commitment) external returns (bytes32 newRoot) {
         newRoot = _addCommitment(commitment);

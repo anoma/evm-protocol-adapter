@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IBlobStorage } from "../interfaces/IBlobStorage.sol";
+import {IBlobStorage} from "../interfaces/IBlobStorage.sol";
 
 enum DeletionCriterion {
     Immediately,
@@ -80,7 +80,7 @@ contract BlobStorage is IBlobStorage {
 
     function _checkIntegrity(bytes32 blobHash, bytes32 retrievedBlobHash) internal pure {
         if (blobHash != retrievedBlobHash) {
-            revert BlobHashMismatch({ expected: blobHash, actual: retrievedBlobHash });
+            revert BlobHashMismatch({expected: blobHash, actual: retrievedBlobHash});
         }
     }
 }

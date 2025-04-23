@@ -1,29 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { ReentrancyGuardTransient } from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
-import { EnumerableSet } from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
-import { IRiscZeroVerifier as TrustedRiscZeroVerifier } from "@risc0-ethereum/IRiscZeroVerifier.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
+import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
+import {IRiscZeroVerifier as TrustedRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
 
-import { MockDelta } from "../test/mocks/MockDelta.sol"; // TODO remove
+import {MockDelta} from "../test/mocks/MockDelta.sol"; // TODO remove
 
-import { IForwarder } from "./interfaces/IForwarder.sol";
-import { IProtocolAdapter } from "./interfaces/IProtocolAdapter.sol";
+import {IForwarder} from "./interfaces/IForwarder.sol";
+import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
-import { AppData } from "./libs/AppData.sol";
-import { ArrayLookup } from "./libs/ArrayLookup.sol";
-import { ComputableComponents } from "./libs/ComputableComponents.sol";
-import { Reference } from "./libs/Reference.sol";
+import {AppData} from "./libs/AppData.sol";
+import {ArrayLookup} from "./libs/ArrayLookup.sol";
+import {ComputableComponents} from "./libs/ComputableComponents.sol";
+import {Reference} from "./libs/Reference.sol";
 
-import { ComplianceUnit } from "./proving/Compliance.sol";
-import { Delta } from "./proving/Delta.sol";
-import { LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair } from "./proving/Logic.sol";
+import {ComplianceUnit} from "./proving/Compliance.sol";
+import {Delta} from "./proving/Delta.sol";
+import {LogicInstance, LogicProofs, TagLogicProofPair, LogicRefProofPair} from "./proving/Logic.sol";
 
-import { BlobStorage, DeletionCriterion, ExpirableBlob } from "./state/BlobStorage.sol";
-import { CommitmentAccumulator } from "./state/CommitmentAccumulator.sol";
-import { NullifierSet } from "./state/NullifierSet.sol";
+import {BlobStorage, DeletionCriterion, ExpirableBlob} from "./state/BlobStorage.sol";
+import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
+import {NullifierSet} from "./state/NullifierSet.sol";
 
-import { Action, ForwarderCalldata, Resource, TagAppDataPair, Transaction } from "./Types.sol";
+import {Action, ForwarderCalldata, Resource, TagAppDataPair, Transaction} from "./Types.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
@@ -63,9 +63,7 @@ contract ProtocolAdapter is
         bytes32 logicCircuitID,
         bytes32 complianceCircuitID,
         uint8 treeDepth
-    )
-        CommitmentAccumulator(treeDepth)
-    {
+    ) CommitmentAccumulator(treeDepth) {
         _TRUSTED_RISC_ZERO_VERIFIER = riscZeroVerifier;
         _LOGIC_CIRCUIT_ID = logicCircuitID;
         _COMPLIANCE_CIRCUIT_ID = complianceCircuitID;
@@ -76,7 +74,7 @@ contract ProtocolAdapter is
     function execute(Transaction calldata transaction) external override nonReentrant {
         _verify(transaction);
 
-        emit TransactionExecuted({ id: ++_txCount, transaction: transaction });
+        emit TransactionExecuted({id: ++_txCount, transaction: transaction});
 
         uint256 n = transaction.actions.length;
         uint256 m;
@@ -123,7 +121,7 @@ contract ProtocolAdapter is
         bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
 
         if (keccak256(output) != keccak256(call.output)) {
-            revert ForwarderCallOutputMismatch({ expected: call.output, actual: output });
+            revert ForwarderCallOutputMismatch({expected: call.output, actual: output});
         }
     }
 
@@ -184,7 +182,7 @@ contract ProtocolAdapter is
                 });
 
                 // Prepare delta proof
-                transactionDelta = Delta.add({ p1: transactionDelta, p2: unit.instance.unitDelta });
+                transactionDelta = Delta.add({p1: transactionDelta, p2: unit.instance.unitDelta});
             }
 
             // Logic Proofs
@@ -193,7 +191,7 @@ contract ProtocolAdapter is
                 isConsumed: true,
                 consumed: action.nullifiers,
                 created: action.commitments,
-                tagSpecificAppData: ExpirableBlob({ deletionCriterion: DeletionCriterion.Immediately, blob: bytes("") })
+                tagSpecificAppData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: bytes("")})
             });
             LogicRefProofPair memory logicRefProofPair;
 
@@ -246,7 +244,7 @@ contract ProtocolAdapter is
         // TODO: THIS IS A TEMPORARY MOCK PROOF AND MUST BE REMOVED.
         // NOTE: The `transactionHash(tags)` and `transactionDelta` are not used here.
         _transactionHash(tags);
-        MockDelta.verify({ deltaProof: transaction.deltaProof });
+        MockDelta.verify({deltaProof: transaction.deltaProof});
         /*
         Delta.verify({
             transactionHash: _transactionHash(tags),
@@ -270,7 +268,7 @@ contract ProtocolAdapter is
                 bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
 
                 if (passedKind != fetchedKind) {
-                    revert CalldataCarrierKindMismatch({ expected: fetchedKind, actual: passedKind });
+                    revert CalldataCarrierKindMismatch({expected: fetchedKind, actual: passedKind});
                 }
             }
 
@@ -281,7 +279,7 @@ contract ProtocolAdapter is
                 bytes32 actualAppDataHash = keccak256(action.tagAppDataPairs.lookup(carrier.commitment()).blob);
 
                 if (actualAppDataHash != expectedAppDataHash) {
-                    revert CalldataCarrierAppDataMismatch({ actual: actualAppDataHash, expected: expectedAppDataHash });
+                    revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});
                 }
             }
         }

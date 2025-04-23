@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Resource } from "../Types.sol";
+import {Resource} from "../Types.sol";
 
 library ComputableComponents {
     function commitment(Resource memory resource) internal pure returns (bytes32 cm) {

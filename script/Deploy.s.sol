@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IRiscZeroVerifier } from "@risc0-ethereum/IRiscZeroVerifier.sol";
+import {IRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
 
-import { ProtocolAdapter } from "../src/ProtocolAdapter.sol";
-import { BaseScript } from "./Base.s.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {BaseScript} from "./Base.s.sol";
 
 contract Deploy is BaseScript {
     function run() public broadcast returns (address protocolAdapter) {
@@ -19,7 +19,7 @@ contract Deploy is BaseScript {
         uint8 treeDepth = uint8(vm.parseUint(vm.readLine(path)));
 
         protocolAdapter = address(
-            new ProtocolAdapter{ salt: sha256("ProtocolAdapter") }({
+            new ProtocolAdapter{salt: sha256("ProtocolAdapter")}({
                 riscZeroVerifier: trustedSepoliaVerifier,
                 logicCircuitID: logicCircuitID,
                 complianceCircuitID: complianceCircuitID,

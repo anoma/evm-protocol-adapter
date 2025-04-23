@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Ownable } from "@openzeppelin-contracts/access/Ownable.sol";
-import { Address } from "@openzeppelin-contracts/utils/Address.sol";
+import {Ownable} from "@openzeppelin-contracts/access/Ownable.sol";
+import {Address} from "@openzeppelin-contracts/utils/Address.sol";
 //import { IERC20 } from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
-import { ForwarderBase } from "./ForwarderBase.sol";
+import {ForwarderBase} from "./ForwarderBase.sol";
 
 contract ERC20Forwarder is Ownable, ForwarderBase {
     using Address for address;
@@ -14,11 +14,7 @@ contract ERC20Forwarder is Ownable, ForwarderBase {
 
     error ZeroAddressNotAllowed();
 
-    constructor(
-        address protocolAdapter,
-        address erc20,
-        bytes32 calldataCarrierLogicRef
-    )
+    constructor(address protocolAdapter, address erc20, bytes32 calldataCarrierLogicRef)
         ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
     {
         if (erc20 == address(0)) revert ZeroAddressNotAllowed();

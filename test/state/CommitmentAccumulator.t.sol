@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
-import { SHA256 } from "../../src/libs/SHA256.sol";
-import { CommitmentAccumulator } from "../../src/state/CommitmentAccumulator.sol";
-import { MerkleTree } from "../../src/state/MerkleTree.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
+import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
+import {MerkleTree} from "../../src/state/MerkleTree.sol";
 
-import { CommitmentAccumulatorMock } from "../mocks/CommitmentAccumulatorMock.sol";
-import { MockTree } from "../mocks/MockTree.sol";
+import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulatorMock.sol";
+import {MockTree} from "../mocks/MockTree.sol";
 
 contract CommitmentAccumulatorTest is Test, MockTree {
     using MerkleTree for bytes32[];
@@ -33,7 +33,7 @@ contract CommitmentAccumulatorTest is Test, MockTree {
 
     function test_merkleProof_reverts_for_empty_hash() public {
         bytes32 emptyLeafHash = _cmAcc.emptyLeafHash();
-        vm.expectRevert(CommitmentAccumulator.EmptyCommitment.selector);
+        vm.expectRevert(CommitmentAccumulator.EmptyCommitment.selector, address(_cmAcc));
         _cmAcc.merkleProof(emptyLeafHash);
     }
 
@@ -62,7 +62,7 @@ contract CommitmentAccumulatorTest is Test, MockTree {
 
     function test_findCommitmentIndex_reverts_on_empty_commitment() public {
         bytes32 emptyLeafHash = _cmAcc.emptyLeafHash();
-        vm.expectRevert(CommitmentAccumulator.EmptyCommitment.selector);
+        vm.expectRevert(CommitmentAccumulator.EmptyCommitment.selector, address(_cmAcc));
         _cmAcc.findCommitmentIndex(emptyLeafHash);
     }
 
@@ -83,14 +83,17 @@ contract CommitmentAccumulatorTest is Test, MockTree {
         bytes32 cm = sha256("SOMETHING");
         _cmAcc.addCommitment(cm);
 
-        vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.PreExistingCommitment.selector, cm));
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitmentAccumulator.PreExistingCommitment.selector, cm), address(_cmAcc)
+        );
         _cmAcc.addCommitment(cm);
     }
 
     function test_findCommitmentIndex_reverts_on_non_existent_commitment() public {
         bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
         vm.expectRevert(
-            abi.encodeWithSelector(CommitmentAccumulator.NonExistingCommitment.selector, nonExistentCommitment)
+            abi.encodeWithSelector(CommitmentAccumulator.NonExistingCommitment.selector, nonExistentCommitment),
+            address(_cmAcc)
         );
         _cmAcc.findCommitmentIndex(nonExistentCommitment);
     }
@@ -100,7 +103,8 @@ contract CommitmentAccumulatorTest is Test, MockTree {
             uint256 commitmentCount = _cmAcc.commitmentCount();
 
             vm.expectRevert(
-                abi.encodeWithSelector(CommitmentAccumulator.CommitmentIndexOutOfBounds.selector, i, commitmentCount)
+                abi.encodeWithSelector(CommitmentAccumulator.CommitmentIndexOutOfBounds.selector, i, commitmentCount),
+                address(_cmAcc)
             );
             _cmAcc.commitmentAtIndex(i);
         }
@@ -171,13 +175,15 @@ contract CommitmentAccumulatorTest is Test, MockTree {
 
         (bytes32[] memory path, uint256 directionBits) = _cmAcc.merkleProof(cm);
 
-        _cmAcc.verifyMerkleProof({ root: latestRoot, commitment: cm, path: path, directionBits: directionBits });
+        _cmAcc.verifyMerkleProof({root: latestRoot, commitment: cm, path: path, directionBits: directionBits});
     }
 
     function test_verifyMerkleProof_reverts_on_non_existent_root() public {
         bytes32 nonExistingRoot = sha256("NON_EXISTENT_ROOT");
 
-        vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.NonExistingRoot.selector, nonExistingRoot));
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitmentAccumulator.NonExistingRoot.selector, nonExistingRoot), address(_cmAcc)
+        );
         _cmAcc.verifyMerkleProof({
             root: nonExistingRoot,
             commitment: 0,
@@ -195,7 +201,10 @@ contract CommitmentAccumulatorTest is Test, MockTree {
         bytes32[] memory siblingsCorrespondingToNonExistingRoot = _siblings[1][0];
         uint256 directionBitsCorrespondingToNonExistingRoot = _directionBits[0];
 
-        vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, latestRoot, nonExistingRoot));
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, latestRoot, nonExistingRoot),
+            address(_cmAcc)
+        );
         _cmAcc.verifyMerkleProof({
             root: latestRoot,
             commitment: nonExistingCommitment,
@@ -209,9 +218,10 @@ contract CommitmentAccumulatorTest is Test, MockTree {
         bytes32[] memory wrongPath = new bytes32[](3);
 
         vm.expectRevert(
-            abi.encodeWithSelector(CommitmentAccumulator.InvalidPathLength.selector, _TREE_DEPTH, wrongPath.length)
+            abi.encodeWithSelector(CommitmentAccumulator.InvalidPathLength.selector, _TREE_DEPTH, wrongPath.length),
+            address(_cmAcc)
         );
-        _cmAcc.verifyMerkleProof({ root: 0, commitment: 0, path: wrongPath, directionBits: 0 });
+        _cmAcc.verifyMerkleProof({root: 0, commitment: 0, path: wrongPath, directionBits: 0});
     }
 
     function test_verifyMerkleProof_reverts_on_wrong_path() public {
@@ -222,9 +232,11 @@ contract CommitmentAccumulatorTest is Test, MockTree {
         bytes32[] memory wrongPath = new bytes32[](_TREE_DEPTH);
 
         // Compute the expected, invalid root.
-        bytes32 invalidRoot = wrongPath.processProof({ directionBits: 0, leaf: commitment });
+        bytes32 invalidRoot = wrongPath.processProof({directionBits: 0, leaf: commitment});
 
-        vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, invalidRoot));
-        _cmAcc.verifyMerkleProof({ root: newRoot, commitment: commitment, path: wrongPath, directionBits: 0 });
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, invalidRoot), address(_cmAcc)
+        );
+        _cmAcc.verifyMerkleProof({root: newRoot, commitment: commitment, path: wrongPath, directionBits: 0});
     }
 }
