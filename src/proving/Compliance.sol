@@ -2,9 +2,9 @@
 pragma solidity ^0.8.27;
 
 struct ComplianceUnit {
-    bytes proof;
-    ComplianceInstance instance;
     bytes32 verifyingKey;
+    ComplianceInstance instance;
+    bytes proof;
 }
 
 struct ComplianceInstance {
@@ -14,12 +14,12 @@ struct ComplianceInstance {
 }
 
 struct ConsumedRefs {
-    bytes32 nullifierRef;
+    bytes32 nullifier;
     bytes32 rootRef;
     bytes32 logicRef;
 }
 
 struct CreatedRefs {
-    bytes32 commitmentRef;
+    bytes32 commitment;
     bytes32 logicRef;
 }

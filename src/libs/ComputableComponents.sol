@@ -31,4 +31,8 @@ library ComputableComponents {
     function kindCalldata(Resource calldata resource) internal pure returns (bytes32 k) {
         k = sha256(abi.encode(resource.logicRef, resource.labelRef));
     }
+
+    function transactionHash(bytes32[] memory tags) internal pure returns (bytes32 txHash) {
+        txHash = sha256(abi.encode(tags));
+    }
 }

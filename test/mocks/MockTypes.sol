@@ -5,12 +5,13 @@ import {Receipt as RiscZeroReceipt} from "@risc0-ethereum/IRiscZeroVerifier.sol"
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
 import {AppData, TagAppDataPair} from "../../src/libs/AppData.sol";
+import {ArrayLookup} from "../../src/libs/ArrayLookup.sol";
 import {ComputableComponents} from "../../src/libs/ComputableComponents.sol";
 import {Universal} from "../../src/libs/Identities.sol";
 
 import {ComplianceUnit, ComplianceInstance, ConsumedRefs, CreatedRefs} from "../../src/proving/Compliance.sol";
 import {Delta} from "../../src/proving/Delta.sol";
-import {LogicInstance, TagLogicProofPair, LogicRefProofPair} from "../../src/proving/Logic.sol";
+import {LogicInstance, LogicProof, TagLogicProofPair} from "../../src/proving/Logic.sol";
 
 import {ExpirableBlob, DeletionCriterion} from "../../src/state/BlobStorage.sol";
 import {Action, ResourceForwarderCalldataPair, Resource, Transaction} from "../../src/Types.sol";
@@ -19,6 +20,7 @@ import {MockDelta} from "../mocks/MockDelta.sol";
 import {MockRiscZeroProof} from "../mocks/MockRiscZeroProof.sol";
 
 library MockTypes {
+    using ArrayLookup for bytes32[];
     using ComputableComponents for Resource;
     using AppData for TagAppDataPair[];
     using Delta for uint256[2];
@@ -86,19 +88,25 @@ library MockTypes {
 
             ResourceForwarderCalldataPair[] memory emptyCalls;
 
-            actions[a] = Action({
-                commitments: cms,
-                nullifiers: nfs,
-                logicProofs: rlProofs,
-                complianceUnits: complianceUnits,
-                tagAppDataPairs: appData,
-                resourceCalldataPairs: emptyCalls
-            });
+            actions[a] =
+                Action({logicProofs: rlProofs, complianceUnits: complianceUnits, resourceCalldataPairs: emptyCalls});
         }
 
         bytes memory deltaProof = MockDelta.PROOF;
 
-        transaction = Transaction({roots: roots, actions: actions, deltaProof: deltaProof});
+        bytes32[] storage tags;
+        for (uint256 i = 0; i < actions.length; ++i) {
+            for (uint256 j = 0; j < actions[i].logicProofs.length; ++j) {
+                tags.push(actions[i].logicProofs[j].tag);
+            }
+        }
+
+        transaction = Transaction({
+            actions: actions,
+            deltaProof: deltaProof,
+            deltaVerifyingKey: ComputableComponents.transactionHash(tags),
+            expectedBalance: Delta.zero()
+        });
     }
 
     // solhint-disable-next-line function-max-lines
@@ -106,7 +114,7 @@ library MockTypes {
         RiscZeroMockVerifier mockVerifier,
         bytes32[] memory nullifiers,
         bytes32[] memory commitments,
-        TagAppDataPair[] memory appData
+        TagAppDataPair[] memory appData // TODO!
     ) internal view returns (TagLogicProofPair[] memory logicProofs) {
         logicProofs = new TagLogicProofPair[](nullifiers.length + commitments.length);
 
@@ -117,9 +125,9 @@ library MockTypes {
             LogicInstance memory instance = LogicInstance({
                 tag: tag,
                 isConsumed: true,
-                consumed: nullifiers,
+                consumed: nullifiers.removeElement(tag),
                 created: commitments,
-                tagSpecificAppData: appData.lookup(tag)
+                appData: [] // TODO!
             });
 
             bytes32 verifyingKey = _ALWAYS_VALID_LOGIC_REF;
@@ -131,7 +139,12 @@ library MockTypes {
 
             logicProofs[i] = TagLogicProofPair({
                 tag: tag,
-                pair: LogicRefProofPair({logicRef: _ALWAYS_VALID_LOGIC_REF, proof: receipt.seal})
+                logicProof: LogicProof({
+                    isConsumed: true,
+                    logicVerifyingKeyOuter: _ALWAYS_VALID_LOGIC_REF,
+                    appData: [], // TODO!
+                    proof: receipt.seal
+                })
             });
         }
 
@@ -143,7 +156,7 @@ library MockTypes {
                 tag: tag,
                 isConsumed: false,
                 consumed: nullifiers,
-                created: commitments,
+                created: commitments.removeElement(tag),
                 tagSpecificAppData: appData.lookup(tag)
             });
 
@@ -156,7 +169,12 @@ library MockTypes {
 
             logicProofs[nullifiers.length + i] = TagLogicProofPair({
                 tag: tag,
-                pair: LogicRefProofPair({logicRef: _ALWAYS_VALID_LOGIC_REF, proof: receipt.seal})
+                logicProof: LogicProof({
+                    isConsumed: true,
+                    logicVerifyingKeyOuter: _ALWAYS_VALID_LOGIC_REF,
+                    appData: [], // TODO!
+                    proof: receipt.seal
+                })
             });
         }
     }
