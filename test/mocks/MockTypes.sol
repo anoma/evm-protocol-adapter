@@ -8,13 +8,22 @@ import {AppData, TagAppDataPair} from "../../src/libs/AppData.sol";
 import {ArrayLookup} from "../../src/libs/ArrayLookup.sol";
 import {ComputableComponents} from "../../src/libs/ComputableComponents.sol";
 import {Universal} from "../../src/libs/Identities.sol";
-
-import {ComplianceUnit, ComplianceInstance, ConsumedRefs, CreatedRefs} from "../../src/proving/Compliance.sol";
 import {Delta} from "../../src/proving/Delta.sol";
-import {LogicInstance, LogicProof, TagLogicProofPair} from "../../src/proving/Logic.sol";
 
 import {ExpirableBlob, DeletionCriterion} from "../../src/state/BlobStorage.sol";
-import {Action, ResourceForwarderCalldataPair, Resource, Transaction} from "../../src/Types.sol";
+import {
+    Action,
+    ResourceForwarderCalldataPair,
+    Resource,
+    Transaction,
+    LogicInstance,
+    TagLogicProofPair,
+    LogicRefProofPair,
+    ComplianceUnit,
+    ComplianceInstance,
+    ConsumedRefs,
+    CreatedRefs
+} from "../../src/Types.sol";
 
 import {MockDelta} from "../mocks/MockDelta.sol";
 import {MockRiscZeroProof} from "../mocks/MockRiscZeroProof.sol";

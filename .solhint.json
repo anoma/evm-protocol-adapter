@@ -34,6 +34,7 @@
 
     "imports-on-top": "warn",
     "imports-order": "warn",
+    "import-path-check": "off",
     "ordering": "warn",
     "visibility-modifier-order": "error",
     "constructor-syntax": "error",

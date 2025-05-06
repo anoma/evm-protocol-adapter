@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ComplianceUnit} from "./proving/Compliance.sol";
+enum DeletionCriterion {
+    Immediately,
+    Never
+}
 
-import {TagLogicProofPair} from "./proving/Logic.sol";
+struct ExpirableBlob {
+    DeletionCriterion deletionCriterion;
+    bytes blob;
+}
 
 struct Resource {
     bytes32 logicRef;
@@ -30,6 +36,47 @@ struct Action {
     ResourceForwarderCalldataPair[] resourceCalldataPairs;
 }
 
+struct LogicInstance {
+    bytes32 tag;
+    bool isConsumed;
+    bytes32[] consumed;
+    bytes32[] created;
+    ExpirableBlob tagSpecificAppData;
+}
+
+struct TagLogicProofPair {
+    bytes32 tag;
+    LogicRefProofPair pair;
+}
+
+struct LogicRefProofPair {
+    bytes32 logicRef;
+    bytes proof;
+}
+
+struct ComplianceUnit {
+    bytes proof;
+    ComplianceInstance instance;
+    bytes32 verifyingKey;
+}
+
+struct ComplianceInstance {
+    ConsumedRefs consumed;
+    CreatedRefs created;
+    uint256[2] unitDelta;
+}
+
+struct ConsumedRefs {
+    bytes32 nullifierRef;
+    bytes32 rootRef;
+    bytes32 logicRef;
+}
+
+struct CreatedRefs {
+    bytes32 commitmentRef;
+    bytes32 logicRef;
+}
+
 struct ResourceForwarderCalldataPair {
     Resource carrier;
     ForwarderCalldata call;
@@ -44,4 +91,9 @@ struct ForwarderCalldata {
     address untrustedForwarder;
     bytes input;
     bytes output;
+}
+
+struct TagAppDataPair {
+    bytes32 tag;
+    ExpirableBlob appData;
 }

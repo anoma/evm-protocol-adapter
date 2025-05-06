@@ -1,28 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ExpirableBlob} from "../state/BlobStorage.sol";
-
-struct LogicInstance {
-    bytes32 tag;
-    bool isConsumed;
-    bytes32[] consumed;
-    bytes32[] created;
-    ExpirableBlob[] appData; // ExpirableBlob tagSpecificAppData; // TODO!
-}
-
-// TODO! PICK BETTER NAME
-struct LogicProof {
-    bool isConsumed;
-    bytes32 logicVerifyingKeyOuter; // TODO rename logic ref
-    ExpirableBlob[] appData;
-    bytes proof;
-}
-
-struct TagLogicProofPair {
-    bytes32 tag;
-    LogicProof logicProof;
-}
+import {TagLogicProofPair, LogicRefProofPair} from "../Types.sol";
 
 library LogicProofs {
     error LogicProofTagNotFound(bytes32 tag);

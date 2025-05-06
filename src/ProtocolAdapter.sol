@@ -14,15 +14,25 @@ import {ArrayLookup} from "./libs/ArrayLookup.sol";
 import {ComputableComponents} from "./libs/ComputableComponents.sol";
 import {Reference} from "./libs/Reference.sol";
 
-import {ComplianceUnit} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
-import {LogicInstance, LogicProofs, LogicProof, TagLogicProofPair} from "./proving/Logic.sol";
-
-import {BlobStorage, DeletionCriterion, ExpirableBlob} from "./state/BlobStorage.sol";
+import {LogicProofs} from "./proving/Logic.sol";
+import {BlobStorage} from "./state/BlobStorage.sol";
 import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 
-import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
+import {
+    Action,
+    ForwarderCalldata,
+    Resource,
+    TagAppDataPair,
+    Transaction,
+    LogicInstance,
+    TagLogicProofPair,
+    LogicRefProofPair,
+    ComplianceUnit,
+    DeletionCriterion,
+    ExpirableBlob
+} from "./Types.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
