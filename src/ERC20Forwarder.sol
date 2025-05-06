@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Ownable} from "@openzeppelin-contracts/access/Ownable.sol";
 import {Address} from "@openzeppelin-contracts/utils/Address.sol";
 
 import {ForwarderBase} from "./ForwarderBase.sol";
 
-contract ERC20Forwarder is Ownable, ForwarderBase {
+contract ERC20Forwarder is ForwarderBase {
     using Address for address;
 
     address internal immutable _ERC20_CONTRACT;
