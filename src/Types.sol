@@ -25,7 +25,7 @@ struct Transaction {
 }
 
 struct Action {
-    TagLogicProofPair[] logicProofs;
+    TagLogicProofPair[] tagLogicProofPairs;
     ComplianceUnit[] complianceUnits;
     ResourceForwarderCalldataPair[] resourceCalldataPairs;
 }

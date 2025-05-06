@@ -88,16 +88,19 @@ library MockTypes {
 
             ResourceForwarderCalldataPair[] memory emptyCalls;
 
-            actions[a] =
-                Action({logicProofs: rlProofs, complianceUnits: complianceUnits, resourceCalldataPairs: emptyCalls});
+            actions[a] = Action({
+                tagLogicProofPairs: rlProofs,
+                complianceUnits: complianceUnits,
+                resourceCalldataPairs: emptyCalls
+            });
         }
 
         bytes memory deltaProof = MockDelta.PROOF;
 
         bytes32[] storage tags;
         for (uint256 i = 0; i < actions.length; ++i) {
-            for (uint256 j = 0; j < actions[i].logicProofs.length; ++j) {
-                tags.push(actions[i].logicProofs[j].tag);
+            for (uint256 j = 0; j < actions[i].tagLogicProofPairs.length; ++j) {
+                tags.push(actions[i].tagLogicProofPairs[j].tag);
             }
         }
 
@@ -110,24 +113,40 @@ library MockTypes {
     }
 
     // solhint-disable-next-line function-max-lines
-    function _mockLogicProofs(
-        RiscZeroMockVerifier mockVerifier,
-        bytes32[] memory nullifiers,
-        bytes32[] memory commitments,
-        TagAppDataPair[] memory appData // TODO!
-    ) internal view returns (TagLogicProofPair[] memory logicProofs) {
-        logicProofs = new TagLogicProofPair[](nullifiers.length + commitments.length);
+    function _mockLogicProofs(RiscZeroMockVerifier mockVerifier, TagAppDataPair[] memory tagAppDataPairs)
+        internal
+        view
+        returns (TagLogicProofPair[] memory logicProofs)
+    {
+        (bytes32[][] memory consumed, bytes32[][] memory created) = ComputableComponents.prepareLists(tagAppDataPairs);
 
-        uint256 len = nullifiers.length;
+        uint256 nResources = tagAppDataPairs.length;
+
+        for (uint256 j = 0; j < nResources; ++j) {
+            bytes32 tag = tagAppDataPairs[j].tag;
+            tags[resCounter++] = tag;
+
+            LogicProof calldata proof = action.tagLogicProofPairs[j].logicProof;
+
+            LogicInstance memory instance = LogicInstance({
+                tag: tag,
+                isConsumed: proof.isConsumed,
+                consumed: consumed[j],
+                created: created[j],
+                appData: proof.appData
+            });
+        }
+
+        uint256 len = consumedTagAppDataPair.length;
         for (uint256 i = 0; i < len; ++i) {
-            bytes32 tag = nullifiers[i];
+            bytes32 tag = consumedTagAppDataPair[i].tag;
 
             LogicInstance memory instance = LogicInstance({
                 tag: tag,
                 isConsumed: true,
                 consumed: nullifiers.removeElement(tag),
                 created: commitments,
-                appData: [] // TODO!
+                appData: appDataEntries[i]
             });
 
             bytes32 verifyingKey = _ALWAYS_VALID_LOGIC_REF;
@@ -142,7 +161,7 @@ library MockTypes {
                 logicProof: LogicProof({
                     isConsumed: true,
                     logicVerifyingKeyOuter: _ALWAYS_VALID_LOGIC_REF,
-                    appData: [], // TODO!
+                    appData: appDataEntries[i],
                     proof: receipt.seal
                 })
             });
@@ -157,7 +176,7 @@ library MockTypes {
                 isConsumed: false,
                 consumed: nullifiers,
                 created: commitments.removeElement(tag),
-                tagSpecificAppData: appData.lookup(tag)
+                appData: appDataEntries[nullifiers.length + i]
             });
 
             bytes32 verifyingKey = _ALWAYS_VALID_LOGIC_REF;
@@ -172,7 +191,7 @@ library MockTypes {
                 logicProof: LogicProof({
                     isConsumed: true,
                     logicVerifyingKeyOuter: _ALWAYS_VALID_LOGIC_REF,
-                    appData: [], // TODO!
+                    appData: appDataEntries[nullifiers.length + i],
                     proof: receipt.seal
                 })
             });
@@ -194,8 +213,8 @@ library MockTypes {
 
         for (uint256 i = 0; i < nUnits; ++i) {
             ComplianceInstance memory instance = ComplianceInstance({
-                consumed: ConsumedRefs({nullifierRef: nullifiers[i], rootRef: root, logicRef: _ALWAYS_VALID_LOGIC_REF}),
-                created: CreatedRefs({commitmentRef: commitments[i], logicRef: _ALWAYS_VALID_LOGIC_REF}),
+                consumed: ConsumedRefs({nullifier: nullifiers[i], rootRef: root, logicRef: _ALWAYS_VALID_LOGIC_REF}),
+                created: CreatedRefs({commitment: commitments[i], logicRef: _ALWAYS_VALID_LOGIC_REF}),
                 unitDelta: Delta.zero() // TODO
             });
 
@@ -242,27 +261,14 @@ library MockTypes {
         }
     }
 
-    function mockAppData(bytes32[] memory nullifiers, bytes32[] memory commitments)
-        internal
-        pure
-        returns (TagAppDataPair[] memory appData)
-    {
-        appData = new TagAppDataPair[](nullifiers.length + commitments.length);
-        {
-            uint256 len = nullifiers.length;
-            for (uint256 i = 0; i < len; ++i) {
-                appData[i] = TagAppDataPair({
-                    tag: nullifiers[i],
-                    appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: _MOCK_BLOB})
-                });
-            }
-            len = commitments.length;
-            for (uint256 i = 0; i < len; ++i) {
-                appData[nullifiers.length + i] = TagAppDataPair({
-                    tag: commitments[i],
-                    appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: _MOCK_BLOB})
-                });
-            }
+    function mockAppData(bytes32[] memory tags) internal pure returns (TagAppDataPair[] memory appData) {
+        appData = new TagAppDataPair[](tags.length);
+
+        for (uint256 i = 0; i < tags.length; ++i) {
+            appData[i] = TagAppDataPair({
+                tag: tags[i],
+                appData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: _MOCK_BLOB})
+            });
         }
     }
 

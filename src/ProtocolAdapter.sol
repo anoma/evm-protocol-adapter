@@ -78,9 +78,9 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < transaction.actions.length; ++i) {
             Action calldata action = transaction.actions[i];
 
-            uint256 nResources = action.logicProofs.length;
+            uint256 nResources = action.tagLogicProofPairs.length;
             for (uint256 j = 0; j < nResources; ++j) {
-                TagLogicProofPair calldata pair = action.logicProofs[j];
+                TagLogicProofPair calldata pair = action.tagLogicProofPairs[j];
 
                 if (pair.logicProof.isConsumed) {
                     // Nullifier non-existence was already checked in `_verify(transaction);` at the top.
@@ -123,10 +123,12 @@ contract ProtocolAdapter is
     // solhint-disable-next-line function-max-lines
     // slither-disable-next-line calls-loop
     function _verify(Transaction calldata transaction) internal view {
-        // Can also be named DeltaHash (which is what Yulia does).
+        uint256[2] memory transactionDelta = Delta.zero(); // TODO: Renamed to DeltaHash?
 
-        uint256[2] memory transactionDelta = Delta.zero();
-        bytes32[] storage tags;
+        uint256 resCount = counts(transaction);
+
+        bytes32[] memory tags = new bytes32[](resCount);
+        uint256 resCounter;
 
         uint256 nActions = transaction.actions.length;
         for (uint256 i; i < nActions; ++i) {
@@ -156,44 +158,26 @@ contract ProtocolAdapter is
                 transactionDelta = Delta.add({p1: transactionDelta, p2: unit.instance.unitDelta});
             }
 
-            uint256 nResources = action.logicProofs.length;
+            // Resource Logic Proofs
 
-            bytes32[] storage allNullifiers;
-            bytes32[] storage allCommitments;
-            for (uint256 j = 0; j < nResources; ++j) {
-                TagLogicProofPair calldata pair = action.logicProofs[j];
+            uint256 nResources = action.tagLogicProofPairs.length;
 
-                tags.push(pair.tag);
-                if (pair.logicProof.isConsumed) {
-                    allNullifiers.push(pair.tag);
-                } else {
-                    allCommitments.push(pair.tag);
-                }
-            }
+            (bytes32[][] memory consumed, bytes32[][] memory created) =
+                ComputableComponents.prepareLists(action.tagLogicProofPairs);
 
             for (uint256 j = 0; j < nResources; ++j) {
-                bytes32 tag = action.logicProofs[j].tag;
-                LogicProof calldata proof = action.logicProofs[j].logicProof;
+                bytes32 tag = action.tagLogicProofPairs[j].tag;
+                tags[resCounter++] = tag;
 
-                LogicInstance memory instance;
+                LogicProof calldata proof = action.tagLogicProofPairs[j].logicProof;
 
-                if (proof.isConsumed) {
-                    instance = LogicInstance({
-                        tag: tag,
-                        isConsumed: true,
-                        consumed: allNullifiers.removeElement(tag),
-                        created: allCommitments,
-                        appData: proof.appData
-                    });
-                } else {
-                    instance = LogicInstance({
-                        tag: tag,
-                        isConsumed: false,
-                        consumed: allNullifiers,
-                        created: allCommitments.removeElement(tag),
-                        appData: proof.appData
-                    });
-                }
+                LogicInstance memory instance = LogicInstance({
+                    tag: tag,
+                    isConsumed: proof.isConsumed,
+                    consumed: consumed[j],
+                    created: created[j],
+                    appData: proof.appData
+                });
 
                 _TRUSTED_RISC_ZERO_VERIFIER.verify({
                     seal: proof.proof,
@@ -222,10 +206,10 @@ contract ProtocolAdapter is
 
     // slither-disable-next-line calls-loop
     function _verifyForwarderCalls(Action calldata action) internal view {
-        uint256 len = action.resourceCalldataPairs.length;
-        for (uint256 j; j < len; ++j) {
-            Resource calldata carrier = action.resourceCalldataPairs[j].carrier;
-            ForwarderCalldata calldata call = action.resourceCalldataPairs[j].call;
+        uint256 nForwarderCalls = action.resourceCalldataPairs.length;
+        for (uint256 i = 0; i < nForwarderCalls; ++i) {
+            Resource calldata carrier = action.resourceCalldataPairs[i].carrier;
+            ForwarderCalldata calldata call = action.resourceCalldataPairs[i].call;
 
             // Kind integrity check
             {
@@ -242,11 +226,25 @@ contract ProtocolAdapter is
             {
                 bytes32 expectedAppDataHash = keccak256(abi.encode(call.untrustedForwarder, call.input, call.output));
 
-                bytes32 actualAppDataHash = keccak256(action.tagAppDataPairs.lookup(carrier.commitment()).blob);
+                // Lookup the first appData entry.
+                bytes32 actualAppDataHash =
+                    keccak256(abi.encode(action.tagLogicProofPairs.lookup(carrier.commitment()).appData[0]));
 
                 if (actualAppDataHash != expectedAppDataHash) {
                     revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});
                 }
+            }
+        }
+    }
+
+    function counts(Transaction calldata transaction) internal pure returns (uint256 resCount) {
+        uint256 nActions = transaction.actions.length;
+
+        for (uint256 i = 0; i < nActions; ++i) {
+            Action calldata action = transaction.actions[i];
+            uint256 nResources = action.tagLogicProofPairs.length;
+            for (uint256 j = 0; j < nResources; ++j) {
+                ++resCount;
             }
         }
     }

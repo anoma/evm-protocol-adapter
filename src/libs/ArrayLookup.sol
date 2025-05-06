@@ -16,7 +16,10 @@ library ArrayLookup {
     }
 
     // TODO! write test to make sure that this works
-    function removeElement(bytes32[] storage array, bytes32 elem) internal returns (bytes32[] storage modified) {
+    function removeElementStorage(bytes32[] storage array, bytes32 elem)
+        internal
+        returns (bytes32[] storage modified)
+    {
         modified = array;
         for (uint256 i = 0; i < array.length; i++) {
             if (modified[i] == elem) {
@@ -27,5 +30,35 @@ library ArrayLookup {
             }
         }
         revert ElementNotFound(elem);
+    }
+
+    function removeElement(bytes32[] memory arr, bytes32 elem) internal pure returns (bytes32[] memory) {
+        uint256 indexToRemove = 0;
+        bool found = false;
+
+        // Find index of the elem
+        for (uint256 i = 0; i < arr.length; i++) {
+            if (arr[i] == elem) {
+                indexToRemove = i;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) revert ElementNotFound(elem);
+
+        // Create new array with one less element
+        bytes32[] memory result = new bytes32[](arr.length - 1);
+        uint256 j = 0;
+
+        // Copy all elements except the one to remove
+        for (uint256 i = 0; i < arr.length; i++) {
+            if (i != indexToRemove) {
+                result[j] = arr[i];
+                j++;
+            }
+        }
+
+        return result;
     }
 }
