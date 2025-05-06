@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ExpirableBlob} from "../state/BlobStorage.sol";
-
-struct TagAppDataPair {
-    bytes32 tag;
-    ExpirableBlob appData;
-}
+import {TagAppDataPair, ExpirableBlob} from "../Types.sol";
 
 library AppData {
     error AppDataTagNotFound(bytes32 tag);

@@ -3,12 +3,12 @@ pragma solidity ^0.8.27;
 
 import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
-contract NullifierSet {
+import {INullifierSet} from "../interfaces/INullifierSet.sol";
+
+contract NullifierSet is INullifierSet {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
     EnumerableSet.Bytes32Set internal _nullifierSet;
-
-    event NullifierAdded(bytes32 indexed nullifier, uint256 indexed index);
 
     error PreExistingNullifier(bytes32 nullifier);
 

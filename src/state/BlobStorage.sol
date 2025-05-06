@@ -3,21 +3,18 @@ pragma solidity ^0.8.27;
 
 import {IBlobStorage} from "../interfaces/IBlobStorage.sol";
 
-enum DeletionCriterion {
-    Immediately,
-    Never
-}
-
-struct ExpirableBlob {
-    DeletionCriterion deletionCriterion;
-    bytes blob;
-}
+import {ExpirableBlob, DeletionCriterion} from "../Types.sol";
 
 contract BlobStorage is IBlobStorage {
     bytes internal constant _EMPTY_BLOB = bytes("");
     bytes32 internal constant _EMPTY_BLOB_HASH = sha256(_EMPTY_BLOB);
 
     mapping(bytes32 blobHash => bytes blob) internal _blobs;
+
+    /// @notice Emitted if a blob is stored.
+    /// @param blobHash The hash of the blob being stored.
+    /// @param deletionCriterion The deletion criterion of the blob.
+    event BlobStored(bytes32 indexed blobHash, DeletionCriterion indexed deletionCriterion);
 
     error BlobEmpty();
     error BlobNotFound(bytes32 blobHash);
@@ -44,6 +41,8 @@ contract BlobStorage is IBlobStorage {
 
         // Blob doesn't need to be stored
         if (deletionCriterion == DeletionCriterion.Immediately) {
+            // TODO Should an event be emitted?
+
             // Return zero
             return blobHash;
         }
@@ -53,6 +52,8 @@ contract BlobStorage is IBlobStorage {
         }
         // Store blob forever
         else if (deletionCriterion == DeletionCriterion.Never) {
+            emit BlobStored({blobHash: blobHash, deletionCriterion: DeletionCriterion.Never});
+
             _blobs[blobHash] = blob;
             return blobHash;
         }
