@@ -2,7 +2,13 @@
 pragma solidity ^0.8.27;
 
 interface ICommitmentAccumulator {
+    /// @notice Emitted if a commitment is added to the commitment accumulator.
+    /// @param commitment The commitment being stored.
+    /// @param index The index of the commitment in the Merkle tree.
     event CommitmentAdded(bytes32 indexed commitment, uint256 indexed index);
+
+    /// @notice Emitted if a root is stored in the root storage.
+    /// @param root The root.
     event RootAdded(bytes32 indexed root);
 
     /// @notice Returns the latest  commitment tree state root.
