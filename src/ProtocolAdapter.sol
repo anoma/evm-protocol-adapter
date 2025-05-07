@@ -228,7 +228,7 @@ contract ProtocolAdapter is
             Delta.verify({
                 transactionHash: sha256(abi.encode(tags)),
                 transactionDelta: transactionDelta,
-                deltaProof: transaction.deltaProof.delta
+                deltaProof: transaction.deltaProof
             });
         }
     }

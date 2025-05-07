@@ -23,9 +23,9 @@ struct Resource {
 }
 
 struct Transaction {
-    // bytes32[] roots;
     Action[] actions;
-    DeltaProof deltaProof;
+    // DeltaProof deltaProof
+    bytes deltaProof;
 }
 
 struct Action {
@@ -34,10 +34,10 @@ struct Action {
     ResourceForwarderCalldataPair[] resourceCalldataPairs;
 }
 
-struct DeltaProof {
-    bytes delta; // Type: DeltaHash
-    bytes32 deltaVerifyingKey; // NOTE by Xuyang: This is currently not used in SRM.
-}
+//struct DeltaProof {
+//    bytes delta; // Type: DeltaHash
+//    bytes32 deltaVerifyingKey; // NOTE by Xuyang: This is currently not //used in SRM.
+//}
 
 struct LogicInstance {
     bytes32 tag;
