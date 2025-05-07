@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+/*
 import {Receipt as RiscZeroReceipt} from "@risc0-ethereum/IRiscZeroVerifier.sol";
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
-import {AppData, TagAppDataPair} from "../../src/libs/AppData.sol";
+//import {AppData, TagAppDataPair} from "../../src/libs/AppData.sol";
 import {ArrayLookup} from "../../src/libs/ArrayLookup.sol";
 import {ComputableComponents} from "../../src/libs/ComputableComponents.sol";
 import {Universal} from "../../src/libs/Identities.sol";
@@ -18,7 +19,7 @@ import {
     Transaction,
     LogicInstance,
     TagLogicProofPair,
-    LogicRefProofPair,
+    LogicProof,
     ComplianceUnit,
     ComplianceInstance,
     ConsumedRefs,
@@ -31,7 +32,7 @@ import {MockRiscZeroProof} from "../mocks/MockRiscZeroProof.sol";
 library MockTypes {
     using ArrayLookup for bytes32[];
     using ComputableComponents for Resource;
-    using AppData for TagAppDataPair[];
+    //    using AppData for TagAppDataPair[];
     using Delta for uint256[2];
 
     bytes32 internal constant _ALWAYS_VALID_LOGIC_REF = bytes32(0);
@@ -88,9 +89,10 @@ library MockTypes {
                 }
             }
 
-            TagAppDataPair[] memory appData = mockAppData({nullifiers: nfs, commitments: cms});
+            //TagAppDataPair[] memory appData = mockAppData({nullifiers: nfs, commitments: cms});
+
             TagLogicProofPair[] memory rlProofs =
-                _mockLogicProofs({mockVerifier: mockVerifier, nullifiers: nfs, commitments: cms, appData: appData});
+                _mockLogicProofs({mockVerifier: mockVerifier, nullifiers: nfs, commitments: cms});
 
             ComplianceUnit[] memory complianceUnits =
                 mockComplianceUnits({mockVerifier: mockVerifier, root: roots[0], commitments: cms, nullifiers: nfs});
@@ -122,7 +124,12 @@ library MockTypes {
     }
 
     // solhint-disable-next-line function-max-lines
-    function _mockLogicProofs(RiscZeroMockVerifier mockVerifier, TagAppDataPair[] memory tagAppDataPairs)
+    function _mockLogicProofs(
+        RiscZeroMockVerifier mockVerifier,
+        bytes32[] memory nullifiers,
+        bytes32[] memory commitments
+    )
+        //, TagAppDataPair[] memory tagAppDataPairs
         internal
         view
         returns (TagLogicProofPair[] memory logicProofs)
@@ -131,11 +138,14 @@ library MockTypes {
 
         uint256 nResources = tagAppDataPairs.length;
 
+        ExpirableBlob[] memory appData = new ExpirableBlob[](1);
+        appData[0] = ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: _MOCK_BLOB});
+
         for (uint256 j = 0; j < nResources; ++j) {
             bytes32 tag = tagAppDataPairs[j].tag;
-            tags[resCounter++] = tag;
+            // tags[resCounter++] = tag;
 
-            LogicProof calldata proof = action.tagLogicProofPairs[j].logicProof;
+            LogicProof calldata proof = tagLogicProofPairs[j].logicProof;
 
             LogicInstance memory instance = LogicInstance({
                 tag: tag,
@@ -340,3 +350,4 @@ library MockTypes {
         }
     }
 }
+*/

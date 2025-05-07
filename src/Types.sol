@@ -25,9 +25,7 @@ struct Resource {
 struct Transaction {
     // bytes32[] roots;
     Action[] actions;
-    bytes deltaProof;
-    bytes32 deltaVerifyingKey; // TransactionHash
-    uint256[2] expectedBalance;
+    DeltaProof deltaProof;
 }
 
 struct Action {
@@ -36,22 +34,27 @@ struct Action {
     ResourceForwarderCalldataPair[] resourceCalldataPairs;
 }
 
+struct DeltaProof {
+    bytes delta; // Type: DeltaHash
+    bytes32 deltaVerifyingKey; // NOTE by Xuyang: This is currently not used in SRM.
+}
+
 struct LogicInstance {
     bytes32 tag;
     bool isConsumed;
-    bytes32[] consumed;
-    bytes32[] created;
-    ExpirableBlob tagSpecificAppData;
+    bytes32 root;
+    ExpirableBlob[] appData;
+}
+
+struct LogicProof {
+    bytes proof;
+    LogicInstance instance;
+    bytes32 logicRef; // logicVerifyingKeyOuter;
 }
 
 struct TagLogicProofPair {
     bytes32 tag;
-    LogicRefProofPair pair;
-}
-
-struct LogicRefProofPair {
-    bytes32 logicRef;
-    bytes proof;
+    LogicProof logicProof;
 }
 
 struct ComplianceUnit {
@@ -67,13 +70,13 @@ struct ComplianceInstance {
 }
 
 struct ConsumedRefs {
-    bytes32 nullifierRef;
-    bytes32 rootRef;
+    bytes32 nullifier;
+    bytes32 root;
     bytes32 logicRef;
 }
 
 struct CreatedRefs {
-    bytes32 commitmentRef;
+    bytes32 commitment;
     bytes32 logicRef;
 }
 
@@ -91,9 +94,4 @@ struct ForwarderCalldata {
     address untrustedForwarder;
     bytes input;
     bytes output;
-}
-
-struct TagAppDataPair {
-    bytes32 tag;
-    ExpirableBlob appData;
 }

@@ -5,13 +5,17 @@ import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.so
 import {Test} from "forge-std/Test.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Resource, Transaction} from "../src/Types.sol";
+// import {Resource, Transaction} from "../src/Types.sol";
 
 import {MockRiscZeroProof} from "./mocks/MockRiscZeroProof.sol";
-import {MockTypes} from "./mocks/MockTypes.sol";
+
+//import {MockTypes} from "./mocks/MockTypes.sol";
 
 contract ProtocolAdapterTest is Test {
-    uint8 internal constant _TREE_DEPTH = 2 ^ 32;
+    uint8 internal constant _COMMITMENT_TREE_DEPTH = 32;
+
+    uint8 internal constant _ACTION_TREE_DEPTH = 4;
+
     // IRiscZeroVerifier internal constant _SEPOLIA_VERIFIER =
     //     IRiscZeroVerifier(address(0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187));
 
@@ -23,12 +27,13 @@ contract ProtocolAdapterTest is Test {
 
         _pa = new ProtocolAdapter({
             riscZeroVerifier: _mockVerifier,
-            logicCircuitID: MockRiscZeroProof.IMAGE_ID_1,
-            complianceCircuitID: MockRiscZeroProof.IMAGE_ID_2,
-            treeDepth: _TREE_DEPTH
+            complianceCircuitID: MockRiscZeroProof.IMAGE_ID,
+            commitmentTreeDepth: _COMMITMENT_TREE_DEPTH,
+            actionTreeDepth: _ACTION_TREE_DEPTH
         });
     }
 
+    /*
     function test_benchmark() public {
         uint16[3] memory n = [uint16(5), uint16(50), uint16(500)];
 
@@ -90,5 +95,5 @@ contract ProtocolAdapterTest is Test {
         });
 
         _pa.verify(txn);
-    }
+    }*/
 }

@@ -3,9 +3,9 @@ pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
 
+import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
 import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
-import {MerkleTree} from "../../src/state/MerkleTree.sol";
 
 import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulatorMock.sol";
 import {MockTree} from "../mocks/MockTree.sol";

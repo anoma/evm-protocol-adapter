@@ -19,7 +19,7 @@ contract MockRiscZeroProofTest is Test {
         _MOCK_VERIFIER = new RiscZeroMockVerifier(MockRiscZeroProof.VERIFIER_SELECTOR);
 
         _proof = _MOCK_VERIFIER.mockProve({
-            imageId: MockRiscZeroProof.IMAGE_ID_1,
+            imageId: MockRiscZeroProof.IMAGE_ID,
             journalDigest: MockRiscZeroProof.JOURNAL_DIGEST
         });
     }
@@ -29,7 +29,7 @@ contract MockRiscZeroProofTest is Test {
         vm.expectRevert(VerificationFailed.selector);
         _MOCK_VERIFIER.verify({
             seal: _proof.seal,
-            imageId: MockRiscZeroProof.IMAGE_ID_2,
+            imageId: bytes32(uint256(123)),
             journalDigest: MockRiscZeroProof.JOURNAL_DIGEST
         });
     }
@@ -40,7 +40,7 @@ contract MockRiscZeroProofTest is Test {
         vm.expectRevert(VerificationFailed.selector, address(_MOCK_VERIFIER));
         _MOCK_VERIFIER.verify({
             seal: wrongSeal,
-            imageId: MockRiscZeroProof.IMAGE_ID_1,
+            imageId: MockRiscZeroProof.IMAGE_ID,
             journalDigest: MockRiscZeroProof.JOURNAL_DIGEST
         });
     }
@@ -54,7 +54,7 @@ contract MockRiscZeroProofTest is Test {
         );
         _MOCK_VERIFIER.verify({
             seal: abi.encode(wrongSelector),
-            imageId: MockRiscZeroProof.IMAGE_ID_1,
+            imageId: MockRiscZeroProof.IMAGE_ID,
             journalDigest: MockRiscZeroProof.JOURNAL_DIGEST
         });
     }
@@ -63,14 +63,14 @@ contract MockRiscZeroProofTest is Test {
         bytes32 wrongDigest = bytes32(0);
 
         vm.expectRevert(VerificationFailed.selector, address(_MOCK_VERIFIER));
-        _MOCK_VERIFIER.verify({seal: _proof.seal, imageId: MockRiscZeroProof.IMAGE_ID_1, journalDigest: wrongDigest});
+        _MOCK_VERIFIER.verify({seal: _proof.seal, imageId: MockRiscZeroProof.IMAGE_ID, journalDigest: wrongDigest});
     }
     /// @notice It should verify correct _proofs.
 
     function test_correctProof() public view {
         _MOCK_VERIFIER.verify({
             seal: _proof.seal,
-            imageId: MockRiscZeroProof.IMAGE_ID_1,
+            imageId: MockRiscZeroProof.IMAGE_ID,
             journalDigest: MockRiscZeroProof.JOURNAL_DIGEST
         });
     }
