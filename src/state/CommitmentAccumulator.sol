@@ -5,7 +5,7 @@ import {Arrays} from "@openzeppelin-contracts/utils/Arrays.sol";
 import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
 import {ICommitmentAccumulator} from "../interfaces/ICommitmentAccumulator.sol";
-import {MerkleTree} from "./MerkleTree.sol";
+import {MerkleTree} from "../libs/MerkleTree.sol";
 
 contract CommitmentAccumulator is ICommitmentAccumulator {
     using MerkleTree for MerkleTree.Tree;

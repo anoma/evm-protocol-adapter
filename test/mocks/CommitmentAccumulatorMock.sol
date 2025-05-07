@@ -3,8 +3,8 @@ pragma solidity ^0.8.27;
 
 import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
+import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
-import {MerkleTree} from "../../src/state/MerkleTree.sol";
 
 contract CommitmentAccumulatorMock is CommitmentAccumulator {
     using EnumerableSet for EnumerableSet.Bytes32Set;

@@ -6,9 +6,9 @@ import {Delta} from "../../src/proving/Delta.sol";
 
 library MockDelta {
     using Delta for uint256[2];
+
     /// @notice A message containing  the empty `bytes32` array.
     /// @dev Obtained from `abi.encode(new bytes32[](0))`.
-
     bytes internal constant MESSAGE = hex"0000000000000000000000000000000000000000000000000000000000000020"
         hex"0000000000000000000000000000000000000000000000000000000000000000";
 

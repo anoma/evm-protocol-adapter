@@ -17,10 +17,6 @@ library MerkleTree {
         bytes32[] _zeros;
     }
 
-    /// @notice The hash representing the empty leaf that is not expected to be part of the tree.
-    /// @dev Obtained from `sha256("EMPTY_LEAF")`.
-    bytes32 internal constant _EMPTY_LEAF_HASH = 0x283d1bb3a401a7e0302d0ffb9102c8fc1f4730c2715a2bfd46a9d9209d5965e0;
-
     error TreeCapacityExceeded();
     error NonExistentLeafIndex(uint256 index);
 
@@ -32,7 +28,7 @@ library MerkleTree {
     function setup(Tree storage self, uint8 treeDepth) internal returns (bytes32 initialRoot) {
         Arrays.unsafeSetLength(self._zeros, treeDepth);
 
-        bytes32 currentZero = _EMPTY_LEAF_HASH;
+        bytes32 currentZero = SHA256.EMPTY_HASH;
 
         for (uint256 i = 0; i < treeDepth; ++i) {
             Arrays.unsafeAccess(self._zeros, i).value = currentZero;
@@ -188,5 +184,30 @@ library MerkleTree {
     /// @return isLeft Whether the sibling is left or right.
     function isLeftSibling(uint256 directionBits, uint256 d) internal pure returns (bool isLeft) {
         isLeft = (directionBits >> d) & 1 == 0;
+    }
+
+    function computeRoot(bytes32[] memory leafs, uint256 treeDepth) internal pure returns (bytes32 root) {
+        uint256 totalLeafs = 1 << treeDepth; // 2^treeDepth
+
+        // Create array of full leaf set with padding if necessary
+        bytes32[] memory nodes = new bytes32[](totalLeafs);
+        for (uint256 i = 0; i < totalLeafs; ++i) {
+            if (i < leafs.length) {
+                nodes[i] = leafs[i];
+            } else {
+                nodes[i] = SHA256.EMPTY_HASH;
+            }
+        }
+
+        // Build the tree upward
+        uint256 currentSize = totalLeafs;
+        while (currentSize > 1) {
+            for (uint256 i = 0; i < currentSize / 2; ++i) {
+                nodes[i] = sha256(abi.encodePacked(nodes[2 * i], nodes[2 * i + 1]));
+            }
+            currentSize /= 2;
+        }
+
+        root = nodes[0]; // root
     }
 }
