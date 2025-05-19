@@ -18,13 +18,7 @@ import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 
 import {
-    Action,
-    ForwarderCalldata,
-    Resource,
-    Transaction,
-    TagLogicProofPair,
-    LogicProof,
-    ComplianceUnit
+    Action, ForwarderCalldata, Resource, Transaction, LogicProof, LogicInstance, ComplianceUnit
 } from "./Types.sol";
 
 contract ProtocolAdapter is
@@ -35,7 +29,7 @@ contract ProtocolAdapter is
     BlobStorage
 {
     using ComputableComponents for Resource;
-    using LogicProofs for TagLogicProofPair[];
+    using LogicProofs for LogicProof[];
 
     TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
     bytes32 internal immutable _COMPLIANCE_CIRCUIT_ID;
@@ -80,21 +74,21 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
-            uint256 nResources = action.tagLogicProofPairs.length;
+            uint256 nResources = action.logicProofs.length;
             for (uint256 j = 0; j < nResources; ++j) {
-                TagLogicProofPair calldata pair = action.tagLogicProofPairs[j];
+                LogicInstance calldata instance = action.logicProofs[j].instance;
 
-                if (pair.logicProof.instance.isConsumed) {
+                if (instance.isConsumed) {
                     // Nullifier non-existence was already checked in `_verify(transaction);` at the top.
-                    _addNullifierUnchecked(pair.tag);
+                    _addNullifierUnchecked(instance.tag);
                 } else {
                     // Commitment non-existence was already checked in `_verify(transaction);` at the top.
-                    newRoot = _addCommitmentUnchecked(pair.tag);
+                    newRoot = _addCommitmentUnchecked(instance.tag);
                 }
 
-                uint256 nBlobs = pair.logicProof.instance.appData.length;
+                uint256 nBlobs = instance.appData.length;
                 for (uint256 k = 0; k < nBlobs; ++j) {
-                    _storeBlob(pair.logicProof.instance.appData[k]);
+                    _storeBlob(instance.appData[k]);
                 }
             }
 
@@ -130,7 +124,7 @@ contract ProtocolAdapter is
 
         uint256 resCounter = 0;
         for (uint256 i = 0; i < nActions; ++i) {
-            resCounter += transaction.actions[i].tagLogicProofPairs.length;
+            resCounter += transaction.actions[i].logicProofs.length;
         }
 
         // Allocate the array.
@@ -166,7 +160,7 @@ contract ProtocolAdapter is
                     // Check the logic ref consistency
                     {
                         bytes32 nf = unit.instance.consumed.nullifier;
-                        LogicProof calldata logicProof = action.tagLogicProofPairs.lookup(nf);
+                        LogicProof calldata logicProof = action.logicProofs.lookup(nf);
 
                         if (unit.instance.consumed.logicRef != logicProof.logicRef) {
                             revert LogicRefMismatch({
@@ -179,7 +173,7 @@ contract ProtocolAdapter is
                     }
                     {
                         bytes32 cm = unit.instance.created.commitment;
-                        LogicProof calldata logicProof = action.tagLogicProofPairs.lookup(cm);
+                        LogicProof calldata logicProof = action.logicProofs.lookup(cm);
 
                         if (unit.instance.created.logicRef != logicProof.logicRef) {
                             revert LogicRefMismatch({
@@ -198,16 +192,16 @@ contract ProtocolAdapter is
 
             // Logic Proofs
             {
-                uint256 nResources = action.tagLogicProofPairs.length;
+                uint256 nResources = action.logicProofs.length;
 
                 bytes32[] memory actionTags = new bytes32[](nResources);
                 for (uint256 j = 0; j < nResources; ++j) {
-                    actionTags[j] = action.tagLogicProofPairs[j].tag;
+                    actionTags[j] = action.logicProofs[j].instance.tag;
                 }
                 bytes32 computedActionTreeRoot = MerkleTree.computeRoot(actionTags, _ACTION_TREE_DEPTH);
 
                 for (uint256 j = 0; j < nResources; ++j) {
-                    LogicProof calldata proof = action.tagLogicProofPairs[j].logicProof;
+                    LogicProof calldata proof = action.logicProofs[j];
 
                     // Check root consistency
                     if (proof.instance.root != computedActionTreeRoot) {
@@ -257,7 +251,7 @@ contract ProtocolAdapter is
 
                 // Lookup the first appData entry.
                 bytes32 actualAppDataHash =
-                    keccak256(abi.encode(action.tagLogicProofPairs.lookup(carrier.commitment()).instance.appData[0]));
+                    keccak256(abi.encode(action.logicProofs.lookup(carrier.commitment()).instance.appData[0]));
 
                 if (actualAppDataHash != expectedAppDataHash) {
                     revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});

@@ -29,21 +29,9 @@ struct Transaction {
 }
 
 struct Action {
-    TagLogicProofPair[] tagLogicProofPairs;
+    LogicProof[] logicProofs;
     ComplianceUnit[] complianceUnits;
     ResourceForwarderCalldataPair[] resourceCalldataPairs;
-}
-
-//struct DeltaProof {
-//    bytes delta; // Type: DeltaHash
-//    bytes32 deltaVerifyingKey; // NOTE by Xuyang: This is currently not //used in SRM.
-//}
-
-struct LogicInstance {
-    bytes32 tag;
-    bool isConsumed;
-    bytes32 root;
-    ExpirableBlob[] appData;
 }
 
 struct LogicProof {
@@ -52,9 +40,11 @@ struct LogicProof {
     bytes32 logicRef; // logicVerifyingKeyOuter;
 }
 
-struct TagLogicProofPair {
+struct LogicInstance {
     bytes32 tag;
-    LogicProof logicProof;
+    bool isConsumed;
+    bytes32 root;
+    ExpirableBlob[] appData;
 }
 
 struct ComplianceUnit {
