@@ -1,6 +1,7 @@
 # EVM Protocol Adapter
 
-For more information on the EVM protocol adapter, find the related 
+For more information on the EVM protocol adapter, find the related
+
 - [Anoma Research Day talk](https://www.youtube.com/watch?v=rKFZsOw360U)
 - [Anoma Specs Page](https://specs.anoma.net/latest/arch/integrations/adapters/evm.html)
 
