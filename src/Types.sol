@@ -60,7 +60,6 @@ struct TagLogicProofPair {
 struct ComplianceUnit {
     bytes proof;
     ComplianceInstance instance;
-    bytes32 verifyingKey;
 }
 
 struct ComplianceInstance {

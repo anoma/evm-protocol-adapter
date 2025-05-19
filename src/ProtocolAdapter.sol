@@ -160,7 +160,7 @@ contract ProtocolAdapter is
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
                         seal: unit.proof,
                         imageId: _COMPLIANCE_CIRCUIT_ID,
-                        journalDigest: sha256(abi.encode(unit.verifyingKey, unit.instance))
+                        journalDigest: sha256(abi.encode(unit.instance))
                     });
 
                     // Check the logic ref consistency
