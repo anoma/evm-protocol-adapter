@@ -11,6 +11,3 @@
 	path = lib/elliptic-curve-solidity
 	url = https://github.com/witnet/elliptic-curve-solidity
 	branch = master
-[submodule "lib/forge-deep"]
-	path = lib/forge-deep
-	url = https://github.com/moodlezoup/forge-deep
