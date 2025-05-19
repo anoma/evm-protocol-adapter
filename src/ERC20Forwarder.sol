@@ -19,14 +19,7 @@ contract ERC20Forwarder is ForwarderBase {
         _ERC20_CONTRACT = erc20;
     }
 
-    // TODO make generic proxy, allow native ETH transfers
     function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
         output = _ERC20_CONTRACT.functionCall(input);
     }
-
-    // Native ETH transfer
-    // TODO! The msg.sender must call directly, but the protocol adapter is the caller. This won't work.
-    //receive() external payable {
-    //    emit NativeTokenDeposited(msg.sender, msg.value);
-    //}
 }

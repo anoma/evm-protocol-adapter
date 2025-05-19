@@ -3,8 +3,6 @@ pragma solidity ^0.8.27;
 
 import {SHA256} from "../../src/libs/SHA256.sol";
 
-import {MerkleTree} from "../../src/state/MerkleTree.sol";
-
 contract MockTree {
     uint8 internal constant _TREE_DEPTH = 2;
     uint256 internal constant _N_LEAFS = 2 ** _TREE_DEPTH;
@@ -33,7 +31,7 @@ contract MockTree {
             }
 
             for (uint256 j = i; j < _N_ROOTS - 1; ++j) {
-                _leaves[i][j] = MerkleTree._EMPTY_LEAF_HASH;
+                _leaves[i][j] = SHA256.EMPTY_HASH;
             }
 
             _nodes[i][0] = SHA256.hash(_leaves[i][0], _leaves[i][1]);

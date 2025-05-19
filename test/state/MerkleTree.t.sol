@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
 
-import {MerkleTree} from "../../src/state/MerkleTree.sol";
+import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {MockTree} from "../mocks/MockTree.sol";
 
 contract MerkleTreeTest is Test, MockTree {

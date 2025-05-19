@@ -2,37 +2,29 @@
 pragma solidity ^0.8.27;
 
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
-import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 import {IRiscZeroVerifier as TrustedRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
-
-import {MockDelta} from "../test/mocks/MockDelta.sol"; // TODO remove
 
 import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
-import {AppData} from "./libs/AppData.sol";
-import {ArrayLookup} from "./libs/ArrayLookup.sol";
 import {ComputableComponents} from "./libs/ComputableComponents.sol";
-import {Reference} from "./libs/Reference.sol";
+import {MerkleTree} from "./libs/MerkleTree.sol";
 
 import {Delta} from "./proving/Delta.sol";
 import {LogicProofs} from "./proving/Logic.sol";
 import {BlobStorage} from "./state/BlobStorage.sol";
 import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
+
 import {NullifierSet} from "./state/NullifierSet.sol";
 
 import {
     Action,
     ForwarderCalldata,
     Resource,
-    TagAppDataPair,
     Transaction,
-    LogicInstance,
     TagLogicProofPair,
-    LogicRefProofPair,
-    ComplianceUnit,
-    DeletionCriterion,
-    ExpirableBlob
+    LogicProof,
+    ComplianceUnit
 } from "./Types.sol";
 
 contract ProtocolAdapter is
@@ -42,40 +34,36 @@ contract ProtocolAdapter is
     NullifierSet,
     BlobStorage
 {
-    using ArrayLookup for bytes32[];
     using ComputableComponents for Resource;
-    using Reference for bytes;
-    using AppData for TagAppDataPair[];
     using LogicProofs for TagLogicProofPair[];
-    using EnumerableSet for EnumerableSet.Bytes32Set;
 
     TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
     bytes32 internal immutable _COMPLIANCE_CIRCUIT_ID;
-    bytes32 internal immutable _LOGIC_CIRCUIT_ID;
+    uint8 internal immutable _ACTION_TREE_DEPTH;
 
     uint256 private _txCount;
-
-    event TransactionExecuted(uint256 indexed id, Transaction transaction);
 
     error InvalidRootRef(bytes32 root);
     error InvalidNullifierRef(bytes32 nullifier);
     error InvalidCommitmentRef(bytes32 commitment);
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
 
+    error RootMismatch(bytes32 expected, bytes32 actual);
+    error LogicRefMismatch(bytes32 expected, bytes32 actual);
+
     error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierAppDataMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierLabelMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierCommitmentNotFound(bytes32 commitment);
-    error TransactionUnbalanced(uint256 expected, uint256 actual);
 
     constructor(
         TrustedRiscZeroVerifier riscZeroVerifier,
-        bytes32 logicCircuitID,
         bytes32 complianceCircuitID,
-        uint8 treeDepth
-    ) CommitmentAccumulator(treeDepth) {
+        uint8 commitmentTreeDepth,
+        uint8 actionTreeDepth
+    ) CommitmentAccumulator(commitmentTreeDepth) {
         _TRUSTED_RISC_ZERO_VERIFIER = riscZeroVerifier;
-        _LOGIC_CIRCUIT_ID = logicCircuitID;
+        _ACTION_TREE_DEPTH = actionTreeDepth;
         _COMPLIANCE_CIRCUIT_ID = complianceCircuitID;
     }
 
@@ -86,33 +74,32 @@ contract ProtocolAdapter is
 
         emit TransactionExecuted({id: ++_txCount, transaction: transaction});
 
-        uint256 n = transaction.actions.length;
-        uint256 m;
-        uint256 j;
         bytes32 newRoot = 0;
-        for (uint256 i = 0; i < n; ++i) {
+
+        uint256 nActions = transaction.actions.length;
+        for (uint256 i = 0; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
-            m = action.tagAppDataPairs.length;
-            for (j = 0; j < m; ++j) {
-                _storeBlob(action.tagAppDataPairs[j].appData);
+            uint256 nResources = action.tagLogicProofPairs.length;
+            for (uint256 j = 0; j < nResources; ++j) {
+                TagLogicProofPair calldata pair = action.tagLogicProofPairs[j];
+
+                if (pair.logicProof.instance.isConsumed) {
+                    // Nullifier non-existence was already checked in `_verify(transaction);` at the top.
+                    _addNullifierUnchecked(pair.tag);
+                } else {
+                    // Commitment non-existence was already checked in `_verify(transaction);` at the top.
+                    newRoot = _addCommitmentUnchecked(pair.tag);
+                }
+
+                uint256 nBlobs = pair.logicProof.instance.appData.length;
+                for (uint256 k = 0; k < nBlobs; ++j) {
+                    _storeBlob(pair.logicProof.instance.appData[k]);
+                }
             }
 
-            m = action.nullifiers.length;
-            for (j = 0; j < m; ++j) {
-                // Nullifier non-existence was already checked in `_verify(transaction);` at the top.
-                _addNullifierUnchecked(action.nullifiers[j]);
-            }
-
-            m = action.commitments.length;
-
-            for (j = 0; j < m; ++j) {
-                // Commitment non-existence was already checked in `_verify(transaction);` at the top.
-                newRoot = _addCommitmentUnchecked(action.commitments[j]);
-            }
-
-            m = action.resourceCalldataPairs.length;
-            for (j = 0; j < m; ++j) {
+            uint256 nForwarderCalls = action.resourceCalldataPairs.length;
+            for (uint256 j = 0; j < nForwarderCalls; ++j) {
                 _executeForwarderCall(action.resourceCalldataPairs[j].call);
             }
         }
@@ -125,7 +112,6 @@ contract ProtocolAdapter is
         _verify(transaction);
     }
 
-    // TODO Consider DoS attacks https://detectors.auditbase.com/avoid-external-calls-in-unbounded-loops-solidity
     // slither-disable-next-line calls-loop
     function _executeForwarderCall(ForwarderCalldata calldata call) internal {
         bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
@@ -138,138 +124,121 @@ contract ProtocolAdapter is
     // solhint-disable-next-line function-max-lines
     // slither-disable-next-line calls-loop
     function _verify(Transaction calldata transaction) internal view {
-        // Can also be named DeltaHash (which is what Yulia does).
         uint256[2] memory transactionDelta = Delta.zero();
 
-        // Helper variable
-        uint256 resourceCount = 0;
-
         uint256 nActions = transaction.actions.length;
-        for (uint256 i; i < nActions; ++i) {
-            resourceCount += transaction.actions[i].commitments.length;
-            resourceCount += transaction.actions[i].nullifiers.length;
+
+        uint256 resCounter = 0;
+        for (uint256 i = 0; i < nActions; ++i) {
+            resCounter += transaction.actions[i].tagLogicProofPairs.length;
         }
-        bytes32[] memory tags = new bytes32[](resourceCount);
 
-        // Reset resource count for later use.
-        resourceCount = 0;
+        // Allocate the array.
+        bytes32[] memory tags = new bytes32[](resCounter);
 
-        uint256 len;
+        // Reset the resource counter.
+        resCounter = 0;
+
         for (uint256 i; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
             _verifyForwarderCalls(action);
 
             // Compliance Proofs
-            len = action.complianceUnits.length;
-            for (uint256 j; j < len; ++j) {
-                ComplianceUnit calldata unit = action.complianceUnits[j];
+            {
+                uint256 nCUs = action.complianceUnits.length;
+                for (uint256 j = 0; j < nCUs; ++j) {
+                    ComplianceUnit calldata unit = action.complianceUnits[j];
 
-                // Check consumed resources
-                // TODO This check can be removed after Xuyang's and Artem's specs change proposal gets merged.
-                if (!transaction.roots.contains(unit.instance.consumed.rootRef)) {
-                    revert InvalidRootRef(unit.instance.consumed.rootRef);
+                    // Check consumed resources
+                    _checkRootPreExistence(unit.instance.consumed.root);
+                    _checkNullifierNonExistence(unit.instance.consumed.nullifier);
+
+                    // Check created resources
+                    _checkCommitmentNonExistence(unit.instance.created.commitment);
+
+                    _TRUSTED_RISC_ZERO_VERIFIER.verify({
+                        seal: unit.proof,
+                        imageId: _COMPLIANCE_CIRCUIT_ID,
+                        journalDigest: sha256(abi.encode(unit.verifyingKey, unit.instance))
+                    });
+
+                    // Check the logic ref consistency
+                    {
+                        bytes32 nf = unit.instance.consumed.nullifier;
+                        LogicProof calldata logicProof = action.tagLogicProofPairs.lookup(nf);
+
+                        if (unit.instance.consumed.logicRef != logicProof.logicRef) {
+                            revert LogicRefMismatch({
+                                expected: logicProof.logicRef,
+                                actual: unit.instance.consumed.logicRef
+                            });
+                        }
+                        // solhint-disable-next-line  gas-increment-by-one
+                        tags[resCounter++] = nf;
+                    }
+                    {
+                        bytes32 cm = unit.instance.created.commitment;
+                        LogicProof calldata logicProof = action.tagLogicProofPairs.lookup(cm);
+
+                        if (unit.instance.created.logicRef != logicProof.logicRef) {
+                            revert LogicRefMismatch({
+                                expected: logicProof.logicRef,
+                                actual: unit.instance.created.logicRef
+                            });
+                        }
+                        // solhint-disable-next-line  gas-increment-by-one
+                        tags[resCounter++] = cm;
+                    }
+
+                    // Prepare delta proof
+                    transactionDelta = Delta.add({p1: transactionDelta, p2: unit.instance.unitDelta});
                 }
-                _checkRootPreExistence(unit.instance.consumed.rootRef);
-
-                // TODO This check can be removed after Xuyang's and Artem's specs change proposal gets merged.
-                if (!action.nullifiers.contains(unit.instance.consumed.nullifierRef)) {
-                    revert InvalidNullifierRef(unit.instance.consumed.nullifierRef);
-                }
-                _checkNullifierNonExistence(unit.instance.consumed.nullifierRef);
-
-                // Check created resources
-                // TODO This check can be removed after Xuyang's and Artem's specs change proposal gets merged.
-                if (!action.commitments.contains(unit.instance.created.commitmentRef)) {
-                    revert InvalidCommitmentRef(unit.instance.created.commitmentRef);
-                }
-                _checkCommitmentNonExistence(unit.instance.created.commitmentRef);
-
-                _TRUSTED_RISC_ZERO_VERIFIER.verify({
-                    seal: unit.proof,
-                    imageId: _COMPLIANCE_CIRCUIT_ID,
-                    journalDigest: sha256(abi.encode(unit.verifyingKey, unit.instance))
-                });
-
-                // Prepare delta proof
-                transactionDelta = Delta.add({p1: transactionDelta, p2: unit.instance.unitDelta});
             }
 
             // Logic Proofs
-            LogicInstance memory instance = LogicInstance({
-                tag: bytes32(0),
-                isConsumed: true,
-                consumed: action.nullifiers,
-                created: action.commitments,
-                tagSpecificAppData: ExpirableBlob({deletionCriterion: DeletionCriterion.Immediately, blob: bytes("")})
-            });
-            LogicRefProofPair memory logicRefProofPair;
+            {
+                uint256 nResources = action.tagLogicProofPairs.length;
 
-            // Check consumed resources
-            len = action.nullifiers.length;
-            for (uint256 j; j < len; ++j) {
-                bytes32 tag = action.nullifiers[j];
-
-                tags[j] = tag;
-                ++resourceCount;
-
-                instance.tag = tag;
-                instance.tagSpecificAppData = action.tagAppDataPairs.lookupCalldata(tag);
-
-                {
-                    logicRefProofPair = action.logicProofs.lookup(tag);
-
-                    _TRUSTED_RISC_ZERO_VERIFIER.verify({
-                        seal: logicRefProofPair.proof,
-                        imageId: _LOGIC_CIRCUIT_ID,
-                        journalDigest: sha256(abi.encode( /*verifying key*/ logicRefProofPair.logicRef, instance))
-                    });
+                bytes32[] memory actionTags = new bytes32[](nResources);
+                for (uint256 j = 0; j < nResources; ++j) {
+                    actionTags[j] = action.tagLogicProofPairs[j].tag;
                 }
-            }
-            // Check created resources
-            instance.isConsumed = false;
+                bytes32 computedActionTreeRoot = MerkleTree.computeRoot(actionTags, _ACTION_TREE_DEPTH);
 
-            len = action.commitments.length;
-            for (uint256 j; j < len; ++j) {
-                bytes32 tag = action.commitments[j];
+                for (uint256 j = 0; j < nResources; ++j) {
+                    LogicProof calldata proof = action.tagLogicProofPairs[j].logicProof;
 
-                tags[action.nullifiers.length + j] = tag;
-                ++resourceCount;
+                    // Check root consistency
+                    if (proof.instance.root != computedActionTreeRoot) {
+                        revert RootMismatch({expected: computedActionTreeRoot, actual: proof.instance.root});
+                    }
 
-                instance.tag = tag;
-                instance.tagSpecificAppData = action.tagAppDataPairs.lookup(tag);
-
-                {
-                    logicRefProofPair = action.logicProofs.lookup(tag);
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
-                        seal: logicRefProofPair.proof,
-                        imageId: _LOGIC_CIRCUIT_ID,
-                        journalDigest: sha256(abi.encode( /*verifying key*/ logicRefProofPair.logicRef, instance))
+                        seal: proof.proof,
+                        imageId: proof.logicRef,
+                        journalDigest: sha256(abi.encode(proof.instance))
                     });
                 }
             }
         }
 
         // Delta Proof
-        // TODO: THIS IS A TEMPORARY MOCK PROOF AND MUST BE REMOVED.
-        // NOTE: The `transactionHash(tags)` and `transactionDelta` are not used here.
-        _transactionHash(tags);
-        MockDelta.verify({deltaProof: transaction.deltaProof});
-        /*
-        Delta.verify({
-            transactionHash: _transactionHash(tags),
-            transactionDelta: transactionDelta,
-            deltaProof: transaction.deltaProof
-         });
-        */
+        {
+            Delta.verify({
+                transactionHash: sha256(abi.encode(tags)),
+                transactionDelta: transactionDelta,
+                deltaProof: transaction.deltaProof
+            });
+        }
     }
 
     // slither-disable-next-line calls-loop
     function _verifyForwarderCalls(Action calldata action) internal view {
-        uint256 len = action.resourceCalldataPairs.length;
-        for (uint256 j; j < len; ++j) {
-            Resource calldata carrier = action.resourceCalldataPairs[j].carrier;
-            ForwarderCalldata calldata call = action.resourceCalldataPairs[j].call;
+        uint256 nForwarderCalls = action.resourceCalldataPairs.length;
+        for (uint256 i = 0; i < nForwarderCalls; ++i) {
+            Resource calldata carrier = action.resourceCalldataPairs[i].carrier;
+            ForwarderCalldata calldata call = action.resourceCalldataPairs[i].call;
 
             // Kind integrity check
             {
@@ -286,16 +255,14 @@ contract ProtocolAdapter is
             {
                 bytes32 expectedAppDataHash = keccak256(abi.encode(call.untrustedForwarder, call.input, call.output));
 
-                bytes32 actualAppDataHash = keccak256(action.tagAppDataPairs.lookup(carrier.commitment()).blob);
+                // Lookup the first appData entry.
+                bytes32 actualAppDataHash =
+                    keccak256(abi.encode(action.tagLogicProofPairs.lookup(carrier.commitment()).instance.appData[0]));
 
                 if (actualAppDataHash != expectedAppDataHash) {
                     revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});
                 }
             }
         }
-    }
-
-    function _transactionHash(bytes32[] memory tags) internal pure returns (bytes32 txHash) {
-        txHash = sha256(abi.encode(tags));
     }
 }
