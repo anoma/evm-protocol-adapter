@@ -24,7 +24,6 @@ struct Resource {
 
 struct Transaction {
     Action[] actions;
-    // DeltaProof deltaProof
     bytes deltaProof;
 }
 
