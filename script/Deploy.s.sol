@@ -19,7 +19,7 @@ contract Deploy is BaseScript {
         uint8 actionTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
 
         protocolAdapter = address(
-            new ProtocolAdapter{salt: sha256("ProtocolAdapter")}({
+            new ProtocolAdapter{salt: sha256("ProtocolAdapterDraft")}({
                 riscZeroVerifier: trustedSepoliaVerifier,
                 complianceCircuitID: complianceCircuitID,
                 commitmentTreeDepth: commitmentTreeDepth,
