@@ -40,7 +40,8 @@ struct LogicProof {
     bytes32 logicRef; // logicVerifyingKeyOuter;
 }
 
-/// @param ciphertext Encrypted information for the receiver of the resource that will be emitted as an event. The ciphertext contains, at least, the resource plaintext and optional other application specific data.
+/// @param ciphertext Encrypted information for the receiver of the resource that will be emitted as an event.
+/// The ciphertext contains, at least, the resource plaintext and optional other application specific data.
 struct LogicInstance {
     bytes32 tag;
     bool isConsumed;
