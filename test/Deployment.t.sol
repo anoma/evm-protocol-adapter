@@ -17,6 +17,6 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_run_deploys_deterministically() public view {
-        assertEq(address(_pa), 0x7357F3235e49eA2F3e228CEABE394B155879Dc7D);
+        assertEq(address(_pa), 0xAF21C8A4d489610F42AABC883e66BE3d651E5d52);
     }
 }
