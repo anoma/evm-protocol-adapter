@@ -44,7 +44,7 @@ struct LogicProof {
 struct LogicInstance {
     bytes32 tag;
     bool isConsumed;
-    bytes32 root;
+    bytes32 actionTreeRoot;
     bytes ciphertext;
     ExpirableBlob[] appData;
 }
@@ -55,20 +55,13 @@ struct ComplianceUnit {
 }
 
 struct ComplianceInstance {
-    ConsumedRefs consumed;
-    CreatedRefs created;
-    uint256[2] unitDelta;
-}
-
-struct ConsumedRefs {
-    bytes32 nullifier;
-    bytes32 root;
-    bytes32 logicRef;
-}
-
-struct CreatedRefs {
-    bytes32 commitment;
-    bytes32 logicRef;
+    bytes32 consumedNullifier;
+    bytes32 consumedLogicRef;
+    bytes32 createdCommitment;
+    bytes32 createdLogicRef;
+    bytes32 commitmentTreeRoot;
+    uint256 unitDeltaX;
+    uint256 unitDeltaY;
 }
 
 struct ResourceForwarderCalldataPair {

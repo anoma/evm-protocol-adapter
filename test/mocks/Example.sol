@@ -9,8 +9,8 @@ import {
     ExpirableBlob,
     ComplianceUnit,
     ComplianceInstance,
-    ConsumedRefs,
-    CreatedRefs,
+    //    ConsumedRefs,
+    //    CreatedRefs,
     ResourceForwarderCalldataPair
 } from "../../src/Types.sol";
 
@@ -18,8 +18,8 @@ library Example {
     function transaction() internal pure returns (Transaction memory txn) {
         bytes32 initialRoot = 0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3;
 
-        bytes32 tagConsumed = 0x8ca5b7b5456e1e48fac6c88661a9c409dd537caac4d81243551fe76d699a6aa5;
-        bytes32 tagCreated = 0x616840899b65b5d2892c40fd674a7d37e99b9909f608b8e5101e27496e0dcc87;
+        bytes32 consumedNullfier = 0x8ca5b7b5456e1e48fac6c88661a9c409dd537caac4d81243551fe76d699a6aa5;
+        bytes32 createdCommitment = 0x616840899b65b5d2892c40fd674a7d37e99b9909f608b8e5101e27496e0dcc87;
 
         bytes32 actionTreeRoot = 0x1126dde6b94ece75e1fc727acb0563dbc4798fdc10a221a45b66c84407f976f2;
 
@@ -31,16 +31,16 @@ library Example {
 
         LogicInstance[] memory logicInstances = new LogicInstance[](2);
         logicInstances[0] = LogicInstance({
-            tag: tagConsumed,
+            tag: consumedNullfier,
             isConsumed: true,
-            root: actionTreeRoot,
+            actionTreeRoot: actionTreeRoot,
             ciphertext: emptyCiphertext,
             appData: emptyAppData
         });
         logicInstances[1] = LogicInstance({
-            tag: tagCreated,
+            tag: createdCommitment,
             isConsumed: false,
-            root: actionTreeRoot,
+            actionTreeRoot: actionTreeRoot,
             ciphertext: emptyCiphertext,
             appData: emptyAppData
         });
@@ -60,13 +60,20 @@ library Example {
 
         ComplianceInstance[] memory complianceInstances = new ComplianceInstance[](1);
         complianceInstances[0] = ComplianceInstance({
-            consumed: ConsumedRefs({nullifier: tagConsumed, root: initialRoot, logicRef: logicRef}),
-            created: CreatedRefs({commitment: tagCreated, logicRef: logicRef}),
-            unitDelta: [
-                uint256(68345706717893827406938840812601435919927844687196557197887884363619078926895),
-                uint256(44937362286900469409801668534830481434225669291263754075873431407733928972953)
-            ]
+            consumedNullifier: consumedNullfier,
+            consumedLogicRef: logicRef,
+            createdCommitment: createdCommitment,
+            createdLogicRef: logicRef,
+            commitmentTreeRoot: initialRoot,
+            unitDeltaX: uint256(68345706717893827406938840812601435919927844687196557197887884363619078926895),
+            unitDeltaY: uint256(44937362286900469409801668534830481434225669291263754075873431407733928972953)
         });
+        //consumed: ConsumedRefs({nullifier: tagConsumed, root: initialRoot, logicRef: logicRef}),
+        //created: CreatedRefs({commitment: tagCreated, logicRef: logicRef}),
+        //unitDelta: [
+        //    uint256(68345706717893827406938840812601435919927844687196557197887884363619078926895),
+        //    uint256(44937362286900469409801668534830481434225669291263754075873431407733928972953)
+        //]
 
         ComplianceUnit[] memory complianceUnits = new ComplianceUnit[](1);
         complianceUnits[0] = ComplianceUnit({

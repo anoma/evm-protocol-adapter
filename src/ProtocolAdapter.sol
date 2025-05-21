@@ -145,11 +145,11 @@ contract ProtocolAdapter is
                     ComplianceUnit calldata unit = action.complianceUnits[j];
 
                     // Check consumed resources
-                    _checkRootPreExistence(unit.instance.consumed.root);
-                    _checkNullifierNonExistence(unit.instance.consumed.nullifier);
+                    _checkRootPreExistence(unit.instance.commitmentTreeRoot);
+                    _checkNullifierNonExistence(unit.instance.consumedNullifier);
 
                     // Check created resources
-                    _checkCommitmentNonExistence(unit.instance.created.commitment);
+                    _checkCommitmentNonExistence(unit.instance.createdCommitment);
 
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
                         seal: unit.proof,
@@ -159,26 +159,26 @@ contract ProtocolAdapter is
 
                     // Check the logic ref consistency
                     {
-                        bytes32 nf = unit.instance.consumed.nullifier;
+                        bytes32 nf = unit.instance.consumedNullifier;
                         LogicProof calldata logicProof = action.logicProofs.lookup(nf);
 
-                        if (unit.instance.consumed.logicRef != logicProof.logicRef) {
+                        if (unit.instance.consumedLogicRef != logicProof.logicRef) {
                             revert LogicRefMismatch({
                                 expected: logicProof.logicRef,
-                                actual: unit.instance.consumed.logicRef
+                                actual: unit.instance.consumedLogicRef
                             });
                         }
                         // solhint-disable-next-line  gas-increment-by-one
                         tags[resCounter++] = nf;
                     }
                     {
-                        bytes32 cm = unit.instance.created.commitment;
+                        bytes32 cm = unit.instance.createdCommitment;
                         LogicProof calldata logicProof = action.logicProofs.lookup(cm);
 
-                        if (unit.instance.created.logicRef != logicProof.logicRef) {
+                        if (unit.instance.createdLogicRef != logicProof.logicRef) {
                             revert LogicRefMismatch({
                                 expected: logicProof.logicRef,
-                                actual: unit.instance.created.logicRef
+                                actual: unit.instance.createdLogicRef
                             });
                         }
                         // solhint-disable-next-line  gas-increment-by-one
@@ -186,7 +186,8 @@ contract ProtocolAdapter is
                     }
 
                     // Prepare delta proof
-                    transactionDelta = Delta.add({p1: transactionDelta, p2: unit.instance.unitDelta});
+                    transactionDelta =
+                        Delta.add({p1: transactionDelta, p2: [unit.instance.unitDeltaX, unit.instance.unitDeltaY]});
                 }
             }
 
@@ -204,8 +205,8 @@ contract ProtocolAdapter is
                     LogicProof calldata proof = action.logicProofs[j];
 
                     // Check root consistency
-                    if (proof.instance.root != computedActionTreeRoot) {
-                        revert RootMismatch({expected: computedActionTreeRoot, actual: proof.instance.root});
+                    if (proof.instance.actionTreeRoot != computedActionTreeRoot) {
+                        revert RootMismatch({expected: computedActionTreeRoot, actual: proof.instance.actionTreeRoot});
                     }
 
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
