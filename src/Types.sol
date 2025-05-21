@@ -55,13 +55,20 @@ struct ComplianceUnit {
 }
 
 struct ComplianceInstance {
-    bytes32 consumedNullifier;
-    bytes32 consumedLogicRef;
-    bytes32 createdCommitment;
-    bytes32 createdLogicRef;
+    ConsumedRefs consumed;
+    CreatedRefs created;
+    uint256[2] unitDelta;
+}
+
+struct ConsumedRefs {
+    bytes32 nullifier;
     bytes32 commitmentTreeRoot;
-    uint256 unitDeltaX;
-    uint256 unitDeltaY;
+    bytes32 logicRef;
+}
+
+struct CreatedRefs {
+    bytes32 commitment;
+    bytes32 logicRef;
 }
 
 struct ResourceForwarderCalldataPair {
