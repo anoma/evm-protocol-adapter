@@ -58,12 +58,22 @@ contract ComplianceProofTest is Test {
 
         ComplianceUnit memory cu = Example.complianceUnit();
 
-        console.logBytes(abi.encodePacked(cu.instance));
+        bytes memory encodedInstance = abi.encode(
+            cu.instance.consumed.nullifier,
+            cu.instance.consumed.logicRef,
+            cu.instance.created.commitment,
+            cu.instance.created.logicRef,
+            cu.instance.consumed.commitmentTreeRoot,
+            cu.instance.unitDelta[0],
+            cu.instance.unitDelta[1]
+        );
+
+        console.logBytes(encodedInstance);
 
         _sepoliaVerifierRouter.verify({
             seal: cu.proof,
             imageId: _complianceCircuitID,
-            journalDigest: sha256(abi.encode(cu.instance))
+            journalDigest: sha256(encodedInstance)
         });
     }
 }
