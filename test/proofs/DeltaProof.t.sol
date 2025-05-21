@@ -5,9 +5,9 @@ import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
 import {Test} from "forge-std/Test.sol";
 
 import {Delta} from "../../src/proving/Delta.sol";
-import {MockDelta} from "./MockDelta.sol";
+import {MockDelta} from "../mocks/MockDelta.sol";
 
-contract MockDeltaTest is Test {
+contract DeltaProofTest is Test {
     function test_signatureIntegrity() public pure {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(MockDelta.SIGNER_PRIVATE_KEY, MockDelta.MESSAGE_HASH);
         assertEq(r, MockDelta.R);
