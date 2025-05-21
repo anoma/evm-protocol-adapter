@@ -29,7 +29,6 @@ library Example {
         bytes memory emptyCiphertext = "";
         ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
 
-        Action[] memory actions = new Action[](1);
         LogicInstance[] memory logicInstances = new LogicInstance[](2);
         logicInstances[0] = LogicInstance({
             tag: tagConsumed,
@@ -75,6 +74,7 @@ library Example {
             instance: complianceInstances[0]
         });
 
+        Action[] memory actions = new Action[](1);
         actions[0] = Action({
             logicProofs: logicProofs,
             complianceUnits: complianceUnits,
