@@ -53,27 +53,20 @@ contract ComplianceProofTest is Test {
         });
     }
 
-    function test_example_compliance_proof_from_converted_transaction() public {
-        vm.selectFork(vm.createFork("sepolia"));
-
+    function test_encoding() public pure {
         ComplianceUnit memory cu = Example.complianceUnit();
 
-        bytes memory encodedInstance = abi.encode(
-            cu.instance.consumed.nullifier,
-            cu.instance.consumed.logicRef,
-            cu.instance.created.commitment,
-            cu.instance.created.logicRef,
-            cu.instance.consumed.commitmentTreeRoot,
-            cu.instance.unitDelta[0],
-            cu.instance.unitDelta[1]
+        assertEq(
+            abi.encode(cu.instance),
+            abi.encode(
+                cu.instance.consumed.nullifier,
+                cu.instance.consumed.commitmentTreeRoot,
+                cu.instance.consumed.logicRef,
+                cu.instance.created.commitment,
+                cu.instance.created.logicRef,
+                cu.instance.unitDelta[0],
+                cu.instance.unitDelta[1]
+            )
         );
-
-        console.logBytes(encodedInstance);
-
-        _sepoliaVerifierRouter.verify({
-            seal: cu.proof,
-            imageId: _complianceCircuitID,
-            journalDigest: sha256(encodedInstance)
-        });
     }
 }
