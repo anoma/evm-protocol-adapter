@@ -25,6 +25,7 @@ contract ComplianceProofTest is Test {
         string memory path = "./script/constructor-args.txt";
         _sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
         _complianceCircuitID = vm.parseBytes32(vm.readLine(path));
+        console.logBytes32(_complianceCircuitID);
 
         _mockVerifier = new RiscZeroMockVerifier({selector: bytes4(ExampleComplianceProof.SEAL)});
         _mockReceipt = _mockVerifier.mockProve({
@@ -34,7 +35,7 @@ contract ComplianceProofTest is Test {
         _mockSeal = _mockReceipt.seal;
     }
 
-    function test_real_complianceProof() public {
+    function testFork_real_complianceProof() public {
         // Fork Sepolia
         vm.selectFork(vm.createFork("sepolia"));
 
@@ -60,13 +61,39 @@ contract ComplianceProofTest is Test {
             abi.encode(cu.instance),
             abi.encode(
                 cu.instance.consumed.nullifier,
-                cu.instance.consumed.commitmentTreeRoot,
                 cu.instance.consumed.logicRef,
+                cu.instance.consumed.commitmentTreeRoot,
                 cu.instance.created.commitment,
                 cu.instance.created.logicRef,
                 cu.instance.unitDelta[0],
                 cu.instance.unitDelta[1]
             )
         );
+    }
+
+    function testFork_example_compliance_proof_from_converted_transaction() public {
+        // Fork Sepolia
+        vm.selectFork(vm.createFork("sepolia"));
+
+        ComplianceUnit memory cu = Example.complianceUnit();
+
+        bytes memory encodedInstance = abi.encode(
+            cu.instance.consumed.nullifier,
+            cu.instance.consumed.logicRef,
+            cu.instance.consumed.commitmentTreeRoot,
+            cu.instance.created.commitment,
+            cu.instance.created.logicRef,
+            cu.instance.unitDelta[0],
+            cu.instance.unitDelta[1]
+        );
+
+        // console.logBytes(encodedInstance);
+        // console.logBytes(abi.encode(cu.instance));
+
+        _sepoliaVerifierRouter.verify({
+            seal: cu.proof,
+            imageId: _complianceCircuitID, //0x1acbb40c5b4daed29a7a61c44baf919f97e6ca3b6893164c1b9cdb481e08e284,
+            journalDigest: sha256(abi.encode(cu.instance))
+        });
     }
 }

@@ -62,8 +62,8 @@ struct ComplianceInstance {
 
 struct ConsumedRefs {
     bytes32 nullifier;
-    bytes32 commitmentTreeRoot;
     bytes32 logicRef;
+    bytes32 commitmentTreeRoot;
 }
 
 struct CreatedRefs {
