@@ -41,7 +41,7 @@ contract ProtocolAdapterTest is Test {
         _pa.verify(Example.transaction());
 
         // solhint-disable-next-line gas-custom-errors
-        revert("The above should NOT revert");
+        revert("The above should NOT revert. PA MUST FIRST BE REDEPLOYED");
     }
 
     function test_execute() public {
@@ -49,7 +49,7 @@ contract ProtocolAdapterTest is Test {
         _pa.execute(Example.transaction());
 
         // solhint-disable-next-line gas-custom-errors
-        revert("The above should NOT revert");
+        revert("The above should NOT revert. PA MUST FIRST BE REDEPLOYED");
     }
 
     /*function test_verifyEmptyTx() public view {
