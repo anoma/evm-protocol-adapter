@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
-import {Test} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 import {Delta} from "../../src/proving/Delta.sol";
 import {MockDelta} from "../mocks/MockDelta.sol";
@@ -22,9 +22,13 @@ contract DeltaProofTest is Test {
 
     function test_deltaVerify() public pure {
         Delta.verify({
-            transactionHash: MockDelta.MESSAGE_HASH,
+            tagsHash: MockDelta.MESSAGE_HASH,
             transactionDelta: MockDelta.transactionDelta(),
             deltaProof: MockDelta.PROOF
         });
+    }
+
+    function test_exmapleDeltaProof() public pure {
+        revert("TODO");
     }
 }

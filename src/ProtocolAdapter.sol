@@ -41,6 +41,7 @@ contract ProtocolAdapter is
     error InvalidNullifierRef(bytes32 nullifier);
     error InvalidCommitmentRef(bytes32 commitment);
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
+    error NonEmptyDelta();
 
     error RootMismatch(bytes32 expected, bytes32 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
@@ -133,7 +134,7 @@ contract ProtocolAdapter is
         // Reset the resource counter.
         resCounter = 0;
 
-        for (uint256 i; i < nActions; ++i) {
+        for (uint256 i = 0; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
             _verifyForwarderCalls(action);
@@ -185,8 +186,12 @@ contract ProtocolAdapter is
                         tags[resCounter++] = cm;
                     }
 
-                    // Prepare delta proof
-                    transactionDelta = Delta.add({p1: transactionDelta, p2: unit.instance.unitDelta});
+                    // Compute transaction delta
+                    if (i == 0 && j == 0) {
+                        transactionDelta = unit.instance.unitDelta;
+                    } else {
+                        transactionDelta = Delta.add({p1: transactionDelta, p2: unit.instance.unitDelta});
+                    }
                 }
             }
 
@@ -217,10 +222,17 @@ contract ProtocolAdapter is
             }
         }
 
-        // Delta Proof
-        {
+        if (nActions == 0) {
+            if (transactionDelta[0] == 0 && transactionDelta[1] == 0) {
+                // Skip the delta proof check.
+                return;
+            } else {
+                revert NonEmptyDelta();
+            }
+        } else {
+            // Check delta proof.
             Delta.verify({
-                transactionHash: sha256(abi.encode(tags)),
+                tagsHash: ComputableComponents.tagsHash(tags),
                 transactionDelta: transactionDelta,
                 deltaProof: transaction.deltaProof
             });

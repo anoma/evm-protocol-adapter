@@ -31,12 +31,9 @@ library Delta {
         (p3[0], p3[1]) = EllipticCurveK256.ecAdd(p1[0], p1[1], p2[0], p2[1]);
     }
 
-    function verify(bytes32 transactionHash, uint256[2] memory transactionDelta, bytes memory deltaProof)
-        internal
-        pure
-    {
+    function verify(bytes32 tagsHash, uint256[2] memory transactionDelta, bytes memory deltaProof) internal pure {
         // Verify the delta proof using the ECDSA.recover API to obtain the address
-        address recovered = ECDSA.recover({hash: transactionHash, signature: deltaProof});
+        address recovered = ECDSA.recover({hash: tagsHash, signature: deltaProof});
 
         // Convert the public key to an address
         address expected = toAccount(transactionDelta);
