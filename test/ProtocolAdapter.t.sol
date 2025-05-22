@@ -26,21 +26,21 @@ contract ProtocolAdapterTest is Test {
         });
     }
 
-    function test_verify() public view {
-        _pa.verify(Example.transaction());
-    }
-
     function test_execute() public {
         _pa.execute(Example.transaction());
-    }
-
-    function test_verify_empty_tx() public view {
-        Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
-        _pa.verify(txn);
     }
 
     function test_execute_empty_tx() public {
         Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
         _pa.execute(txn);
+    }
+
+    function test_verify() public view {
+        _pa.verify(Example.transaction());
+    }
+
+    function test_verify_empty_tx() public view {
+        Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
+        _pa.verify(txn);
     }
 }

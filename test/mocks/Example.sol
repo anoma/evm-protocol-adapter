@@ -28,8 +28,8 @@ library Example {
     bytes internal constant _COMPLIANCE_PROOF =
         hex"9f39696c2f86bf280c28d106e506743568544cffb61821c0d6d298a3cc3b93267b7f5876188a6f78487a3409927cddb6590aeb71780059f3763faae19aa5ae265258e3811e812dad801cddc573fa907ddc2e7b0fb76c64690b25a5cd5652c059e52590342a89a9f416e2bdd59d7b3e8bf42613339536ce32532d73eea5d2750c3275598a09933f49f4804fd3bd0bc020c236dbbea5e2443103c9d8534f9c81f79e06c1d00725b905b489b525c44404804d24c83fa2a2668682d1c16bfa461af54cf2ec391501de8124316e26ba4a0e6deba257a3b53204c8349711f26a2af4e8f9c0ee321c9a3199e246a7ccd0386af919c1b6168aa43d58ee496cec5468c997e693e3fc";
 
-    bytes32 internal constant unitDeltaX = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798;
-    bytes32 internal constant unitDeltaY = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8;
+    bytes32 internal constant _UNIT_DELTA_X = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798;
+    bytes32 internal constant _UNIT_DELTA_Y = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8;
 
     bytes internal constant _CONSUMED_LOGIC_PROOF =
         hex"9f39696c1a34d41dc233a6418070ba23b7fe95ca6791925db284eda01fe7eae73dbfa4862ef5ec07d2beb53206ad120fc0d2131391ade3c7873b39f1466a15b90835c9421c0d453b4b3dc0996e6e0d4a22b487ce89ce30ec559b56cbf056f3787e6a1041159ccec9cc365c282537cefc06625733068b5743dc83dcbff3b8d83b3c0e0cc41f0814eefc547ae84857fe25f9aff6c2d76bb475593b7352488cc9d9f10e54461463c95242f94dc9708c29d70c8930f965fa8d4731cc8d99156bfdbe1357df072de9413d3b036d85636a81718f92f2b34162af929c48a47597e7b72fb84c4feb0f677ba14e174796edc4dd33f386621aace3e64072f8beb845f1b78a37ddd250";
@@ -48,8 +48,8 @@ library Example {
                 logicRef: _CONSUMED_LOGIC_REF
             }),
             created: CreatedRefs({commitment: _CREATED_COMMITMENT, logicRef: _CREATED_LOGIC_REF}),
-            unitDeltaX: unitDeltaX,
-            unitDeltaY: unitDeltaY
+            unitDeltaX: _UNIT_DELTA_X,
+            unitDeltaY: _UNIT_DELTA_Y
         });
     }
 

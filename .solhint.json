@@ -2,7 +2,7 @@
   "extends": "solhint:recommended",
   "plugins": [],
   "rules": {
-    "code-complexity": ["error", 10],
+    "code-complexity": ["error", 11],
     "explicit-types": "error",
     "function-max-lines": ["warn", 150],
     "max-line-length": ["warn", 120],

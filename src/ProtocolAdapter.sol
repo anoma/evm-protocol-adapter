@@ -40,6 +40,7 @@ contract ProtocolAdapter is
     using RiscZeroUtils for ComplianceInstance;
     using RiscZeroUtils for LogicInstance;
     using LogicProofs for LogicProof[];
+    using Delta for uint256[2];
 
     TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
     bytes32 internal immutable _COMPLIANCE_CIRCUIT_ID;
@@ -126,9 +127,8 @@ contract ProtocolAdapter is
     }
 
     // slither-disable-next-line calls-loop
-    // solhint-disable-next-line code-complexity
     function _verify(Transaction calldata transaction) internal view {
-        uint256[2] memory transactionDelta;
+        uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
         uint256 nActions = transaction.actions.length;
 
@@ -152,43 +152,43 @@ contract ProtocolAdapter is
             {
                 uint256 nCUs = action.complianceUnits.length;
                 for (uint256 j = 0; j < nCUs; ++j) {
-                    ComplianceUnit calldata unit = action.complianceUnits[j];
+                    ComplianceUnit calldata cu = action.complianceUnits[j];
 
                     // Check consumed resources
-                    _checkRootPreExistence(unit.instance.consumed.commitmentTreeRoot);
-                    _checkNullifierNonExistence(unit.instance.consumed.nullifier);
+                    _checkRootPreExistence(cu.instance.consumed.commitmentTreeRoot);
+                    _checkNullifierNonExistence(cu.instance.consumed.nullifier);
 
                     // Check created resources
-                    _checkCommitmentNonExistence(unit.instance.created.commitment);
+                    _checkCommitmentNonExistence(cu.instance.created.commitment);
 
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
-                        seal: unit.proof,
+                        seal: cu.proof,
                         imageId: _COMPLIANCE_CIRCUIT_ID,
-                        journalDigest: unit.instance.toJournalDigest()
+                        journalDigest: cu.instance.toJournalDigest()
                     });
 
                     // Check the logic ref consistency
                     {
-                        bytes32 nf = unit.instance.consumed.nullifier;
+                        bytes32 nf = cu.instance.consumed.nullifier;
                         LogicProof calldata logicProof = action.logicProofs.lookup(nf);
 
-                        if (unit.instance.consumed.logicRef != logicProof.logicRef) {
+                        if (cu.instance.consumed.logicRef != logicProof.logicRef) {
                             revert LogicRefMismatch({
                                 expected: logicProof.logicRef,
-                                actual: unit.instance.consumed.logicRef
+                                actual: cu.instance.consumed.logicRef
                             });
                         }
                         // solhint-disable-next-line  gas-increment-by-one
                         tags[resCounter++] = nf;
                     }
                     {
-                        bytes32 cm = unit.instance.created.commitment;
+                        bytes32 cm = cu.instance.created.commitment;
                         LogicProof calldata logicProof = action.logicProofs.lookup(cm);
 
-                        if (unit.instance.created.logicRef != logicProof.logicRef) {
+                        if (cu.instance.created.logicRef != logicProof.logicRef) {
                             revert LogicRefMismatch({
                                 expected: logicProof.logicRef,
-                                actual: unit.instance.created.logicRef
+                                actual: cu.instance.created.logicRef
                             });
                         }
                         // solhint-disable-next-line  gas-increment-by-one
@@ -197,12 +197,10 @@ contract ProtocolAdapter is
 
                     // Compute transaction delta
                     if (i == 0 && j == 0) {
-                        transactionDelta = [uint256(unit.instance.unitDeltaX), uint256(unit.instance.unitDeltaY)];
+                        transactionDelta = [uint256(cu.instance.unitDeltaX), uint256(cu.instance.unitDeltaY)];
                     } else {
-                        transactionDelta = Delta.add({
-                            p1: transactionDelta,
-                            p2: [uint256(unit.instance.unitDeltaX), uint256(unit.instance.unitDeltaY)]
-                        });
+                        transactionDelta =
+                            transactionDelta.add([uint256(cu.instance.unitDeltaX), uint256(cu.instance.unitDeltaY)]);
                     }
                 }
             }
@@ -218,26 +216,23 @@ contract ProtocolAdapter is
                 bytes32 computedActionTreeRoot = MerkleTree.computeRoot(actionTags, _ACTION_TREE_DEPTH);
 
                 for (uint256 j = 0; j < nResources; ++j) {
-                    LogicProof calldata proof = action.logicProofs[j];
+                    LogicProof calldata lp = action.logicProofs[j];
 
                     // Check root consistency
-                    if (proof.instance.actionTreeRoot != computedActionTreeRoot) {
-                        revert RootMismatch({expected: computedActionTreeRoot, actual: proof.instance.actionTreeRoot});
+                    if (lp.instance.actionTreeRoot != computedActionTreeRoot) {
+                        revert RootMismatch({expected: computedActionTreeRoot, actual: lp.instance.actionTreeRoot});
                     }
 
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
-                        seal: proof.proof,
-                        imageId: proof.logicRef,
-                        journalDigest: proof.instance.toJournalDigest()
+                        seal: lp.proof,
+                        imageId: lp.logicRef,
+                        journalDigest: lp.instance.toJournalDigest()
                     });
                 }
             }
         }
 
-        if (nActions == 0) {
-            // Skip the delta proof check.
-            return;
-        } else {
+        if (nActions != 0) {
             // Check delta proof.
             Delta.verify({
                 tagsHash: ComputableComponents.tagsHash(tags),
