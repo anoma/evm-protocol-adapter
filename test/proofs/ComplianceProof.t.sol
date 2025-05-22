@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Receipt as RiscZeroReceipt} from "@risc0-ethereum/IRiscZeroVerifier.sol";
+import {Receipt as RiscZeroReceipt, VerificationFailed} from "@risc0-ethereum/IRiscZeroVerifier.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
@@ -25,7 +25,6 @@ contract ComplianceProofTest is Test {
         string memory path = "./script/constructor-args.txt";
         _sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
         _complianceCircuitID = vm.parseBytes32(vm.readLine(path));
-        console.logBytes32(_complianceCircuitID);
 
         _mockVerifier = new RiscZeroMockVerifier({selector: bytes4(ExampleComplianceProof.SEAL)});
         _mockReceipt = _mockVerifier.mockProve({
@@ -65,34 +64,24 @@ contract ComplianceProofTest is Test {
                 cu.instance.consumed.commitmentTreeRoot,
                 cu.instance.created.commitment,
                 cu.instance.created.logicRef,
-                cu.instance.unitDelta[0],
-                cu.instance.unitDelta[1]
+                cu.instance.unitDeltaX,
+                cu.instance.unitDeltaY
             )
         );
     }
 
+    function test_compliance_circuit_id_integrity() public view {
+        assertEq(_complianceCircuitID, 0x2a0bd332079f7420f6f564bb96ad132937224d70d4d93155bf9507e49d05ad65);
+    }
+
     function testFork_example_compliance_proof_from_converted_transaction() public {
-        // Fork Sepolia
         vm.selectFork(vm.createFork("sepolia"));
 
         ComplianceUnit memory cu = Example.complianceUnit();
 
-        bytes memory encodedInstance = abi.encode(
-            cu.instance.consumed.nullifier,
-            cu.instance.consumed.logicRef,
-            cu.instance.consumed.commitmentTreeRoot,
-            cu.instance.created.commitment,
-            cu.instance.created.logicRef,
-            cu.instance.unitDelta[0],
-            cu.instance.unitDelta[1]
-        );
-
-        // console.logBytes(encodedInstance);
-        // console.logBytes(abi.encode(cu.instance));
-
         _sepoliaVerifierRouter.verify({
             seal: cu.proof,
-            imageId: _complianceCircuitID, //0x1acbb40c5b4daed29a7a61c44baf919f97e6ca3b6893164c1b9cdb481e08e284,
+            imageId: _complianceCircuitID,
             journalDigest: sha256(abi.encode(cu.instance))
         });
     }

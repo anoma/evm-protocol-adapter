@@ -155,17 +155,7 @@ contract ProtocolAdapter is
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
                         seal: unit.proof,
                         imageId: _COMPLIANCE_CIRCUIT_ID,
-                        journalDigest: sha256(
-                            abi.encode(
-                                unit.instance.consumed.nullifier,
-                                unit.instance.created.commitment,
-                                unit.instance.consumed.logicRef,
-                                unit.instance.created.logicRef,
-                                unit.instance.consumed.commitmentTreeRoot,
-                                unit.instance.unitDelta[0],
-                                unit.instance.unitDelta[1]
-                            )
-                        )
+                        journalDigest: sha256(abi.encode(unit.instance))
                     });
 
                     // Check the logic ref consistency
@@ -198,9 +188,12 @@ contract ProtocolAdapter is
 
                     // Compute transaction delta
                     if (i == 0 && j == 0) {
-                        transactionDelta = unit.instance.unitDelta;
+                        transactionDelta = [uint256(unit.instance.unitDeltaX), uint256(unit.instance.unitDeltaY)];
                     } else {
-                        transactionDelta = Delta.add({p1: transactionDelta, p2: unit.instance.unitDelta});
+                        transactionDelta = Delta.add({
+                            p1: transactionDelta,
+                            p2: [uint256(unit.instance.unitDeltaX), uint256(unit.instance.unitDeltaY)]
+                        });
                     }
                 }
             }

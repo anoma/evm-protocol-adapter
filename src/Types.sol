@@ -57,7 +57,8 @@ struct ComplianceUnit {
 struct ComplianceInstance {
     ConsumedRefs consumed;
     CreatedRefs created;
-    uint256[2] unitDelta;
+    bytes32 unitDeltaX;
+    bytes32 unitDeltaY;
 }
 
 struct ConsumedRefs {

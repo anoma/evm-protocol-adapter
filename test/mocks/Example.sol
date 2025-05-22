@@ -15,26 +15,32 @@ import {
 } from "../../src/Types.sol";
 
 library Example {
-    bytes32 internal constant initialRoot = 0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3;
+    bytes32 internal constant initialCommitmentTreeRoot =
+        0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3;
 
-    bytes32 internal constant consumedNullifier = 0x8908b8d4641b053566380a6b900c07a1c6634ba1992bcedc30cc4f1e586b95f8;
-    bytes32 internal constant createdCommitment = 0x676f9cd10e72f99d2416ecc268dd7a6a2e5613085d471bd62d2685f977c7b55d;
+    bytes32 internal constant consumedNullifier = 0x81df30066f64e51cfade805b17718be06eb34aeb3839177dc0a26f470de4a5f1;
+    bytes32 internal constant createdCommitment = 0x38507f7ea10368b792c09076b6514dfa3a2d8f809f5a86f62c8b5d7df04f58dd;
 
     bytes32 internal constant actionTreeRoot = 0x68da5e3c22df2b64a6473cfc91614246e0cfdee6bb1f17258d887ce7af566170;
 
-    bytes32 internal constant logicRef = 0xb3efbbc411861566d8a690717f3beb93b6496b3f4d6659f6c0237713508a8a86;
+    bytes32 internal constant logicRef = 0x67cba0b4837042068f17ce54ca69f481686b8d98bf8ca6b575f61064afb7e7af;
 
     bytes internal constant complianceProof =
-        hex"9f39696c27416c218ea0af1e862af2bc719e6f235c287368e27eaf6685ac4826943e3d1201c603a7bbb42a9af31456fe5da8250ede2cad1f225b237f465293978469baf624f97e8ee38f610200326e34c7a15de612b4107f772c6629dd5913199acc2b1c1164cb7830e3a770cdf5d4e7d1e68927d4b06b1799edac2d706484589b55dc162140c5dde2082e8319584739cb55870cd8456e958d3fb94b22790f3bdf2e4bb8057c9fd6ad79bfeb8e043692a95aa0b5d9c8efcd089cf642e5e5363e9b971e3000ee7647ec367bf531ba36254750fd6711902aca792f72aeeb7114fcc79afdc617a09665a8d7f57ae76a2d658fb8d9f66cbc427b7c75576850369635f242be71";
+        hex"9f39696c08d1d2f3ea7ef7579325a142137f0e150c103bc027ffb2e590eeaa3027021806223720c18ef9ae310144637ca35b9c02e2449925637a5901bfc25d6b6da8865d13be49485aa584633057d7db278f282d36cc550faba644c69e50cd1a1726b910248415fc47253a89ab12e1c0ec3ded908cbd5895e8154dab239f209c2bf17e2b058f9af5ed6cc9dde5f1ce607fc5c931a402e7497f078a23247617e4f1c6de1114948f3d6d9eca0a1dd4a58525492e8eeb0ade74078aec35e3411937e9c17b0f18ea0a6b3fa9ce6902a95a7381c34c81ce5ab07f054b7e0a7081803c667203a72fd367123cc034eba695b14b6e1f4c04e5b973dfdb56ffa204f4e2d3d54cb180";
 
-    uint256 constant unitDeltaX = 55066263022277343669578718895168534326250603453777594175500187360389116729240;
-    uint256 constant unitDeltaY = 32670510020758816978083085130507043184471273380659243275938904335757337482424;
+    bytes32 internal constant unitDeltaX = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798;
+    bytes32 internal constant unitDeltaY = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8;
 
     function complianceInstance() internal pure returns (ComplianceInstance memory instance) {
         instance = ComplianceInstance({
-            consumed: ConsumedRefs({nullifier: consumedNullifier, commitmentTreeRoot: initialRoot, logicRef: logicRef}),
+            consumed: ConsumedRefs({
+                nullifier: consumedNullifier,
+                commitmentTreeRoot: initialCommitmentTreeRoot,
+                logicRef: logicRef
+            }),
             created: CreatedRefs({commitment: createdCommitment, logicRef: logicRef}),
-            unitDelta: [unitDeltaX, unitDeltaY]
+            unitDeltaX: unitDeltaX,
+            unitDeltaY: unitDeltaY
         });
     }
 
@@ -92,64 +98,3 @@ library Example {
         });
     }
 }
-
-/*
-Transaction {
-    actions: [
-        Action {
-            logicProofs: [
-                LogicProof {
-                    proof: 0x9f39696c124d86bf02961a1a31ec9fe47dd11a489dee18726cb1279da1459bd7b8226423160c995cff4d4a88409ca94fcd598b25146cc34bfd3594961e9d7d05e064681311d2e3dc2f8ca0fbebb71a6353e11fea5bb4db4b4a0b265c670408a9b0b7668d20dd022e2e44c76cf6e682e15e1778f0804bed3177cf849865b23091a8c000642ded57f8aaa8faae6feb4a2d12805b23712712e9926f736506242d230614e61121d20a3565cdd6121cc5ef0736c31fe4fabc2733bdc7c20eace81d6afacedbd50cb36f2a20f93e0813a63b60a1ad4be7f795a499ed7d92b316d7ab3a477b215e2af189a19fb27b231d584e6075825a86ea8f49f1440ba14114d35c63aa3aaf7e,
-                    instance: LogicInstance {
-                        tag: 0x8908b8d4641b053566380a6b900c07a1c6634ba1992bcedc30cc4f1e586b95f8,
-                        isConsumed: true,
-                        actionTreeRoot: 0x68da5e3c22df2b64a6473cfc91614246e0cfdee6bb1f17258d887ce7af566170,
-                        ciphertext: 0x,
-                        appData: [],
-                    },
-                    logicRef: 0xb3efbbc411861566d8a690717f3beb93b6496b3f4d6659f6c0237713508a8a86,
-                },
-                LogicProof {
-                    proof: 0x9f39696c073e0e1c246ff363da18bde2cf1d9cd2cce4a2b49c094316b961ff52fe80f75322e50a256320ccade7d82b5cff66470dde34f8f782f03589b0f40137d859059d0ac40deeaa9234e7b53ed80380b3cdee501b6fff1ab0d7c1f4ec8c391498f96e2b0fcc8bb52234ed057c142d2e6d47976ffe9aba2eaf427b991325926548192c22122a2f7cf1dc3822235514d85c71d26a8fe30fa4e143f5326be46048f780a13038f5b08878cfecc1ae9830094d06e6744a05fbddfcd1f61a2a061076f78cc70c6a69d7ecf08e7f5c883cd41efddcc4a26ff3ba4fb7f532aa95347b608552ef154db314f8c568eb88510320ae3356d1c5f7cb82a72b9945fcaf799240d14b8b,
-                    instance: LogicInstance {
-                        tag: 0x676f9cd10e72f99d2416ecc268dd7a6a2e5613085d471bd62d2685f977c7b55d,
-                        isConsumed: false,
-                        actionTreeRoot: 0x68da5e3c22df2b64a6473cfc91614246e0cfdee6bb1f17258d887ce7af566170,
-                        ciphertext: 0x,
-                        appData: [],
-                    },
-                    logicRef: 0xb3efbbc411861566d8a690717f3beb93b6496b3f4d6659f6c0237713508a8a86,
-                },
-            ],
-            complianceUnits: [
-                ComplianceUnit {
-                    proof: 0x9f39696c03fc8bffe69dc33db7f3d2dd43788ef5f6950e6cb14b7131bc7e36c58046f5e7122418311487f2e07f4ae1cd7964f640ec87c21518f5b55bd00e0ba7f7eccd2e2736e29168bd5c69762bae7f69ee778e221b536b8c5a45bae008634f5770caac277eb5a8db96df2215d0cae2e51c8ac1d5973759b9e13efb33e32b0aece67a8e00ec3557a04dc7187b50276c95c8014d75dd498b0beb8a5c1d773fb822f4fcdb026a0513ef8847dcd1e9f95c0b55710ca3fb2f7d3ee983821ca7f2c8285b162e1aecbaab6986745930b5427fd78bd2841d81c68fc129795ce85c05ad2c73d2fa2f763dc7d19733313b13c82235f0332cb8358bf31ca4389b43805a729dedef65,
-                    instance: ComplianceInstance {
-                        consumed: ConsumedRefs {
-                            nullifier: 0x8908b8d4641b053566380a6b900c07a1c6634ba1992bcedc30cc4f1e586b95f8,
-                            commitmentTreeRoot: 0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3,
-                            logicRef: 0xb3efbbc411861566d8a690717f3beb93b6496b3f4d6659f6c0237713508a8a86,
-                        },
-                        created: CreatedRefs {
-                            commitment: 0x676f9cd10e72f99d2416ecc268dd7a6a2e5613085d471bd62d2685f977c7b55d,
-                            logicRef: 0xb3efbbc411861566d8a690717f3beb93b6496b3f4d6659f6c0237713508a8a86,
-                        },
-                        unitDelta: [
-                            55066263022277343669578718895168534326250603453777594175500187360389116729240,
-                            32670510020758816978083085130507043184471273380659243275938904335757337482424,
-                        ],
-                    },
-                },
-            ],
-            resourceCalldataPairs: [],
-        },
-    ],
-    deltaProof: 0xf90921c5ea7492c43839366218ff6d7399dd254f6fafa929347411c8a9054b6d330ae5b7e905d95188d9ad1474c96614da3ffdce4f492b78d5dfa73716de609301,
-}
-*/
-
-// Run 2:
-// 0x9f39696c2dd1fbd565ac40e07f352a2fb4713312379173ec141e05b5789d60243492a230089b517d8d7a4580ea86169ecabcede62833820f8a471e2217bc7ecb4fe960e401314c83607fdad82d12106057db17bc2ceb1d9f869d72dec7a8b6922a075be5302df3cd68c807ae71801b47ba636211c82dd4a74bd380ded4f8d6e40fd4f1990a63285fa5ef55f1c8a9a691d582930ecb6257d1beb6db275031abeb24fc39ee1a7df299f0d5621e766839e0d3e24decd5ffe6c4c471a58cca2c2421ffba1df71cc41cb5c9f5af6dc8fe637be7557ec531d3e6cf5961977eee3877694c8b47e30b94207c2973d4bff6a5a12ae10aaf567aabcf2cca4d31c3017b50b152483232
-
-// Run 3:
-// 0x9f39696c2c12dc8f53faf79c7b1ac04f8446e23ce08a1232ae16ce4fe3a26ecc83e263cb208ba7e512e4a9ea1411a20ea6f8e77548a73254f717991fa7cf82381e7a8f9f0f7c0b7f80f6bb3778770798bdaf42adc67b4ca8c24dd5745b3aad13c386ee810d40b272b0057ccf2c78d6b0e159caffcf38615eb3fc7a2d624eb0e7492b25b4066712abdcfcc89a6292851022628dd8b2b261fa0fc907f722de91c28fef7c7b1a61fe92d2f4f66488f3863e7da8a7f044d153ec20c249fa058d769510d8c9710181c5f9e2d182c0ba5c320f9f2a3ef3ae2703002717b46596e99b41e5ff03e60ee1121cc02e055fba7f1d211d96ce88295cbe01e87eaca4d325893fed6c381f
