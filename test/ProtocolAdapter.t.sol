@@ -37,19 +37,11 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_verify() public {
-        vm.expectRevert(VerificationFailed.selector);
         _pa.verify(Example.transaction());
-
-        // solhint-disable-next-line gas-custom-errors
-        revert("The above should NOT revert."); // TODO! Redeploy new PA first.
     }
 
     function test_execute() public {
-        vm.expectRevert(VerificationFailed.selector);
         _pa.execute(Example.transaction());
-
-        // solhint-disable-next-line gas-custom-errors
-        revert("The above should NOT revert."); // TODO! Redeploy new PA first.
     }
 
     /*function test_verifyEmptyTx() public view {

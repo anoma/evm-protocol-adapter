@@ -116,6 +116,29 @@ contract ProtocolAdapter is
         }
     }
 
+    function _toJournalDigest(LogicInstance calldata instance) internal pure returns (bytes32 digest) {
+        /*
+            bytes32 tag;
+            bool isConsumed;
+            bytes32 actionTreeRoot;
+            bytes ciphertext;
+            ExpirableBlob[] appData;
+        */
+
+        bytes memory encodedCiphertext = "";
+        bytes memory encodedAppData = ""; //TODO!
+
+        digest = sha256(
+            abi.encodePacked(
+                instance.tag,
+                bytes4(instance.isConsumed ? uint32(1) : uint32(0)),
+                instance.actionTreeRoot,
+                instance.ciphertext, // TODO!
+                encodedAppData
+            )
+        );
+    }
+
     // solhint-disable-next-line function-max-lines
     // slither-disable-next-line calls-loop
     function _verify(Transaction calldata transaction) internal view {

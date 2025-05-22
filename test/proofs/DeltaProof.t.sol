@@ -30,10 +30,10 @@ contract DeltaProofTest is Test {
         });
     }
 
-    function test_exmapleDeltaProof() public pure {
+    function test_example_delta_proof() public pure {
         bytes32[] memory tags = new bytes32[](2);
-        tags[0] = Example.consumedNullifier;
-        tags[1] = Example.createdCommitment;
+        tags[0] = Example._CONSUMED_NULLIFIER;
+        tags[1] = Example._CREATED_COMMITMENT;
 
         revert("TODO");
         /*Delta.verify({
