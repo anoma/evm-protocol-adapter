@@ -23,7 +23,7 @@ contract CommitmentAccumulatorTest is Test, MockTree {
     }
 
     function test_the_initial_root_for_depth_32_should_be_as_expected() public {
-        assertEq(new CommitmentAccumulator(_TREE_DEPTH).latestRoot(), INITIAL_COMMITMENT_TREE_ROOT);
+        assertEq(new CommitmentAccumulator(32).latestRoot(), INITIAL_COMMITMENT_TREE_ROOT);
     }
 
     function test_latestRoot_should_return_correct_roots() public {

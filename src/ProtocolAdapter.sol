@@ -9,6 +9,7 @@ import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
 import {ComputableComponents} from "./libs/ComputableComponents.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
+import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 
 import {Delta} from "./proving/Delta.sol";
 import {LogicProofs} from "./proving/Logic.sol";
@@ -18,7 +19,14 @@ import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 
 import {
-    Action, ForwarderCalldata, Resource, Transaction, LogicProof, LogicInstance, ComplianceUnit
+    Action,
+    ForwarderCalldata,
+    Resource,
+    Transaction,
+    LogicProof,
+    LogicInstance,
+    ComplianceUnit,
+    ComplianceInstance
 } from "./Types.sol";
 
 contract ProtocolAdapter is
@@ -29,6 +37,8 @@ contract ProtocolAdapter is
     BlobStorage
 {
     using ComputableComponents for Resource;
+    using RiscZeroUtils for ComplianceInstance;
+    using RiscZeroUtils for LogicInstance;
     using LogicProofs for LogicProof[];
 
     TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
@@ -41,7 +51,6 @@ contract ProtocolAdapter is
     error InvalidNullifierRef(bytes32 nullifier);
     error InvalidCommitmentRef(bytes32 commitment);
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
-    error NonEmptyDelta();
 
     error RootMismatch(bytes32 expected, bytes32 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
@@ -116,33 +125,10 @@ contract ProtocolAdapter is
         }
     }
 
-    function _toJournalDigest(LogicInstance calldata instance) internal pure returns (bytes32 digest) {
-        /*
-            bytes32 tag;
-            bool isConsumed;
-            bytes32 actionTreeRoot;
-            bytes ciphertext;
-            ExpirableBlob[] appData;
-        */
-
-        bytes memory encodedCiphertext = "";
-        bytes memory encodedAppData = ""; //TODO!
-
-        digest = sha256(
-            abi.encodePacked(
-                instance.tag,
-                bytes4(instance.isConsumed ? uint32(1) : uint32(0)),
-                instance.actionTreeRoot,
-                instance.ciphertext, // TODO!
-                encodedAppData
-            )
-        );
-    }
-
-    // solhint-disable-next-line function-max-lines
     // slither-disable-next-line calls-loop
+    // solhint-disable-next-line code-complexity
     function _verify(Transaction calldata transaction) internal view {
-        uint256[2] memory transactionDelta = Delta.zero();
+        uint256[2] memory transactionDelta;
 
         uint256 nActions = transaction.actions.length;
 
@@ -178,7 +164,7 @@ contract ProtocolAdapter is
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
                         seal: unit.proof,
                         imageId: _COMPLIANCE_CIRCUIT_ID,
-                        journalDigest: sha256(abi.encode(unit.instance))
+                        journalDigest: unit.instance.toJournalDigest()
                     });
 
                     // Check the logic ref consistency
@@ -242,19 +228,15 @@ contract ProtocolAdapter is
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
                         seal: proof.proof,
                         imageId: proof.logicRef,
-                        journalDigest: sha256(abi.encode(proof.instance))
+                        journalDigest: proof.instance.toJournalDigest()
                     });
                 }
             }
         }
 
         if (nActions == 0) {
-            if (transactionDelta[0] == 0 && transactionDelta[1] == 0) {
-                // Skip the delta proof check.
-                return;
-            } else {
-                revert NonEmptyDelta();
-            }
+            // Skip the delta proof check.
+            return;
         } else {
             // Check delta proof.
             Delta.verify({

@@ -1,20 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {IRiscZeroVerifier, VerificationFailed} from "@risc0-ethereum/IRiscZeroVerifier.sol";
+import {IRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
 
 import {Test} from "forge-std/Test.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {Transaction, Action} from "../src/Types.sol";
 import {Example} from "./mocks/Example.sol";
 
 contract ProtocolAdapterTest is Test {
-    IRiscZeroVerifier internal _sepoliaVerifier;
-    bytes32 internal _complianceCircuitID;
-    uint8 internal _commitmentTreeDepth;
-
-    uint8 internal _actionTreeDepth;
-
     ProtocolAdapter internal _pa;
 
     function setUp() public {
@@ -23,20 +18,15 @@ contract ProtocolAdapterTest is Test {
 
         string memory path = "./script/constructor-args.txt";
 
-        _sepoliaVerifier = IRiscZeroVerifier(vm.parseAddress(vm.readLine(path)));
-        _complianceCircuitID = vm.parseBytes32(vm.readLine(path));
-        _commitmentTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
-        _actionTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
-
         _pa = new ProtocolAdapter({
-            riscZeroVerifier: _sepoliaVerifier,
-            complianceCircuitID: _complianceCircuitID,
-            commitmentTreeDepth: _commitmentTreeDepth,
-            actionTreeDepth: _actionTreeDepth
+            riscZeroVerifier: IRiscZeroVerifier(vm.parseAddress(vm.readLine(path))), // Sepolia verifier
+            complianceCircuitID: vm.parseBytes32(vm.readLine(path)),
+            commitmentTreeDepth: uint8(vm.parseUint(vm.readLine(path))),
+            actionTreeDepth: uint8(vm.parseUint(vm.readLine(path)))
         });
     }
 
-    function test_verify() public {
+    function test_verify() public view {
         _pa.verify(Example.transaction());
     }
 
@@ -44,14 +34,13 @@ contract ProtocolAdapterTest is Test {
         _pa.execute(Example.transaction());
     }
 
-    /*function test_verifyEmptyTx() public view {
-        Transaction memory txn = MockTypes.mockTransaction({
-            mockVerifier: _mockVerifier,
-            root: _pa.latestRoot(),
-            consumed: new Resource[](0),
-            created: new Resource[](0)
-        });
-
+    function test_verify_empty_tx() public view {
+        Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
         _pa.verify(txn);
-    }*/
+    }
+
+    function test_execute_empty_tx() public {
+        Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
+        _pa.execute(txn);
+    }
 }

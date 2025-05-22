@@ -2,10 +2,11 @@
 pragma solidity ^0.8.27;
 
 import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
 import {ComputableComponents} from "../../src/libs/ComputableComponents.sol";
 import {Delta} from "../../src/proving/Delta.sol";
+import {Transaction} from "../../src/Types.sol";
 import {Example} from "../mocks/Example.sol";
 import {MockDelta} from "../mocks/MockDelta.sol";
 
@@ -35,11 +36,17 @@ contract DeltaProofTest is Test {
         tags[0] = Example._CONSUMED_NULLIFIER;
         tags[1] = Example._CREATED_COMMITMENT;
 
-        revert("TODO");
-        /*Delta.verify({
+        Transaction memory txn = Example.transaction();
+
+        uint256[2] memory txDelta = [
+            uint256(txn.actions[0].complianceUnits[0].instance.unitDeltaX),
+            uint256(txn.actions[0].complianceUnits[0].instance.unitDeltaY)
+        ];
+
+        Delta.verify({
             tagsHash: ComputableComponents.tagsHash(tags),
-            transactionDelta: MockDelta.transactionDelta(),
-            deltaProof: MockDelta.PROOF
-        });*/
+            transactionDelta: txDelta,
+            deltaProof: txn.deltaProof
+        });
     }
 }
