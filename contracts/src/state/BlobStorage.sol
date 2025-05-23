@@ -11,11 +11,6 @@ contract BlobStorage is IBlobStorage {
 
     mapping(bytes32 blobHash => bytes blob) internal _blobs;
 
-    /// @notice Emitted if a blob is stored.
-    /// @param blobHash The hash of the blob being stored.
-    /// @param deletionCriterion The deletion criterion of the blob.
-    event BlobStored(bytes32 indexed blobHash, DeletionCriterion indexed deletionCriterion);
-
     error BlobEmpty();
     error BlobNotFound(bytes32 blobHash);
     error BlobHashMismatch(bytes32 expected, bytes32 actual);
