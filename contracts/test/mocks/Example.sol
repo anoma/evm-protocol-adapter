@@ -59,13 +59,13 @@ library Example {
 
     function logicInstance(bool isConsumed) internal pure returns (LogicInstance memory instance) {
         ExpirableBlob[] memory emptyAppData = new ExpirableBlob[](0);
-        bytes memory emptyCiphertext = "";
+        bytes[] memory emptyCiphertexts = new bytes[](0);
 
         instance = LogicInstance({
             tag: isConsumed ? _CONSUMED_NULLIFIER : _CREATED_COMMITMENT,
             isConsumed: isConsumed,
             actionTreeRoot: _ACTION_TREE_ROOT,
-            ciphertext: emptyCiphertext,
+            ciphertexts: emptyCiphertexts,
             appData: emptyAppData
         });
     }

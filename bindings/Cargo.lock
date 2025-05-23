@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "aarm"
 version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?branch=xuyang%2Fbump_risc0_v2#03506b61af76960b54f40ff3674aa24eecf08803"
+source = "git+https://github.com/anoma/aarm-risc0.git?rev=51dd376e19c7de9c73308f5859411936e532ccd2#51dd376e19c7de9c73308f5859411936e532ccd2"
 dependencies = [
  "aarm_core",
  "compliance-methods",
@@ -20,7 +20,7 @@ dependencies = [
 [[package]]
 name = "aarm_core"
 version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?branch=xuyang%2Fbump_risc0_v2#03506b61af76960b54f40ff3674aa24eecf08803"
+source = "git+https://github.com/anoma/aarm-risc0.git?rev=51dd376e19c7de9c73308f5859411936e532ccd2#51dd376e19c7de9c73308f5859411936e532ccd2"
 dependencies = [
  "aes-gcm",
  "bincode",
@@ -1640,7 +1640,7 @@ checksum = "67ba02a97a2bd10f4b59b25c7973101c79642302776489e030cd13cdab09ed15"
 [[package]]
 name = "compliance-methods"
 version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?branch=xuyang%2Fbump_risc0_v2#03506b61af76960b54f40ff3674aa24eecf08803"
+source = "git+https://github.com/anoma/aarm-risc0.git?rev=51dd376e19c7de9c73308f5859411936e532ccd2#51dd376e19c7de9c73308f5859411936e532ccd2"
 dependencies = [
  "risc0-build",
 ]
@@ -5605,7 +5605,7 @@ dependencies = [
 [[package]]
 name = "trivial_logic"
 version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?branch=xuyang%2Fbump_risc0_v2#03506b61af76960b54f40ff3674aa24eecf08803"
+source = "git+https://github.com/anoma/aarm-risc0.git?rev=51dd376e19c7de9c73308f5859411936e532ccd2#51dd376e19c7de9c73308f5859411936e532ccd2"
 dependencies = [
  "risc0-build",
 ]

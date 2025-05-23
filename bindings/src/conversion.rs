@@ -1,10 +1,11 @@
 use alloy::sol;
 
 use aarm::evm_adapter::{
-    AdapterAction, AdapterComplianceUnit, AdapterLogicProof, AdapterTransaction,
+    AdapterAction, AdapterComplianceUnit, AdapterLogicInstance, AdapterLogicProof,
+    AdapterTransaction,
 };
 use aarm_core::compliance::ComplianceInstance;
-use aarm_core::logic_instance::{ExpirableBlob, LogicInstance};
+use aarm_core::logic_instance::ExpirableBlob;
 use aarm_core::resource::Resource;
 use alloy::primitives::{B256, U256};
 
@@ -45,14 +46,14 @@ impl From<Vec<ExpirableBlob>> for Vec<EVMTypes::ExpirableBlob> {
     fn from(blobs: Vec<ExpirableBlob>) -> Self {}
 }*/
 
-impl From<LogicInstance> for ProtocolAdapter::LogicInstance {
-    fn from(instance: LogicInstance) -> Self {
+impl From<AdapterLogicInstance> for ProtocolAdapter::LogicInstance {
+    fn from(instance: AdapterLogicInstance) -> Self {
         Self {
             tag: B256::from_slice(instance.tag.as_bytes()),
             isConsumed: instance.is_consumed,
             actionTreeRoot: B256::from_slice(instance.root.as_bytes()),
-            ciphertext: instance.cipher.into(),
-            appData: instance.app_data.into_iter().map(|b| b.into()).collect(), // TODO Refactor (see above).
+            ciphertexts: instance.cipher.into_iter().map(|c| c.into()).collect(),
+            appData: vec![],
         }
     }
 }

@@ -19,19 +19,29 @@ library RiscZeroUtils {
     function convertJournal(LogicInstance memory instance) internal pure returns (bytes memory converted) {
         bytes memory appData = "";
 
-        uint256 nBlobs = instance.appData.length;
-        for (uint256 i = 0; i < nBlobs; ++i) {
-            bytes memory blobEncoded = abi.encodePacked(
-                instance.appData[i].blob.length, instance.appData[i].blob, instance.appData[i].deletionCriterion
-            );
-            appData = abi.encodePacked(appData, blobEncoded);
+        uint32 nCiphertexts = uint32(instance.ciphertexts.length);
+        bytes memory encodedCipher = abi.encodePacked(uint32ToRisc0(nCiphertexts));
+        {
+            for (uint256 i = 0; i < nCiphertexts; ++i) {
+                encodedCipher = abi.encodePacked(encodedCipher, instance.ciphertexts[i]);
+            }
+        }
+
+        {
+            uint256 nBlobs = instance.appData.length;
+            for (uint256 i = 0; i < nBlobs; ++i) {
+                bytes memory blobEncoded = abi.encodePacked(
+                    instance.appData[i].blob.length, instance.appData[i].blob, instance.appData[i].deletionCriterion
+                );
+                appData = abi.encodePacked(appData, blobEncoded);
+            }
         }
 
         converted = abi.encodePacked(
             instance.tag,
             boolToRisc0(instance.isConsumed),
             instance.actionTreeRoot,
-            instance.ciphertext, // TODO! Encode real ciphertext.
+            encodedCipher, // TODO! Encode real ciphertext.
             appData // TODO! Encode real appData.
         );
     }

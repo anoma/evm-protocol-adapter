@@ -47,6 +47,30 @@ contract LogicProofTest is Test {
         console.logBytes(encoded);
     }
 
+    function test_instance_encoding() public pure {
+        console.logBytes(Example.logicInstance({isConsumed: true}).convertJournal());
+    }
+
+    // 4, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 2, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 5, 0, 0, 0, 6, 0, 0, 0, 7, 0, 0, 0, 8, 0, 0, 0, 1, 0, 0, 0
+
+    /*
+
+    4, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 2, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 5, 0, 0, 0, 6, 0, 0, 0, 7, 0, 0, 0, 8, 0, 0, 0, 1, 0, 0, 0
+
+    cipher: vec![1, 2, 3, 4],
+            app_data: vec![
+                ExpirableBlob {
+                    blob: vec![1, 2, 3, 4],
+                    deletion_criterion: 0,
+                },
+                ExpirableBlob {
+                    blob: vec![5, 6, 7, 8],
+                    deletion_criterion: 1,
+                },
+            ],
+
+    */
+
     function test_example_logic_proof() public view {
         {
             LogicProof memory lp = Example.logicProof({isConsumed: true});

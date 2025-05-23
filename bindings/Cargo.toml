@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-aarm_core = { git = "https://github.com/anoma/aarm-risc0.git", branch = "xuyang/bump_risc0_v2", package = "aarm_core" }
-aarm = { git = "https://github.com/anoma/aarm-risc0.git", branch = "xuyang/bump_risc0_v2", package = "aarm" }
+aarm_core = { git = "https://github.com/anoma/aarm-risc0.git", rev = "51dd376e19c7de9c73308f5859411936e532ccd2", package = "aarm_core" }
+aarm = { git = "https://github.com/anoma/aarm-risc0.git", rev = "51dd376e19c7de9c73308f5859411936e532ccd2", package = "aarm" }
 dotenv = "0.15"
 alloy = { version = "0.12", features = ["full"] }
 tokio = "1.44"
