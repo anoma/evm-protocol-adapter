@@ -16,7 +16,6 @@ library RiscZeroUtils {
         digest = sha256(convertJournal(instance));
     }
 
-    // TODO Use calldata?
     function convertJournal(LogicInstance memory instance) internal pure returns (bytes memory converted) {
         converted = abi.encodePacked(
             instance.tag,
