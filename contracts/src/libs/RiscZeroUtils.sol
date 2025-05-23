@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ComplianceInstance, LogicInstance} from "../Types.sol";
+import {ComplianceInstance, LogicInstance, ExpirableBlob} from "../Types.sol";
 
 library RiscZeroUtils {
     bytes internal constant _EMPTY = abi.encodePacked(bytes4(0));
@@ -17,16 +17,33 @@ library RiscZeroUtils {
     }
 
     function convertJournal(LogicInstance memory instance) internal pure returns (bytes memory converted) {
+        bytes memory appData = "";
+
+        uint256 nBlobs = instance.appData.length;
+        for (uint256 i = 0; i < nBlobs; ++i) {
+            bytes memory blobEncoded = abi.encodePacked(
+                instance.appData[i].blob.length, instance.appData[i].blob, instance.appData[i].deletionCriterion
+            );
+            appData = abi.encodePacked(appData, blobEncoded);
+        }
+
         converted = abi.encodePacked(
             instance.tag,
             boolToRisc0(instance.isConsumed),
             instance.actionTreeRoot,
-            _EMPTY, // TODO! Encode real ciphertext.
-            _EMPTY // TODO! Encode real appData.
+            instance.ciphertext, // TODO! Encode real ciphertext.
+            appData // TODO! Encode real appData.
         );
     }
 
     function boolToRisc0(bool value) internal pure returns (bytes4 converted) {
         converted = value ? bytes4(0x01000000) : bytes4(0x00000000);
+    }
+
+    function uint32ToRisc0(uint32 value) public pure returns (bytes4 converted) {
+        converted = bytes4(
+            ((value & 0x000000FF) << 24) | ((value & 0x0000FF00) << 8) | ((value & 0x00FF0000) >> 8)
+                | ((value & 0xFF000000) >> 24)
+        );
     }
 }
