@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
-import {Test} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 import {ComputableComponents} from "../../src/libs/ComputableComponents.sol";
 import {Delta} from "../../src/proving/Delta.sol";
@@ -29,6 +29,15 @@ contract DeltaProofTest is Test {
             transactionDelta: MockDelta.transactionDelta(),
             deltaProof: MockDelta.PROOF
         });
+    }
+
+    function test_sandbox() public pure {
+        bytes32[] memory tags = new bytes32[](3);
+        tags[0] = 0x1111111111111111111111111111111111111111111111111111111111111111;
+        tags[1] = 0x2222222222222222222222222222222222222222222222222222222222222222;
+        tags[2] = 0x3333333333333333333333333333333333333333333333333333333333333333;
+
+        console.logBytes(abi.encode(tags));
     }
 
     function test_example_delta_proof() public pure {

@@ -1,9 +1,13 @@
 # Directories
 cache/
 out/
+target/
+deps/
 node_modules/
 .juvix-build
 .vscode/*
+.idea/
+
 
 # broadcasts
 !broadcast

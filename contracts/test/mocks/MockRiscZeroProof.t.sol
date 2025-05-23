@@ -65,8 +65,8 @@ contract MockRiscZeroProofTest is Test {
         vm.expectRevert(VerificationFailed.selector, address(_MOCK_VERIFIER));
         _MOCK_VERIFIER.verify({seal: _proof.seal, imageId: MockRiscZeroProof.IMAGE_ID, journalDigest: wrongDigest});
     }
-    /// @notice It should verify correct _proofs.
 
+    /// @notice It should verify correct _proofs.
     function test_correctProof() public view {
         _MOCK_VERIFIER.verify({
             seal: _proof.seal,
