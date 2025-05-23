@@ -41,8 +41,6 @@ contract BlobStorage is IBlobStorage {
 
         // Blob doesn't need to be stored
         if (deletionCriterion == DeletionCriterion.Immediately) {
-            // TODO Should an event be emitted?
-
             // Return zero
             return blobHash;
         }

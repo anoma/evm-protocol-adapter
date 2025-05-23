@@ -21,7 +21,6 @@ library EllipticCurveK256 {
     /// @notice The modulus.
     uint256 internal constant PP = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
 
-    // TODO needed?
     function derivePubKey(uint256 privateKey) internal pure returns (uint256 qx, uint256 qy) {
         (qx, qy) = EllipticCurve.ecMul({_k: privateKey, _x: GX, _y: GY, _aa: AA, _pp: PP});
     }

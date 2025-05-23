@@ -31,4 +31,10 @@ library ComputableComponents {
     function kindCalldata(Resource calldata resource) internal pure returns (bytes32 k) {
         k = sha256(abi.encode(resource.logicRef, resource.labelRef));
     }
+
+    /// @dev The tags are encoded in packed form to remove the array header.
+    /// Since all the tags are 32 bytes, tight variable packing will not occur.
+    function tagsHash(bytes32[] memory tags) internal pure returns (bytes32 hash) {
+        hash = keccak256(abi.encodePacked(tags));
+    }
 }

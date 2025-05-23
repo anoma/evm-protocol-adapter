@@ -24,26 +24,13 @@ struct Resource {
 
 struct Transaction {
     Action[] actions;
-    // DeltaProof deltaProof
     bytes deltaProof;
 }
 
 struct Action {
-    TagLogicProofPair[] tagLogicProofPairs;
+    LogicProof[] logicProofs;
     ComplianceUnit[] complianceUnits;
     ResourceForwarderCalldataPair[] resourceCalldataPairs;
-}
-
-//struct DeltaProof {
-//    bytes delta; // Type: DeltaHash
-//    bytes32 deltaVerifyingKey; // NOTE by Xuyang: This is currently not //used in SRM.
-//}
-
-struct LogicInstance {
-    bytes32 tag;
-    bool isConsumed;
-    bytes32 root;
-    ExpirableBlob[] appData;
 }
 
 struct LogicProof {
@@ -52,27 +39,32 @@ struct LogicProof {
     bytes32 logicRef; // logicVerifyingKeyOuter;
 }
 
-struct TagLogicProofPair {
+/// @param ciphertext Encrypted information for the receiver of the resource that will be emitted as an event.
+/// The ciphertext contains, at least, the resource plaintext and optional other application specific data.
+struct LogicInstance {
     bytes32 tag;
-    LogicProof logicProof;
+    bool isConsumed;
+    bytes32 actionTreeRoot;
+    bytes ciphertext;
+    ExpirableBlob[] appData;
 }
 
 struct ComplianceUnit {
     bytes proof;
     ComplianceInstance instance;
-    bytes32 verifyingKey;
 }
 
 struct ComplianceInstance {
     ConsumedRefs consumed;
     CreatedRefs created;
-    uint256[2] unitDelta;
+    bytes32 unitDeltaX;
+    bytes32 unitDeltaY;
 }
 
 struct ConsumedRefs {
     bytes32 nullifier;
-    bytes32 root;
     bytes32 logicRef;
+    bytes32 commitmentTreeRoot;
 }
 
 struct CreatedRefs {

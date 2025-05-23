@@ -9,6 +9,7 @@ import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
 import {ComputableComponents} from "./libs/ComputableComponents.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
+import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 
 import {Delta} from "./proving/Delta.sol";
 import {LogicProofs} from "./proving/Logic.sol";
@@ -22,9 +23,10 @@ import {
     ForwarderCalldata,
     Resource,
     Transaction,
-    TagLogicProofPair,
     LogicProof,
-    ComplianceUnit
+    LogicInstance,
+    ComplianceUnit,
+    ComplianceInstance
 } from "./Types.sol";
 
 contract ProtocolAdapter is
@@ -35,7 +37,10 @@ contract ProtocolAdapter is
     BlobStorage
 {
     using ComputableComponents for Resource;
-    using LogicProofs for TagLogicProofPair[];
+    using RiscZeroUtils for ComplianceInstance;
+    using RiscZeroUtils for LogicInstance;
+    using LogicProofs for LogicProof[];
+    using Delta for uint256[2];
 
     TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
     bytes32 internal immutable _COMPLIANCE_CIRCUIT_ID;
@@ -80,21 +85,21 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
-            uint256 nResources = action.tagLogicProofPairs.length;
+            uint256 nResources = action.logicProofs.length;
             for (uint256 j = 0; j < nResources; ++j) {
-                TagLogicProofPair calldata pair = action.tagLogicProofPairs[j];
+                LogicInstance calldata instance = action.logicProofs[j].instance;
 
-                if (pair.logicProof.instance.isConsumed) {
+                if (instance.isConsumed) {
                     // Nullifier non-existence was already checked in `_verify(transaction);` at the top.
-                    _addNullifierUnchecked(pair.tag);
+                    _addNullifierUnchecked(instance.tag);
                 } else {
                     // Commitment non-existence was already checked in `_verify(transaction);` at the top.
-                    newRoot = _addCommitmentUnchecked(pair.tag);
+                    newRoot = _addCommitmentUnchecked(instance.tag);
                 }
 
-                uint256 nBlobs = pair.logicProof.instance.appData.length;
+                uint256 nBlobs = instance.appData.length;
                 for (uint256 k = 0; k < nBlobs; ++j) {
-                    _storeBlob(pair.logicProof.instance.appData[k]);
+                    _storeBlob(instance.appData[k]);
                 }
             }
 
@@ -121,16 +126,15 @@ contract ProtocolAdapter is
         }
     }
 
-    // solhint-disable-next-line function-max-lines
     // slither-disable-next-line calls-loop
     function _verify(Transaction calldata transaction) internal view {
-        uint256[2] memory transactionDelta = Delta.zero();
+        uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
         uint256 nActions = transaction.actions.length;
 
         uint256 resCounter = 0;
         for (uint256 i = 0; i < nActions; ++i) {
-            resCounter += transaction.actions[i].tagLogicProofPairs.length;
+            resCounter += transaction.actions[i].logicProofs.length;
         }
 
         // Allocate the array.
@@ -139,7 +143,7 @@ contract ProtocolAdapter is
         // Reset the resource counter.
         resCounter = 0;
 
-        for (uint256 i; i < nActions; ++i) {
+        for (uint256 i = 0; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
             _verifyForwarderCalls(action);
@@ -148,85 +152,90 @@ contract ProtocolAdapter is
             {
                 uint256 nCUs = action.complianceUnits.length;
                 for (uint256 j = 0; j < nCUs; ++j) {
-                    ComplianceUnit calldata unit = action.complianceUnits[j];
+                    ComplianceUnit calldata cu = action.complianceUnits[j];
 
                     // Check consumed resources
-                    _checkRootPreExistence(unit.instance.consumed.root);
-                    _checkNullifierNonExistence(unit.instance.consumed.nullifier);
+                    _checkRootPreExistence(cu.instance.consumed.commitmentTreeRoot);
+                    _checkNullifierNonExistence(cu.instance.consumed.nullifier);
 
                     // Check created resources
-                    _checkCommitmentNonExistence(unit.instance.created.commitment);
+                    _checkCommitmentNonExistence(cu.instance.created.commitment);
 
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
-                        seal: unit.proof,
+                        seal: cu.proof,
                         imageId: _COMPLIANCE_CIRCUIT_ID,
-                        journalDigest: sha256(abi.encode(unit.verifyingKey, unit.instance))
+                        journalDigest: cu.instance.toJournalDigest()
                     });
 
                     // Check the logic ref consistency
                     {
-                        bytes32 nf = unit.instance.consumed.nullifier;
-                        LogicProof calldata logicProof = action.tagLogicProofPairs.lookup(nf);
+                        bytes32 nf = cu.instance.consumed.nullifier;
+                        LogicProof calldata logicProof = action.logicProofs.lookup(nf);
 
-                        if (unit.instance.consumed.logicRef != logicProof.logicRef) {
+                        if (cu.instance.consumed.logicRef != logicProof.logicRef) {
                             revert LogicRefMismatch({
                                 expected: logicProof.logicRef,
-                                actual: unit.instance.consumed.logicRef
+                                actual: cu.instance.consumed.logicRef
                             });
                         }
                         // solhint-disable-next-line  gas-increment-by-one
                         tags[resCounter++] = nf;
                     }
                     {
-                        bytes32 cm = unit.instance.created.commitment;
-                        LogicProof calldata logicProof = action.tagLogicProofPairs.lookup(cm);
+                        bytes32 cm = cu.instance.created.commitment;
+                        LogicProof calldata logicProof = action.logicProofs.lookup(cm);
 
-                        if (unit.instance.created.logicRef != logicProof.logicRef) {
+                        if (cu.instance.created.logicRef != logicProof.logicRef) {
                             revert LogicRefMismatch({
                                 expected: logicProof.logicRef,
-                                actual: unit.instance.created.logicRef
+                                actual: cu.instance.created.logicRef
                             });
                         }
                         // solhint-disable-next-line  gas-increment-by-one
                         tags[resCounter++] = cm;
                     }
 
-                    // Prepare delta proof
-                    transactionDelta = Delta.add({p1: transactionDelta, p2: unit.instance.unitDelta});
+                    // Compute transaction delta
+                    if (i == 0 && j == 0) {
+                        transactionDelta = [uint256(cu.instance.unitDeltaX), uint256(cu.instance.unitDeltaY)];
+                    } else {
+                        transactionDelta =
+                            transactionDelta.add([uint256(cu.instance.unitDeltaX), uint256(cu.instance.unitDeltaY)]);
+                    }
                 }
             }
 
             // Logic Proofs
             {
-                uint256 nResources = action.tagLogicProofPairs.length;
+                uint256 nResources = action.logicProofs.length;
 
                 bytes32[] memory actionTags = new bytes32[](nResources);
                 for (uint256 j = 0; j < nResources; ++j) {
-                    actionTags[j] = action.tagLogicProofPairs[j].tag;
+                    actionTags[j] = action.logicProofs[j].instance.tag;
                 }
                 bytes32 computedActionTreeRoot = MerkleTree.computeRoot(actionTags, _ACTION_TREE_DEPTH);
 
                 for (uint256 j = 0; j < nResources; ++j) {
-                    LogicProof calldata proof = action.tagLogicProofPairs[j].logicProof;
+                    LogicProof calldata lp = action.logicProofs[j];
 
                     // Check root consistency
-                    if (proof.instance.root != computedActionTreeRoot) {
-                        revert RootMismatch({expected: computedActionTreeRoot, actual: proof.instance.root});
+                    if (lp.instance.actionTreeRoot != computedActionTreeRoot) {
+                        revert RootMismatch({expected: computedActionTreeRoot, actual: lp.instance.actionTreeRoot});
                     }
 
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
-                        seal: proof.proof,
-                        imageId: proof.logicRef,
-                        journalDigest: sha256(abi.encode(proof.instance))
+                        seal: lp.proof,
+                        imageId: lp.logicRef,
+                        journalDigest: lp.instance.toJournalDigest()
                     });
                 }
             }
         }
 
-        // Delta Proof
-        {
+        if (nActions != 0) {
+            // Check delta proof.
             Delta.verify({
-                transactionHash: sha256(abi.encode(tags)),
+                tagsHash: ComputableComponents.tagsHash(tags),
                 transactionDelta: transactionDelta,
                 deltaProof: transaction.deltaProof
             });
@@ -257,7 +266,7 @@ contract ProtocolAdapter is
 
                 // Lookup the first appData entry.
                 bytes32 actualAppDataHash =
-                    keccak256(abi.encode(action.tagLogicProofPairs.lookup(carrier.commitment()).instance.appData[0]));
+                    keccak256(abi.encode(action.logicProofs.lookup(carrier.commitment()).instance.appData[0]));
 
                 if (actualAppDataHash != expectedAppDataHash) {
                     revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});

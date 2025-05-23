@@ -10,6 +10,8 @@ import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
 import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulatorMock.sol";
 import {MockTree} from "../mocks/MockTree.sol";
 
+bytes32 constant INITIAL_COMMITMENT_TREE_ROOT = 0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3;
+
 contract CommitmentAccumulatorTest is Test, MockTree {
     using MerkleTree for bytes32[];
 
@@ -18,6 +20,10 @@ contract CommitmentAccumulatorTest is Test, MockTree {
     constructor() {
         _setupMockTree();
         _cmAcc = new CommitmentAccumulatorMock(_TREE_DEPTH);
+    }
+
+    function test_the_initial_root_for_depth_32_should_be_as_expected() public {
+        assertEq(new CommitmentAccumulator(32).latestRoot(), INITIAL_COMMITMENT_TREE_ROOT);
     }
 
     function test_latestRoot_should_return_correct_roots() public {
