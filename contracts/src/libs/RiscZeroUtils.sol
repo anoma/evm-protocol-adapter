@@ -16,6 +16,40 @@ library RiscZeroUtils {
         digest = sha256(convertJournal(instance));
     }
 
+    function complianceCircuitID() internal pure returns (bytes32 id) {
+        // /Users/michaelheuer/Projects/Anoma/aarm-risc0/target/debug/build/compliance-methods-5cb536499c35ce55/out/methods.rs
+        // pub const COMPLIANCE_GUEST_ID: [u32; 8] = [3090118071, 2046858913, 4187123841, 1403752873, 1328899817, 1064955823, 809758477, 955615332];
+        /*
+        id = bytes32(
+            abi.encodePacked(
+                uint32(3090118071),
+                uint32(2046858913),
+                uint32(4187123841),
+                uint32(1403752873),
+                uint32(1328899817),
+                uint32(1064955823),
+                uint32(809758477),
+                uint32(955615332)
+            )
+        ); // 0xb82f75b77a0096a1f992708153ab91a94f3566e93f79efaf3043ef0d38f58864
+        */
+
+        // /Users/michaelheuer/Projects/Anoma/evm-protocol-adapter/bindings/target/debug/build/compliance-methods-51e9697bae8b4140/out/methods.rs
+        // [2042205920, 594384590, 401169715, 3848800549, 2343010086, 3791765588, 2592415277, 176323215]
+        id = bytes32(
+            abi.encodePacked(
+                uint32(2042205920),
+                uint32(594384590),
+                uint32(401169715),
+                uint32(3848800549),
+                uint32(2343010086),
+                uint32(3791765588),
+                uint32(2592415277),
+                uint32(176323215)
+            )
+        ); // 0x79b996e0236d96ce17e95d33e56809258ba77f26e201c0549a851e2d0a827a8f
+    }
+
     function convertJournal(LogicInstance memory instance) internal pure returns (bytes memory converted) {
         uint32 nCiphertext = uint32(instance.ciphertext.length);
         bytes memory encodedCipher =

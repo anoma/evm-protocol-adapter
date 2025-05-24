@@ -24,7 +24,14 @@ contract ComplianceProofTest is Test {
     }
 
     function test_compliance_circuit_id_integrity() public view {
-        assertEq(_complianceCircuitID, 0xb82f75b77a0096a1f992708153ab91a94f3566e93f79efaf3043ef0d38f58864);
+        // /Users/michaelheuer/Projects/Anoma/aarm-risc0/target/debug/build/compliance-methods-5cb536499c35ce55/out/methods.rs
+        // [3090118071, 2046858913, 4187123841, 1403752873, 1328899817, 1064955823, 809758477, 955615332];
+        //    B82F75B7, 7A0096A1, F9927081, 53AB91A9, 4F3566E9, 3F79EFAF, 3043EF0D , 38F58864
+
+        //assertEq(_complianceCircuitID, 0x2a0bd332079f7420f6f564bb96ad132937224d70d4d93155bf9507e49d05ad65);
+
+        assertEq(_complianceCircuitID, RiscZeroUtils.complianceCircuitID());
+        //assertEq(_complianceCircuitID, 0x2a0bd332079f7420f6f564bb96ad132937224d70d4d93155bf9507e49d05ad65);
     }
 
     function test_example_compliance_proof() public view {
