@@ -2,43 +2,55 @@
 pragma solidity ^0.8.27;
 
 import {
-    Transaction,
-    Action,
-    LogicProof,
-    LogicInstance,
     ExpirableBlob,
-    ComplianceUnit,
+    DeletionCriterion,
     ComplianceInstance,
-    ConsumedRefs,
     CreatedRefs,
-    ResourceForwarderCalldataPair
+    ConsumedRefs,
+    ComplianceUnit,
+    LogicInstance,
+    LogicProof,
+    Transaction,
+    ResourceForwarderCalldataPair,
+    Action
 } from "../../src/Types.sol";
-
 import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
 
 library Example {
-    bytes32 internal constant _CONSUMED_NULLIFIER = 0x81df30066f64e51cfade805b17718be06eb34aeb3839177dc0a26f470de4a5f1;
-    bytes32 internal constant _CREATED_COMMITMENT = 0x38507f7ea10368b792c09076b6514dfa3a2d8f809f5a86f62c8b5d7df04f58dd;
-
-    bytes32 internal constant _ACTION_TREE_ROOT = 0x7fead92317c3b897d1f4326a58d7be17e6f6cccaaeb3f4f1a8d478b3a04b641d;
-
-    bytes32 internal constant _CONSUMED_LOGIC_REF = 0x67cba0b4837042068f17ce54ca69f481686b8d98bf8ca6b575f61064afb7e7af;
+    bytes32 internal constant _CONSUMED_NULLIFIER = 0x47d140b002864789e014b2dbc222d2bce62a6ef80f0eb1995c758dffb88dbe32;
+    bytes32 internal constant _CREATED_COMMITMENT = 0x0b7059ca4344dc9ebb69f668044c60241e2302cd42122f049a82dfdc539b4aa0;
+    bytes32 internal constant _ACTION_TREE_ROOT = 0xab82530843896e639200bad250cbef46f7f2fae9115ba14958076768c167e342;
+    bytes32 internal constant _CONSUMED_LOGIC_REF = 0x009962e2c1c0ac9106f612ed26169335b7f304e3640dfd20c52821aaa71cd2db;
     bytes32 internal constant _CREATED_LOGIC_REF = _CONSUMED_LOGIC_REF;
 
+    bytes internal constant _CONSUMED_LOGIC_PROOF =
+        hex"9f39696c02c0e53aa2dd94e48aa2ff0a438835214e1b944551b87e8d3378003c23dc9db816a7c651cad325e66615baa33cacb34ce7ce4c8365fed8d14b946238ac9abb352e318650ec42894e88f8dc94633bdb0d17d55395f3240fdbcbaecafceb0d52501b0b920fea6fb3d3c2fd834c7b1a53c97ec360752bc6d0addccb919854206ca224ce1761be1ecacaa40a34f0a80b44819f19c6c5feb10553bf1d6d411f5c29ca0e4441ae263e2ec3ccccc2c71e3ddc8adae5ce5358ef6256baff03d3aa5f8f110d624503211748159ecb196fdb41ee1d46e7ded43f093eec622e0d530f2d48241937ef1664969ce4a0c934f30f9b4b853e74293af1ad245838acf2a0f8eae05a";
+
+    bytes internal constant _CREATED_LOGIC_PROOF =
+        hex"9f39696c21d20adc8f1cff2dfc24e31a28460985fa645c79859e2446a66b9268b8bd77360fc0f05ca556e9f2782a175a7f9f18015d9903bc4f473d6e108a6dbcd20834aa16065240e7a2fd7d8087912161ca1ed0753007cd63d3bb70b9e368998ad2ac830fec23b700c6d002f3429b4fb5b0f683490935d5c3b212b0fdb259623051849f202ebb36cdd80640ee82d648814ef260516d72269706af40006ccc64511758921af07aa78e0ccd27a19216fff015a1aa18f80253ccae990fae550858b2368dc306d18f43c4bbdea431e9eb43c03834d564156d44d97e73b071d47686311894c80b23ee8695478fe762c06f1c8e40b4c7e0d2fc2deac47861007f4e68904eadff";
+
     bytes internal constant _COMPLIANCE_PROOF =
-        hex"9f39696c1409d4184b5f8217bb9d32ae6f24755e32c307f78ef357c8c656dfe3a3cb40a60a39bf1fc9a38b11aa506a27a59a57a78358f02a750ba62ee2196d2b9e2d5d87108dbc0d558211f9afc1a01b78536a5a073df0ed360ff8a6777280c31066ef6602e91c67e48ab76f67a27072ce47a9a256edde35c6ab9e4ee8c7e92dc95b364511eb207fd20be212ca7200bc71736ae499037d35279d3728912e696bac380c600b146e6dc7768e14fc121391032e6422a5dafd5eac4710a80f05474eb02d5b320ee1a7eef75ed1c84e424ac16192d91589c099f53d235e9d7de9fa637c79d6cf11135489abf2d57f9dc2d9d13a489da18fabebfb435e99489ef6fb7ff3f85f3f";
+        hex"9f39696c2b52b86d30a989425c95ee530c4d70015afbcc9e2036bbbbbe32f22139d7a5001c15d06cbdd63c07bcda429df84cf6dc13191c010270452583c4205d49dec0002113e68ef521e279f5d35249762e73b378b0146be0031d89f4f3759a51bcf56e027aacb55597227cdb10387f03e66c310182569d93f5889f66b4331cf75924c02534b4e6a32901965bb62ddf400de2cf5c02fe2c3e94f6f79a92a9a2298123a30caf2d028ab1e38d4d5c5b0e337709ad9fa52cc592c324bfc396ce3a71540ca108acc378ebfca12dab204ede492d43d437d8ee1893c897152372fc9d0b176bcd287d7272ce7897ff39fc0d16678beae5035a67eb40aa7510417da19d357e4548";
 
     bytes32 internal constant _UNIT_DELTA_X = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798;
     bytes32 internal constant _UNIT_DELTA_Y = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8;
 
-    bytes internal constant _CONSUMED_LOGIC_PROOF =
-        hex"9f39696c2528c347e86ed3589c25d2982e45c3d380a8bbd498a4a948df7bd0afd14b30d127206578495ceea33a6155532836a2af6623e9be3de60340a0f36bb3e7ad76480095cc0c40c20f6adf9f23bcf6268b872569b7b87ce2d9dbf3a8ea1d42fe868408fa2cc6af37179002346c1605c47fabc3f13a43c22009896eb5c05a71de3e682e3a4d9f68de0e901006be7dd3ba12a6f60481726cdb9987cbb290fd8ed317151f0abdbd39325824c451180a1479fd0dbc3213a9d7b339baa624cec56703d03417627befedc84557ea8a53a6669db078077e7c98e1aa3f7531bdcd4e07ba0abc04db292a66fa3ec2faa8a717a959da5fe4b3bfbc1de614b67f039953dd1401d1";
-
-    bytes internal constant _CREATED_LOGIC_PROOF =
-        hex"9f39696c020afc48f494e99955ddacf3e03af85ed9794bf8e8a8598394925f108b00659223f46287268e833fee127f94e94c6692e5c4ecc3ec3d53b094fa136a551a637904f2696a1d61819d677e842133f3fde23b171980d849278c72af2df585cc2dec12dddb29b3a69db5ea95c86acb8c4b9c7c94bcad34adeb1edf167ce70b15d56f1012594bba5a406c2c3da7e4479f8a07b83c662ba0995ac75a442bc4e69fcdd72ab16cc74b5d80bdf269e937e9e6b4abe8a23395609f7fa08fd00b577618a73420b37ff6c37a480b02612b90bc6a282e3f94c60605f463b8bf2fe763eab9c70d1dc50ec078e986fcdeba2222fb2000c09dc8d25228be96364fe44d8c0bcb579e";
-
     bytes internal constant _DELTA_PROOF =
-        hex"f494b59af684e3edc3a56c800387042608c6856ab8445755b4a5325f26b9140b55a412e72b4510981a383e1d0f1ef4c1bfcf3dd43ca7658780daedf7fbbe72591c";
+        hex"2f87f84992b94ce2cd69e2c9540e4b3c0f383ee6b7639344fe97697ce64d23e2091d33efb675348ddede05dc45c3158885bfccec1bcb4e84c5401917a3f353e91c";
+
+    function ciphertext() internal pure returns (bytes memory cipher) {
+        cipher = hex"3f0000007f000000bf000000ff000000";
+    }
+
+    function expirableBlobs() internal pure returns (ExpirableBlob[] memory blobs) {
+        blobs = new ExpirableBlob[](2);
+        blobs[0] = ExpirableBlob({
+            blob: hex"1f0000003f0000005f0000007f000000",
+            deletionCriterion: DeletionCriterion.Immediately
+        });
+        blobs[1] =
+            ExpirableBlob({blob: hex"9f000000bf000000df000000ff000000", deletionCriterion: DeletionCriterion.Never});
+    }
 
     function complianceInstance() internal pure returns (ComplianceInstance memory instance) {
         instance = ComplianceInstance({
@@ -58,15 +70,12 @@ library Example {
     }
 
     function logicInstance(bool isConsumed) internal pure returns (LogicInstance memory instance) {
-        ExpirableBlob[] memory emptyAppData = new ExpirableBlob[](0);
-        bytes[] memory emptyCiphertexts = new bytes[](0);
-
         instance = LogicInstance({
             tag: isConsumed ? _CONSUMED_NULLIFIER : _CREATED_COMMITMENT,
             isConsumed: isConsumed,
             actionTreeRoot: _ACTION_TREE_ROOT,
-            ciphertexts: emptyCiphertexts,
-            appData: emptyAppData
+            ciphertext: ciphertext(),
+            appData: expirableBlobs()
         });
     }
 
@@ -98,3 +107,176 @@ library Example {
         txn = Transaction({actions: actions, deltaProof: _DELTA_PROOF});
     }
 }
+/*
+Transaction {
+    actions: [
+        Action {
+            logicProofs: [
+                LogicProof {
+                    proof: 0x9f39696c02c0e53aa2dd94e48aa2ff0a438835214e1b944551b87e8d3378003c23dc9db816a7c651cad325e66615baa33cacb34ce7ce4c8365fed8d14b946238ac9abb352e318650ec42894e88f8dc94633bdb0d17d55395f3240fdbcbaecafceb0d52501b0b920fea6fb3d3c2fd834c7b1a53c97ec360752bc6d0addccb919854206ca224ce1761be1ecacaa40a34f0a80b44819f19c6c5feb10553bf1d6d411f5c29ca0e4441ae263e2ec3ccccc2c71e3ddc8adae5ce5358ef6256baff03d3aa5f8f110d624503211748159ecb196fdb41ee1d46e7ded43f093eec622e0d530f2d48241937ef1664969ce4a0c934f30f9b4b853e74293af1ad245838acf2a0f8eae05a,
+                    instance: LogicInstance {
+                        tag: 0x47d140b002864789e014b2dbc222d2bce62a6ef80f0eb1995c758dffb88dbe32,
+                        isConsumed: true,
+                        actionTreeRoot: 0xab82530843896e639200bad250cbef46f7f2fae9115ba14958076768c167e342,
+                        ciphertext: 0x3f0000007f000000bf000000ff000000,
+                        appData: [
+                            ExpirableBlob {
+                                deletionCriterion: 0,
+                                blob: 0x1f0000003f0000005f0000007f000000,
+                            },
+                            ExpirableBlob {
+                                deletionCriterion: 1,
+                                blob: 0x9f000000bf000000df000000ff000000,
+                            },
+                        ],
+                    },
+                    logicRef: 0x009962e2c1c0ac9106f612ed26169335b7f304e3640dfd20c52821aaa71cd2db,
+                },
+                LogicProof {
+                    proof: 0x9f39696c21d20adc8f1cff2dfc24e31a28460985fa645c79859e2446a66b9268b8bd77360fc0f05ca556e9f2782a175a7f9f18015d9903bc4f473d6e108a6dbcd20834aa16065240e7a2fd7d8087912161ca1ed0753007cd63d3bb70b9e368998ad2ac830fec23b700c6d002f3429b4fb5b0f683490935d5c3b212b0fdb259623051849f202ebb36cdd80640ee82d648814ef260516d72269706af40006ccc64511758921af07aa78e0ccd27a19216fff015a1aa18f80253ccae990fae550858b2368dc306d18f43c4bbdea431e9eb43c03834d564156d44d97e73b071d47686311894c80b23ee8695478fe762c06f1c8e40b4c7e0d2fc2deac47861007f4e68904eadff,
+                    instance: LogicInstance {
+                        tag: 0x0b7059ca4344dc9ebb69f668044c60241e2302cd42122f049a82dfdc539b4aa0,
+                        isConsumed: false,
+                        actionTreeRoot: 0xab82530843896e639200bad250cbef46f7f2fae9115ba14958076768c167e342,
+                        ciphertext: 0x3f0000007f000000bf000000ff000000,
+                        appData: [
+                            ExpirableBlob {
+                                deletionCriterion: 0,
+                                blob: 0x1f0000003f0000005f0000007f000000,
+                            },
+                            ExpirableBlob {
+                                deletionCriterion: 1,
+                                blob: 0x9f000000bf000000df000000ff000000,
+                            },
+                        ],
+                    },
+                    logicRef: 0x009962e2c1c0ac9106f612ed26169335b7f304e3640dfd20c52821aaa71cd2db,
+                },
+            ],
+            complianceUnits: [
+                ComplianceUnit {
+                    proof: 0x9f39696c2b52b86d30a989425c95ee530c4d70015afbcc9e2036bbbbbe32f22139d7a5001c15d06cbdd63c07bcda429df84cf6dc13191c010270452583c4205d49dec0002113e68ef521e279f5d35249762e73b378b0146be0031d89f4f3759a51bcf56e027aacb55597227cdb10387f03e66c310182569d93f5889f66b4331cf75924c02534b4e6a32901965bb62ddf400de2cf5c02fe2c3e94f6f79a92a9a2298123a30caf2d028ab1e38d4d5c5b0e337709ad9fa52cc592c324bfc396ce3a71540ca108acc378ebfca12dab204ede492d43d437d8ee1893c897152372fc9d0b176bcd287d7272ce7897ff39fc0d16678beae5035a67eb40aa7510417da19d357e4548,
+                    instance: ComplianceInstance {
+                        consumed: ConsumedRefs {
+                            nullifier: 0x47d140b002864789e014b2dbc222d2bce62a6ef80f0eb1995c758dffb88dbe32,
+                            logicRef: 0x009962e2c1c0ac9106f612ed26169335b7f304e3640dfd20c52821aaa71cd2db,
+                            commitmentTreeRoot: 0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3,
+                        },
+                        created: CreatedRefs {
+                            commitment: 0x0b7059ca4344dc9ebb69f668044c60241e2302cd42122f049a82dfdc539b4aa0,
+                            logicRef: 0x009962e2c1c0ac9106f612ed26169335b7f304e3640dfd20c52821aaa71cd2db,
+                        },
+                        unitDeltaX: 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
+                        unitDeltaY: 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8,
+                    },
+                },
+            ],
+            resourceCalldataPairs: [],
+        },
+    ],
+    deltaProof: 0x2f87f84992b94ce2cd69e2c9540e4b3c0f383ee6b7639344fe97697ce64d23e2091d33efb675348ddede05dc45c3158885bfccec1bcb4e84c5401917a3f353e91c,
+}
+*/
+
+/*
+
+EVM Tx:
+AdapterTransaction {
+    actions: [
+        AdapterAction {
+            compliance_units: [
+                AdapterComplianceUnit {
+                    proof: [ 159, 57, 105, 108, 7, 28, 33, 249, 111, 154, 215, 164, 75, 239, 204, 240, 183, 15, 223, 94, 57, 128, 253, 23, 208, 147, 127, 235, 172, 114, 73, 60, 233, 97, 247, 162, 46, 74, 46, 67, 84, 22, 52, 186, 16, 120, 73, 43, 119, 249, 230, 23, 207, 71, 252, 116, 38, 37, 228, 68, 105, 255, 145, 105, 43, 229, 240, 47, 12, 111, 159, 65, 6, 56, 86, 7, 96, 46, 143, 151, 194, 239, 246, 88, 18, 245, 6, 248, 85, 250, 194, 32, 139, 153, 105, 47, 173, 209, 48, 121, 9, 0, 120, 39, 55, 99, 130, 19, 158, 149, 3, 149, 215, 225, 105, 55, 138, 82, 177, 180, 85, 228, 50, 149, 253, 132, 64, 118, 50, 60, 75, 184, 43, 94, 147, 195, 2, 44, 101, 7, 174, 196, 4, 60, 251, 52, 7, 109, 115, 96, 32, 104, 80, 244, 221, 104, 201, 174, 242, 182, 66, 186, 4, 99, 18, 175, 100, 64, 253, 193, 79, 27, 69, 215, 100, 90, 111, 105, 240, 65, 171, 15, 251, 90, 244, 141, 169, 175, 37, 229, 207, 36, 229, 133, 207, 215, 28, 106, 80, 70, 24, 30, 155, 218, 27, 104, 164, 244, 216, 79, 38, 30, 83, 230, 253, 197, 40, 112, 231, 165, 49, 247, 95, 238, 34, 185, 87, 236, 16, 170, 174, 141, 251, 150, 181, 196, 15, 145, 238, 103, 229, 65, 220, 90, 93, 124, 154, 151, 56, 216, 188, 202, 241, 140, 31, 33, 64, 120, 254, 236,
+                    ],
+                    instance: ComplianceInstance {
+                        consumed_nullifier: Digest(20439f8d30d860515d4ac2b35314e63823389d7af3f901dd0f3b8241134a0f99),
+                        consumed_logic_ref: Digest(8035182c92dfbd6da397ac9826667b88cd98c7ea82ca2079c562f09ff0950329),
+                        consumed_commitment_tree_root: Digest(7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3),
+                        created_commitment: Digest(19e5ca72229a57cf2a60cb11c43b6b16a9246e26fed8303c5b4685458191c66d),
+                        created_logic_ref: Digest(8035182c92dfbd6da397ac9826667b88cd98c7ea82ca2079c562f09ff0950329),
+                        delta_x: Digest(79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798),
+                        delta_y: Digest(483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8),
+                    },
+                },
+            ],
+            logic_proofs: [
+                AdapterLogicProof {
+                    verifying_key: Digest(8035182c92dfbd6da397ac9826667b88cd98c7ea82ca2079c562f09ff0950329),
+                    proof: [ 159, 57, 105, 108, 1, 239, 83, 33, 11, 25, 215, 93, 46, 138, 173, 74, 146, 176, 84, 107, 141, 14, 163, 112, 34, 194, 73, 159, 190, 63, 215, 99, 20, 84, 99, 7, 27, 234, 245, 103, 170, 104, 65, 228, 168, 251, 92, 180, 3, 55, 39, 64, 21, 205, 209, 237, 120, 240, 37, 13, 19, 160, 76, 177, 56, 34, 30, 115, 46, 55, 227, 68, 170, 173, 5, 199, 64, 151, 38, 254, 4, 232, 187, 6, 91, 178, 195, 58, 156, 95, 57, 131, 148, 135, 194, 126, 145, 16, 244, 96, 23, 188, 169, 151, 65, 7, 156, 227, 189, 125, 17, 78, 220, 220, 176, 199, 104, 185, 40, 77, 55, 100, 226, 148, 176, 179, 155, 24, 2, 164, 89, 210, 46, 250, 187, 110, 21, 144, 42, 138, 122, 36, 254, 175, 206, 0, 247, 196, 100, 56, 25, 4, 195, 91, 197, 185, 168, 65, 181, 85, 187, 157, 119, 21, 35, 227, 234, 105, 225, 9, 85, 171, 80, 212, 162, 2, 181, 60, 47, 9, 104, 156, 96, 10, 187, 68, 29, 131, 25, 119, 56, 97, 53, 44, 67, 146, 23, 55, 87, 133, 213, 76, 20, 135, 48, 146, 29, 99, 46, 54, 11, 5, 68, 12, 47, 213, 29, 48, 29, 83, 203, 5, 255, 196, 225, 84, 153, 71, 13, 187, 38, 109, 224, 244, 70, 127, 172, 152, 87, 141, 140, 56, 45, 56, 141, 173, 15, 231, 209, 250, 15, 105, 159, 34, 199, 45, 53, 51, 179, 75,
+                    ],
+                    instance: AdapterLogicInstance {
+                        tag: Digest(20439f8d30d860515d4ac2b35314e63823389d7af3f901dd0f3b8241134a0f99),
+                        is_consumed: true,
+                        root: Digest(9a7962edc0c80a321a76554ae7e9795081c4155873a98071d9bf262f522ef78a),
+                        cipher: [
+                             63, 0, 0, 0,
+                            127, 0, 0, 0,
+                            191, 0, 0, 0,
+                            255, 0, 0, 0,
+                        ],
+                        app_data: [
+                            AdapterExpirableBlob {
+                                blob: [
+                                     31, 0, 0, 0, 
+                                     63, 0, 0, 0, 
+                                     95, 0, 0, 0, 
+                                    127, 0, 0, 0,
+                                ],
+                                deletion_criterion: 0,
+                            },
+                            AdapterExpirableBlob {
+                                blob: [ 
+                                    159, 0, 0, 0, 
+                                    191, 0, 0, 0, 
+                                    223, 0, 0, 0, 
+                                    255, 0, 0, 0,
+                                ],
+                                deletion_criterion: 1,
+                            },
+                        ],
+                    },
+                },
+                AdapterLogicProof {
+                    verifying_key: Digest(8035182c92dfbd6da397ac9826667b88cd98c7ea82ca2079c562f09ff0950329),
+                    proof: [ 159, 57, 105, 108, 30, 54, 31, 107, 217, 20, 190, 113, 24, 154, 33, 230, 249, 11, 110, 250, 93, 240, 79, 202, 96, 36, 216, 227, 193, 159, 64, 129, 11, 249, 146, 139, 1, 100, 65, 83, 209, 157, 235, 182, 145, 131, 225, 18, 5, 164, 152, 93, 212, 150, 253, 117, 224, 53, 192, 124, 57, 170, 88, 159, 162, 21, 115, 73, 41, 154, 2, 82, 49, 199, 35, 132, 205, 104, 104, 159, 55, 1, 250, 76, 52, 12, 68, 244, 129, 249, 146, 153, 176, 101, 159, 174, 192, 71, 231, 188, 41, 119, 175, 62, 202, 195, 145, 148, 16, 83, 223, 205, 98, 220, 18, 227, 64, 206, 158, 150, 227, 28, 197, 47, 25, 229, 188, 102, 245, 219, 96, 54, 43, 194, 106, 80, 132, 122, 51, 181, 71, 5, 133, 91, 191, 159, 6, 64, 157, 121, 109, 64, 19, 74, 72, 106, 68, 119, 13, 180, 242, 8, 216, 253, 23, 134, 145, 7, 91, 184, 162, 74, 115, 100, 121, 33, 207, 65, 242, 243, 106, 177, 202, 252, 202, 46, 152, 154, 199, 64, 105, 30, 254, 150, 114, 209, 15, 169, 76, 251, 208, 236, 239, 26, 22, 98, 84, 219, 2, 92, 188, 131, 213, 242, 113, 70, 93, 191, 110, 73, 235, 164, 227, 8, 72, 57, 231, 195, 16, 181, 116, 7, 169, 4, 102, 65, 207, 102, 139, 38, 79, 88, 210, 15, 181, 236, 43, 124, 98, 35, 201, 128, 183, 142, 208, 6, 107, 213, 242, 214,
+                    ],
+                    instance: AdapterLogicInstance {
+                        tag: Digest(19e5ca72229a57cf2a60cb11c43b6b16a9246e26fed8303c5b4685458191c66d),
+                        is_consumed: false,
+                        root: Digest(9a7962edc0c80a321a76554ae7e9795081c4155873a98071d9bf262f522ef78a),
+                        cipher: [
+                             63, 0, 0, 0,
+                            127, 0, 0, 0,
+                            191, 0, 0, 0,
+                            255, 0, 0, 0,
+                        ],
+                        app_data: [
+                            AdapterExpirableBlob {
+                                blob: [
+                                     31, 0, 0, 0, 
+                                     63, 0, 0, 0, 
+                                     95, 0, 0, 0, 
+                                    127, 0, 0, 0,
+                                ],
+                                deletion_criterion: 0,
+                            },
+                            AdapterExpirableBlob {
+                                blob: [ 
+                                    159, 0, 0, 0, 
+                                    191, 0, 0, 0, 
+                                    223, 0, 0, 0, 
+                                    255, 0, 0, 0,
+                                ],
+                                deletion_criterion: 1,
+                            },
+                        ],
+                    },
+                },
+            ],
+        },
+    ],
+    delta_proof: [ 101, 118, 70, 61, 176, 226, 62, 150, 196, 80, 131, 239, 77, 64, 200, 133, 224, 92, 31, 237, 155, 180, 12, 186, 201, 114, 236, 162, 26, 83, 148, 158, 111, 193, 82, 54, 10, 181, 170, 121, 140, 76, 114, 218, 45, 205, 2, 245, 236, 118, 124, 169, 255, 151, 84, 132, 174, 64, 118, 161, 104, 168, 153, 149, 27,
+    ],
+}
+
+*/

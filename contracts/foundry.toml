@@ -31,7 +31,7 @@ gas_reports = [
     "BlobStorageMock",
 ]
 optimizer = true
-via_ir = true
+# via_ir = true # TODO! RE-ENABLE, -- stack to deep error will occur for txn struct
 optimizer_runs = 10_000
 
 src = "src"
@@ -67,4 +67,5 @@ localhost = "http://localhost:8545"
 mainnet = "https://mainnet.infura.io/v3/${API_KEY_INFURA}"
 optimism = "https://optimism-mainnet.infura.io/v3/${API_KEY_INFURA}"
 polygon = "https://polygon-mainnet.infura.io/v3/${API_KEY_INFURA}"
-sepolia = "https://sepolia.infura.io/v3/${API_KEY_INFURA}"
+#sepolia ="https://sepolia.infura.io/v3/${API_KEY_INFURA}"
+sepolia = "https://eth-sepolia.g.alchemy.com/v2/${API_KEY_ALCHEMY}"

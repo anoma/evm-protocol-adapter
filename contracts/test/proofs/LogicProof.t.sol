@@ -24,38 +24,42 @@ contract LogicProofTest is Test {
     }
 
     function test_uint32_transform() public pure {
-        assertEq(uint32(1).uint32ToRisc0(), bytes4(0x01000000));
-        assertEq(uint32(16).uint32ToRisc0(), bytes4(0x10000000));
-    }
-
-    function test_example_appdata_encoding() public pure {
-        ExpirableBlob[] memory expBlobs = new ExpirableBlob[](3);
-        expBlobs[0] = ExpirableBlob({blob: hex"aaaaaaaa", deletionCriterion: DeletionCriterion.Never});
-        expBlobs[1] = ExpirableBlob({blob: hex"bbbbbbbbbbbbbbbb", deletionCriterion: DeletionCriterion.Immediately});
-        expBlobs[2] =
-            ExpirableBlob({blob: hex"cccccccccccccccccccccccccccccccc", deletionCriterion: DeletionCriterion.Never});
-
-        uint256 nBlobs = expBlobs.length;
-        bytes memory encoded = abi.encodePacked(uint32(expBlobs.length));
-
-        for (uint256 i = 0; i < nBlobs; ++i) {
-            bytes memory blobEncoded =
-                abi.encodePacked(uint32(expBlobs[i].blob.length), expBlobs[i].blob, expBlobs[i].deletionCriterion);
-            encoded = abi.encodePacked(encoded, blobEncoded);
-        }
-        // 0x0000000300000004aaaaaaaa0100000008bbbbbbbbbbbbbbbb0000000010cccccccccccccccccccccccccccccccc01
-        console.logBytes(encoded);
+        assertEq(uint32(1).toRiscZero(), bytes4(0x01000000));
+        assertEq(uint32(16).toRiscZero(), bytes4(0x10000000));
+        assertEq(uint32(255).toRiscZero(), bytes4(0xff000000));
     }
 
     function test_instance_encoding() public pure {
         console.logBytes(Example.logicInstance({isConsumed: true}).convertJournal());
     }
 
-    // 4, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 2, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 5, 0, 0, 0, 6, 0, 0, 0, 7, 0, 0, 0, 8, 0, 0, 0, 1, 0, 0, 0
-
     /*
+    0x
+    47d140b002864789e014b2dbc222d2bce62a6ef80f0eb1995c758dffb88dbe32
+    01000000
+    ab82530843896e639200bad250cbef46f7f2fae9115ba14958076768c167e342
+    04000000
+        3f0000007f000000bf000000ff000000
+    
+    02000000
+        04000000
+            1f0000003f0000005f0000007f000000
+        00000000
+        04000000
+            9f000000bf000000df000000ff000000
+        01000000
 
-    4, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 2, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 5, 0, 0, 0, 6, 0, 0, 0, 7, 0, 0, 0, 8, 0, 0, 0, 1, 0, 0, 0
+    4, 0, 0, 0, 
+    1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 
+    
+    2, 0, 0, 0, 
+        4, 0, 0, 0, 
+            1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0, 
+        0, 0, 0, 0, 
+    
+        4, 0, 0, 0, 
+            5, 0, 0, 0, 6, 0, 0, 0, 7, 0, 0, 0, 8, 0, 0, 0, 
+        1, 0, 0, 0
 
     cipher: vec![1, 2, 3, 4],
             app_data: vec![
@@ -71,24 +75,23 @@ contract LogicProofTest is Test {
 
     */
 
-    function test_example_logic_proof() public view {
-        {
-            LogicProof memory lp = Example.logicProof({isConsumed: true});
+    function test_example_logic_proof_consmed() public view {
+        LogicProof memory lp = Example.logicProof({isConsumed: true});
 
-            _sepoliaVerifierRouter.verify({
-                seal: lp.proof,
-                imageId: lp.logicRef,
-                journalDigest: lp.instance.toJournalDigest()
-            });
-        }
-        {
-            LogicProof memory lp = Example.logicProof({isConsumed: false});
+        _sepoliaVerifierRouter.verify({
+            seal: lp.proof,
+            imageId: lp.logicRef,
+            journalDigest: lp.instance.toJournalDigest()
+        });
+    }
 
-            _sepoliaVerifierRouter.verify({
-                seal: lp.proof,
-                imageId: lp.logicRef,
-                journalDigest: lp.instance.toJournalDigest()
-            });
-        }
+    function test_example_logic_proof_created() public view {
+        LogicProof memory lp = Example.logicProof({isConsumed: false});
+
+        _sepoliaVerifierRouter.verify({
+            seal: lp.proof,
+            imageId: lp.logicRef,
+            journalDigest: lp.instance.toJournalDigest()
+        });
     }
 }

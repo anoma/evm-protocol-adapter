@@ -24,7 +24,7 @@ contract ComplianceProofTest is Test {
     }
 
     function test_compliance_circuit_id_integrity() public view {
-        assertEq(_complianceCircuitID, 0x2a0bd332079f7420f6f564bb96ad132937224d70d4d93155bf9507e49d05ad65);
+        assertEq(_complianceCircuitID, 0xb82f75b77a0096a1f992708153ab91a94f3566e93f79efaf3043ef0d38f58864);
     }
 
     function test_example_compliance_proof() public view {

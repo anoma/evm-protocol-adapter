@@ -45,7 +45,7 @@ struct LogicInstance {
     bytes32 tag;
     bool isConsumed;
     bytes32 actionTreeRoot;
-    bytes[] ciphertexts;
+    bytes ciphertext;
     ExpirableBlob[] appData;
 }
 

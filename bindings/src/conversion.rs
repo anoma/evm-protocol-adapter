@@ -1,13 +1,12 @@
 use alloy::sol;
 
 use aarm::evm_adapter::{
-    AdapterAction, AdapterComplianceUnit, AdapterLogicInstance, AdapterLogicProof,
-    AdapterTransaction,
+    AdapterAction, AdapterComplianceUnit, AdapterExpirableBlob, AdapterLogicInstance,
+    AdapterLogicProof, AdapterTransaction,
 };
 use aarm_core::compliance::ComplianceInstance;
-use aarm_core::logic_instance::ExpirableBlob;
 use aarm_core::resource::Resource;
-use alloy::primitives::{B256, U256};
+use alloy::primitives::{Bytes, B256, U256};
 
 sol!(
     #[allow(missing_docs)]
@@ -32,8 +31,8 @@ impl From<Resource> for ProtocolAdapter::Resource {
     }
 }
 
-impl From<ExpirableBlob> for ProtocolAdapter::ExpirableBlob {
-    fn from(expirable_blob: ExpirableBlob) -> Self {
+impl From<AdapterExpirableBlob> for ProtocolAdapter::ExpirableBlob {
+    fn from(expirable_blob: AdapterExpirableBlob) -> Self {
         Self {
             blob: expirable_blob.blob.into(),
             deletionCriterion: expirable_blob.deletion_criterion,
@@ -41,19 +40,14 @@ impl From<ExpirableBlob> for ProtocolAdapter::ExpirableBlob {
     }
 }
 
-/* TODO figure this one out
-impl From<Vec<ExpirableBlob>> for Vec<EVMTypes::ExpirableBlob> {
-    fn from(blobs: Vec<ExpirableBlob>) -> Self {}
-}*/
-
 impl From<AdapterLogicInstance> for ProtocolAdapter::LogicInstance {
     fn from(instance: AdapterLogicInstance) -> Self {
         Self {
             tag: B256::from_slice(instance.tag.as_bytes()),
             isConsumed: instance.is_consumed,
             actionTreeRoot: B256::from_slice(instance.root.as_bytes()),
-            ciphertexts: instance.cipher.into_iter().map(|c| c.into()).collect(),
-            appData: vec![],
+            ciphertext: Bytes::from(instance.cipher),
+            appData: instance.app_data.into_iter().map(|eb| eb.into()).collect(),
         }
     }
 }
