@@ -192,29 +192,13 @@ mod tests {
     }
 
     #[test]
-    fn print_resource() {
-        println!(
-            "{:?}",
-            example_evm_resource(
-                &[0x11; 32],
-                &[0x22; 32],
-                &[0x33; 32],
-                &[0x44; 32],
-                55,
-                U256::from(66),
-                U256::from(77),
-                true,
-            )
-        )
-    }
-
-    #[test]
+    #[ignore]
     fn print_tx() {
-        println!("{:?}", aarm::evm_adapter::get_compliance_id());
-
         dotenv().ok();
         env::var("BONSAI_API_KEY").expect("Couldn't read BONSAI_API_KEY");
         env::var("BONSAI_API_URL").expect("Couldn't read BONSAI_API_URL");
+
+        println!("{:?}", aarm::evm_adapter::get_compliance_id());
 
         let raw_tx = aarm::transaction::generate_test_transaction(1);
         let evm_tx = ProtocolAdapter::Transaction::from(raw_tx.convert());
