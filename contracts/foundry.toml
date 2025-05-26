@@ -1,0 +1,70 @@
+# Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
+[profile.default]
+fs_permissions = [{ access = "read", path = "./script/constructor-args.txt" }]
+
+
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "@openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
+    "@risc0-ethereum/=lib/risc0-ethereum/contracts/src/",
+    "@elliptic-curve-solidity/=lib/elliptic-curve-solidity/",
+
+    "openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "ds-test/=lib/risc0-ethereum/lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/",
+    "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+    "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+]
+
+
+# Deterministic deployment settings (https://book.getfoundry.sh/guides/deterministic-deployments-using-create2#configuring-your-foundrytoml)
+cbor_metadata = false
+bytecode_hash = "none"
+
+solc = "0.8.28"
+auto_detect_solc = false
+evm_version = "cancun"
+fuzz = { runs = 1_000 }
+gas_reports = [
+    "ProtocolAdapter",
+    "CommitmentAccumulatorMock",
+    "NullifierSetMock",
+    "BlobStorageMock",
+]
+optimizer = true
+# via_ir = true # TODO! RE-ENABLE, -- stack to deep error will occur for txn struct
+optimizer_runs = 10_000
+
+src = "src"
+libs = ["lib"]
+out = "out"
+script = "script"
+test = "test"
+allow_internal_expect_revert = true
+
+[profile.ci]
+fuzz = { runs = 10_000 }
+verbosity = 4
+
+[etherscan]
+arbitrum = { key = "${API_KEY_ARBISCAN}" }
+avalanche = { key = "${API_KEY_SNOWTRACE}" }
+base = { key = "${API_KEY_BASESCAN}" }
+bnb_smart_chain = { key = "${API_KEY_BSCSCAN}" }
+gnosis_chain = { key = "${API_KEY_GNOSISSCAN}" }
+goerli = { key = "${API_KEY_ETHERSCAN}" }
+mainnet = { key = "${API_KEY_ETHERSCAN}" }
+optimism = { key = "${API_KEY_OPTIMISTIC_ETHERSCAN}" }
+polygon = { key = "${API_KEY_POLYGONSCAN}" }
+sepolia = { key = "${API_KEY_ETHERSCAN}" }
+
+[rpc_endpoints]
+arbitrum = "https://arbitrum-mainnet.infura.io/v3/${API_KEY_INFURA}"
+avalanche = "https://avalanche-mainnet.infura.io/v3/${API_KEY_INFURA}"
+base = "https://mainnet.base.org"
+bnb_smart_chain = "https://bsc-dataseed.binance.org"
+gnosis_chain = "https://rpc.gnosischain.com"
+localhost = "http://localhost:8545"
+mainnet = "https://mainnet.infura.io/v3/${API_KEY_INFURA}"
+optimism = "https://optimism-mainnet.infura.io/v3/${API_KEY_INFURA}"
+polygon = "https://polygon-mainnet.infura.io/v3/${API_KEY_INFURA}"
+sepolia = "https://sepolia.infura.io/v3/${API_KEY_INFURA}"

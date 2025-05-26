@@ -1,14 +1,18 @@
 # Directories
 cache/
 out/
+target/
+deps/
 node_modules/
 .juvix-build
 .vscode/*
+.idea/
+
 
 # broadcasts
 !broadcast
-broadcast/*
-broadcast/*/31337/
+contracts/broadcast/*
+contracts/broadcast/*/31337/
 
 # Files
 *.env
