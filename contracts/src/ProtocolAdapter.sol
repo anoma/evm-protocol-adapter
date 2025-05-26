@@ -95,7 +95,7 @@ contract ProtocolAdapter is
                 }
 
                 uint256 nBlobs = instance.appData.length;
-                for (uint256 k = 0; k < nBlobs; ++j) {
+                for (uint256 k = 0; k < nBlobs; ++k) {
                     _storeBlob(instance.appData[k]);
                 }
             }
