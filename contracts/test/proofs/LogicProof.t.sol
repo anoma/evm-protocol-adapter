@@ -6,7 +6,7 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 import {Test} from "forge-std/Test.sol";
 
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
-import {LogicProof, LogicInstance, ExpirableBlob, DeletionCriterion} from "../../src/Types.sol";
+import {LogicProof, LogicInstance} from "../../src/Types.sol";
 import {Example} from "../mocks/Example.sol";
 
 contract LogicProofTest is Test {

@@ -44,7 +44,6 @@ contract ProtocolAdapter is
     using Delta for uint256[2];
 
     TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
-    bytes32 internal immutable _COMPLIANCE_CIRCUIT_ID;
     uint8 internal immutable _ACTION_TREE_DEPTH;
 
     uint256 private _txCount;
