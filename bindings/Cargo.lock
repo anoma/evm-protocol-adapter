@@ -36,18 +36,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aarm_evm"
-version = "0.1.0"
-dependencies = [
- "aarm",
- "aarm_core",
- "alloy",
- "dotenv",
- "serde",
- "tokio",
-]
-
-[[package]]
 name = "addchain"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3964,6 +3952,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.101",
+]
+
+[[package]]
+name = "protocol_adapter_bindings"
+version = "0.1.0"
+dependencies = [
+ "aarm",
+ "aarm_core",
+ "alloy",
+ "dotenv",
+ "serde",
+ "tokio",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 [package]
-name = "aarm_evm"
+name = "protocol_adapter_bindings"
 version = "0.1.0"
 edition = "2024"
 

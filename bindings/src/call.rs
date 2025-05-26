@@ -11,7 +11,6 @@ use alloy::providers::{Identity, ProviderBuilder, RootProvider};
 use alloy::signers::local::PrivateKeySigner;
 use dotenv::dotenv;
 use std::env;
-
 pub fn get_pa() -> ProtocolAdapter::ProtocolAdapterInstance<
     (),
     FillProvider<
@@ -56,6 +55,18 @@ pub async fn get_latest_root() -> B256 {
 pub async fn get_merkle_proof(commitment: B256) -> (Vec<B256>, U256) {
     let res = get_pa().merkleProof(commitment).call().await.unwrap();
     (res.siblings, res.directionBits)
+}
+
+pub async fn verify(tx: ProtocolAdapter::Transaction) {
+    let res = get_pa().verify(tx).call().await.unwrap();
+    println!("{:?}", res);
+}
+
+pub fn example_tx() -> ProtocolAdapter::Transaction {
+    ProtocolAdapter::Transaction {
+        actions: vec![],
+        deltaProof: vec![].into(),
+    }
 }
 
 #[tokio::test]
