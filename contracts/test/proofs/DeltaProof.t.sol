@@ -31,15 +31,6 @@ contract DeltaProofTest is Test {
         });
     }
 
-    function test_sandbox() public pure {
-        bytes32[] memory tags = new bytes32[](3);
-        tags[0] = 0x1111111111111111111111111111111111111111111111111111111111111111;
-        tags[1] = 0x2222222222222222222222222222222222222222222222222222222222222222;
-        tags[2] = 0x3333333333333333333333333333333333333333333333333333333333333333;
-
-        console.logBytes(abi.encode(tags));
-    }
-
     function test_example_delta_proof() public pure {
         bytes32[] memory tags = new bytes32[](2);
         tags[0] = Example._CONSUMED_NULLIFIER;

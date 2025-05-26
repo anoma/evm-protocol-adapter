@@ -39,25 +39,6 @@ contract ComplianceProofTest is Test {
         );
     }
 
-    /*function test_compliance_circuit_id_integrity() public pure {
-        // aarm-risc0/target/release/build/compliance-methods-ec7fa279091777e1/out/methods.rs
-        // pub const COMPLIANCE_GUEST_ID: [u32; 8] = [3090118071, 2046858913, 4187123841, 1403752873, 1328899817, 1064955823, 809758477, 955615332];
-        bytes32 id = bytes32(
-            abi.encodePacked(
-                uint32(3090118071),
-                uint32(2046858913),
-                uint32(4187123841),
-                uint32(1403752873),
-                uint32(1328899817),
-                uint32(1064955823),
-                uint32(809758477),
-                uint32(955615332)
-            )
-        ); // 0xb82f75b77a0096a1f992708153ab91a94f3566e93f79efaf3043ef0d38f58864
-
-        assertEq(id, Compliance._CIRCUIT_ID);
-    }*/
-
     function test_example_compliance_proof() public view {
         ComplianceUnit memory cu = Example.complianceUnit();
 
