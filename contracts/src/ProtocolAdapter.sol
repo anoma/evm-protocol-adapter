@@ -11,8 +11,9 @@ import {ComputableComponents} from "./libs/ComputableComponents.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 
+import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
-import {LogicProofs} from "./proving/Logic.sol";
+import {Logic} from "./proving/Logic.sol";
 import {BlobStorage} from "./state/BlobStorage.sol";
 import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 
@@ -39,7 +40,7 @@ contract ProtocolAdapter is
     using ComputableComponents for Resource;
     using RiscZeroUtils for ComplianceInstance;
     using RiscZeroUtils for LogicInstance;
-    using LogicProofs for LogicProof[];
+    using Logic for LogicProof[];
     using Delta for uint256[2];
 
     TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
@@ -61,15 +62,11 @@ contract ProtocolAdapter is
     error CalldataCarrierLabelMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierCommitmentNotFound(bytes32 commitment);
 
-    constructor(
-        TrustedRiscZeroVerifier riscZeroVerifier,
-        bytes32 complianceCircuitID,
-        uint8 commitmentTreeDepth,
-        uint8 actionTreeDepth
-    ) CommitmentAccumulator(commitmentTreeDepth) {
+    constructor(TrustedRiscZeroVerifier riscZeroVerifier, uint8 commitmentTreeDepth, uint8 actionTreeDepth)
+        CommitmentAccumulator(commitmentTreeDepth)
+    {
         _TRUSTED_RISC_ZERO_VERIFIER = riscZeroVerifier;
         _ACTION_TREE_DEPTH = actionTreeDepth;
-        _COMPLIANCE_CIRCUIT_ID = complianceCircuitID;
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -163,7 +160,7 @@ contract ProtocolAdapter is
 
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
                         seal: cu.proof,
-                        imageId: _COMPLIANCE_CIRCUIT_ID,
+                        imageId: Compliance._CIRCUIT_ID,
                         journalDigest: cu.instance.toJournalDigest()
                     });
 

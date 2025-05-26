@@ -12,8 +12,6 @@ contract Deploy is BaseScript {
 
         IRiscZeroVerifier trustedSepoliaVerifier = IRiscZeroVerifier(vm.parseAddress(vm.readLine(path)));
 
-        bytes32 complianceCircuitID = vm.parseBytes32(vm.readLine(path));
-
         uint8 commitmentTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
 
         uint8 actionTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
@@ -21,7 +19,6 @@ contract Deploy is BaseScript {
         protocolAdapter = address(
             new ProtocolAdapter{salt: sha256("ProtocolAdapterDraft")}({
                 riscZeroVerifier: trustedSepoliaVerifier,
-                complianceCircuitID: complianceCircuitID,
                 commitmentTreeDepth: commitmentTreeDepth,
                 actionTreeDepth: actionTreeDepth
             })

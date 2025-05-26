@@ -20,7 +20,6 @@ contract ProtocolAdapterTest is Test {
 
         _pa = new ProtocolAdapter({
             riscZeroVerifier: IRiscZeroVerifier(vm.parseAddress(vm.readLine(path))), // Sepolia verifier
-            complianceCircuitID: vm.parseBytes32(vm.readLine(path)),
             commitmentTreeDepth: uint8(vm.parseUint(vm.readLine(path))),
             actionTreeDepth: uint8(vm.parseUint(vm.readLine(path)))
         });

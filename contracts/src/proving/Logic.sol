@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import {LogicProof} from "../Types.sol";
 
-library LogicProofs {
+library Logic {
     error LogicProofTagNotFound(bytes32 tag);
     error LogicProofIndexOutBounds(uint256 index, uint256 max);
 
