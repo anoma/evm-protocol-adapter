@@ -17,26 +17,26 @@ import {
 import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
 
 library Example {
-    bytes32 internal constant _CONSUMED_NULLIFIER = 0x47d140b002864789e014b2dbc222d2bce62a6ef80f0eb1995c758dffb88dbe32;
-    bytes32 internal constant _CREATED_COMMITMENT = 0x0b7059ca4344dc9ebb69f668044c60241e2302cd42122f049a82dfdc539b4aa0;
-    bytes32 internal constant _ACTION_TREE_ROOT = 0xab82530843896e639200bad250cbef46f7f2fae9115ba14958076768c167e342;
-    bytes32 internal constant _CONSUMED_LOGIC_REF = 0x009962e2c1c0ac9106f612ed26169335b7f304e3640dfd20c52821aaa71cd2db;
+    bytes32 internal constant _CONSUMED_NULLIFIER = 0x8320c7eb5b5dc80f950d4a5da77c58e7c678d4314011e85216851f32e452b26b;
+    bytes32 internal constant _CREATED_COMMITMENT = 0xb9a737dcf88058e86d299cc2882d22f09f5741864aaa4eb493ec8569fe55b4d7;
+    bytes32 internal constant _ACTION_TREE_ROOT = 0x6032785d515a72a20aa0eff803a63ef97ce1002c50163629634b9eb820e3df38;
+    bytes32 internal constant _CONSUMED_LOGIC_REF = 0x2fee2ae67fdf0b4f68f71768632101c637a2936f421e5e613a3b9f688687e5c9;
     bytes32 internal constant _CREATED_LOGIC_REF = _CONSUMED_LOGIC_REF;
 
     bytes internal constant _CONSUMED_LOGIC_PROOF =
-        hex"9f39696c07babbd484e959b96e8946e5633c5f3eb3c89dac5b7b8e872ccf0955175a786d2bbe51eddc10c60540a3e02df36d9e29f0c70581a0c6522329350a2ac34087412883b8247d7e60261ec73c8062edda070660e4865e46a8985a5a02d9a63220c624126a44df3ba75b25905361429104e4b70f14dccf8f3b76f0ee51c38971481809922efd089d96ca9e5b9be91a53a0e6893ab8da5f4ed7209ae0e305c83630600c5ec00c593fc88a5ea809485e73f7a6b081304837e071f22d08b1cc1392b13b24f5710a8ac92feeb61891a20cf8b972a1a87c475d800e72b60f6e26d719a820281d892c92f90d00b1303a7a0f795db30576b163093d86eb3522395a8f6f75d6";
+        hex"9f39696c0d7e99ff3be98c3fa98e35834129a6fb0ee3afa92d279373c699b6e1ee77a5b111dc40ae4b7a944ef70c5a2bfb191132676917228a4149c93e2f0f4efcc71c4208f882b8e0660b25be1695c926563aee6b5c852975576c429d25651747a6e0c12c7010de58e2f8883b5afc8a0be257e2253c07691a1c0d1fde4dd9539496f4541264161674dbf3b4fbcb10dccba7e3dec2069aec0b90abf1035a1dfd8b26354e16512323cc7fa31bdf7a39fb3c1021d5eab36dbbd97fedfd4564822c5a2aba320fb68abc10826a6b23910179a2218b2ecae9cebc3a3c898f736edc072eb3207d28d5e2ff14f47b5e6f6fd061bcbf09ac670e2b8fb0bab637a6b5ccd8dc278a75";
 
     bytes internal constant _CREATED_LOGIC_PROOF =
-        hex"9f39696c2ecefc878b7edd6ac0482898e0f595d52f274da835f2ab49598279eaf4543ee206b4021f277e3bca871a5b515137049dfee5832f9ba67faca8fb068551a637b70215ed13c52838310c841e2a51e1545051a7151ecc2b63086e7bd7171f09e0752ffa224012a81a4c6414d65af28a6b6265e26653b360c13c01e19ea075e17cbb2d560d81fc26ea3e51f40c84378f69256068c2711ba805f84fbb2b491d22642919a363cd185ef0a2b8ab6e9b72c6e39a714294ea1e0cb7256af23c7faf7bbfe41de1bf7c98ec70dcf0ffa2f293d11f77ab3b2ad4513e278b5ec6c3a326d164c01330ff82fa8d0addf12c939cc15c90fb2471c87c2e659f70d8d913dfdc9fcb88";
+        hex"9f39696c1823bea05358cbdd711add3344bd0120add6ef2f39b280f8e5651453a6db20570d05b34728a66b40f71a552bcdc05c3a0a7fd12aa0646000417887b32f8968101c2031bc8c252360e590513336a98e218852b9477fc83e81a41f6db79e84efc727c425e303e1f6ccfbe10e5091e95085ba13100d43100ac065d6d5d2692e2c0511af8415ad69180a082365f299d9de491359c91f82b174f420fdb4ce64719a332585e89323aa9e11afb4a21908fcb1e17c299f76b38f13fcb17cc55abd4d01de12dee4f4f4b0f65697c9d27be1552bd64dbb8166370216db36620e9b467246e609561b0e80bd7a038064c5ff4e806b438efec9c515371dbfce1699284818e622";
 
     bytes internal constant _COMPLIANCE_PROOF =
-        hex"9f39696c13644e07f84dbbf45f1ebe7e363de1ae8241c0001e592f96bf808c5d20ca9a981b9fa23b60c7c0d02736d9c9c4fc6c47eafcc84d14cb0abb612be42501ef13a50af3a6550dd6eeab4739d7ecc436f10b8e605aab1c12a8b23d6d81bc040ec8812987ae0df60cf05f7f595b96a53ef550f26d756837ca214da93d499167219d5e1145d36b5b53063e41a9b303b9bebcaec8bafaea6cc051c12d8985ff28aa1e4b0d1b35e913fb8370749384769e9f568498c735b7ae94f93d7aa667145378f29b1684ae6fae6b51e1d415319b7ffac7c8473514ae6656aee9fc0b0b43bf46c6de0e8abc9a8eabb3e038e485fb18460ece7578c8e87c143eabdd7dc6a2bc74ac89";
+        hex"9f39696c23adcf13391a7ccea62f5dee82ee028f894a4185e020512e5fc86dec1f5d3dec00b12a83b6d1309acf3f1a431bbe711600e8873bfa559a0901f3656af7e73ad50696c3c08a22b59d5330b5b892d581032c5970f87444be04fe45324b2870e12b1b0f731a45019e09733b9edd860709a15e9f76597d6ec4db6a518a52b98d7d01126fcc48ea8998bfd3b82a3b92b7861c4b658b9ec10dc42c9d99536999d8aca125f74e93a116193bc75c648001981bbaa9c28d39a0ea97c0a160f09832446ef5183bce3627678a6edc08e7f0ae2f7753b49b06ef7d336d47d5f00262227cbec301104ea80b25dc8e3ef78336815b4a3978d8d6067be06d137480425bd330292a";
 
     bytes32 internal constant _UNIT_DELTA_X = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798;
     bytes32 internal constant _UNIT_DELTA_Y = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8;
 
     bytes internal constant _DELTA_PROOF =
-        hex"2f87f84992b94ce2cd69e2c9540e4b3c0f383ee6b7639344fe97697ce64d23e2091d33efb675348ddede05dc45c3158885bfccec1bcb4e84c5401917a3f353e91c";
+        hex"09eb4f4f11cb979c00a593e471e0ce76a86ecd511825ef7f2c900b47dc899f8105796334f8d2672e9a5440c7c772998482ff9647d39a6672a5cf0dd7a4f2abb71b";
 
     function ciphertext() internal pure returns (bytes memory cipher) {
         cipher = hex"3f0000007f000000bf000000ff000000";
@@ -107,74 +107,3 @@ library Example {
         txn = Transaction({actions: actions, deltaProof: _DELTA_PROOF});
     }
 }
-
-/*
-Transaction {
-    actions: [
-        Action {
-            logicProofs: [
-                LogicProof {
-                    proof: 0x9f39696c07babbd484e959b96e8946e5633c5f3eb3c89dac5b7b8e872ccf0955175a786d2bbe51eddc10c60540a3e02df36d9e29f0c70581a0c6522329350a2ac34087412883b8247d7e60261ec73c8062edda070660e4865e46a8985a5a02d9a63220c624126a44df3ba75b25905361429104e4b70f14dccf8f3b76f0ee51c38971481809922efd089d96ca9e5b9be91a53a0e6893ab8da5f4ed7209ae0e305c83630600c5ec00c593fc88a5ea809485e73f7a6b081304837e071f22d08b1cc1392b13b24f5710a8ac92feeb61891a20cf8b972a1a87c475d800e72b60f6e26d719a820281d892c92f90d00b1303a7a0f795db30576b163093d86eb3522395a8f6f75d6,
-                    instance: LogicInstance {
-                        tag: 0x47d140b002864789e014b2dbc222d2bce62a6ef80f0eb1995c758dffb88dbe32,
-                        isConsumed: true,
-                        actionTreeRoot: 0xab82530843896e639200bad250cbef46f7f2fae9115ba14958076768c167e342,
-                        ciphertext: 0x3f0000007f000000bf000000ff000000,
-                        appData: [
-                            ExpirableBlob {
-                                deletionCriterion: 0,
-                                blob: 0x1f0000003f0000005f0000007f000000,
-                            },
-                            ExpirableBlob {
-                                deletionCriterion: 1,
-                                blob: 0x9f000000bf000000df000000ff000000,
-                            },
-                        ],
-                    },
-                    logicRef: 0x009962e2c1c0ac9106f612ed26169335b7f304e3640dfd20c52821aaa71cd2db,
-                },
-                LogicProof {
-                    proof: 0x9f39696c2ecefc878b7edd6ac0482898e0f595d52f274da835f2ab49598279eaf4543ee206b4021f277e3bca871a5b515137049dfee5832f9ba67faca8fb068551a637b70215ed13c52838310c841e2a51e1545051a7151ecc2b63086e7bd7171f09e0752ffa224012a81a4c6414d65af28a6b6265e26653b360c13c01e19ea075e17cbb2d560d81fc26ea3e51f40c84378f69256068c2711ba805f84fbb2b491d22642919a363cd185ef0a2b8ab6e9b72c6e39a714294ea1e0cb7256af23c7faf7bbfe41de1bf7c98ec70dcf0ffa2f293d11f77ab3b2ad4513e278b5ec6c3a326d164c01330ff82fa8d0addf12c939cc15c90fb2471c87c2e659f70d8d913dfdc9fcb88,
-                    instance: LogicInstance {
-                        tag: 0x0b7059ca4344dc9ebb69f668044c60241e2302cd42122f049a82dfdc539b4aa0,
-                        isConsumed: false,
-                        actionTreeRoot: 0xab82530843896e639200bad250cbef46f7f2fae9115ba14958076768c167e342,
-                        ciphertext: 0x3f0000007f000000bf000000ff000000,
-                        appData: [
-                            ExpirableBlob {
-                                deletionCriterion: 0,
-                                blob: 0x1f0000003f0000005f0000007f000000,
-                            },
-                            ExpirableBlob {
-                                deletionCriterion: 1,
-                                blob: 0x9f000000bf000000df000000ff000000,
-                            },
-                        ],
-                    },
-                    logicRef: 0x009962e2c1c0ac9106f612ed26169335b7f304e3640dfd20c52821aaa71cd2db,
-                },
-            ],
-            complianceUnits: [
-                ComplianceUnit {
-                    proof: 0x9f39696c13644e07f84dbbf45f1ebe7e363de1ae8241c0001e592f96bf808c5d20ca9a981b9fa23b60c7c0d02736d9c9c4fc6c47eafcc84d14cb0abb612be42501ef13a50af3a6550dd6eeab4739d7ecc436f10b8e605aab1c12a8b23d6d81bc040ec8812987ae0df60cf05f7f595b96a53ef550f26d756837ca214da93d499167219d5e1145d36b5b53063e41a9b303b9bebcaec8bafaea6cc051c12d8985ff28aa1e4b0d1b35e913fb8370749384769e9f568498c735b7ae94f93d7aa667145378f29b1684ae6fae6b51e1d415319b7ffac7c8473514ae6656aee9fc0b0b43bf46c6de0e8abc9a8eabb3e038e485fb18460ece7578c8e87c143eabdd7dc6a2bc74ac89,
-                    instance: ComplianceInstance {
-                        consumed: ConsumedRefs {
-                            nullifier: 0x47d140b002864789e014b2dbc222d2bce62a6ef80f0eb1995c758dffb88dbe32,
-                            logicRef: 0x009962e2c1c0ac9106f612ed26169335b7f304e3640dfd20c52821aaa71cd2db,
-                            commitmentTreeRoot: 0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3,
-                        },
-                        created: CreatedRefs {
-                            commitment: 0x0b7059ca4344dc9ebb69f668044c60241e2302cd42122f049a82dfdc539b4aa0,
-                            logicRef: 0x009962e2c1c0ac9106f612ed26169335b7f304e3640dfd20c52821aaa71cd2db,
-                        },
-                        unitDeltaX: 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
-                        unitDeltaY: 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8,
-                    },
-                },
-            ],
-            resourceCalldataPairs: [],
-        },
-    ],
-    deltaProof: 0x2f87f84992b94ce2cd69e2c9540e4b3c0f383ee6b7639344fe97697ce64d23e2091d33efb675348ddede05dc45c3158885bfccec1bcb4e84c5401917a3f353e91c,
-}
-*/

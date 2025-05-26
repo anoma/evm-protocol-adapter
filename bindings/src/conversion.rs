@@ -210,6 +210,8 @@ mod tests {
 
     #[test]
     fn print_tx() {
+        println!("{:?}", aarm::evm_adapter::get_compliance_id());
+
         dotenv().ok();
         env::var("BONSAI_API_KEY").expect("Couldn't read BONSAI_API_KEY");
         env::var("BONSAI_API_URL").expect("Couldn't read BONSAI_API_URL");
