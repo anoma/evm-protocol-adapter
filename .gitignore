@@ -11,8 +11,8 @@ node_modules/
 
 # broadcasts
 !broadcast
-broadcast/*
-broadcast/*/31337/
+contracts/broadcast/*
+contracts/broadcast/*/31337/
 
 # Files
 *.env
