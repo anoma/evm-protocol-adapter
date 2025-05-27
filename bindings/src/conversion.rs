@@ -4,7 +4,7 @@ use aarm::evm_adapter::{
     AdapterAction, AdapterComplianceUnit, AdapterExpirableBlob, AdapterLogicInstance,
     AdapterLogicProof, AdapterTransaction,
 };
-use aarm_core::compliance::ComplianceUnit;
+use aarm_core::compliance::ComplianceInstance;
 use aarm_core::resource::Resource;
 use alloy::primitives::{Bytes, B256, U256};
 
@@ -31,7 +31,7 @@ impl From<Resource> for ProtocolAdapter::Resource {
     }
 }
 
-impl From<AdapterExpirableBlob> for ProtocolAdapter::ExpirableBlob {
+impl From<AdapterExpirableBlob> for BlobStorage::ExpirableBlob {
     fn from(expirable_blob: AdapterExpirableBlob) -> Self {
         Self {
             blob: expirable_blob.blob.into(),
@@ -40,7 +40,7 @@ impl From<AdapterExpirableBlob> for ProtocolAdapter::ExpirableBlob {
     }
 }
 
-impl From<AdapterLogicInstance> for ProtocolAdapter::LogicInstance {
+impl From<AdapterLogicInstance> for Logic::Instance {
     fn from(instance: AdapterLogicInstance) -> Self {
         Self {
             tag: B256::from_slice(instance.tag.as_bytes()),
@@ -52,18 +52,18 @@ impl From<AdapterLogicInstance> for ProtocolAdapter::LogicInstance {
     }
 }
 
-impl From<AdapterLogicProof> for ProtocolAdapter::LogicProof {
+impl From<AdapterLogicProof> for Logic::VerifierInput {
     fn from(logic_proof: AdapterLogicProof) -> Self {
         Self {
             proof: logic_proof.proof.into(),
             instance: logic_proof.instance.into(),
-            logicRef: B256::from_slice(logic_proof.verifying_key.as_bytes()),
+            verifyingKey: B256::from_slice(logic_proof.verifying_key.as_bytes()),
         }
     }
 }
 
-impl From<AdapterComplianceInstance> for ProtocolAdapter::Compliance.VerifierInput {
-    fn from(compliance_unit: AdapterComplianceInstance) -> Self {
+impl From<AdapterComplianceUnit> for Compliance::VerifierInput {
+    fn from(compliance_unit: AdapterComplianceUnit) -> Self {
         Self {
             proof: compliance_unit.proof.into(),
             instance: compliance_unit.instance.into(),
@@ -71,17 +71,17 @@ impl From<AdapterComplianceInstance> for ProtocolAdapter::Compliance.VerifierInp
     }
 }
 
-impl From<ComplianceInstance> for ProtocolAdapter::Compliance.Instance {
-    fn from(instance: Compliance.Instance) -> Self {
+impl From<ComplianceInstance> for Compliance::Instance {
+    fn from(instance: ComplianceInstance) -> Self {
         Self {
-            consumed: ProtocolAdapter::ConsumedRefs {
+            consumed: Compliance::ConsumedRefs {
                 nullifier: B256::from_slice(instance.consumed_nullifier.as_bytes()),
                 logicRef: B256::from_slice(instance.consumed_logic_ref.as_bytes()),
                 commitmentTreeRoot: B256::from_slice(
                     instance.consumed_commitment_tree_root.as_bytes(),
                 ),
             },
-            created: ProtocolAdapter::CreatedRefs {
+            created: Compliance::CreatedRefs {
                 commitment: B256::from_slice(instance.created_commitment.as_bytes()),
                 logicRef: B256::from_slice(instance.created_logic_ref.as_bytes()),
             },
@@ -94,7 +94,7 @@ impl From<ComplianceInstance> for ProtocolAdapter::Compliance.Instance {
 impl From<AdapterAction> for ProtocolAdapter::Action {
     fn from(action: AdapterAction) -> Self {
         Self {
-            logicProofs: action
+            logicVerifierInputs: action
                 .logic_proofs
                 .into_iter()
                 .map(|lp| lp.into())

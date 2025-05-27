@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import {Compliance} from "../../src/proving/Compliance.sol";
 import {Logic} from "../../src/proving/Logic.sol";
-import {ExpirableBlob, DeletionCriterion} from "../../src/state/ExpirableBlob.sol";
+import {BlobStorage} from "../../src/state/BlobStorage.sol";
 import {Transaction, ResourceForwarderCalldataPair, Action} from "../../src/Types.sol";
 
 import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
@@ -34,14 +34,16 @@ library Example {
         cipher = hex"3f0000007f000000bf000000ff000000";
     }
 
-    function expirableBlobs() internal pure returns (ExpirableBlob[] memory blobs) {
-        blobs = new ExpirableBlob[](2);
-        blobs[0] = ExpirableBlob({
+    function expirableBlobs() internal pure returns (BlobStorage.ExpirableBlob[] memory blobs) {
+        blobs = new BlobStorage.ExpirableBlob[](2);
+        blobs[0] = BlobStorage.ExpirableBlob({
             blob: hex"1f0000003f0000005f0000007f000000",
-            deletionCriterion: DeletionCriterion.Immediately
+            deletionCriterion: BlobStorage.DeletionCriterion.Immediately
         });
-        blobs[1] =
-            ExpirableBlob({blob: hex"9f000000bf000000df000000ff000000", deletionCriterion: DeletionCriterion.Never});
+        blobs[1] = BlobStorage.ExpirableBlob({
+            blob: hex"9f000000bf000000df000000ff000000",
+            deletionCriterion: BlobStorage.DeletionCriterion.Never
+        });
     }
 
     function complianceInstance() internal pure returns (Compliance.Instance memory instance) {

@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
 
-import {BlobStorage, DeletionCriterion} from "../../src/state/BlobStorage.sol";
+import {BlobStorage} from "../../src/state/BlobStorage.sol";
 
 import {BlobStorageMock} from "../mocks/BlobStorageMock.sol";
 
@@ -21,16 +21,16 @@ contract BlobStorageTest is Test {
     }
 
     function test_storeBlob_deletionCriterion_Never_returns_the_blob_hash() public {
-        assertEq(_bs.storeBlob(_BLOB, DeletionCriterion.Never), _EXPECTED_BLOB_HASH);
+        assertEq(_bs.storeBlob(_BLOB, BlobStorage.DeletionCriterion.Never), _EXPECTED_BLOB_HASH);
     }
 
     function test_storeBlob_deletionCriterion_Never_reverts_on_empty_blob() public {
         vm.expectRevert(BlobStorage.BlobEmpty.selector);
-        _bs.storeBlob(_EMPTY_BLOB, DeletionCriterion.Never);
+        _bs.storeBlob(_EMPTY_BLOB, BlobStorage.DeletionCriterion.Never);
     }
 
     function test_storeBlob_deletionCriterion_Never_stores_blobs_forever() public {
-        bytes32 blobHash = _bs.storeBlob(_BLOB, DeletionCriterion.Never);
+        bytes32 blobHash = _bs.storeBlob(_BLOB, BlobStorage.DeletionCriterion.Never);
 
         assertEq(blobHash, _EXPECTED_BLOB_HASH);
         assertEq(_bs.lookupBlob(blobHash), _BLOB);
@@ -42,7 +42,7 @@ contract BlobStorageTest is Test {
 
     function test_storeBlob_deletionCriterion_Immediately_reverts_on_empty_blob() public {
         vm.expectRevert(BlobStorage.BlobEmpty.selector);
-        _bs.storeBlob(_EMPTY_BLOB, DeletionCriterion.Immediately);
+        _bs.storeBlob(_EMPTY_BLOB, BlobStorage.DeletionCriterion.Immediately);
     }
 
     /// @dev Ensures that the non-existent blobs cannot be looked up
@@ -54,7 +54,7 @@ contract BlobStorageTest is Test {
 
     /// @dev Ensures that immediately deleted blobs cannot be looked up.
     function test_lookupBlob_reverts_for_immediately_deleted_blob() public {
-        bytes32 blobHash = _bs.storeBlob(_BLOB, DeletionCriterion.Immediately);
+        bytes32 blobHash = _bs.storeBlob(_BLOB, BlobStorage.DeletionCriterion.Immediately);
 
         vm.expectRevert(abi.encodeWithSelector(BlobStorage.BlobNotFound.selector, blobHash));
         _bs.lookupBlob(blobHash);

@@ -3,9 +3,21 @@ pragma solidity ^0.8.27;
 
 import {IBlobStorage} from "../interfaces/IBlobStorage.sol";
 
-import {ExpirableBlob, DeletionCriterion} from "../state/ExpirableBlob.sol";
-
 contract BlobStorage is IBlobStorage {
+    /// @notice An enum representing the supported blob deletion criteria.
+    enum DeletionCriterion {
+        Immediately,
+        Never
+    }
+
+    /// @notice A blob with a deletion criterion attached.
+    /// @param deletionCriterion The deletion criterion.
+    /// @param blob The bytes-encoded blob data.
+    struct ExpirableBlob {
+        DeletionCriterion deletionCriterion;
+        bytes blob;
+    }
+
     bytes internal constant _EMPTY_BLOB = bytes("");
     bytes32 internal constant _EMPTY_BLOB_HASH = sha256(_EMPTY_BLOB);
 

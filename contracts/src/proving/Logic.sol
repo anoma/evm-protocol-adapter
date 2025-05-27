@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ExpirableBlob} from "../state/ExpirableBlob.sol";
+import {BlobStorage} from "../state/BlobStorage.sol";
 
 library Logic {
     /// @notice The instance of the logic proof associated with a specific resource.
@@ -16,7 +16,7 @@ library Logic {
         bool isConsumed;
         bytes32 actionTreeRoot;
         bytes ciphertext;
-        ExpirableBlob[] appData;
+        BlobStorage.ExpirableBlob[] appData;
     }
 
     /// @notice A struct containing all information required to verify a logic proof.
