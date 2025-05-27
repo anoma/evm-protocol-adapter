@@ -18,24 +18,44 @@ For more information on the EVM protocol adapter, find the related
 > This repo features a prototype and is work in progress. Do NOT use in
 > production.
 
-## Installation
+## Project Structure
 
-1. Get an up-to-date version of [Foundry](https://github.com/foundry-rs/foundry)
+```sh
+.
+├── bindings
+├── contracts
+├── LICENSE
+└── README.md
+```
+
+The `contracts` folder contains the contracts written in [Solidity](https://soliditylang.org/) contracts as well as [Foundry forge](https://book.getfoundry.sh/forge/) tests and deploy scripts.
+
+The `bindings` folder contains bindings in [Rust](https://www.rust-lang.org/) to convert [Rust](https://www.rust-lang.org/) and [RISC Zero](https://risczero.com/) types into EVM types using the [`alloy-rs` library](https://github.com/alloy-rs).
+
+## Prerequisites
+
+1. Get an up-to-date version of [Rust](https://www.rust-lang.org/)
    with
 
    ```sh
-   curl -L https://foundry.paradigm.xyz | bash
-   foundryup
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
 
-2. Clone this repo and run
-   ```sh
-   forge install
-   ```
+2. Clone this repo
 
-## Usage
+## Solidity Contracts
 
-### Tests
+### Installation
+
+Change the directory to the `contracts` folder with `cd contracts` and run
+
+```sh
+forge install
+```
+
+### Usage
+
+#### Tests
 
 Run
 
@@ -43,7 +63,7 @@ Run
 forge test
 ```
 
-### Deployment
+#### Deployment
 
 To simulate deployment on sepolia, run
 
@@ -59,7 +79,7 @@ Append the
 - `--account <ACCOUNT_NAME>` flag to use a previously imported keystore (see
   `cast wallet --help` for more info)
 
-#### Block Explorer Verification
+##### Block Explorer Verification
 
 For post-deployment verification on Etherscan run
 
@@ -73,10 +93,42 @@ forge verify-contract \
 
 after replacing `<ADDRESS>` with the respective contract address.
 
-## Benchmarks
+### Benchmarks
 
 Parameters:
 
 - Commitment accumulator `treeDepth = 32`
 
 <img src=".assets/Benchmark.png" width=67% alt="Protocol adapter benchmark for a Merkle tree depth of 32.">
+
+## Rust Bindings
+
+### Installation
+
+Change the directory to the `bindings` folder with `cd bindings` and run
+
+1. Install `rzup` by running the following command:
+
+   ```sh
+   curl -L https://risczero.com/install | bash
+   ```
+
+2. Run `rzup` to install RISC Zero:
+
+   ```sh
+   rzup install
+   ```
+
+3. Go to the `bindings` directory with `cd bindings` and run
+
+   ```sh
+   cargo build
+   ```
+
+### Usage
+
+Print a test transaction with
+
+```sh
+cargo test -- conversion::tests::print_tx --exact --show-output --ignored
+```
