@@ -22,7 +22,7 @@ contract DeltaProofTest is Test {
         assertEq(recovered, MockDelta.SIGNER_ACCOUNT);
     }
 
-    function test_deltaVerify() public pure {
+    function test_verify_mock_delta_proof() public pure {
         Delta.verify({
             proof: MockDelta.PROOF,
             instance: MockDelta.transactionDelta(),
@@ -30,7 +30,7 @@ contract DeltaProofTest is Test {
         });
     }
 
-    function test_example_delta_proof() public pure {
+    function test_verify_example_delta_proof() public pure {
         bytes32[] memory tags = new bytes32[](2);
         tags[0] = Example._CONSUMED_NULLIFIER;
         tags[1] = Example._CREATED_COMMITMENT;

@@ -23,7 +23,7 @@ contract LogicProofTest is Test {
         _sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
     }
 
-    function test_example_logic_proof_consmed() public view {
+    function test_verify_example_logic_proof_consumed() public view {
         Logic.VerifierInput memory input = Example.logicVerifierInput({isConsumed: true});
 
         _sepoliaVerifierRouter.verify({
@@ -33,7 +33,7 @@ contract LogicProofTest is Test {
         });
     }
 
-    function test_example_logic_proof_created() public view {
+    function test_verify_example_logic_proof_created() public view {
         Logic.VerifierInput memory lp = Example.logicVerifierInput({isConsumed: false});
 
         _sepoliaVerifierRouter.verify({

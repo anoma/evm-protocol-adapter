@@ -21,7 +21,7 @@ contract ComplianceProofTest is Test {
         _sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
     }
 
-    function test_example_compliance_proof() public view {
+    function tes_verify_example_compliance_proof() public view {
         Compliance.Unit memory cu = Example.complianceUnit();
 
         _sepoliaVerifierRouter.verify({
