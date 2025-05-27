@@ -5,22 +5,20 @@ version = 4
 [[package]]
 name = "aarm"
 version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?rev=83407a216cd3f032b9ec5eb9d3fd8d2591513c32#83407a216cd3f032b9ec5eb9d3fd8d2591513c32"
+source = "git+https://github.com/anoma/aarm-risc0.git?rev=3752239d71ee6801de469b31df8760ad96aa4a75#3752239d71ee6801de469b31df8760ad96aa4a75"
 dependencies = [
  "aarm_core",
- "compliance-methods",
  "k256",
  "rand 0.8.5",
  "risc0-ethereum-contracts",
  "risc0-zkvm",
  "serde",
- "trivial_logic",
 ]
 
 [[package]]
 name = "aarm_core"
 version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?rev=83407a216cd3f032b9ec5eb9d3fd8d2591513c32#83407a216cd3f032b9ec5eb9d3fd8d2591513c32"
+source = "git+https://github.com/anoma/aarm-risc0.git?rev=3752239d71ee6801de469b31df8760ad96aa4a75#3752239d71ee6801de469b31df8760ad96aa4a75"
 dependencies = [
  "aes-gcm",
  "bincode",
@@ -1624,14 +1622,6 @@ name = "cobs"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67ba02a97a2bd10f4b59b25c7973101c79642302776489e030cd13cdab09ed15"
-
-[[package]]
-name = "compliance-methods"
-version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?rev=83407a216cd3f032b9ec5eb9d3fd8d2591513c32#83407a216cd3f032b9ec5eb9d3fd8d2591513c32"
-dependencies = [
- "risc0-build",
-]
 
 [[package]]
 name = "const-hex"
@@ -5600,14 +5590,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e0d2eaa99c3c2e41547cfa109e910a68ea03823cccad4a0525dcbc9b01e8c71"
 dependencies = [
  "tracing-core",
-]
-
-[[package]]
-name = "trivial_logic"
-version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?rev=83407a216cd3f032b9ec5eb9d3fd8d2591513c32#83407a216cd3f032b9ec5eb9d3fd8d2591513c32"
-dependencies = [
- "risc0-build",
 ]
 
 [[package]]
