@@ -8,7 +8,6 @@ import {EllipticCurveK256} from "../libs/EllipticCurveK256.sol";
 /// @dev This uses the Pedersen commitment scheme
 /// (https://link.springer.com/content/pdf/10.1007/3-540-46766-1_9.pdf#page=3).
 library Delta {
-    error InvalidPublicKeyLength(uint256 expected, uint256 actual);
     error DeltaMismatch(address expected, address actual);
 
     function add(uint256[2] memory p1, uint256[2] memory p2) internal pure returns (uint256[2] memory p3) {
