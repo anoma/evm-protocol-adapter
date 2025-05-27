@@ -1,17 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import {Compliance} from "../../src/proving/Compliance.sol";
 import {Logic} from "../../src/proving/Logic.sol";
 import {ExpirableBlob, DeletionCriterion} from "../../src/state/ExpirableBlob.sol";
-import {
-    ComplianceInstance,
-    CreatedRefs,
-    ConsumedRefs,
-    ComplianceUnit,
-    Transaction,
-    ResourceForwarderCalldataPair,
-    Action
-} from "../../src/Types.sol";
+import {Transaction, ResourceForwarderCalldataPair, Action} from "../../src/Types.sol";
 
 import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
 
@@ -51,21 +44,21 @@ library Example {
             ExpirableBlob({blob: hex"9f000000bf000000df000000ff000000", deletionCriterion: DeletionCriterion.Never});
     }
 
-    function complianceInstance() internal pure returns (ComplianceInstance memory instance) {
-        instance = ComplianceInstance({
-            consumed: ConsumedRefs({
+    function complianceInstance() internal pure returns (Compliance.Instance memory instance) {
+        instance = Compliance.Instance({
+            consumed: Compliance.ConsumedRefs({
                 nullifier: _CONSUMED_NULLIFIER,
                 commitmentTreeRoot: INITIAL_COMMITMENT_TREE_ROOT,
                 logicRef: _CONSUMED_LOGIC_REF
             }),
-            created: CreatedRefs({commitment: _CREATED_COMMITMENT, logicRef: _CREATED_LOGIC_REF}),
+            created: Compliance.CreatedRefs({commitment: _CREATED_COMMITMENT, logicRef: _CREATED_LOGIC_REF}),
             unitDeltaX: _UNIT_DELTA_X,
             unitDeltaY: _UNIT_DELTA_Y
         });
     }
 
-    function complianceUnit() internal pure returns (ComplianceUnit memory unit) {
-        unit = ComplianceUnit({proof: _COMPLIANCE_PROOF, instance: complianceInstance()});
+    function complianceUnit() internal pure returns (Compliance.Unit memory unit) {
+        unit = Compliance.Unit({proof: _COMPLIANCE_PROOF, instance: complianceInstance()});
     }
 
     function logicInstance(bool isConsumed) internal pure returns (Logic.Instance memory instance) {
@@ -93,7 +86,7 @@ library Example {
         logicVerifierInputs[0] = logicVerifierInput({isConsumed: true});
         logicVerifierInputs[1] = logicVerifierInput({isConsumed: false});
 
-        ComplianceUnit[] memory complianceUnits = new ComplianceUnit[](1);
+        Compliance.Unit[] memory complianceUnits = new Compliance.Unit[](1);
         complianceUnits[0] = complianceUnit();
 
         Action[] memory actions = new Action[](1);

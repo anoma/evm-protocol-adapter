@@ -19,7 +19,7 @@ import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 
 import {NullifierSet} from "./state/NullifierSet.sol";
 
-import {Action, ForwarderCalldata, Resource, Transaction, ComplianceUnit, ComplianceInstance} from "./Types.sol";
+import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
@@ -29,7 +29,7 @@ contract ProtocolAdapter is
     BlobStorage
 {
     using ComputableComponents for Resource;
-    using RiscZeroUtils for ComplianceInstance;
+    using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
@@ -139,7 +139,7 @@ contract ProtocolAdapter is
             {
                 uint256 nCUs = action.complianceUnits.length;
                 for (uint256 j = 0; j < nCUs; ++j) {
-                    ComplianceUnit calldata cu = action.complianceUnits[j];
+                    Compliance.Unit calldata cu = action.complianceUnits[j];
 
                     // Check consumed resources
                     _checkRootPreExistence(cu.instance.consumed.commitmentTreeRoot);

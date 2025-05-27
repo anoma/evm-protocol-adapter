@@ -20,8 +20,8 @@ import {
     LogicInstance,
     TagLogicProofPair,
     LogicProof,
-    ComplianceUnit,
-    ComplianceInstance,
+    Compliance.Unit,
+    Compliance.Instance,
     ConsumedRefs,
     CreatedRefs
 } from "../../src/Types.sol";
@@ -94,8 +94,8 @@ library MockTypes {
             TagLogicProofPair[] memory rlProofs =
                 _mockLogicProofs({mockVerifier: mockVerifier, nullifiers: nfs, commitments: cms});
 
-            ComplianceUnit[] memory complianceUnits =
-                mockComplianceUnits({mockVerifier: mockVerifier, root: roots[0], commitments: cms, nullifiers: nfs});
+            Compliance.Unit[] memory complianceUnits =
+                mockCompliance.Units({mockVerifier: mockVerifier, root: roots[0], commitments: cms, nullifiers: nfs});
 
             ResourceForwarderCalldataPair[] memory emptyCalls;
 
@@ -217,21 +217,21 @@ library MockTypes {
         }
     }
 
-    function mockComplianceUnits(
+    function mockCompliance.Units(
         RiscZeroMockVerifier mockVerifier,
         bytes32 root,
         bytes32[] memory nullifiers,
         bytes32[] memory commitments
-    ) internal view returns (ComplianceUnit[] memory units) {
+    ) internal view returns (Compliance.Unit[] memory units) {
         if (nullifiers.length != commitments.length) revert SevereError();
 
         bytes32 verifyingKey = MockRiscZeroProof.IMAGE_ID_2; // TODO
 
         uint256 nUnits = nullifiers.length;
-        units = new ComplianceUnit[](nUnits);
+        units = new Compliance.Unit[](nUnits);
 
         for (uint256 i = 0; i < nUnits; ++i) {
-            ComplianceInstance memory instance = ComplianceInstance({
+            Compliance.Instance memory instance = Compliance.Instance({
                 consumed: ConsumedRefs({nullifier: nullifiers[i], rootRef: root, logicRef: _ALWAYS_VALID_LOGIC_REF}),
                 created: CreatedRefs({commitment: commitments[i], logicRef: _ALWAYS_VALID_LOGIC_REF}),
                 unitDelta: Delta.zero() // TODO
@@ -242,7 +242,7 @@ library MockTypes {
                 journalDigest: sha256(abi.encode(verifyingKey, instance))
             });
 
-            units[i] = ComplianceUnit({proof: receipt.seal, instance: instance, verifyingKey: verifyingKey});
+            units[i] = Compliance.Unit({proof: receipt.seal, instance: instance, verifyingKey: verifyingKey});
         }
     }
 

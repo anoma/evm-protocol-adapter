@@ -1,10 +1,10 @@
 use alloy::sol;
 
 use aarm::evm_adapter::{
-    AdapterAction, AdapterComplianceUnit, AdapterExpirableBlob, AdapterLogicInstance,
+    AdapterAction, AdapterCompliance.Unit, AdapterExpirableBlob, AdapterLogicInstance,
     AdapterLogicProof, AdapterTransaction,
 };
-use aarm_core::compliance::ComplianceInstance;
+use aarm_core::compliance::Compliance.Instance;
 use aarm_core::resource::Resource;
 use alloy::primitives::{Bytes, B256, U256};
 
@@ -62,8 +62,8 @@ impl From<AdapterLogicProof> for ProtocolAdapter::LogicProof {
     }
 }
 
-impl From<AdapterComplianceUnit> for ProtocolAdapter::ComplianceUnit {
-    fn from(compliance_unit: AdapterComplianceUnit) -> Self {
+impl From<AdapterCompliance.Unit> for ProtocolAdapter::Compliance.Unit {
+    fn from(compliance_unit: AdapterCompliance.Unit) -> Self {
         Self {
             proof: compliance_unit.proof.into(),
             instance: compliance_unit.instance.into(),
@@ -71,8 +71,8 @@ impl From<AdapterComplianceUnit> for ProtocolAdapter::ComplianceUnit {
     }
 }
 
-impl From<ComplianceInstance> for ProtocolAdapter::ComplianceInstance {
-    fn from(instance: ComplianceInstance) -> Self {
+impl From<Compliance.Instance> for ProtocolAdapter::Compliance.Instance {
+    fn from(instance: Compliance.Instance) -> Self {
         Self {
             consumed: ProtocolAdapter::ConsumedRefs {
                 nullifier: B256::from_slice(instance.consumed_nullifier.as_bytes()),

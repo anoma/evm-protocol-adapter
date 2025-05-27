@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ComplianceInstance} from "../Types.sol";
-
+import {Compliance} from "../proving/Compliance.sol";
 import {Logic} from "../proving/Logic.sol";
 
 library RiscZeroUtils {
-    function toJournalDigest(ComplianceInstance memory instance) internal pure returns (bytes32 digest) {
+    function toJournalDigest(Compliance.Instance memory instance) internal pure returns (bytes32 digest) {
         digest = sha256(abi.encode(instance));
     }
 
