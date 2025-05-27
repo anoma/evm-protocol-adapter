@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 library Compliance {
-    /// @notice The compliance instance containing data to verify the compliance unit.
+    /// @notice The compliance instance containing the data required to verify the compliance unit.
     /// @param consumed References associated with the consumed resource in the compliance unit.
     /// @param created References associated with the created resource in the compliance unit.
     /// @param unitDeltaX The x-coordinate of the delta value of this unit.
@@ -41,5 +41,6 @@ library Compliance {
         Instance instance;
     }
 
+    /// @notice The compliance verifying key.
     bytes32 internal constant _VERIFYING_KEY = 0x7004946d81df7a5c47b7d3b8359654e9bb81190f0705be69d54f15391fff2248;
 }

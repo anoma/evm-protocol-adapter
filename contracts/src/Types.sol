@@ -4,15 +4,15 @@ pragma solidity ^0.8.27;
 import {Compliance} from "./proving/Compliance.sol";
 import {Logic} from "./proving/Logic.sol";
 
-/// @notice The resource object.
+/// @notice The resource object constituting the atomic unit of state in the Anoma protocol.
 /// @param  logicRef The hash of the resource logic function.
 /// @param  labelRef The hash of the resource label, which can contain arbitrary data.
 /// @param  valueRef The hash of the resource value, which can contain arbitrary data.
 /// @param  nullifierKeyCommitment The commitment to the nullifier key.
 /// @param  quantity The quantity that the resource represents.
-/// @param  nonce The nonce guaranteeing the resource uniqueness.
-/// @param  randSeed The randomness seed that can be used to derive pseudo-randomness.
-/// @param  ephemeral The resource ephemerality.
+/// @param  nonce The nonce guaranteeing the resource's uniqueness.
+/// @param  randSeed The randomness seed that can be used to derive pseudo-randomness for applications.
+/// @param  ephemeral The resource's ephemerality.
 struct Resource {
     bytes32 logicRef;
     bytes32 labelRef;
@@ -24,7 +24,8 @@ struct Resource {
     bool ephemeral;
 }
 
-/// @notice The transaction object.
+/// @notice The transaction object containing all required data to conduct a RM state transition
+/// in which resource get consumed and created.
 /// @param actions The list of actions to be executed.
 /// @param deltaProof The proof for the transaction delta value.
 struct Transaction {
@@ -32,19 +33,20 @@ struct Transaction {
     bytes deltaProof;
 }
 
-/// @notice The action data structure.
+/// @notice The action object providing context separation between non-intersecting sets of resources.
 /// @param logicProofs The logic proofs of each resource consumed or created in the action.
 /// @param complianceVerifierInputs The compliance units comprising one consumed and one created resource, each.
-/// @param resourceCalldataPairs A tuple of a resource object and a
+/// @param resourceCalldataPairs The external calls
 struct Action {
     Logic.VerifierInput[] logicVerifierInputs;
     Compliance.VerifierInput[] complianceVerifierInputs;
     ResourceForwarderCalldataPair[] resourceCalldataPairs;
 }
 
-/// @notice // TODO
-/// @param carrier
-/// @param call
+/// @notice A tuple containing data to allow the protocol adapter to call external contracts
+/// and to create and consume resources in correspondence to this external call.
+/// @param carrier The carrier resource making the calldata available in the RM state space.
+/// @param call The calldata containing in- and outputs of the external call being routed through a forwarder contract.
 struct ResourceForwarderCalldataPair {
     Resource carrier;
     ForwarderCalldata call;
