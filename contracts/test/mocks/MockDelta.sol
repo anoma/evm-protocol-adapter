@@ -47,6 +47,6 @@ library MockDelta {
         // for the mock verification to work
         if (keccak256(deltaProof) != keccak256(PROOF)) revert WrongUsage();
 
-        Delta.verify({tagsHash: MESSAGE_HASH, transactionDelta: transactionDelta(), deltaProof: deltaProof});
+        Delta.verify({proof: deltaProof, instance: transactionDelta(), verifyingKey: MESSAGE_HASH});
     }
 }

@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
 import {Test} from "forge-std/Test.sol";
 
-import {ComputableComponents} from "../../src/libs/ComputableComponents.sol";
 import {Delta} from "../../src/proving/Delta.sol";
 import {Transaction} from "../../src/Types.sol";
 import {Example} from "../mocks/Example.sol";
@@ -25,9 +24,9 @@ contract DeltaProofTest is Test {
 
     function test_deltaVerify() public pure {
         Delta.verify({
-            tagsHash: MockDelta.MESSAGE_HASH,
-            transactionDelta: MockDelta.transactionDelta(),
-            deltaProof: MockDelta.PROOF
+            proof: MockDelta.PROOF,
+            instance: MockDelta.transactionDelta(),
+            verifyingKey: MockDelta.MESSAGE_HASH
         });
     }
 
@@ -38,15 +37,11 @@ contract DeltaProofTest is Test {
 
         Transaction memory txn = Example.transaction();
 
-        uint256[2] memory txDelta = [
+        uint256[2] memory transactionDelta = [
             uint256(txn.actions[0].complianceUnits[0].instance.unitDeltaX),
             uint256(txn.actions[0].complianceUnits[0].instance.unitDeltaY)
         ];
 
-        Delta.verify({
-            tagsHash: ComputableComponents.tagsHash(tags),
-            transactionDelta: txDelta,
-            deltaProof: txn.deltaProof
-        });
+        Delta.verify({proof: txn.deltaProof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
     }
 }

@@ -231,9 +231,9 @@ contract ProtocolAdapter is
         if (nActions != 0) {
             // Check delta proof.
             Delta.verify({
-                tagsHash: ComputableComponents.tagsHash(tags),
-                transactionDelta: transactionDelta,
-                deltaProof: transaction.deltaProof
+                proof: transaction.deltaProof,
+                instance: transactionDelta,
+                verifyingKey: Delta.computeVerifyingKey(tags)
             });
         }
     }
