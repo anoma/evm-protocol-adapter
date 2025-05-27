@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {DeletionCriterion} from "../Types.sol";
+import {DeletionCriterion} from "../state/ExpirableBlob.sol";
 
 interface IBlobStorage {
     /// @notice Emitted if a blob is stored.

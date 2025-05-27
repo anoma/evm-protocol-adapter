@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import {Logic} from "../../src/proving/Logic.sol";
+import {ExpirableBlob, DeletionCriterion} from "../../src/state/ExpirableBlob.sol";
 import {
-    ExpirableBlob,
-    DeletionCriterion,
     ComplianceInstance,
     CreatedRefs,
     ConsumedRefs,
     ComplianceUnit,
-    LogicInstance,
-    LogicProof,
     Transaction,
     ResourceForwarderCalldataPair,
     Action
 } from "../../src/Types.sol";
+
 import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
 
 library Example {
@@ -69,8 +68,8 @@ library Example {
         unit = ComplianceUnit({proof: _COMPLIANCE_PROOF, instance: complianceInstance()});
     }
 
-    function logicInstance(bool isConsumed) internal pure returns (LogicInstance memory instance) {
-        instance = LogicInstance({
+    function logicInstance(bool isConsumed) internal pure returns (Logic.Instance memory instance) {
+        instance = Logic.Instance({
             tag: isConsumed ? _CONSUMED_NULLIFIER : _CREATED_COMMITMENT,
             isConsumed: isConsumed,
             actionTreeRoot: _ACTION_TREE_ROOT,
@@ -79,27 +78,27 @@ library Example {
         });
     }
 
-    function logicProof(bool isConsumed) internal pure returns (LogicProof memory data) {
-        data = LogicProof({
+    function logicVerifierInput(bool isConsumed) internal pure returns (Logic.VerifierInput memory input) {
+        input = Logic.VerifierInput({
             proof: isConsumed ? _CONSUMED_LOGIC_PROOF : _CREATED_LOGIC_PROOF,
             instance: logicInstance(isConsumed),
-            logicRef: isConsumed ? _CONSUMED_LOGIC_REF : _CREATED_LOGIC_REF
+            verifyingKey: isConsumed ? _CONSUMED_LOGIC_REF : _CREATED_LOGIC_REF
         });
     }
 
     function transaction() internal pure returns (Transaction memory txn) {
         ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
 
-        LogicProof[] memory logicProofs = new LogicProof[](2);
-        logicProofs[0] = logicProof({isConsumed: true});
-        logicProofs[1] = logicProof({isConsumed: false});
+        Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2);
+        logicVerifierInputs[0] = logicVerifierInput({isConsumed: true});
+        logicVerifierInputs[1] = logicVerifierInput({isConsumed: false});
 
         ComplianceUnit[] memory complianceUnits = new ComplianceUnit[](1);
         complianceUnits[0] = complianceUnit();
 
         Action[] memory actions = new Action[](1);
         actions[0] = Action({
-            logicProofs: logicProofs,
+            logicVerifierInputs: logicVerifierInputs,
             complianceUnits: complianceUnits,
             resourceCalldataPairs: emptyForwarderCallData
         });

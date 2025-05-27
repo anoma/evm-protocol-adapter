@@ -1,19 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-/// @notice An enum representing the supported blob deletion criteria.
-enum DeletionCriterion {
-    Immediately,
-    Never
-}
-
-/// @notice A blob with a deletion criterion attached.
-/// @param deletionCriterion The deletion criterion.
-/// @param blob The bytes-encoded blob data.
-struct ExpirableBlob {
-    DeletionCriterion deletionCriterion;
-    bytes blob;
-}
+import {Logic} from "./proving/Logic.sol";
 
 /// @notice The resource object.
 /// @param  logicRef The hash of the resource logic function.
@@ -48,36 +36,9 @@ struct Transaction {
 /// @param complianceUnits The compliance units comprising one consumed and one created resource, each.
 /// @param resourceCalldataPairs A tuple of a resource object and a
 struct Action {
-    LogicProof[] logicProofs;
+    Logic.VerifierInput[] logicVerifierInputs;
     ComplianceUnit[] complianceUnits;
     ResourceForwarderCalldataPair[] resourceCalldataPairs;
-}
-
-/// @notice The data structure containing all information to verify the logic proof.
-/// @param proof
-/// @param instance
-/// @param logicRef
-/// @dev In the future and to achieve function privacy, the logic circuit validity will be proving in another circuit.
-/// This means that the logic function hash
-struct LogicProof {
-    bytes proof;
-    LogicInstance instance;
-    bytes32 logicRef; // TODO Rename to verifying key?
-}
-
-/// @notice The instance of the logic proof.
-/// @param tag The nullifier or commitment of the resource depending on if the resource is consumed or not.
-/// @param isConsumed Whether the associated resource is consumed or not.
-/// @param actionTreeRoot The root of the action tree.
-/// @param ciphertext Encrypted information for the receiver of the resource that will be emitted as an event.
-/// The ciphertext contains, at least, the resource plaintext and optional other application specific data.
-/// @param appData // TODO
-struct LogicInstance {
-    bytes32 tag;
-    bool isConsumed;
-    bytes32 actionTreeRoot;
-    bytes ciphertext;
-    ExpirableBlob[] appData;
 }
 
 /// @notice // TODO

@@ -19,16 +19,7 @@ import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 
 import {NullifierSet} from "./state/NullifierSet.sol";
 
-import {
-    Action,
-    ForwarderCalldata,
-    Resource,
-    Transaction,
-    LogicProof,
-    LogicInstance,
-    ComplianceUnit,
-    ComplianceInstance
-} from "./Types.sol";
+import {Action, ForwarderCalldata, Resource, Transaction, ComplianceUnit, ComplianceInstance} from "./Types.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
@@ -39,8 +30,8 @@ contract ProtocolAdapter is
 {
     using ComputableComponents for Resource;
     using RiscZeroUtils for ComplianceInstance;
-    using RiscZeroUtils for LogicInstance;
-    using Logic for LogicProof[];
+    using RiscZeroUtils for Logic.Instance;
+    using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
     TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
@@ -81,9 +72,9 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
-            uint256 nResources = action.logicProofs.length;
+            uint256 nResources = action.logicVerifierInputs.length;
             for (uint256 j = 0; j < nResources; ++j) {
-                LogicInstance calldata instance = action.logicProofs[j].instance;
+                Logic.Instance calldata instance = action.logicVerifierInputs[j].instance;
 
                 if (instance.isConsumed) {
                     // Nullifier non-existence was already checked in `_verify(transaction);` at the top.
@@ -130,7 +121,7 @@ contract ProtocolAdapter is
 
         uint256 resCounter = 0;
         for (uint256 i = 0; i < nActions; ++i) {
-            resCounter += transaction.actions[i].logicProofs.length;
+            resCounter += transaction.actions[i].logicVerifierInputs.length;
         }
 
         // Allocate the array.
@@ -166,11 +157,11 @@ contract ProtocolAdapter is
                     // Check the logic ref consistency
                     {
                         bytes32 nf = cu.instance.consumed.nullifier;
-                        LogicProof calldata logicProof = action.logicProofs.lookup(nf);
+                        Logic.VerifierInput calldata logicVerifierInputs = action.logicVerifierInputs.lookup(nf);
 
-                        if (cu.instance.consumed.logicRef != logicProof.logicRef) {
+                        if (cu.instance.consumed.logicRef != logicVerifierInputs.verifyingKey) {
                             revert LogicRefMismatch({
-                                expected: logicProof.logicRef,
+                                expected: logicVerifierInputs.verifyingKey,
                                 actual: cu.instance.consumed.logicRef
                             });
                         }
@@ -179,13 +170,10 @@ contract ProtocolAdapter is
                     }
                     {
                         bytes32 cm = cu.instance.created.commitment;
-                        LogicProof calldata logicProof = action.logicProofs.lookup(cm);
+                        Logic.VerifierInput calldata input = action.logicVerifierInputs.lookup(cm);
 
-                        if (cu.instance.created.logicRef != logicProof.logicRef) {
-                            revert LogicRefMismatch({
-                                expected: logicProof.logicRef,
-                                actual: cu.instance.created.logicRef
-                            });
+                        if (cu.instance.created.logicRef != input.verifyingKey) {
+                            revert LogicRefMismatch({expected: input.verifyingKey, actual: cu.instance.created.logicRef});
                         }
                         // solhint-disable-next-line  gas-increment-by-one
                         tags[resCounter++] = cm;
@@ -203,26 +191,26 @@ contract ProtocolAdapter is
 
             // Logic Proofs
             {
-                uint256 nResources = action.logicProofs.length;
+                uint256 nResources = action.logicVerifierInputs.length;
 
                 bytes32[] memory actionTags = new bytes32[](nResources);
                 for (uint256 j = 0; j < nResources; ++j) {
-                    actionTags[j] = action.logicProofs[j].instance.tag;
+                    actionTags[j] = action.logicVerifierInputs[j].instance.tag;
                 }
                 bytes32 computedActionTreeRoot = MerkleTree.computeRoot(actionTags, _ACTION_TREE_DEPTH);
 
                 for (uint256 j = 0; j < nResources; ++j) {
-                    LogicProof calldata lp = action.logicProofs[j];
+                    Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
 
                     // Check root consistency
-                    if (lp.instance.actionTreeRoot != computedActionTreeRoot) {
-                        revert RootMismatch({expected: computedActionTreeRoot, actual: lp.instance.actionTreeRoot});
+                    if (input.instance.actionTreeRoot != computedActionTreeRoot) {
+                        revert RootMismatch({expected: computedActionTreeRoot, actual: input.instance.actionTreeRoot});
                     }
 
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
-                        seal: lp.proof,
-                        imageId: lp.logicRef,
-                        journalDigest: lp.instance.toJournalDigest()
+                        seal: input.proof,
+                        imageId: input.verifyingKey,
+                        journalDigest: input.instance.toJournalDigest()
                     });
                 }
             }
@@ -262,7 +250,7 @@ contract ProtocolAdapter is
 
                 // Lookup the first appData entry.
                 bytes32 actualAppDataHash =
-                    keccak256(abi.encode(action.logicProofs.lookup(carrier.commitment()).instance.appData[0]));
+                    keccak256(abi.encode(action.logicVerifierInputs.lookup(carrier.commitment()).instance.appData[0]));
 
                 if (actualAppDataHash != expectedAppDataHash) {
                     revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});

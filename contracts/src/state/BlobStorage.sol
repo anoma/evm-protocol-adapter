@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import {IBlobStorage} from "../interfaces/IBlobStorage.sol";
 
-import {ExpirableBlob, DeletionCriterion} from "../Types.sol";
+import {ExpirableBlob, DeletionCriterion} from "../state/ExpirableBlob.sol";
 
 contract BlobStorage is IBlobStorage {
     bytes internal constant _EMPTY_BLOB = bytes("");
