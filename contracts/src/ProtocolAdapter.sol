@@ -137,43 +137,43 @@ contract ProtocolAdapter is
 
             // Compliance Proofs
             {
-                uint256 nCUs = action.complianceUnits.length;
+                uint256 nCUs = action.complianceVerifierInputs.length;
                 for (uint256 j = 0; j < nCUs; ++j) {
-                    Compliance.Unit calldata cu = action.complianceUnits[j];
+                    Compliance.VerifierInput calldata cvi = action.complianceVerifierInputs[j];
 
                     // Check consumed resources
-                    _checkRootPreExistence(cu.instance.consumed.commitmentTreeRoot);
-                    _checkNullifierNonExistence(cu.instance.consumed.nullifier);
+                    _checkRootPreExistence(cvi.instance.consumed.commitmentTreeRoot);
+                    _checkNullifierNonExistence(cvi.instance.consumed.nullifier);
 
                     // Check created resources
-                    _checkCommitmentNonExistence(cu.instance.created.commitment);
+                    _checkCommitmentNonExistence(cvi.instance.created.commitment);
 
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
-                        seal: cu.proof,
-                        imageId: Compliance._CIRCUIT_ID,
-                        journalDigest: cu.instance.toJournalDigest()
+                        seal: cvi.proof,
+                        imageId: Compliance._VERIFYING_KEY,
+                        journalDigest: cvi.instance.toJournalDigest()
                     });
 
                     // Check the logic ref consistency
                     {
-                        bytes32 nf = cu.instance.consumed.nullifier;
+                        bytes32 nf = cvi.instance.consumed.nullifier;
                         Logic.VerifierInput calldata logicVerifierInputs = action.logicVerifierInputs.lookup(nf);
 
-                        if (cu.instance.consumed.logicRef != logicVerifierInputs.verifyingKey) {
+                        if (cvi.instance.consumed.logicRef != logicVerifierInputs.verifyingKey) {
                             revert LogicRefMismatch({
                                 expected: logicVerifierInputs.verifyingKey,
-                                actual: cu.instance.consumed.logicRef
+                                actual: cvi.instance.consumed.logicRef
                             });
                         }
                         // solhint-disable-next-line  gas-increment-by-one
                         tags[resCounter++] = nf;
                     }
                     {
-                        bytes32 cm = cu.instance.created.commitment;
-                        Logic.VerifierInput calldata input = action.logicVerifierInputs.lookup(cm);
+                        bytes32 cm = cvi.instance.created.commitment;
+                        Logic.VerifierInput calldata lvi = action.logicVerifierInputs.lookup(cm);
 
-                        if (cu.instance.created.logicRef != input.verifyingKey) {
-                            revert LogicRefMismatch({expected: input.verifyingKey, actual: cu.instance.created.logicRef});
+                        if (cvi.instance.created.logicRef != lvi.verifyingKey) {
+                            revert LogicRefMismatch({expected: lvi.verifyingKey, actual: cvi.instance.created.logicRef});
                         }
                         // solhint-disable-next-line  gas-increment-by-one
                         tags[resCounter++] = cm;
@@ -181,10 +181,10 @@ contract ProtocolAdapter is
 
                     // Compute transaction delta
                     if (i == 0 && j == 0) {
-                        transactionDelta = [uint256(cu.instance.unitDeltaX), uint256(cu.instance.unitDeltaY)];
+                        transactionDelta = [uint256(cvi.instance.unitDeltaX), uint256(cvi.instance.unitDeltaY)];
                     } else {
                         transactionDelta =
-                            transactionDelta.add([uint256(cu.instance.unitDeltaX), uint256(cu.instance.unitDeltaY)]);
+                            transactionDelta.add([uint256(cvi.instance.unitDeltaX), uint256(cvi.instance.unitDeltaY)]);
                     }
                 }
             }

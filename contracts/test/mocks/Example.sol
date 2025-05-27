@@ -57,8 +57,8 @@ library Example {
         });
     }
 
-    function complianceUnit() internal pure returns (Compliance.Unit memory unit) {
-        unit = Compliance.Unit({proof: _COMPLIANCE_PROOF, instance: complianceInstance()});
+    function complianceVerifierInput() internal pure returns (Compliance.VerifierInput memory unit) {
+        unit = Compliance.VerifierInput({proof: _COMPLIANCE_PROOF, instance: complianceInstance()});
     }
 
     function logicInstance(bool isConsumed) internal pure returns (Logic.Instance memory instance) {
@@ -86,13 +86,13 @@ library Example {
         logicVerifierInputs[0] = logicVerifierInput({isConsumed: true});
         logicVerifierInputs[1] = logicVerifierInput({isConsumed: false});
 
-        Compliance.Unit[] memory complianceUnits = new Compliance.Unit[](1);
-        complianceUnits[0] = complianceUnit();
+        Compliance.VerifierInput[] memory complianceVerifierInputs = new Compliance.VerifierInput[](1);
+        complianceVerifierInputs[0] = complianceVerifierInput();
 
         Action[] memory actions = new Action[](1);
         actions[0] = Action({
             logicVerifierInputs: logicVerifierInputs,
-            complianceUnits: complianceUnits,
+            complianceVerifierInputs: complianceVerifierInputs,
             resourceCalldataPairs: emptyForwarderCallData
         });
 

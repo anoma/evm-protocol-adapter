@@ -1,10 +1,10 @@
 use alloy::sol;
 
 use aarm::evm_adapter::{
-    AdapterAction, AdapterCompliance.Unit, AdapterExpirableBlob, AdapterLogicInstance,
+    AdapterAction, AdapterComplianceUnit, AdapterExpirableBlob, AdapterLogicInstance,
     AdapterLogicProof, AdapterTransaction,
 };
-use aarm_core::compliance::Compliance.Instance;
+use aarm_core::compliance::ComplianceUnit;
 use aarm_core::resource::Resource;
 use alloy::primitives::{Bytes, B256, U256};
 
@@ -62,8 +62,8 @@ impl From<AdapterLogicProof> for ProtocolAdapter::LogicProof {
     }
 }
 
-impl From<AdapterCompliance.Unit> for ProtocolAdapter::Compliance.Unit {
-    fn from(compliance_unit: AdapterCompliance.Unit) -> Self {
+impl From<AdapterComplianceInstance> for ProtocolAdapter::Compliance.VerifierInput {
+    fn from(compliance_unit: AdapterComplianceInstance) -> Self {
         Self {
             proof: compliance_unit.proof.into(),
             instance: compliance_unit.instance.into(),
@@ -71,7 +71,7 @@ impl From<AdapterCompliance.Unit> for ProtocolAdapter::Compliance.Unit {
     }
 }
 
-impl From<Compliance.Instance> for ProtocolAdapter::Compliance.Instance {
+impl From<ComplianceInstance> for ProtocolAdapter::Compliance.Instance {
     fn from(instance: Compliance.Instance) -> Self {
         Self {
             consumed: ProtocolAdapter::ConsumedRefs {
@@ -99,7 +99,7 @@ impl From<AdapterAction> for ProtocolAdapter::Action {
                 .into_iter()
                 .map(|lp| lp.into())
                 .collect(),
-            complianceUnits: action
+            complianceVerifierInputs: action
                 .compliance_units
                 .into_iter()
                 .map(|cu| cu.into())

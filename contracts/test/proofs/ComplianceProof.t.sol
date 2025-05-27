@@ -22,11 +22,11 @@ contract ComplianceProofTest is Test {
     }
 
     function tes_verify_example_compliance_proof() public view {
-        Compliance.Unit memory cu = Example.complianceUnit();
+        Compliance.VerifierInput memory cu = Example.complianceVerifierInput();
 
         _sepoliaVerifierRouter.verify({
             seal: cu.proof,
-            imageId: Compliance._CIRCUIT_ID,
+            imageId: Compliance._VERIFYING_KEY,
             journalDigest: cu.instance.toJournalDigest()
         });
     }

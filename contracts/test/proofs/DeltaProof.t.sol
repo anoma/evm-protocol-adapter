@@ -38,8 +38,8 @@ contract DeltaProofTest is Test {
         Transaction memory txn = Example.transaction();
 
         uint256[2] memory transactionDelta = [
-            uint256(txn.actions[0].complianceUnits[0].instance.unitDeltaX),
-            uint256(txn.actions[0].complianceUnits[0].instance.unitDeltaY)
+            uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaX),
+            uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaY)
         ];
 
         Delta.verify({proof: txn.deltaProof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});

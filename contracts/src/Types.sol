@@ -34,11 +34,11 @@ struct Transaction {
 
 /// @notice The action data structure.
 /// @param logicProofs The logic proofs of each resource consumed or created in the action.
-/// @param complianceUnits The compliance units comprising one consumed and one created resource, each.
+/// @param complianceVerifierInputs The compliance units comprising one consumed and one created resource, each.
 /// @param resourceCalldataPairs A tuple of a resource object and a
 struct Action {
     Logic.VerifierInput[] logicVerifierInputs;
-    Compliance.Unit[] complianceUnits;
+    Compliance.VerifierInput[] complianceVerifierInputs;
     ResourceForwarderCalldataPair[] resourceCalldataPairs;
 }
 

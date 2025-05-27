@@ -30,6 +30,7 @@ library Delta {
         hash = keccak256(abi.encodePacked(tags));
     }
 
+    /// @notice Verifies a delta proof.
     /// @param proof The delta proof.
     /// @param instance The transaction delta.
     /// @param verifyingKey The Keccak-256 hash of all nullifiers and commitments as ordered in the compliance units.
