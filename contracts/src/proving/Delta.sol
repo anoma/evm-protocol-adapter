@@ -11,9 +11,8 @@ library Delta {
     error InvalidPublicKeyLength(uint256 expected, uint256 actual);
     error DeltaMismatch(address expected, address actual);
 
-    // TODO remove?
-    function zero() internal pure returns (uint256[2] memory p) {
-        (p[0], p[1]) = EllipticCurveK256.derivePubKey({privateKey: 0});
+    function add(uint256[2] memory p1, uint256[2] memory p2) internal pure returns (uint256[2] memory p3) {
+        (p3[0], p3[1]) = EllipticCurveK256.ecAdd(p1[0], p1[1], p2[0], p2[1]);
     }
 
     function toAccount(uint256[2] memory delta) internal pure returns (address account) {
@@ -30,10 +29,6 @@ library Delta {
     /// Since all the tags are 32 bytes in size, tight variable packing will not occur.
     function computeVerifyingKey(bytes32[] memory tags) internal pure returns (bytes32 hash) {
         hash = keccak256(abi.encodePacked(tags));
-    }
-
-    function add(uint256[2] memory p1, uint256[2] memory p2) internal pure returns (uint256[2] memory p3) {
-        (p3[0], p3[1]) = EllipticCurveK256.ecAdd(p1[0], p1[1], p2[0], p2[1]);
     }
 
     /// @param proof The delta proof.
