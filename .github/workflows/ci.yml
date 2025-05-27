@@ -135,27 +135,3 @@ jobs:
   #          PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: ${{ vars.PROTOCOL_ADAPTER_ADDRESS_SEPOLIA }}
   #          API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
   #          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-
-  juvix:
-    strategy:
-      fail-fast: true
-
-    name: Juvix Apps
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download latest nightly Juvix binary
-        uses: jaxxstorm/action-install-gh-release@v1.10.0
-        with:
-          repo: anoma/juvix-nightly-builds
-          tag: nightly-2025-02-13-0.6.9-8b06157
-          cache: enable
-
-      - name: Run Juvix typecheck
-        run: juvix dependencies update
-        working-directory: ./juvix
-
-      - name: Run Juvix typecheck
-        run: juvix typecheck
-        working-directory: ./juvix
