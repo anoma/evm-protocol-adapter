@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-enum DeletionCriterion {
-    Immediately,
-    Never
-}
+import {Compliance} from "./proving/Compliance.sol";
+import {Logic} from "./proving/Logic.sol";
 
-struct ExpirableBlob {
-    DeletionCriterion deletionCriterion;
-    bytes blob;
-}
-
+/// @notice The resource object constituting the atomic unit of state in the Anoma protocol.
+/// @param  logicRef The hash of the resource logic function.
+/// @param  labelRef The hash of the resource label, which can contain arbitrary data.
+/// @param  valueRef The hash of the resource value, which can contain arbitrary data.
+/// @param  nullifierKeyCommitment The commitment to the nullifier key.
+/// @param  quantity The quantity that the resource represents.
+/// @param  nonce The nonce guaranteeing the resource's uniqueness.
+/// @param  randSeed The randomness seed that can be used to derive pseudo-randomness for applications.
+/// @param  ephemeral The resource's ephemerality.
 struct Resource {
     bytes32 logicRef;
     bytes32 labelRef;
@@ -22,56 +24,29 @@ struct Resource {
     bool ephemeral;
 }
 
+/// @notice The transaction object containing all required data to conduct a RM state transition
+/// in which resource get consumed and created.
+/// @param actions The list of actions to be executed.
+/// @param deltaProof The proof for the transaction delta value.
 struct Transaction {
     Action[] actions;
     bytes deltaProof;
 }
 
+/// @notice The action object providing context separation between non-intersecting sets of resources.
+/// @param logicProofs The logic proofs of each resource consumed or created in the action.
+/// @param complianceVerifierInputs The compliance units comprising one consumed and one created resource, each.
+/// @param resourceCalldataPairs The external calls
 struct Action {
-    LogicProof[] logicProofs;
-    ComplianceUnit[] complianceUnits;
+    Logic.VerifierInput[] logicVerifierInputs;
+    Compliance.VerifierInput[] complianceVerifierInputs;
     ResourceForwarderCalldataPair[] resourceCalldataPairs;
 }
 
-struct LogicProof {
-    bytes proof;
-    LogicInstance instance;
-    bytes32 logicRef; // logicVerifyingKeyOuter;
-}
-
-/// @param ciphertext Encrypted information for the receiver of the resource that will be emitted as an event.
-/// The ciphertext contains, at least, the resource plaintext and optional other application specific data.
-struct LogicInstance {
-    bytes32 tag;
-    bool isConsumed;
-    bytes32 actionTreeRoot;
-    bytes ciphertext;
-    ExpirableBlob[] appData;
-}
-
-struct ComplianceUnit {
-    bytes proof;
-    ComplianceInstance instance;
-}
-
-struct ComplianceInstance {
-    ConsumedRefs consumed;
-    CreatedRefs created;
-    bytes32 unitDeltaX;
-    bytes32 unitDeltaY;
-}
-
-struct ConsumedRefs {
-    bytes32 nullifier;
-    bytes32 logicRef;
-    bytes32 commitmentTreeRoot;
-}
-
-struct CreatedRefs {
-    bytes32 commitment;
-    bytes32 logicRef;
-}
-
+/// @notice A tuple containing data to allow the protocol adapter to call external contracts
+/// and to create and consume resources in correspondence to this external call.
+/// @param carrier The carrier resource making the calldata available in the RM state space.
+/// @param call The calldata containing in- and outputs of the external call being routed through a forwarder contract.
 struct ResourceForwarderCalldataPair {
     Resource carrier;
     ForwarderCalldata call;

@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
 import {Test} from "forge-std/Test.sol";
 
-import {ComputableComponents} from "../../src/libs/ComputableComponents.sol";
 import {Delta} from "../../src/proving/Delta.sol";
 import {Transaction} from "../../src/Types.sol";
 import {Example} from "../mocks/Example.sol";
@@ -23,30 +22,26 @@ contract DeltaProofTest is Test {
         assertEq(recovered, MockDelta.SIGNER_ACCOUNT);
     }
 
-    function test_deltaVerify() public pure {
+    function test_verify_mock_delta_proof() public pure {
         Delta.verify({
-            tagsHash: MockDelta.MESSAGE_HASH,
-            transactionDelta: MockDelta.transactionDelta(),
-            deltaProof: MockDelta.PROOF
+            proof: MockDelta.PROOF,
+            instance: MockDelta.transactionDelta(),
+            verifyingKey: MockDelta.MESSAGE_HASH
         });
     }
 
-    function test_example_delta_proof() public pure {
+    function test_verify_example_delta_proof() public pure {
         bytes32[] memory tags = new bytes32[](2);
         tags[0] = Example._CONSUMED_NULLIFIER;
         tags[1] = Example._CREATED_COMMITMENT;
 
         Transaction memory txn = Example.transaction();
 
-        uint256[2] memory txDelta = [
-            uint256(txn.actions[0].complianceUnits[0].instance.unitDeltaX),
-            uint256(txn.actions[0].complianceUnits[0].instance.unitDeltaY)
+        uint256[2] memory transactionDelta = [
+            uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaX),
+            uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaY)
         ];
 
-        Delta.verify({
-            tagsHash: ComputableComponents.tagsHash(tags),
-            transactionDelta: txDelta,
-            deltaProof: txn.deltaProof
-        });
+        Delta.verify({proof: txn.deltaProof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
     }
 }

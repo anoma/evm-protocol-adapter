@@ -14,13 +14,13 @@ contract Deploy is BaseScript {
 
         uint8 commitmentTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
 
-        uint8 actionTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
+        uint8 actionTagTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
 
         protocolAdapter = address(
             new ProtocolAdapter{salt: sha256("ProtocolAdapterDraft")}({
                 riscZeroVerifier: trustedSepoliaVerifier,
                 commitmentTreeDepth: commitmentTreeDepth,
-                actionTreeDepth: actionTreeDepth
+                actionTagTreeDepth: actionTagTreeDepth
             })
         );
     }

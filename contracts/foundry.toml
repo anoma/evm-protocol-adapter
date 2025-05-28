@@ -31,7 +31,7 @@ gas_reports = [
     "BlobStorageMock",
 ]
 optimizer = true
-# via_ir = true # TODO! RE-ENABLE, -- stack to deep error will occur for txn struct
+via_ir = true
 optimizer_runs = 10_000
 
 src = "src"

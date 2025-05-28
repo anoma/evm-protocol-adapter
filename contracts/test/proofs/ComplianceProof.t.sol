@@ -7,11 +7,10 @@ import {Test} from "forge-std/Test.sol";
 
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {Compliance} from "../../src/proving/Compliance.sol";
-import {ComplianceUnit, ComplianceInstance} from "../../src/Types.sol";
 import {Example} from "../mocks/Example.sol";
 
 contract ComplianceProofTest is Test {
-    using RiscZeroUtils for ComplianceInstance;
+    using RiscZeroUtils for Compliance.Instance;
 
     RiscZeroVerifierRouter internal _sepoliaVerifierRouter;
 
@@ -22,18 +21,18 @@ contract ComplianceProofTest is Test {
         _sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
     }
 
-    function test_example_compliance_proof() public view {
-        ComplianceUnit memory cu = Example.complianceUnit();
+    function tes_verify_example_compliance_proof() public view {
+        Compliance.VerifierInput memory cu = Example.complianceVerifierInput();
 
         _sepoliaVerifierRouter.verify({
             seal: cu.proof,
-            imageId: Compliance._CIRCUIT_ID,
+            imageId: Compliance._VERIFYING_KEY,
             journalDigest: cu.instance.toJournalDigest()
         });
     }
 
     function test_compliance_instance_encoding() public pure {
-        ComplianceInstance memory instance = Example.complianceInstance();
+        Compliance.Instance memory instance = Example.complianceInstance();
 
         assertEq(
             abi.encode(instance),

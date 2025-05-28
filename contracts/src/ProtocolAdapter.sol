@@ -19,16 +19,7 @@ import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 
 import {NullifierSet} from "./state/NullifierSet.sol";
 
-import {
-    Action,
-    ForwarderCalldata,
-    Resource,
-    Transaction,
-    LogicProof,
-    LogicInstance,
-    ComplianceUnit,
-    ComplianceInstance
-} from "./Types.sol";
+import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
@@ -38,13 +29,13 @@ contract ProtocolAdapter is
     BlobStorage
 {
     using ComputableComponents for Resource;
-    using RiscZeroUtils for ComplianceInstance;
-    using RiscZeroUtils for LogicInstance;
-    using Logic for LogicProof[];
+    using RiscZeroUtils for Compliance.Instance;
+    using RiscZeroUtils for Logic.Instance;
+    using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
     TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
-    uint8 internal immutable _ACTION_TREE_DEPTH;
+    uint8 internal immutable _ACTION_TAG_TREE_DEPTH;
 
     uint256 private _txCount;
 
@@ -61,11 +52,15 @@ contract ProtocolAdapter is
     error CalldataCarrierLabelMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierCommitmentNotFound(bytes32 commitment);
 
-    constructor(TrustedRiscZeroVerifier riscZeroVerifier, uint8 commitmentTreeDepth, uint8 actionTreeDepth)
+    /// @notice Constructs the protocol adapter contract.
+    /// @param riscZeroVerifier The RISC Zero verifier contract. This contract can be trusted to work correctly.
+    /// @param commitmentTreeDepth The depth of the commitment tree of the commitment accumulator.
+    /// @param actionTagTreeDepth The depth of the tag tree of each action.
+    constructor(TrustedRiscZeroVerifier riscZeroVerifier, uint8 commitmentTreeDepth, uint8 actionTagTreeDepth)
         CommitmentAccumulator(commitmentTreeDepth)
     {
         _TRUSTED_RISC_ZERO_VERIFIER = riscZeroVerifier;
-        _ACTION_TREE_DEPTH = actionTreeDepth;
+        _ACTION_TAG_TREE_DEPTH = actionTagTreeDepth;
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -81,9 +76,9 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
-            uint256 nResources = action.logicProofs.length;
+            uint256 nResources = action.logicVerifierInputs.length;
             for (uint256 j = 0; j < nResources; ++j) {
-                LogicInstance calldata instance = action.logicProofs[j].instance;
+                Logic.Instance calldata instance = action.logicVerifierInputs[j].instance;
 
                 if (instance.isConsumed) {
                     // Nullifier non-existence was already checked in `_verify(transaction);` at the top.
@@ -105,6 +100,7 @@ contract ProtocolAdapter is
             }
         }
 
+        // Store the latest root
         _storeRoot(newRoot);
     }
 
@@ -113,6 +109,8 @@ contract ProtocolAdapter is
         _verify(transaction);
     }
 
+    /// @notice Executes a call to a forwarder contracts.
+    /// @param call The calldata to conduct the forwarder call.
     // slither-disable-next-line calls-loop
     function _executeForwarderCall(ForwarderCalldata calldata call) internal {
         bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
@@ -128,9 +126,10 @@ contract ProtocolAdapter is
 
         uint256 nActions = transaction.actions.length;
 
+        // Calculate the total number of resources.
         uint256 resCounter = 0;
         for (uint256 i = 0; i < nActions; ++i) {
-            resCounter += transaction.actions[i].logicProofs.length;
+            resCounter += transaction.actions[i].logicVerifierInputs.length;
         }
 
         // Allocate the array.
@@ -146,45 +145,45 @@ contract ProtocolAdapter is
 
             // Compliance Proofs
             {
-                uint256 nCUs = action.complianceUnits.length;
+                uint256 nCUs = action.complianceVerifierInputs.length;
                 for (uint256 j = 0; j < nCUs; ++j) {
-                    ComplianceUnit calldata cu = action.complianceUnits[j];
+                    Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
                     // Check consumed resources
-                    _checkRootPreExistence(cu.instance.consumed.commitmentTreeRoot);
-                    _checkNullifierNonExistence(cu.instance.consumed.nullifier);
+                    _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
+                    _checkNullifierNonExistence(complianceVerifierInput.instance.consumed.nullifier);
 
                     // Check created resources
-                    _checkCommitmentNonExistence(cu.instance.created.commitment);
+                    _checkCommitmentNonExistence(complianceVerifierInput.instance.created.commitment);
 
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
-                        seal: cu.proof,
-                        imageId: Compliance._CIRCUIT_ID,
-                        journalDigest: cu.instance.toJournalDigest()
+                        seal: complianceVerifierInput.proof,
+                        imageId: Compliance._VERIFYING_KEY,
+                        journalDigest: complianceVerifierInput.instance.toJournalDigest()
                     });
 
                     // Check the logic ref consistency
                     {
-                        bytes32 nf = cu.instance.consumed.nullifier;
-                        LogicProof calldata logicProof = action.logicProofs.lookup(nf);
+                        bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
+                        Logic.VerifierInput calldata logicVerifierInputs = action.logicVerifierInputs.lookup(nf);
 
-                        if (cu.instance.consumed.logicRef != logicProof.logicRef) {
+                        if (complianceVerifierInput.instance.consumed.logicRef != logicVerifierInputs.verifyingKey) {
                             revert LogicRefMismatch({
-                                expected: logicProof.logicRef,
-                                actual: cu.instance.consumed.logicRef
+                                expected: logicVerifierInputs.verifyingKey,
+                                actual: complianceVerifierInput.instance.consumed.logicRef
                             });
                         }
                         // solhint-disable-next-line  gas-increment-by-one
                         tags[resCounter++] = nf;
                     }
                     {
-                        bytes32 cm = cu.instance.created.commitment;
-                        LogicProof calldata logicProof = action.logicProofs.lookup(cm);
+                        bytes32 cm = complianceVerifierInput.instance.created.commitment;
+                        Logic.VerifierInput calldata logicVerifierInputs = action.logicVerifierInputs.lookup(cm);
 
-                        if (cu.instance.created.logicRef != logicProof.logicRef) {
+                        if (complianceVerifierInput.instance.created.logicRef != logicVerifierInputs.verifyingKey) {
                             revert LogicRefMismatch({
-                                expected: logicProof.logicRef,
-                                actual: cu.instance.created.logicRef
+                                expected: logicVerifierInputs.verifyingKey,
+                                actual: complianceVerifierInput.instance.created.logicRef
                             });
                         }
                         // solhint-disable-next-line  gas-increment-by-one
@@ -193,51 +192,62 @@ contract ProtocolAdapter is
 
                     // Compute transaction delta
                     if (i == 0 && j == 0) {
-                        transactionDelta = [uint256(cu.instance.unitDeltaX), uint256(cu.instance.unitDeltaY)];
+                        transactionDelta = [
+                            uint256(complianceVerifierInput.instance.unitDeltaX),
+                            uint256(complianceVerifierInput.instance.unitDeltaY)
+                        ];
                     } else {
-                        transactionDelta =
-                            transactionDelta.add([uint256(cu.instance.unitDeltaX), uint256(cu.instance.unitDeltaY)]);
+                        transactionDelta = transactionDelta.add(
+                            [
+                                uint256(complianceVerifierInput.instance.unitDeltaX),
+                                uint256(complianceVerifierInput.instance.unitDeltaY)
+                            ]
+                        );
                     }
                 }
             }
 
             // Logic Proofs
             {
-                uint256 nResources = action.logicProofs.length;
+                uint256 nResources = action.logicVerifierInputs.length;
 
                 bytes32[] memory actionTags = new bytes32[](nResources);
                 for (uint256 j = 0; j < nResources; ++j) {
-                    actionTags[j] = action.logicProofs[j].instance.tag;
+                    actionTags[j] = action.logicVerifierInputs[j].instance.tag;
                 }
-                bytes32 computedActionTreeRoot = MerkleTree.computeRoot(actionTags, _ACTION_TREE_DEPTH);
+                bytes32 computedActionTreeRoot = MerkleTree.computeRoot(actionTags, _ACTION_TAG_TREE_DEPTH);
 
                 for (uint256 j = 0; j < nResources; ++j) {
-                    LogicProof calldata lp = action.logicProofs[j];
+                    Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
 
                     // Check root consistency
-                    if (lp.instance.actionTreeRoot != computedActionTreeRoot) {
-                        revert RootMismatch({expected: computedActionTreeRoot, actual: lp.instance.actionTreeRoot});
+                    if (input.instance.actionTreeRoot != computedActionTreeRoot) {
+                        revert RootMismatch({expected: computedActionTreeRoot, actual: input.instance.actionTreeRoot});
                     }
 
+                    // Check the compliance proof
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
-                        seal: lp.proof,
-                        imageId: lp.logicRef,
-                        journalDigest: lp.instance.toJournalDigest()
+                        seal: input.proof,
+                        imageId: input.verifyingKey,
+                        journalDigest: input.instance.toJournalDigest()
                     });
                 }
             }
         }
 
+        // Check whether the transaction is empty
         if (nActions != 0) {
-            // Check delta proof.
+            // Check the delta proof
             Delta.verify({
-                tagsHash: ComputableComponents.tagsHash(tags),
-                transactionDelta: transactionDelta,
-                deltaProof: transaction.deltaProof
+                proof: transaction.deltaProof,
+                instance: transactionDelta,
+                verifyingKey: Delta.computeVerifyingKey(tags)
             });
         }
     }
 
+    /// @notice Verifies the forwarder calls of a given action.
+    /// @param action The action to verify the forwarder calls for.
     // slither-disable-next-line calls-loop
     function _verifyForwarderCalls(Action calldata action) internal view {
         uint256 nForwarderCalls = action.resourceCalldataPairs.length;
@@ -262,7 +272,7 @@ contract ProtocolAdapter is
 
                 // Lookup the first appData entry.
                 bytes32 actualAppDataHash =
-                    keccak256(abi.encode(action.logicProofs.lookup(carrier.commitment()).instance.appData[0]));
+                    keccak256(abi.encode(action.logicVerifierInputs.lookup(carrier.commitment()).instance.appData[0]));
 
                 if (actualAppDataHash != expectedAppDataHash) {
                     revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});
