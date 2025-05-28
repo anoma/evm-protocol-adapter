@@ -5,12 +5,11 @@ version = 4
 [[package]]
 name = "aarm"
 version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?rev=3752239d71ee6801de469b31df8760ad96aa4a75#3752239d71ee6801de469b31df8760ad96aa4a75"
+source = "git+https://github.com/anoma/aarm-risc0.git?rev=2683454e3ee1ade32916bf6158c621778fc98539#2683454e3ee1ade32916bf6158c621778fc98539"
 dependencies = [
  "aarm_core",
  "k256",
  "rand 0.8.5",
- "risc0-ethereum-contracts",
  "risc0-zkvm",
  "serde",
 ]
@@ -18,7 +17,7 @@ dependencies = [
 [[package]]
 name = "aarm_core"
 version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?rev=3752239d71ee6801de469b31df8760ad96aa4a75#3752239d71ee6801de469b31df8760ad96aa4a75"
+source = "git+https://github.com/anoma/aarm-risc0.git?rev=2683454e3ee1ade32916bf6158c621778fc98539#2683454e3ee1ade32916bf6158c621778fc98539"
 dependencies = [
  "aes-gcm",
  "bincode",
@@ -3952,6 +3951,7 @@ dependencies = [
  "aarm_core",
  "alloy",
  "dotenv",
+ "risc0-ethereum-contracts",
  "serde",
  "tokio",
 ]

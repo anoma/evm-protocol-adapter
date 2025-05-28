@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-aarm_core = { git = "https://github.com/anoma/aarm-risc0.git", rev = "3752239d71ee6801de469b31df8760ad96aa4a75", package = "aarm_core" }
-aarm = { git = "https://github.com/anoma/aarm-risc0.git", rev = "3752239d71ee6801de469b31df8760ad96aa4a75", package = "aarm" }
+aarm_core = { git = "https://github.com/anoma/aarm-risc0.git", rev = "2683454e3ee1ade32916bf6158c621778fc98539", package = "aarm_core" }
+aarm = { git = "https://github.com/anoma/aarm-risc0.git", rev = "2683454e3ee1ade32916bf6158c621778fc98539", package = "aarm" }
+risc0-ethereum-contracts = { git = "https://github.com/risc0/risc0-ethereum", tag = "v2.0.0" }
 dotenv = "0.15"
 alloy = { version = "0.12", features = ["full"] }
 tokio = "1.44"
