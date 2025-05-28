@@ -42,5 +42,5 @@ library Compliance {
     }
 
     /// @notice The compliance verifying key.
-    bytes32 internal constant _VERIFYING_KEY = 0x7004946d81df7a5c47b7d3b8359654e9bb81190f0705be69d54f15391fff2248;
+    bytes32 internal constant _VERIFYING_KEY = 0xd15203a1b0a6a096d0187241329bed9c8536dd0e61dfe6e348ee5cd10b39cfb4;
 }

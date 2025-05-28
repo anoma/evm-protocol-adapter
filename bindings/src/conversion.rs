@@ -1,12 +1,14 @@
+use alloy::primitives::{Address, Bytes, B256, U256};
 use alloy::sol;
 
-use aarm::evm_adapter::{
-    AdapterAction, AdapterComplianceUnit, AdapterExpirableBlob, AdapterLogicInstance,
-    AdapterLogicProof, AdapterTransaction,
-};
+use risc0_ethereum_contracts::encode_seal;
+
+use aarm::action::{Action, ForwarderCalldata};
+use aarm::logic_proof::LogicProof;
+use aarm::transaction::{Delta, Transaction};
 use aarm_core::compliance::ComplianceInstance;
+use aarm_core::logic_instance::{ExpirableBlob, LogicInstance};
 use aarm_core::resource::Resource;
-use alloy::primitives::{Bytes, B256, U256};
 
 sol!(
     #[allow(missing_docs)]
@@ -15,6 +17,15 @@ sol!(
     ProtocolAdapter,
     "../contracts/out/ProtocolAdapter.sol/ProtocolAdapter.json"
 );
+
+fn insert_zeros(vec: Vec<u8>) -> Vec<u8> {
+    vec.into_iter()
+        .flat_map(|byte| {
+            // Create an iterator that contains the original byte followed by three zero bytes
+            std::iter::once(byte).chain(std::iter::repeat_n(0, 3))
+        })
+        .collect()
+}
 
 impl From<Resource> for ProtocolAdapter::Resource {
     fn from(r: Resource) -> Self {
@@ -31,42 +42,42 @@ impl From<Resource> for ProtocolAdapter::Resource {
     }
 }
 
-impl From<AdapterExpirableBlob> for BlobStorage::ExpirableBlob {
-    fn from(expirable_blob: AdapterExpirableBlob) -> Self {
+impl From<ExpirableBlob> for BlobStorage::ExpirableBlob {
+    fn from(expirable_blob: ExpirableBlob) -> Self {
         Self {
-            blob: expirable_blob.blob.into(),
+            blob: insert_zeros(expirable_blob.blob).into(),
             deletionCriterion: expirable_blob.deletion_criterion,
         }
     }
 }
 
-impl From<AdapterLogicInstance> for Logic::Instance {
-    fn from(instance: AdapterLogicInstance) -> Self {
+impl From<LogicInstance> for Logic::Instance {
+    fn from(instance: LogicInstance) -> Self {
         Self {
             tag: B256::from_slice(instance.tag.as_bytes()),
             isConsumed: instance.is_consumed,
             actionTreeRoot: B256::from_slice(instance.root.as_bytes()),
-            ciphertext: Bytes::from(instance.cipher),
-            appData: instance.app_data.into_iter().map(|eb| eb.into()).collect(),
+            ciphertext: Bytes::from(insert_zeros(instance.cipher)),
+            appData: instance
+                .app_data
+                .into_iter()
+                .map(BlobStorage::ExpirableBlob::from)
+                .collect(),
         }
     }
 }
 
-impl From<AdapterLogicProof> for Logic::VerifierInput {
-    fn from(logic_proof: AdapterLogicProof) -> Self {
+impl From<LogicProof> for Logic::VerifierInput {
+    fn from(logic_proof: LogicProof) -> Self {
         Self {
-            proof: logic_proof.proof.into(),
-            instance: logic_proof.instance.into(),
+            proof: Bytes::from(encode_seal(&logic_proof.receipt).unwrap()),
+            instance: logic_proof
+                .receipt
+                .journal
+                .decode::<LogicInstance>()
+                .unwrap()
+                .into(),
             verifyingKey: B256::from_slice(logic_proof.verifying_key.as_bytes()),
-        }
-    }
-}
-
-impl From<AdapterComplianceUnit> for Compliance::VerifierInput {
-    fn from(compliance_unit: AdapterComplianceUnit) -> Self {
-        Self {
-            proof: compliance_unit.proof.into(),
-            instance: compliance_unit.instance.into(),
         }
     }
 }
@@ -91,8 +102,27 @@ impl From<ComplianceInstance> for Compliance::Instance {
     }
 }
 
-impl From<AdapterAction> for ProtocolAdapter::Action {
-    fn from(action: AdapterAction) -> Self {
+impl From<ForwarderCalldata> for ProtocolAdapter::ForwarderCalldata {
+    fn from(calldata: ForwarderCalldata) -> Self {
+        Self {
+            untrustedForwarder: Address::from(calldata.untrusted_forwarder),
+            input: Bytes::from(calldata.input),
+            output: Bytes::from(calldata.output),
+        }
+    }
+}
+
+impl From<(Resource, ForwarderCalldata)> for ProtocolAdapter::ResourceForwarderCalldataPair {
+    fn from(pair: (Resource, ForwarderCalldata)) -> Self {
+        Self {
+            carrier: pair.0.into(),
+            call: pair.1.into(),
+        }
+    }
+}
+
+impl From<Action> for ProtocolAdapter::Action {
+    fn from(action: Action) -> Self {
         Self {
             logicVerifierInputs: action
                 .logic_proofs
@@ -102,18 +132,38 @@ impl From<AdapterAction> for ProtocolAdapter::Action {
             complianceVerifierInputs: action
                 .compliance_units
                 .into_iter()
-                .map(|cu| cu.into())
+                .map(|receipt| Compliance::VerifierInput {
+                    proof: Bytes::from(encode_seal(&receipt).unwrap()),
+                    instance: receipt
+                        .journal
+                        .decode::<ComplianceInstance>()
+                        .unwrap()
+                        .into(),
+                })
                 .collect(),
-            resourceCalldataPairs: vec![],
+            resourceCalldataPairs: action
+                .resource_forwarder_calldata_pairs
+                .into_iter()
+                .map(|p| p.into())
+                .collect(),
         }
     }
 }
 
-impl From<AdapterTransaction> for ProtocolAdapter::Transaction {
-    fn from(tx: AdapterTransaction) -> Self {
+impl From<Transaction> for ProtocolAdapter::Transaction {
+    fn from(tx: Transaction) -> Self {
+        let delta_proof = match &tx.delta_proof {
+            Delta::Witness(_) => panic!("Unbalanced Transactions cannot be converted"),
+            Delta::Proof(proof) => proof.to_bytes().to_vec(),
+        };
+
         Self {
-            actions: tx.actions.into_iter().map(|a| a.into()).collect(),
-            deltaProof: tx.delta_proof.into(),
+            actions: tx
+                .actions
+                .into_iter()
+                .map(ProtocolAdapter::Action::from)
+                .collect(),
+            deltaProof: Bytes::from(delta_proof),
         }
     }
 }
@@ -123,52 +173,8 @@ mod tests {
     use super::*;
     use aarm_core::nullifier_key::NullifierKeyCommitment;
     use aarm_core::resource::Resource;
-    use alloy::primitives::Uint;
     use dotenv::dotenv;
     use std::env;
-
-    fn example_arm_resource(
-        logic_ref: &[u8; 32],
-        label_ref: &[u8; 32],
-        value_ref: &[u8; 32],
-        nkc: &[u8; 32],
-        quantity: u128,
-        nonce: Uint<256, 4>,
-        rand_seed: Uint<256, 4>,
-        ephemeral: bool,
-    ) -> Resource {
-        Resource {
-            logic_ref: (*logic_ref).into(),
-            label_ref: (*label_ref).into(),
-            value_ref: (*value_ref).into(),
-            nk_commitment: NullifierKeyCommitment::from_bytes((*nkc).into()),
-            quantity,
-            nonce: nonce.to_le_bytes(),
-            rand_seed: rand_seed.to_le_bytes(),
-            is_ephemeral: ephemeral,
-        }
-    }
-    fn example_evm_resource(
-        logic_ref: &[u8; 32],
-        label_ref: &[u8; 32],
-        value_ref: &[u8; 32],
-        nkc: &[u8; 32],
-        quantity: u128,
-        nonce: Uint<256, 4>,
-        rand_seed: Uint<256, 4>,
-        ephemeral: bool,
-    ) -> ProtocolAdapter::Resource {
-        ProtocolAdapter::Resource {
-            logicRef: B256::from_slice(logic_ref),
-            labelRef: B256::from_slice(label_ref),
-            valueRef: B256::from_slice(value_ref),
-            nullifierKeyCommitment: B256::from_slice(nkc),
-            quantity: U256::from(quantity),
-            nonce,
-            randSeed: rand_seed,
-            ephemeral,
-        }
-    }
 
     #[test]
     fn convert_resource() {
@@ -182,12 +188,26 @@ mod tests {
         let ephemeral = true;
 
         assert_eq!(
-            ProtocolAdapter::Resource::from(example_arm_resource(
-                logic_ref, label_ref, value_ref, nkc, quantity, nonce, rand_seed, ephemeral,
-            )),
-            example_evm_resource(
-                logic_ref, label_ref, value_ref, nkc, quantity, nonce, rand_seed, ephemeral,
-            )
+            ProtocolAdapter::Resource::from(Resource {
+                logic_ref: (*logic_ref).into(),
+                label_ref: (*label_ref).into(),
+                value_ref: (*value_ref).into(),
+                nk_commitment: NullifierKeyCommitment::from_bytes(*nkc),
+                quantity,
+                nonce: nonce.to_le_bytes(),
+                rand_seed: rand_seed.to_le_bytes(),
+                is_ephemeral: ephemeral,
+            }),
+            ProtocolAdapter::Resource {
+                logicRef: B256::from_slice(logic_ref),
+                labelRef: B256::from_slice(label_ref),
+                valueRef: B256::from_slice(value_ref),
+                nullifierKeyCommitment: B256::from_slice(nkc),
+                quantity: U256::from(quantity),
+                nonce,
+                randSeed: rand_seed,
+                ephemeral,
+            }
         );
     }
 
@@ -198,10 +218,10 @@ mod tests {
         env::var("BONSAI_API_KEY").expect("Couldn't read BONSAI_API_KEY");
         env::var("BONSAI_API_URL").expect("Couldn't read BONSAI_API_URL");
 
-        println!("{:?}", aarm::evm_adapter::get_compliance_id());
+        println!("{:?}", aarm::constants::get_compliance_id());
 
         let raw_tx = aarm::transaction::generate_test_transaction(1);
-        let evm_tx = ProtocolAdapter::Transaction::from(AdapterTransaction::from(raw_tx));
+        let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
         println!("{:#?}", evm_tx);
     }
 }
