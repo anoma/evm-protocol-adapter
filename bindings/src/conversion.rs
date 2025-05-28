@@ -201,7 +201,7 @@ mod tests {
         println!("{:?}", aarm::evm_adapter::get_compliance_id());
 
         let raw_tx = aarm::transaction::generate_test_transaction(1);
-        let evm_tx = ProtocolAdapter::Transaction::from(raw_tx.convert());
-        println!("EVM Tx:\n{:#?}", evm_tx);
+        let evm_tx = ProtocolAdapter::Transaction::from(AdapterTransaction::from(raw_tx));
+        println!("{:#?}", evm_tx);
     }
 }
