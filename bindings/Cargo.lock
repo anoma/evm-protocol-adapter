@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "aarm"
 version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?rev=2683454e3ee1ade32916bf6158c621778fc98539#2683454e3ee1ade32916bf6158c621778fc98539"
+source = "git+https://github.com/anoma/aarm-risc0.git?rev=eebee1752dc7536ebcce5a4b6de72f135b45d957#eebee1752dc7536ebcce5a4b6de72f135b45d957"
 dependencies = [
  "aarm_core",
  "k256",
@@ -17,7 +17,7 @@ dependencies = [
 [[package]]
 name = "aarm_core"
 version = "0.1.0"
-source = "git+https://github.com/anoma/aarm-risc0.git?rev=2683454e3ee1ade32916bf6158c621778fc98539#2683454e3ee1ade32916bf6158c621778fc98539"
+source = "git+https://github.com/anoma/aarm-risc0.git?rev=eebee1752dc7536ebcce5a4b6de72f135b45d957#eebee1752dc7536ebcce5a4b6de72f135b45d957"
 dependencies = [
  "aes-gcm",
  "bincode",

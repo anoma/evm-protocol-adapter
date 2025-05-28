@@ -1,4 +1,4 @@
-use aarm::action::Action;
+use aarm::action::{Action, ForwarderCalldata};
 use alloy::sol;
 
 use aarm::logic_proof::LogicProof;
@@ -6,7 +6,7 @@ use aarm::transaction::{Delta, Transaction};
 use aarm_core::compliance::ComplianceInstance;
 use aarm_core::logic_instance::{ExpirableBlob, LogicInstance};
 use aarm_core::resource::Resource;
-use alloy::primitives::{Bytes, B256, U256};
+use alloy::primitives::{Address, Bytes, B256, U256};
 
 use risc0_ethereum_contracts::encode_seal;
 
@@ -103,10 +103,10 @@ impl From<ComplianceInstance> for Compliance::Instance {
     }
 }
 
-/*impl From<ForwarderCalldata> for ProtocolAdapter::ForwarderCalldata {
+impl From<ForwarderCalldata> for ProtocolAdapter::ForwarderCalldata {
     fn from(calldata: ForwarderCalldata) -> Self {
         Self {
-            untrustedForwarder: Address::from_slice(calldata.untrusted_forwarder.as_bytes()),
+            untrustedForwarder: Address::from(calldata.untrusted_forwarder),
             input: Bytes::from(calldata.input),
             output: Bytes::from(calldata.output),
         }
@@ -120,7 +120,7 @@ impl From<(Resource, ForwarderCalldata)> for ProtocolAdapter::ResourceForwarderC
             call: pair.1.into(),
         }
     }
-}*/
+}
 
 impl From<Action> for ProtocolAdapter::Action {
     fn from(action: Action) -> Self {
@@ -142,7 +142,11 @@ impl From<Action> for ProtocolAdapter::Action {
                         .into(),
                 })
                 .collect(),
-            resourceCalldataPairs: vec![], //action.resource_forwarder_calldata_pairs.into(),
+            resourceCalldataPairs: action
+                .resource_forwarder_calldata_pairs
+                .into_iter()
+                .map(|p| p.into())
+                .collect(),
         }
     }
 }
