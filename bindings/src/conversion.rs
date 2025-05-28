@@ -1,14 +1,14 @@
-use aarm::action::{Action, ForwarderCalldata};
+use alloy::primitives::{Address, Bytes, B256, U256};
 use alloy::sol;
 
+use risc0_ethereum_contracts::encode_seal;
+
+use aarm::action::{Action, ForwarderCalldata};
 use aarm::logic_proof::LogicProof;
 use aarm::transaction::{Delta, Transaction};
 use aarm_core::compliance::ComplianceInstance;
 use aarm_core::logic_instance::{ExpirableBlob, LogicInstance};
 use aarm_core::resource::Resource;
-use alloy::primitives::{Address, Bytes, B256, U256};
-
-use risc0_ethereum_contracts::encode_seal;
 
 sol!(
     #[allow(missing_docs)]
@@ -21,10 +21,10 @@ sol!(
 fn insert_zeros(vec: Vec<u8>) -> Vec<u8> {
     vec.into_iter()
         .flat_map(|byte| {
-            // Create an iterator that contains the original byte followed by three 0s
-            std::iter::once(byte).chain(std::iter::repeat(0).take(3))
+            // Create an iterator that contains the original byte followed by three zero bytes
+            std::iter::once(byte).chain(std::iter::repeat_n(0, 3))
         })
-        .collect() // Collect into a new Vec<u8>
+        .collect()
 }
 
 impl From<Resource> for ProtocolAdapter::Resource {
@@ -58,12 +58,11 @@ impl From<LogicInstance> for Logic::Instance {
             isConsumed: instance.is_consumed,
             actionTreeRoot: B256::from_slice(instance.root.as_bytes()),
             ciphertext: Bytes::from(insert_zeros(instance.cipher)),
-            appData: //instance.app_data.into_vec(),
-            instance
-            .app_data
-            .into_iter()
-            .map(BlobStorage::ExpirableBlob::from)
-            .collect(),
+            appData: instance
+                .app_data
+                .into_iter()
+                .map(BlobStorage::ExpirableBlob::from)
+                .collect(),
         }
     }
 }
@@ -162,7 +161,7 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
             actions: tx
                 .actions
                 .into_iter()
-                .map(|a| ProtocolAdapter::Action::from(a))
+                .map(ProtocolAdapter::Action::from)
                 .collect(),
             deltaProof: Bytes::from(delta_proof),
         }
@@ -174,52 +173,8 @@ mod tests {
     use super::*;
     use aarm_core::nullifier_key::NullifierKeyCommitment;
     use aarm_core::resource::Resource;
-    use alloy::primitives::Uint;
     use dotenv::dotenv;
     use std::env;
-
-    fn example_arm_resource(
-        logic_ref: &[u8; 32],
-        label_ref: &[u8; 32],
-        value_ref: &[u8; 32],
-        nkc: &[u8; 32],
-        quantity: u128,
-        nonce: Uint<256, 4>,
-        rand_seed: Uint<256, 4>,
-        ephemeral: bool,
-    ) -> Resource {
-        Resource {
-            logic_ref: (*logic_ref).into(),
-            label_ref: (*label_ref).into(),
-            value_ref: (*value_ref).into(),
-            nk_commitment: NullifierKeyCommitment::from_bytes((*nkc).into()),
-            quantity,
-            nonce: nonce.to_le_bytes(),
-            rand_seed: rand_seed.to_le_bytes(),
-            is_ephemeral: ephemeral,
-        }
-    }
-    fn example_evm_resource(
-        logic_ref: &[u8; 32],
-        label_ref: &[u8; 32],
-        value_ref: &[u8; 32],
-        nkc: &[u8; 32],
-        quantity: u128,
-        nonce: Uint<256, 4>,
-        rand_seed: Uint<256, 4>,
-        ephemeral: bool,
-    ) -> ProtocolAdapter::Resource {
-        ProtocolAdapter::Resource {
-            logicRef: B256::from_slice(logic_ref),
-            labelRef: B256::from_slice(label_ref),
-            valueRef: B256::from_slice(value_ref),
-            nullifierKeyCommitment: B256::from_slice(nkc),
-            quantity: U256::from(quantity),
-            nonce,
-            randSeed: rand_seed,
-            ephemeral,
-        }
-    }
 
     #[test]
     fn convert_resource() {
@@ -233,12 +188,26 @@ mod tests {
         let ephemeral = true;
 
         assert_eq!(
-            ProtocolAdapter::Resource::from(example_arm_resource(
-                logic_ref, label_ref, value_ref, nkc, quantity, nonce, rand_seed, ephemeral,
-            )),
-            example_evm_resource(
-                logic_ref, label_ref, value_ref, nkc, quantity, nonce, rand_seed, ephemeral,
-            )
+            ProtocolAdapter::Resource::from(Resource {
+                logic_ref: (*logic_ref).into(),
+                label_ref: (*label_ref).into(),
+                value_ref: (*value_ref).into(),
+                nk_commitment: NullifierKeyCommitment::from_bytes(*nkc),
+                quantity,
+                nonce: nonce.to_le_bytes(),
+                rand_seed: rand_seed.to_le_bytes(),
+                is_ephemeral: ephemeral,
+            }),
+            ProtocolAdapter::Resource {
+                logicRef: B256::from_slice(logic_ref),
+                labelRef: B256::from_slice(label_ref),
+                valueRef: B256::from_slice(value_ref),
+                nullifierKeyCommitment: B256::from_slice(nkc),
+                quantity: U256::from(quantity),
+                nonce,
+                randSeed: rand_seed,
+                ephemeral,
+            }
         );
     }
 
