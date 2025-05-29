@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.30;
 
 interface INullifierSet {
     /// @notice Emitted if a nullifier is added to the nullifier set.

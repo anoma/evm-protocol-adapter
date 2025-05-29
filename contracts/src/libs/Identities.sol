@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.30;
 
 /// @notice A library containing the cryptographic keys of the universally known identity,
 /// an identity with which everyone can compose their own identity.
