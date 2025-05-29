@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-  pull_request:
+  #pull_request:
   workflow_dispatch:
 
 jobs:
@@ -88,13 +88,7 @@ jobs:
           API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
           API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
         working-directory: ./contracts
-
-      - name: Upload Contract Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: contract-artifacts
-          path: ./contracts/out
-
+          
   bindings:
     name: Bindings Tests
     runs-on: ubuntu-latest
