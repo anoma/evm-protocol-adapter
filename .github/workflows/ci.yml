@@ -88,11 +88,10 @@ jobs:
         with:
           path: |
             ~/.cargo
-            ./target
+            ./bindings/target
           key: rust-build-${{ hashFiles('bindings/Cargo.toml') }}
           restore-keys: |
             rust-build-
-
 
       - name: Show Rust version
         run: rustc --version
