@@ -2245,6 +2245,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "evm_protocol_adapter_bindings"
+version = "0.1.0"
+dependencies = [
+ "aarm",
+ "aarm_core",
+ "alloy",
+ "dotenv",
+ "risc0-ethereum-contracts",
+ "serde",
+ "tokio",
+]
+
+[[package]]
 name = "fallible-iterator"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3941,19 +3954,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.101",
-]
-
-[[package]]
-name = "protocol_adapter_bindings"
-version = "0.1.0"
-dependencies = [
- "aarm",
- "aarm_core",
- "alloy",
- "dotenv",
- "risc0-ethereum-contracts",
- "serde",
- "tokio",
 ]
 
 [[package]]
