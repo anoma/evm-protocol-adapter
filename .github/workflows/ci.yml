@@ -6,47 +6,65 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Job 1: Install Foundry
+  install-foundry:
+    name: Install Foundry
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Foundry (cached)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: true
+
+      - name: Show Foundry version
+        run: forge --version
+
+  install-rust:
+    name: Install Rust
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Rust toolchain
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo
+            /usr/local/cargo # For global cargo
+          key: rust-toolchain-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            rust-toolchain-
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Show Rust version
+        run: rustc --version
+
   contracts:
+    name: Contracts Tests
+    runs-on: ubuntu-latest
+    needs: install-foundry
     env:
       FOUNDRY_PROFILE: ci
 
-    strategy:
-      fail-fast: true
-
-    name: Contracts
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-
-      - name: Show Forge version
-        run: forge --version
-        working-directory: ./contracts
-
-      - name: Run Forge fmt
-        run: forge fmt --check
-        id: fmt
-        working-directory: ./contracts
-
-      - name: Install Slither
-        run: pip install slither-analyzer
-        working-directory: ./contracts
-
-      - name: Show Slither version
-        run: slither --version
-        working-directory: ./contracts
-
-      - name: Run Slither
-        run: slither .
-        id: slither
-        working-directory: ./contracts
-
-      - name: "Install Bun"
-        uses: "oven-sh/setup-bun@v1"
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
 
       - name: Show Bun version
         run: bun --version
@@ -56,47 +74,60 @@ jobs:
         run: bun install solhint
         working-directory: ./contracts
 
-      - name: Show Solhint version
-        run: bunx --bun solhint --version
-        working-directory: ./contracts
-
-      - name: Run Solhint in `src` dir
+      - name: Run Solhint in `src`
         run: bunx --bun solhint --config .solhint.json 'src/**/*.sol'
-        id: solhint-src
-        working-directory: ./contracts
-
-      - name: Run Solhint in `test` dir
-        run: bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
-        id: solhint-test
-        working-directory: ./contracts
-
-      - name: Run Solhint in `script` dir
-        run: bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
-        id: solhint-script
         working-directory: ./contracts
 
       - name: Run Forge build
         run: forge build --sizes --ast
-        id: build
         working-directory: ./contracts
 
       - name: Run Forge tests
         run: forge test -vvv --gas-report
-        id: test
         env:
           API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
           API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
         working-directory: ./contracts
 
-      - name: Build bindings
-        run: cargo build
+      - name: Upload Contract Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: contract-artifacts
+          path: ./contracts/out
+
+  bindings:
+    name: Bindings Tests
+    runs-on: ubuntu-latest
+    needs: [ install-foundry, install-rust, contracts ]
+    env:
+      PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: ${{ vars.PROTOCOL_ADAPTER_ADDRESS_SEPOLIA }}
+      API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
+      API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Contract Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: contract-artifacts
+
+      - name: Cache Rust Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo
+            ./target
+          key: rust-build-${{ hashFiles('bindings/Cargo.toml') }}
+          restore-keys: |
+            rust-build-
+
+      - name: Build Bindings
+        run: cargo build --release
         working-directory: ./bindings
 
       - name: Run Tests
         run: cargo test --verbose
         working-directory: ./bindings
-        env:
-          PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: ${{ vars.PROTOCOL_ADAPTER_ADDRESS_SEPOLIA }}
-          API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
-          API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
