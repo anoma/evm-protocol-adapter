@@ -22,7 +22,7 @@ library RiscZeroUtils {
 
     /// @notice Converts the logic instance to match the RISC Zero journal.
     /// @param instance The logic instance.
-    /// @return digest The journal.
+    /// @return converted The converted journal.
     function convertJournal(Logic.Instance memory instance) internal pure returns (bytes memory converted) {
         uint32 nCiphertext = uint32(instance.ciphertext.length);
         bytes memory encodedCipher = abi.encodePacked(toRiscZero(nCiphertext / 4), instance.ciphertext);
