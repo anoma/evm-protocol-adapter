@@ -1,3 +1,4 @@
+[![CI](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml)ä
 # EVM Protocol Adapter
 
 For more information on the EVM protocol adapter, find the related
