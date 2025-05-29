@@ -4,16 +4,22 @@ pragma solidity ^0.8.27;
 import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
 import {EllipticCurveK256} from "../libs/EllipticCurveK256.sol";
 
-/// @notice A library for addition and verification of delta values.
-/// @dev This uses the Pedersen commitment scheme
-/// (https://link.springer.com/content/pdf/10.1007/3-540-46766-1_9.pdf#page=3).
+/// @notice A library containing methods of the delta proving system.
 library Delta {
+    /// @notice Thrown if the recovered delta public key doesn't match the delta instance.
     error DeltaMismatch(address expected, address actual);
 
+    /// @notice Adds to ellipitic curve points and returns the resulting value.
+    /// @param p1 The first curve point.
+    /// @param p2 The second curve point.
+    /// @return p3 The resulting curve point.
     function add(uint256[2] memory p1, uint256[2] memory p2) internal pure returns (uint256[2] memory p3) {
         (p3[0], p3[1]) = EllipticCurveK256.ecAdd(p1[0], p1[1], p2[0], p2[1]);
     }
 
+    /// @notice Converts a delta public key to an Ethereum account.
+    /// @param delta  The delta public key.
+    /// @return account The associated account.
     function toAccount(uint256[2] memory delta) internal pure returns (address account) {
         // Hash the public key with Keccak-256
         bytes32 hashedKey = keccak256(abi.encode(delta[0], delta[1]));

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+/// @notice A library containing type definitions of the compliance proving system.
 library Compliance {
     /// @notice The compliance instance containing the data required to verify the compliance unit.
     /// @param consumed References associated with the consumed resource in the compliance unit.
@@ -42,5 +43,6 @@ library Compliance {
     }
 
     /// @notice The compliance verifying key.
+    /// @dev The key is fixed as long as the compliance circuit binary is not changed.
     bytes32 internal constant _VERIFYING_KEY = 0xd15203a1b0a6a096d0187241329bed9c8536dd0e61dfe6e348ee5cd10b39cfb4;
 }

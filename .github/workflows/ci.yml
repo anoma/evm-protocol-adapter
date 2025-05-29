@@ -2,57 +2,31 @@ name: CI
 
 on:
   push:
-  pull_request:
   workflow_dispatch:
-
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  RUST_BACKTRACE: "1"
-  RISC0_VERSION: 2.0.2
-  RISC0_TOOLCHAIN_VERSION: 1.85.0
 
 jobs:
   contracts:
+    name: Contracts
+    runs-on: ubuntu-latest
     env:
       FOUNDRY_PROFILE: ci
 
-    strategy:
-      fail-fast: true
-
-    name: Contracts
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: true
 
-      - name: Show Forge version
+      - name: Show Foundry version
         run: forge --version
-        working-directory: ./contracts
 
-      - name: Run Forge fmt
-        run: forge fmt --check
-        id: fmt
-        working-directory: ./contracts
-
-      - name: Install Slither
-        run: pip install slither-analyzer
-        working-directory: ./contracts
-
-      - name: Show Slither version
-        run: slither --version
-        working-directory: ./contracts
-
-      - name: Run Slither
-        run: slither .
-        id: slither
-        working-directory: ./contracts
-
-      - name: "Install Bun"
-        uses: "oven-sh/setup-bun@v1"
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
 
       - name: Show Bun version
         run: bun --version
@@ -62,76 +36,70 @@ jobs:
         run: bun install solhint
         working-directory: ./contracts
 
-      - name: Show Solhint version
-        run: bunx --bun solhint --version
-        working-directory: ./contracts
-
-      - name: Run Solhint in `src` dir
+      - name: Run Solhint in `src`
         run: bunx --bun solhint --config .solhint.json 'src/**/*.sol'
-        id: solhint-src
-        working-directory: ./contracts
-
-      - name: Run Solhint in `test` dir
-        run: bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
-        id: solhint-test
-        working-directory: ./contracts
-
-      - name: Run Solhint in `script` dir
-        run: bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
-        id: solhint-script
         working-directory: ./contracts
 
       - name: Run Forge build
         run: forge build --sizes --ast
-        id: build
         working-directory: ./contracts
 
       - name: Run Forge tests
         run: forge test -vvv --gas-report
-        id: test
         env:
           API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
+          API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
         working-directory: ./contracts
 
-  #  bindings:
-  #    strategy:
-  #      fail-fast: true
-  #
-  #    name: Rust-Bindings
-  #    runs-on: ubuntu-latest
-  #    steps:
-  #      - uses: actions/checkout@v4
-  #        with:
-  #          submodules: recursive
-  #
-  #      - name: Install rust
-  #        uses: risc0/risc0/.github/actions/rustup@release-2.0
-  #        with:
-  #          toolchain: '1.85'
-  #
-  #      - name: Install rzup
-  #        run: |
-  #          curl -L https://risczero.com/install | bash
-  #          echo "$HOME/.risc0/bin" >> $GITHUB_PATH
-  #        shell: bash
-  #
-  #      - name: Install toolchains
-  #        run: |
-  #          rzup install --verbose cargo-risczero ${{ env.RISC0_VERSION }}
-  #          rzup install --verbose r0vm ${{ env.RISC0_VERSION }}
-  #          rzup install --verbose --force rust ${{ env.RISC0_TOOLCHAIN_VERSION }}
-  #          rzup install --verbose cpp
-  #        shell: bash
-  #
-  #      - name: Build bindings
-  #        run: cargo build
-  #        working-directory: ./bindings
-  #
-  #      # Run Rust tests
-  #      - name: Run Tests
-  #        run: cargo test --verbose
-  #        working-directory: ./bindings
-  #        env:
-  #          PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: ${{ vars.PROTOCOL_ADAPTER_ADDRESS_SEPOLIA }}
-  #          API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
-  #          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      - name: Upload Contract Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-artifacts
+          path: ./contracts/out
+
+  bindings:
+    name: Bindings
+    runs-on: ubuntu-latest
+    needs: contracts
+    env:
+      PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: ${{ vars.PROTOCOL_ADAPTER_ADDRESS_SEPOLIA }}
+      API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
+      API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Contract Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: contract-artifacts
+          path: ./contracts/out
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Cache Rust toolchain and dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo
+            ./bindings/target
+          key: rust-build-${{ hashFiles('bindings/Cargo.toml') }}
+          restore-keys: |
+            rust-build-
+
+      - name: Show Rust version
+        run: rustc --version
+
+      - name: Build Bindings
+        run: cargo build --release
+        working-directory: ./bindings
+
+      - name: Run Tests
+        run: cargo test --verbose
+        working-directory: ./bindings

@@ -8,7 +8,6 @@ remappings = [
     "@openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
     "@risc0-ethereum/=lib/risc0-ethereum/contracts/src/",
     "@elliptic-curve-solidity/=lib/elliptic-curve-solidity/",
-
     "openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
     "ds-test/=lib/risc0-ethereum/lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/",
     "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -58,13 +57,24 @@ polygon = { key = "${API_KEY_POLYGONSCAN}" }
 sepolia = { key = "${API_KEY_ETHERSCAN}" }
 
 [rpc_endpoints]
-arbitrum = "https://arbitrum-mainnet.infura.io/v3/${API_KEY_INFURA}"
-avalanche = "https://avalanche-mainnet.infura.io/v3/${API_KEY_INFURA}"
+#arbitrum = "https://arbitrum-mainnet.infura.io/v3/${API_KEY_INFURA}"
+#avalanche = "https://avalanche-mainnet.infura.io/v3/${API_KEY_INFURA}"
+#base = "https://mainnet.base.org"
+#bnb_smart_chain = "https://bsc-dataseed.binance.org"
+#gnosis_chain = "https://rpc.gnosischain.com"
+#localhost = "http://localhost:8545"
+#mainnet = "https://mainnet.infura.io/v3/${API_KEY_INFURA}"
+#optimism = "https://optimism-mainnet.infura.io/v3/${API_KEY_INFURA}"
+#polygon = "https://polygon-mainnet.infura.io/v3/${API_KEY_INFURA}"
+#sepolia = "https://sepolia.infura.io/v3/${API_KEY_INFURA}"
+
+arbitrum = "https://arb-mainnet.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
+avalanche = "https://avax-mainnet.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
 base = "https://mainnet.base.org"
 bnb_smart_chain = "https://bsc-dataseed.binance.org"
 gnosis_chain = "https://rpc.gnosischain.com"
 localhost = "http://localhost:8545"
-mainnet = "https://mainnet.infura.io/v3/${API_KEY_INFURA}"
-optimism = "https://optimism-mainnet.infura.io/v3/${API_KEY_INFURA}"
-polygon = "https://polygon-mainnet.infura.io/v3/${API_KEY_INFURA}"
-sepolia = "https://sepolia.infura.io/v3/${API_KEY_INFURA}"
+mainnet = "https://eth-mainnet.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
+optimism = "https://opt-mainnet.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
+polygon = "https://polygon-mainnet.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
+sepolia = "https://eth-sepolia.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
