@@ -19,7 +19,7 @@ remappings = [
 cbor_metadata = false
 bytecode_hash = "none"
 
-solc = "0.8.28"
+solc = "0.8.30"
 auto_detect_solc = false
 evm_version = "cancun"
 fuzz = { runs = 1_000 }

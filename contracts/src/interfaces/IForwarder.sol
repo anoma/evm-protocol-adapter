@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.30;
 
 interface IForwarder {
     /// @notice Forwards an external call to read or write EVM state.
