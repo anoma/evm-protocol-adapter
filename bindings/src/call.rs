@@ -31,8 +31,8 @@ pub fn protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<
         .expect("Wrong private key format");
 
     let rpc_url = format!(
-        "https://sepolia.infura.io/v3/{}",
-        env::var("API_KEY_INFURA").expect("Couldn't read API_KEY_INFURA")
+        "https://eth-sepolia.g.alchemy.com/v2/{}",
+        env::var("API_KEY_ALCHEMY").expect("Couldn't read API_KEY_ALCHEMY")
     );
 
     let provider = ProviderBuilder::new()
