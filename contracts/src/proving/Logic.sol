@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import {BlobStorage} from "../state/BlobStorage.sol";
 
+/// @notice A library containing type definitions and methods of the logic proving system.
 library Logic {
     /// @notice The instance of the logic proof associated with a specific resource.
     /// @param tag The nullifier or commitment of the resource depending on if the resource is consumed or not.

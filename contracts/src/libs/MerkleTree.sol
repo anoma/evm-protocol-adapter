@@ -17,7 +17,10 @@ library MerkleTree {
         bytes32[] _zeros;
     }
 
+    /// @notice Thrown if the tree capacity is reached.
     error TreeCapacityExceeded();
+
+    /// @notice Thrown if the leaf index does not exist.
     error NonExistentLeafIndex(uint256 index);
 
     /// @notice Sets up the tree with a capacity (i.e. number of leaves) of `2**treeDepth`
@@ -186,14 +189,19 @@ library MerkleTree {
         isLeft = (directionBits >> d) & 1 == 0;
     }
 
-    function computeRoot(bytes32[] memory leafs, uint256 treeDepth) internal pure returns (bytes32 root) {
+    /// @notice Computes the root of a Merkle tree.
+    /// @param leaves The leaves of the tree.
+    /// @param treeDepth The tree depth.
+    /// @return root The computed root.
+    /// @dev This method should only be used for trees with low depth.
+    function computeRoot(bytes32[] memory leaves, uint256 treeDepth) internal pure returns (bytes32 root) {
         uint256 totalLeafs = 1 << treeDepth; // 2^treeDepth
 
         // Create array of full leaf set with padding if necessary
         bytes32[] memory nodes = new bytes32[](totalLeafs);
         for (uint256 i = 0; i < totalLeafs; ++i) {
-            if (i < leafs.length) {
-                nodes[i] = leafs[i];
+            if (i < leaves.length) {
+                nodes[i] = leaves[i];
             } else {
                 nodes[i] = SHA256.EMPTY_HASH;
             }
@@ -202,12 +210,13 @@ library MerkleTree {
         // Build the tree upward
         uint256 currentSize = totalLeafs;
         while (currentSize > 1) {
-            for (uint256 i = 0; i < currentSize / 2; ++i) {
+            currentSize /= 2;
+
+            for (uint256 i = 0; i < currentSize; ++i) {
                 nodes[i] = sha256(abi.encodePacked(nodes[2 * i], nodes[2 * i + 1]));
             }
-            currentSize /= 2;
         }
 
-        root = nodes[0]; // root
+        root = nodes[0];
     }
 }
