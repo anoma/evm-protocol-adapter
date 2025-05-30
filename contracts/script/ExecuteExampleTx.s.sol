@@ -7,7 +7,7 @@ import {BaseScript} from "./Base.s.sol";
 
 contract ExecuteExampleTx is BaseScript {
     function run() public broadcast {
-        ProtocolAdapter pa = ProtocolAdapter(0xFffb262057d35cd5fE71Bbed9cCb1f7B1dABF2FC);
+        ProtocolAdapter pa = ProtocolAdapter(0xC5033726a1fb969743A6f5Baf1753D56c6e1692b);
         pa.execute(Example.transaction());
     }
 }
