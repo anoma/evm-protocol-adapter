@@ -6,7 +6,7 @@ import {IRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
 import {Test} from "forge-std/Test.sol";
 
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {Transaction, Action} from "../../src/Types.sol";
+import {Transaction} from "../../src/Types.sol";
 
 contract BenchmarkData is Test {
     function _parse(string memory path) internal view returns (Transaction memory txn) {
@@ -54,76 +54,76 @@ contract Benchmark is BenchmarkData {
         _pa.execute(_txns[0]);
     }
 
-    function test_verify_00() public view {
-        _pa.verify(_txns[0]);
-    }
-
     function test_execute_01() public {
         _pa.execute(_txns[1]);
-    }
-
-    function test_verify_01() public view {
-        _pa.verify(_txns[1]);
     }
 
     function test_execute_05() public {
         _pa.execute(_txns[2]);
     }
 
-    function test_verify_05() public view {
-        _pa.verify(_txns[2]);
-    }
-
     function test_execute_10() public {
         _pa.execute(_txns[3]);
-    }
-
-    function test_verify_10() public view {
-        _pa.verify(_txns[3]);
     }
 
     function test_execute_15() public {
         _pa.execute(_txns[4]);
     }
 
-    function test_verify_15() public view {
-        _pa.verify(_txns[4]);
-    }
-
     function test_execute_20() public {
         _pa.execute(_txns[5]);
-    }
-
-    function test_verify_20() public view {
-        _pa.verify(_txns[5]);
     }
 
     function test_execute_25() public {
         _pa.execute(_txns[6]);
     }
 
-    function test_verify_25() public view {
-        _pa.verify(_txns[6]);
-    }
-
     function test_execute_30() public {
         _pa.execute(_txns[7]);
-    }
-
-    function test_verify_30() public view {
-        _pa.verify(_txns[7]);
     }
 
     function test_execute_35() public {
         _pa.execute(_txns[8]);
     }
 
-    function test_verify_35() public view {
-        _pa.verify(_txns[8]);
-    }
-
     function test_execute_40() public {
         _pa.execute(_txns[9]);
+    }
+
+    function test_verify_00() public view {
+        _pa.verify(_txns[0]);
+    }
+
+    function test_verify_01() public view {
+        _pa.verify(_txns[1]);
+    }
+
+    function test_verify_05() public view {
+        _pa.verify(_txns[2]);
+    }
+
+    function test_verify_10() public view {
+        _pa.verify(_txns[3]);
+    }
+
+    function test_verify_15() public view {
+        _pa.verify(_txns[4]);
+    }
+
+    function test_verify_20() public view {
+        _pa.verify(_txns[5]);
+    }
+
+    function test_verify_25() public view {
+        _pa.verify(_txns[6]);
+    }
+
+    function test_verify_30() public view {
+        _pa.verify(_txns[7]);
+    }
+
+    function test_verify_35() public view {
+        _pa.verify(_txns[8]);
     }
 
     function test_verify_40() public view {
