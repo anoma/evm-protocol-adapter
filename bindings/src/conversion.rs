@@ -1,4 +1,4 @@
-use alloy::primitives::{Address, Bytes, B256, U256};
+use alloy::primitives::{Address, B256, Bytes, U256};
 use alloy::sol;
 
 use risc0_ethereum_contracts::encode_seal;
@@ -212,7 +212,6 @@ mod tests {
     }
 
     #[test]
-    // #[ignore]
     fn print_tx() {
         dotenv().ok();
         env::var("BONSAI_API_KEY").expect("Couldn't read BONSAI_API_KEY");
@@ -220,9 +219,13 @@ mod tests {
 
         println!("{:?}", aarm::constants::get_compliance_id());
 
-        let raw_tx = aarm::transaction::generate_test_transaction(40);
+        let raw_tx = aarm::transaction::generate_test_transaction(1);
         let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
-        std::fs::write("test_tx40.json", serde_json::to_string_pretty(&evm_tx).unwrap()).unwrap();
+        std::fs::write(
+            "test_tx1.json",
+            serde_json::to_string_pretty(&evm_tx).unwrap(),
+        )
+        .unwrap();
         println!("{:#?}", evm_tx);
     }
 }
