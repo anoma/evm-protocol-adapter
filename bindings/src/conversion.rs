@@ -212,6 +212,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn print_tx() {
         dotenv().ok();
         env::var("BONSAI_API_KEY").expect("Couldn't read BONSAI_API_KEY");
@@ -219,10 +220,12 @@ mod tests {
 
         println!("{:?}", aarm::constants::get_compliance_id());
 
-        let raw_tx = aarm::transaction::generate_test_transaction(1);
+        let n_actions = 1;
+
+        let raw_tx = aarm::transaction::generate_test_transaction(n_actions);
         let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
         std::fs::write(
-            "test_tx1.json",
+            format!("test_tx{:02}.json", n_actions),
             serde_json::to_string_pretty(&evm_tx).unwrap(),
         )
         .unwrap();
