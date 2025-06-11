@@ -19,7 +19,7 @@ contract BenchmarkData is Test {
 }
 
 contract Benchmark is BenchmarkData {
-    Transaction[9] internal _txns;
+    Transaction[10] internal _txns;
     ProtocolAdapter internal _pa;
 
     function setUp() public {
@@ -36,7 +36,7 @@ contract Benchmark is BenchmarkData {
         ];
 
         for (uint256 i = 0; i < paths.length; ++i) {
-            _txns[i] = _parse(string.concat("/test/benchmark/", paths[i]));
+            _txns[i + 1] = _parse(string.concat("/test/benchmark/", paths[i]));
         }
 
         vm.selectFork(vm.createFork("sepolia"));
@@ -50,75 +50,83 @@ contract Benchmark is BenchmarkData {
         });
     }
 
-    function test_execute_1() public {
+    function test_execute_00() public {
         _pa.execute(_txns[0]);
     }
 
-    function test_verify_1() public view {
+    function test_verify_00() public view {
         _pa.verify(_txns[0]);
     }
 
-    function test_execute_5() public {
+    function test_execute_01() public {
         _pa.execute(_txns[1]);
     }
 
-    function test_verify_5() public view {
+    function test_verify_01() public view {
         _pa.verify(_txns[1]);
     }
 
-    function test_execute_10() public {
+    function test_execute_05() public {
         _pa.execute(_txns[2]);
     }
 
-    function test_verify_10() public view {
+    function test_verify_05() public view {
         _pa.verify(_txns[2]);
     }
 
-    function test_execute_15() public {
+    function test_execute_10() public {
         _pa.execute(_txns[3]);
     }
 
-    function test_verify_15() public view {
+    function test_verify_10() public view {
         _pa.verify(_txns[3]);
     }
 
-    function test_execute_20() public {
+    function test_execute_15() public {
         _pa.execute(_txns[4]);
     }
 
-    function test_verify_20() public view {
+    function test_verify_15() public view {
         _pa.verify(_txns[4]);
     }
 
-    function test_execute_25() public {
+    function test_execute_20() public {
         _pa.execute(_txns[5]);
     }
 
-    function test_verify_25() public view {
+    function test_verify_20() public view {
         _pa.verify(_txns[5]);
     }
 
-    function test_execute_30() public {
+    function test_execute_25() public {
         _pa.execute(_txns[6]);
     }
 
-    function test_verify_30() public view {
+    function test_verify_25() public view {
         _pa.verify(_txns[6]);
     }
 
-    function test_execute_35() public {
+    function test_execute_30() public {
         _pa.execute(_txns[7]);
     }
 
-    function test_verify_35() public view {
+    function test_verify_30() public view {
         _pa.verify(_txns[7]);
     }
 
-    function test_execute_40() public {
+    function test_execute_35() public {
         _pa.execute(_txns[8]);
     }
 
-    function test_verify_40() public view {
+    function test_verify_35() public view {
         _pa.verify(_txns[8]);
+    }
+
+    function test_execute_40() public {
+        _pa.execute(_txns[9]);
+    }
+
+    function test_verify_40() public view {
+        _pa.verify(_txns[9]);
     }
 }
