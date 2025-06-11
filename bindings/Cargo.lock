@@ -2254,6 +2254,7 @@ dependencies = [
  "dotenv",
  "risc0-ethereum-contracts",
  "serde",
+ "serde_json",
  "tokio",
 ]
 

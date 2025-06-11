@@ -1,0 +1,2525 @@
+{
+  "0_actions": [
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c08f3164e0eaf80fad06b5d36d6b9fb8938effbaee9113bfd4a8ec60bd80ada4c22fc26f1c332125e4adb8366eb8087a995ae28ebc614003203951810e755c8570556e4e46a8d9641c4ba865685935f805d1cbe54e30654b53821a7c27db8fdd4018ac6ef0dea2f723d446bef256e6e4ae5184379f5b0f27e4b0e70ff424f659c0949c953f7a5276f49737ee6ab5e9cb83641b455b366d8e91cbfd77db0fa7d6f012c5485c0f2a00b490a45ae5fd5828730cb0b0a012d5dd2e0c15c66e20e08a214e13306c8f13ba67f567777e20c050a3d305b526a09c7bf57ac5d50ddf60ddd1e699f09dd0974556c36c683cc16e30193abc4deff02f4391dfd07f236389950",
+          "1_instance": {
+            "0_tag": "0x155d957de29e96a50517f3c033e1c618e697795e6853a5dc18ce684289d25497",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x190745ccc5568e6501a640df6f543b178b1bd4a058b6e7fea993e6697459e2d8",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c098b7be1e66ea8d1adaa42a739772a2764e049f8b60669ab9046fd6d443ee9b22fb559d455e9ab43eb05e8bfc49e83ebd86b721be299788d265b86330ad8f1341226e53d144b848c885b8b614d26d327a2d622aca9fa70cb59bca29513f550e90bb09da2b33a04dc5f3a861b5658fae8456b4bd977d7a7dab8349ea2f1d15424057903ba8345db7ddc2fa109f286607e8efaac7b78746e0140796a3754139afe10cd69737170f5ed411759610616195b183e01d89feeda58727b402604d422b41f9e3f703c692e47bccb4d20695f965227312da581dce1285f41cf89d01e5a991005c06def263852db100a8a5fc02b4914d70dbcaeac72e2a4e8d773149f4d06",
+          "1_instance": {
+            "0_tag": "0x9c590db144abb0434267475ac46554bc71377b1e678a6ce7dd86c8559b97cf1c",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x190745ccc5568e6501a640df6f543b178b1bd4a058b6e7fea993e6697459e2d8",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c277a99395a8e9395d0f3d5f209f8f58b53131fbc7a3f047f87d857848288ab3a044a246043eb2df7a1a1cbc8d8c38aee1f97b2b22a190687570012b94a992cff1c1dad10776ad08864e1b1721110ff833494f1d5f377a1f0563974d3c2ca8c962053feed9796faa16e16cac9efb91232387c058c7781c5de0f21637a7c0df7a61db16b155a424184f7f566d16e85f54baaf3be0f485cc0815d5ae1b3620f2acd2c5585121673c32421cf3287b064ca12ae3a3c10bd3d266d808573de8eb81fe615449f80721aed42ddd8afe1e96dcfd0baa3da72652a22b645ed8442a481bdaf049ef6e65115a1f756f5daa9c362dbd95a05107c5d733610f941cab2f404c77a",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x155d957de29e96a50517f3c033e1c618e697795e6853a5dc18ce684289d25497",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x9c590db144abb0434267475ac46554bc71377b1e678a6ce7dd86c8559b97cf1c",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1e7d32bbbb7f5b05b948e5832f039d5136c16ed98e957db9dbd415ab0be8318414f69512dacd38caa7579c79fc536a42d6a67061fe805b37fd27f797331756451bdba00fb922bafc8f14026e124afc80cfcc2e22ebb2f136a0ad274e5640e8792bc92048badcfc38dd28fe1afe1b8e61c70deeacdd1546f6f29762511471b222161ecc0cbf4c3cbfa03fa6959aa95b7c18ea59f60d7fc340eb21869f36032b0d1fec108085e84e059cf3bcf75486587caf10301811a5f93a0825471f4763dadc0d1f636837b4f262f07ba722124b17ceef421078e994ef0193749f709a7ad4f40801ddc986747d2210d3798bbe94510e9464986a4f0a281c8c6d3ef127dabf5d",
+          "1_instance": {
+            "0_tag": "0x10457d358d0f4781741af6694268825fc1c7932439745a9019b5cd42385c6e51",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x8328c1d29669ea1ba0bfb1cf9982721eebdd32691e026b3242bfffdbbe2d9ee1",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c27613be0ee436479802710530a9f55374966a5981c45098300e25fcb1ed9e2011607e0f4e4e433aff9a0c848500c35d88ea305bb22e169674ad7242139ec6eb510a2741a73ea50b878e71935544d6a49c11ef55bc9aac5d5038ccbeee30d57f3180574b99bbddc8ae9ede3adb7e3a97c979b13fb2902358c8215cd117c8ef19e2cccdc7a4f141878a687233af6b13cdcf4a5ac3da62f826d314b86f59a223a9f030e34e693fd74830c2ea5de8967d65281acff18676bf06c324f6d93f24fb84c131a82aef885d4f3b5ea420e0ac9cff663317c38dc4738f055549f38e62c9df32a41a5a70b9c2bf7a93b91c02fe65b97b43c9aae7a24dfbe94a47416e6ec4f4f",
+          "1_instance": {
+            "0_tag": "0xa15530f6eaa1bda4bbf66944db75cacfc50da4a168bfb0d74e5f849369cbec2f",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x8328c1d29669ea1ba0bfb1cf9982721eebdd32691e026b3242bfffdbbe2d9ee1",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c042e1a42bb75d9f741bae966b7d2de7c86400d96258fdbda9e2acdef50ec1a7c0c429f43cef7887eb77c641dd8697394bc55ed271c1ee1c110f43bd6d7963e3512c75016f04d4324555f0abccdeb8da6397e576263495b6edb401a1fed94fed71087dfd4d1022c7a076bd6a7894ffaf2800148726cb6cf73cfbe7d73c750504401c5cd77eb0abc329f98e2904ea17168d1df02332a1968a6eff4b883787e74f0059341ff45af948a3aa1e9fa01c2a2d211249091a784f44b658e0ce0eaa0497604cab8763a5271c705ce2454aafaeae4e986aa15759a7356bf4396a908d68126125a5daface5274671be48e066ed225077589ffdcc7fae73e8f9b7e6ff04025e",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x10457d358d0f4781741af6694268825fc1c7932439745a9019b5cd42385c6e51",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xa15530f6eaa1bda4bbf66944db75cacfc50da4a168bfb0d74e5f849369cbec2f",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c104f0368cd7d8b1e0fe9fbafba7fc74088743da2db48091ab072b4a8732005f107adac0a593924867575bdc2a27ec820799cbf63ad681630445d76466c35c52003577632a069a724dedf41b20a1c05afbd8f232d31fb5236886e1a812c88524a1719d67cc778ab3d6fa46407b433ccfe0e478def372bd5a289e9f07e9bdf0a262e3f822eb671ea36a0075c0cd27c9627c03401b11db9bdf6ef8e24a94c99d25601dbbac180d37729aed5f3c657df46d26f5caba6d82149f5fa6976a77de6d6b507086d05a41e14867505e64951b6b3f3f56d5e8209d15c9b319ea84349f6c32c1e2302c5c57d461e210b83c16ce60bbe2b0527be16879c38b07c947dce475cc2",
+          "1_instance": {
+            "0_tag": "0xc2bd114268bf5e8a423908f506e2c6e3aea8cff75503058a7c43358a0e977248",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x9936cb13ef3b4b225ac8ba5c5f082278b002ea60219fe8f671a278bee2b5f4d6",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c2f6b3a521f966c7b9176fb2fefa1ff7bd1a62dda25b90093e3fbacefc9d882692913a649dbeefccab695d009e48267a42201d4491d418d946a1dfa47b52cb81e1779ee409a035fcd69ab3a5b59ce418b813f4d568cc9f7707b13c7a782de63e6169e45165c2d0fed921e85d436c3502597be86bd242f3432c9076b0a3651a94f05b1171e8700acd3be516bee575dfe75475f7aa79c4456b896a1f6769c93a00d2346222bff9a5a095cc6b9b3aa35d34ef208d0acd363eb148e58ab6d9d83b73115acad8e0d9533cbdc4bff017aef6da4c126251f235840609e5ed8aa824b52db1973246e5eb9ffb68c53f638934924e23675db392aa595f7a7da5025d48ed24d",
+          "1_instance": {
+            "0_tag": "0x17a40bc4187af543bb9d4f9a78cb3f8edc4f0e920d3cabf0d0ddb0b1bf5d1acc",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x9936cb13ef3b4b225ac8ba5c5f082278b002ea60219fe8f671a278bee2b5f4d6",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c025a4c7794808e01bb6701e3e3755ad72a04c3146f8df1610b370dc8d4b48859157948d743bbeae4bf33ab0db507171913773f87a9bd7610832f07055511e85528900349385853a8c11d20cb43487868cd47fb3667c98c16a7e8436155707fc10cd708ed00b1cc0de6c257458ee02b303176518a6878fec5e2c84a0924f0eef12b59fb933429d73f0a9ec9e841424c7359bd37e8042b12b3447d24ba9fd9d2a903f85407596249be6521892c391a97023d29848fc0cb5154d34a6c0c0602c962058e09f33b754becfbb0912e997942ed6209d9208368e07867303bd6e9f1076f198a0e220b348de06f4f6e66cc4d8dcaa9fdb7839ee471688d91dd428eb36956",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xc2bd114268bf5e8a423908f506e2c6e3aea8cff75503058a7c43358a0e977248",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x17a40bc4187af543bb9d4f9a78cb3f8edc4f0e920d3cabf0d0ddb0b1bf5d1acc",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c164816ef7508f918dfa72a579a7642e541b09c46a05c553dd0383e88fe726ac7121aed0bed6ad45094be9799d5bfaf7c88d98bbbb58f5aef39de47181e0d340903da5796e1d9e0c9fe7834c2cd7403ebac615519eed7e91d29993fee0b84171713899f12be222cdcea2661a0a4a4bf626ad7f095efecf12206612216261983be102262714a70be921e7b3f7a89e835e904207f1e4309b697ac8d466b3257dfce20012adb5c4407a432e23be672d2f3737f83197b065c5abb391b14962a40e40b2c3dbb0ddd2710e8d6cf3a3a3f84c26af8c9a23a5eb2fb6e4346c1f84317a4d32ee34cb3638794e48f63b350c454ec41d2f471f66b9391e646fe158f7d20adaa",
+          "1_instance": {
+            "0_tag": "0xd2f4acc994eb3f35c25c37f2dbae3feee96c43a23045902cf93388447879eca6",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x1e4e5ee823ebc9936d6fb1e26b3cff850f36ac64a78cc03b0a3a256ddcb375b5",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c02105ddf4838314d275d386aa8d77cb7349a9ea62eb58be25c52ca2fe9deea8b291e6b51caa50cdcd47cfe76e94b1adb2243c68b010886b85ccc9ceeae97bd8f0e80d1e3c1a9cd5c5b1cfd99e272796128ad1bec555b58018fb992d5c7725c1817d05f18afa08c6734015895bfe468fe1ec65a3dcddde6a66be5cb30276a92e92c8efa3db117ce66dcb04a82e9d53a0806544a4af6b8b0ca55f06bc131acadf1148912b070cbc01a8ddfa85dc2ff95b21d0869672f645c81f1cd426a127d04c42f9bad00ed9670f282b64030ff7565345a5072a305fe8dc8e41831229cd61176040f68561c328aac6fe3ecd0acfe65d24efe64a636b9435ccf4353dbad4188b2",
+          "1_instance": {
+            "0_tag": "0x7c042f365832a994808859fd8160ed31d71c3eea7ae08676eac476d7bcc4d271",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x1e4e5ee823ebc9936d6fb1e26b3cff850f36ac64a78cc03b0a3a256ddcb375b5",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c14047ff4739ed3e5acf6f379bb454203c1610ab6a7ae3088777afa194cb545561327d9fc29cdc604f0ec4525b04c7cc768e22b7290cf71a11332a733e83bef6b0308286007530174f3a88858e286e445689ba3e7bec88d2d692acac3070c486f1d29ea02c9373fcbf8e94e8263ff2bdd892050e95a27c2cca950b2829537f9b62d98152b9d66f8263bd1cc2b5d23408ad847a4c890b84c08c7ce4731cdba635f06c6fdf8519cb2eddb5794207c175902feeb216c5a32a3bbd6178637cf417e2d205b8b7128d382b8c00f2280fb0a71bf7cb8ef16330e67548f710e463bd15b380a525b5f53c045c0c7beb2ee69c99e1a8343c571d9193cd8011679676825da14",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xd2f4acc994eb3f35c25c37f2dbae3feee96c43a23045902cf93388447879eca6",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x7c042f365832a994808859fd8160ed31d71c3eea7ae08676eac476d7bcc4d271",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1874760a28ab9e1dc0cdd330263d95bd4d0c2b637cb9eec0b7f2e77314b6adad0deacaade21c95b09760afdb296f882c5217c48627ce13046c02a936ffef3923139f3dacdb25956d85c5a37ed22600e7a52aa380937f8ed44249fe4096c3a432296df1a21fc519c6e2f5ff564ca97bf1a551c058acc812dd9f04da4e805de5e805f6868eea5c9bae14e5e0e6d01fa6255487298b94f7999f884fab3b958624820336682b9b3dd1c48bdf197da265f606a95d8951335683f4715456278f5a92892ccfdb68ac943b022739999514f2101d980b08fd292f3536e587c94e5fe33513208808c78beb5b7763ee39d3bc0556e157022ae9b9828a0b8f803bccae2e95f1",
+          "1_instance": {
+            "0_tag": "0x597391efbddbe83bbf26064d6796b0687af6832a066e55ec169c3f02e097ffa2",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xfe837fa7d65982917c3bed90cc1d390e89128f2f259bd7c0c3c9c14ece01850e",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c288d44fb6551530c165688ef29c5b8f19fef6ba67b47c53be6988657ad0ab8b309c67b2768b39daa2efb744d38f538b3177999d09e68fbb440ce7d697aac5e680cfd4bb55f9e79604f2ee0127ef86240c6dfa4ba3c2c76b882a70ea7863c53b01f0325cb0dcd55cd9eb87d8fa095decccee33eab2d9658c2ee6155f0a7fed4aa2194332d34b5a36e7f2c78ecd1bb06a653875f58a8b89817a77a64b6d716bc2418224fda0be1319d8be1f562617cdce335ff08b331185dfc7fbdf5684535fdd51ccb882ac9f574e30295ffd3eeb41cde6d6964226c81ca0dda567224f605b4c404bb33b47f3ce1ab34bdee304550c5976ff89a9f81073d3c72b1dc3499513e05",
+          "1_instance": {
+            "0_tag": "0xb9d62af5f5f71027693c55f5bd6717916cf611486a015afde36a96b018ffd87e",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xfe837fa7d65982917c3bed90cc1d390e89128f2f259bd7c0c3c9c14ece01850e",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c0de499886b49d1cac9997bc4e3ed8cb5dc6ec4ad070ad8f5a16f01913da8771a2ced6cdf3b48d4a7834186161ee921ea7231fdae0b93e41fa9ebacfda85dca08005d4f84a0e387543bfdec497c08ec056135039af0afd62f76f8a319873015602d8e55bde47659970063d3a80f419213115f751c0cc0bc3d206b9d8a6dd74960164d6890f5dfedf63258b00f2b806037cf57f2c45b50dd8262caa99da906a9223025a3732e9d912668f65be9fe422cc00ae4a65bff3acad68dbebb2f287ee6ea13daa79dd29e9adfc6eb1da33cb4b685d77936dc9fb48ae28489880d6883505f240e7c975f74a8d5c8b858e7af8e83b7aab214d29aa7752dbc7b3b2aee0defa2",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x597391efbddbe83bbf26064d6796b0687af6832a066e55ec169c3f02e097ffa2",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xb9d62af5f5f71027693c55f5bd6717916cf611486a015afde36a96b018ffd87e",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c0d6913b4c1f798bdce92d1c1134664c64495ba075efdc00a5d0d9fbcab2120830d0b5cc85fe2f27dec0abc6b4036b91ae4507cc79c8ba186739bafc813f738c20608abf61076354e0c926f16be9157acf4f08574ebd5e7e3f877a7b5b7151abe2cc104d67656a43d301e96acfc16267dba42c0f65b89f574c662fd14fc2bc56c274401598e091f9ad52818dc19f35585e3d7445cacf0dc62a3f1adea9d356d5b2744e9bf930bf5cc0f0dcf8c20489b5409738bee36fc6d65a69cfa86d949a1e417ea12371ef4209c5f51155b8c8e9bff28ba00e72f194e7f231be1fc2e440bd82d7e187bd37741f97560cd5cbff510f51a47dd7ebd8aecda373b9921907ae586",
+          "1_instance": {
+            "0_tag": "0x01451f2dd2e5500ead793c726eed294db37aa5bedcb91bfa748bed97251293fb",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x6a0a0254184ebc2d2218a7c4161f7bba5ed8b50a7db17cc306fc94c212fd50b9",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c18dd102f7dc92e3969f7399a69afd0b202100ac7c790556450d3edb7dc84099c1f54e5187a9a31d54495ce014d9f89f66da7593b9b9d74076e9cc136404bc206296ca4b17e6f61806e1d7fd5daf834fbd5288e6b0d00eabac951dbce42ba979b242e5785a2a911818b01c8e927b52c44ab55f1574ff06e0b03f52c2118f3b6e127db3b7b5d7a9157e220a9f28f9b3fc1d1bec53e6d497ac83c44f2f4796cff4d1a3d7f887caba4aca1353754c7d49091def58a7917d4ae29785f610b16fd06c52b7115b8e55ca8dc9551db04b571cb173cc50344d9b10940d40b4955020975312df0f214023b0473d6457fca810d635d35224813e063ebdc3f80fca7bcc72b4b",
+          "1_instance": {
+            "0_tag": "0x9c2089998e24fe40a2c020983e4f7dd822b1040da1abd5af01886f86d50bc362",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x6a0a0254184ebc2d2218a7c4161f7bba5ed8b50a7db17cc306fc94c212fd50b9",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c0b4399fdea6d6c098688db16e0767e5f01205c52049620638c2d5f7b7886a8a31c7c29a12358cc6806859d9953e4331faf22e2997c4f952902cead39f0e987bb040d1cdb9a5eda15409c51fb90d641f766f2078cb31a063ecdb6fbb813d1c586210e8fca381ff8b358c6372f674b08bceb39b52d36ea8b47b139e16716c52b6f17d116fdfe58fbd058ad05975309a7085dea311ba56b585ca5b26ba56fe57594132a03ca836ed46706fef4986e0088521d088ea1675cd28a05997cc043febbad214d6f63930201bea635d8d5310392217e6da71b296ca77d045168a940454b56263ac16093989417e9c56da67dd20575e9dad851006617fcabf932795e043232",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x01451f2dd2e5500ead793c726eed294db37aa5bedcb91bfa748bed97251293fb",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x9c2089998e24fe40a2c020983e4f7dd822b1040da1abd5af01886f86d50bc362",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c09442d4a947e0639e38dd8229b5f64e2f2a023d481684ef539e6db627a3b50cf115a9c39af0a01d0f83cf613cbbf862cdee8507e2d397d494ad9b010ded736920eed51851b28af6573a6914756c41fbe70f85cbc017affa81a5af5ed7d12f7181172a665a0db4c1af5b30bca0b551c6739169e24a792b7c824c1160708b19e220a962bd63d09cb01f8f88d51c1d3d3ac5ef996035f6a82666dc77f56538854a806232843fc90bb387c92165c3e2d9e9ec0da0ab320cd99c610f06b7f3bc6628f0a840f0e52c0e4a6cc5217b3df4abe9f94e18836f9d0e26c06202f93e62cd052171e14d4c1b8b59bb4aebac135f66a041469cb9fd6c50fd636e6dc843087f26f",
+          "1_instance": {
+            "0_tag": "0x3cdff6df2c5c68b79631e7d1e84b813f7033e8da2effafe41ed7f9eaf2a6be47",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x57ae6b1917a6bd7d77febcd0d9cad3644a2017c8e26c98354a74e4bf8c38bf84",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c169a6294d9f7c3e7b5aab0e8569c5e79a463f65a60821273dacaa1069539068f175354f19970e9a0a0d120c43c83b9897152959b1f86aed96bb3e4af1f773b880987845e54c692f6f651062da7fce2e60343354dcc7194bdfa66b7030a18c06d0dbc72656a4774b858c5ba72284fc170f842c0653a0debd9358917c771b4280116ba2e4839eac0b11e1c49465094d3b80af312a9dcb6184192ad863854dc05a10d0687291893f8f2890fad286c5b30f80feeb9ada565eea88cb4f49f074d770e03727bb4c57659a0cbabd27fff9e948f34aae560a4fb3dbb3f877085a6043084122e3953bedf03ad916309f6124d398e13b81924d3fc648b3d503200f1bb0933",
+          "1_instance": {
+            "0_tag": "0x0f5e9a37b674cea6e2eb8e961d3bc6dc0afcf42792b4e7ae3430c8e2f7aa6f82",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x57ae6b1917a6bd7d77febcd0d9cad3644a2017c8e26c98354a74e4bf8c38bf84",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c11edad70c8d0e3645cdf370276d560f544db9c82bf24af8701d2e00744d11f58249bd9d0aceb3f7227c7892486eb3015dbd659dccbfdc7c8c2a417d17f711fb613e8332e035e6c4d7e1f851939619af15daf667b5a78a08a777b90380ce10067159eab8c0916bafccef1d687c74df9f1a7cb083f96367c6c37162d20a3bd98b409c6c1bebd9a156d176764e844a211aad5991b1fb479eba90b4bfc9a09d6c02028e48bb6061eb9249d14e41cdc188baa252c2bc1afe47c68cfd449cf769bb95124a342290d48492097348bc2e21351acb5fb569b171d97ab9f5679ee62147a8a25217de2e5057979e74bf181c4838d20d0dca4b6d21ecb671432e06928254135",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x3cdff6df2c5c68b79631e7d1e84b813f7033e8da2effafe41ed7f9eaf2a6be47",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x0f5e9a37b674cea6e2eb8e961d3bc6dc0afcf42792b4e7ae3430c8e2f7aa6f82",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c04534a0ecba3e2a506641ff5a757dfed3c63f8bc3cd41ad51d19f72a47d2ac8330360f27c81894321b7942763887425ac81a8ea2c62e49464a30570d5b0317bc001d525f118252a08ba31d26d3c9a8f9e89d23f41d53b6fde2fc8d7b04f4b7222256a474df5150beddb974edecbcdaf27a4a16ea04bfafa8f5bb932060dd30a309021dd50eb0c2b72edc40be747b0ce084fb29d5f18ece3fe0185d58eb0c43e02a1eb3b42fc14cedff58144f8b4e502a368b9a5138daaac7db7b1b2bc1ec44f01b31322f777c8d21c3d671dc71d63ca4c9742bb31a62fd30d20137b99194e9a510b5812a3f230637a909068efdd249476bd493e8ad739555c5c140448e22c558",
+          "1_instance": {
+            "0_tag": "0x54da7a019fd90eb04a5dfc70180059aff51a6f92a42bf43511051b60f6a750cb",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xb61d2a70d632d90b99d6e2ff2aa006d240ea98848affd14bdc5dce3708e0b575",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c26e09d2d468b016f3c95bcde0c084c5401fee7c68b0a524d129a18a5245540ca0fd98d6b8e1bc83b7980bf4d1475f994c4b58eddc3a4e98865bcbbe1c1ee3db32495e91db606f852fc648c74f119c093abc3bb5cbb208ff6f76990806155c93c0608cbe894b11f1b54d28b4c6f2e0654056bde5f1d005975f4d060b87e529a231fc9bc4623a44fae01766c0323aa4ef7b3c4541794dcecf721e9cf9705ed3ea720cea327669c7f979bcecb219607c336f8ab819d8c5a9adf2a41236342c2536f1eeeff4de6822d03d1a019cf13a7a707d63cc9ed1f91f6634d1bf0f5c9fe97c52cd37e430f915fc42ee0d8399712ffdb9065d093c9ca805043acf4f75efdb5e7",
+          "1_instance": {
+            "0_tag": "0x339351a0762039a3c671ae6eb90ed179ea20845570477d47659e918146a5e5d8",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xb61d2a70d632d90b99d6e2ff2aa006d240ea98848affd14bdc5dce3708e0b575",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1cdb7ce66c2c357a1fd088ec03de84145057d5ca1e85eb48a814182c324e2aa02d7fa550c906e8e9ba2f0432aa11e821aeb00cff78e52e98cf80dc85b59c9ff90e1e5c7384571d5689b8dc39fec2716bc80370aa93eb7f05f2f3ab9e72b77d710c3383ee6ec6d64c43c0d4b7b2a4276a332b79a1bdc3b2fe0f4f0a253dcddd141a147aa47c434c7346aacd89f7013a13ba87c5325a7629708cd1b1163d99999604234b6b1dcd531e7fefac0a4b123f302676871e7969e2ea821e99d7d4e1851f06f2da7ed0ce3a2b38ea8e1f9b3a9afb1256ffe7cc44eb281f13eecebb73704f08bce201f571f5340076fbf9a3fa843212ab2efdd174d4c37dfadadc5d1b3189",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x54da7a019fd90eb04a5dfc70180059aff51a6f92a42bf43511051b60f6a750cb",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x339351a0762039a3c671ae6eb90ed179ea20845570477d47659e918146a5e5d8",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c06c0dd9ce39fbdef28861fbf5448ea83bd312df9794adcb6bbb553c40a47786d2384249bb4d0ac096392a296ca0fd218374ca270e0ddbdb07531d4f1079668c4007b0d280a4f8e9573462251eae05995c0738d7f9d686d6cc0b873ee2cbab2a61ceda1d3b1b2dba449422c635dec4f2f34841c7fa4f8acda73cc613b4514f9e10655ddc8e26cc1aeae10a36d00de1eeec1cf6c273a0396dea0c8f1ba69599901186293058d3b42de9e3c3eac0066d6fa9d3cd544bb045725bd27b8f64dcb305f0c2965707ebe714d2883670387496edf8fbe4cc19064bcfaa96516958236904510d2e9d3d207fc386ff09918a9e0cc56f990c2f8f271da1e9e6ce61d2cbf4385",
+          "1_instance": {
+            "0_tag": "0x8adae2ea4bcd2b2dac8209b01196ea09a16b0616500b40f7a5f56616092a4dc5",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x1a5ef999b3ce71b7ef9364e02ba8d17cda2e552b64accfa99f241363262775ec",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c09fb8d9fee18a3dfa21b318c79f8cf34059e3ddae5cb5fc71f32ef8da90b47110554bedcc93e2d08bb8b8ed9c27f2bc32a0e4598836dc9e567dacace16b1aa642147f88b8b73351f615af1a908128fcf632a16dbd3ba67beb54e8ead6a6f110f1e441b21dac95067baab0329fba83ce2035a9c94b4fa5828c5e528cfb401497c1b1ef53f8fc52422fc7586874df45bde3536367fb76de5913ddcbd686fb848452af22d1c7459479893aafc0da3c46bdfe05ebcd7c73d4874b6039c3e8cf1ccb5108e88327b3648b548fbad51ad915177a5541ddea7fa0a4778c1c3e42922b23d2c4825f339f099f7e6113c48cb88824a668a1c6cbf82a300da4c1b9fae921ab1",
+          "1_instance": {
+            "0_tag": "0x9186c10de3199870c62f310f50359e6f758044f1fd9f242f227d1a434039f510",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x1a5ef999b3ce71b7ef9364e02ba8d17cda2e552b64accfa99f241363262775ec",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1b80dacd90cb67c64b6415dce85f6c98839e4bcb258a67f1a7ab9715c730d906042df846451d15c3b4195a35adca7f7340cd1f6585381559bf840f600130b5b611950374a81557a898623aa4e33aaccd599801cb85a3887f6f19af44416071b92cda1b270459df2c55306093f68694ca3f14ed6d9784b098bca15c300e73768b24a39f4dd82a624185f5caae6d8ee8a3a044216a659102344025e51e221b989713549afdf1fdb0f752de75127a6cbd6ed73762d20b8037e1904199c5ac0fa32c0f44c95823ce6cf0713c81f298f78a4e9ca5ccc7bff28ffc774a3cbb6938740e1ae2a27db67a0d231df4fa19d201c8e6b77fd111c5c717f2afbdfe46a671aae2",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x8adae2ea4bcd2b2dac8209b01196ea09a16b0616500b40f7a5f56616092a4dc5",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x9186c10de3199870c62f310f50359e6f758044f1fd9f242f227d1a434039f510",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c24024ffff690180544e8dd52b92b8b1dd2b65626b9e92d012f4fe7cdd4677a080f7b86331554ab4fd1f344cff5f77bbb1b16a6709d59599729ecbb7fc181b1ef010109304b8b06d54d3e02643de06599dac6ee4072fda9c1c5dbcc4e85ac82000eb483e8c04b1492d58364a0d72af76385507de645515d8cbc3b4bd974e372dd1dd419a45875c543e5c32984dbab7b66377a8643002cf2afacf850d6d4e28d4919d706a024c244d2d3e0b2bce94329bb03eb0aa44871c66d6514e7e4b05911d10220440c0132f6b175b785933044b2ce0aedee9a6e257fb7b87966761c96b6c7118694c7e75f9406efe7e8eace97aea8c8ae474666a65b7a010df0bb1aa40cfd",
+          "1_instance": {
+            "0_tag": "0x546f0420690cf2050b00c19eb50aae2d5e27e4dd1367e586c9f93083e9ae8501",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xf02e93bc496fc5c4b5687f578eff6f0d14bcefd3541122c338ca40b08e55e6c8",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c06901fcb084a0cc857e7f552fde95f3ac132cdb74a0f0151450a129436f612ed26d4042324612dd0603e53ecdde665b730fedb0fa44e8814148ac93ef7c998e50e43b55f7d162bd3ac832130ca7700f4f44bf8055e852b37b3d5ccd40400fc8e300f92a1dc49e9b11e4c0f4093fdc5588e47fb216fc2097304a89957c943ed04264e5291d89da2ff77934d911ead786a543f30384c8420d557657cfd853e05c21b7474a3f9dd7186117208306556aeb437c93907027bb7155cca978387db5ac61fea6baf5423439f84eb40ede9b6e50cd0c5bb65f9604abf61bbe41ed3121c6f0d63c877c6577f4f33562ff69c06e81ad23f14b7e5b059d024fdb44b84b573d5",
+          "1_instance": {
+            "0_tag": "0xb3149656d14b48f3a4c6c054a39397f55854fef7eaeb4221e1f2c43e7aa929c5",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xf02e93bc496fc5c4b5687f578eff6f0d14bcefd3541122c338ca40b08e55e6c8",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c08079a789600781bc989bcf04672367a6561ab63d4c8c4186de9f3cf24466a4f1f09bd35fc67ae4ee77085e42eeed71f83b7e26f5c6fdf79b22b85f894965c7f29511ba174cc1683bae031dbf7f956d62ccd1eafa36ac0ad8bbd50f10aa2eb900d44f8361393f84b70a1a7141009f83e7bec35d22ac4e79bd25aedcc356148281148aae196772bc39c65cd3e64feb4e17ae22a77933c178c2b6754d243fccb5012dea1f71930185d55674f87318c99c225d68020a7a4b4fc9648f6448ed98c0f1679f8fa5b15d0760f1bf16c078e5155904e6e3625b148f05a87b70e0f88cc70304c895ca8c34d9be4802faa95048c102c7d19ba48892d38caa4cb5bf22bcf16",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x546f0420690cf2050b00c19eb50aae2d5e27e4dd1367e586c9f93083e9ae8501",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xb3149656d14b48f3a4c6c054a39397f55854fef7eaeb4221e1f2c43e7aa929c5",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c17428b02d30831c79590bcd2ec3e6b99e5621db9177ec08e996ba81c7665480f0b25af367149c351434d7c468a3e61e200d1ede0ab3a9c8743269033eb7e7eb30ce17b68b1b8b61dcc2a75495c7eb4a2afe60188ae6980d7c056a7d0c18697510c19fa5f0f044d96fc150da9c2dd226d4ef87945fe037fd9ac27b2e2f53e49881d3c22119ac623fc5a1241b94ddf06d37ec2349b57219d568c1f9ed389b188db0634833d21f45c87170e7145fea8e95ee7b4e1af46067586a7ede31dbf8e28931b4dd4ef3f376ab54d54c6a69a5d093fe9425fb92d946acc5c8b6aecd56bee2d00015fd1adcbde10ae39b06f29c02212377dd82ababf93c8c0e51ea27de3fa76",
+          "1_instance": {
+            "0_tag": "0xeb154a2f11ad07329923c9df54423561138e9756a13a600149621638d4b604ba",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x341491254af06696cdbaef2610dfdcd869f0c0efcde60f27c1202c14bdd46e5c",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c0c264c58bb4cfe29627b779fd989cbcce9f61ef68cc74b4270144607365238870ee9e55d2f4b60ee04b1913e92229cac4cb822f8e4c61b3420eba707ea1ec566064053c1a66850d5b76b6d6e0bc23a2264e78e8c1125ac6052c6768d0fb0c53925886efa27575d14e0a79e2b09ab9a037a9a29ee69e1d604ae5de438c1220187260a39968333368b8d2e5e05b716a3daa50bf25a2074e5fdcac82ab7af54916301159a02348da8a0714b3caf535e025bcb74ecc06dcc0d47cf02617a9424cf3f2ff98d4ecd6bf8269132ec24dcb8ca892ee5738eb276152c26f3cb77437f9b7a20387e91c487d780e47cdc43ae2210572878b49e7bd5cda0cb1f6e61dcdbc0c2",
+          "1_instance": {
+            "0_tag": "0xcead7906ba2d08eae7e0a17920cfefd94736689eaa6bd56ca7a2963bbb037a29",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x341491254af06696cdbaef2610dfdcd869f0c0efcde60f27c1202c14bdd46e5c",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c28965ab063b5c2b9e93edb89237b517794f50f745b953a2e303ee58d32179482057b3bb15e03a5a9265996647442876f0de0b5a37a6ed8fe42148bc50bddd8ec2864ad4c6188abc689d7f27f45f2b7fcde972898f4279cbc8562a0fd589a45830c770c4c12ddceef36c9c41c19183514f0a898aff170f13083dc95d11916dbdc17af5c5f5f7f46fe6e2c55acceb00edf5dd2716e76b2a1b6458eee3663d61a2818956dcc5e561f85a069eb9f4f3f900db986d494996125ed7ea9df2f6fcf492b2cc7909e84d2f7a7cdddc8627737b8303e6800b743c0654b440ab25ed026aa76287cdca1e26529cc4d084f92b8e8b078c7c010137e60eec5699c17cb60f21548",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xeb154a2f11ad07329923c9df54423561138e9756a13a600149621638d4b604ba",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xcead7906ba2d08eae7e0a17920cfefd94736689eaa6bd56ca7a2963bbb037a29",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c02e30d09051ade80769a7acc4d1c2d3d4089dd886cb854f55f67c521072df294117bd90e66f1a49b2001339aed176e61aeb55c8cf01a3f6eebc44849cecea2f6043a1996b1d65dc73f253af6ca9259f34a5e21e99575e161ddead9f94000ecc52eed355e31025971395295f78ebb304bd81dacd96b0fdca349a207ab1f8bbcb22e451b5c808a69aefefc6c4314dd77dc9180a882f4115e5c19e2d5c7df4771b211d33c3958640245af8e53b2a7d9e537917de402c5c470efd3411edcbfcc64452261d3e720652ac4a8025cf8825d8dd9aef606730789be6e8716d177fccbb02509c613e8d0bc40de2541670f3e51f6a987a52aec371e16f624746845e711a65b",
+          "1_instance": {
+            "0_tag": "0xb07d96fedd296bf508f873ccfb505ebd5eb2fd1f4a2da4aabf5c2b3e50762391",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xacc5659908317fd699a6fd9c20de3218fad7625f94cebbf7df9e7d5bdbabee45",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c045e39a28b781ee1a9cd321f8e855ea3e93bc1a30ab9ae7485c72e5b18176a182829a7cd461a62c91262b471cc48e128b88f7f60648ccb8b8c4260cd307e02251134666b986f0d7297aad92441ef10a95d598a2a1e76064e974297c035cd29b302b168693f90dbf2f14a86a4a6e79ff1230146ef7622b66758cbc3572e00328b252f59a50f694d37cff0d286cc5b7b0a5eeb780743e10df16e3d3c33340a289a0c955a81176ae07914537b1693c142667ad4ca3eba220c109ceaa59db3cb007218afef276349046bd4c5843db3f1e8f30e78e23cdecd1cf23809a40c7ba291cb209b325d5653736c3095635e5f292b4003653d7fa99c1c3536a7f9c21f702d56",
+          "1_instance": {
+            "0_tag": "0xe6a899ea52f4211f58981e285dfb9e29d13ed7569a48ed68c665de0ccda1752f",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xacc5659908317fd699a6fd9c20de3218fad7625f94cebbf7df9e7d5bdbabee45",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c09e1eafef8fa453997404f40a3353e320aa0f0d8387732db9aeb41cb766ef72202e0cf5fe76144cae2dc2e9a8bd719c9bc2f1688d5a1ffe6085ef7702e6d1b4910a253b4a7a25ace49bb011d4ecf91d34ad9e05fefe4eed57d4f33af7631a85f2575701d6aed8a8a7953828f1d0446baaa3fd71613b52afd1b7d0faa06d1fd8405e561e2d0a6e035ce12e42a6bdde2bd0257a4bdec99411fac31f5e92040da870e2ba0a0be2e27c6a60c5f3d4b3e70b60d3ea7fcdec071e3fab89747d1e0581a062fd1ac0d04feffa5257872b744e4c9efefa1f55296136c3b2e5fc718d80a4a1d0f3d1be7c6ba29500eff19c4a9d599ea378b304a0c23296a3d5276f7af9002",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xb07d96fedd296bf508f873ccfb505ebd5eb2fd1f4a2da4aabf5c2b3e50762391",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xe6a899ea52f4211f58981e285dfb9e29d13ed7569a48ed68c665de0ccda1752f",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1daea0a4fc4e574754c30c00fc5500ef8220294de7f4d22c136c008eb0829c880c2cbee3c8175984432ec32b55c0afd184feec65e56eb4c996d4df3e28407b9f16e38667e08d133d3ad9f48c13e6983cc7fa7471b343d185669d5dc027a64e5b21d403899faff89a5937f733560650a974800ea1b85515253898467d62b2ae3817c092bb41f76011b49c27ebf841558813390ec09ca47017cfc4fa422adefe601894d062f52839c47256703bb83f62fe75882971ad6d09c31cbb418fdf6e36ed077a8a835011cf19634e624f5b139e6bbccf30768725ee68a4afd649061f305a213751f1195ac5171689358fea2063ade06cc62a1c80f5cf89951406e87e1fc8",
+          "1_instance": {
+            "0_tag": "0x1a941b8e5f437684f13478e0c605c1a55ea560426c6853f992a62a8acfbe2afe",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xf7708714131df128536004d3796e8056c26db32493840473b2327f5b9a4fa21a",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c186116122f9d6356f2e40fa0fa05aa94bf9c140bbf316f9f0f7257b5af3fa6bc0bcd6c43dd87911510a0fbdcc02b66988e3782a8b9e66a47cbdb0c87392c7bf726bd7894274ca7f771e22f040197e120d075b306e4b35388fd077b13ee414ccc261b5f7b3c66e2d07489ceb2e73ca538391f55d2ab24c84f7c91b5a59136fe7712014a1ee6a04b8a03887fc08f7bf1bb4fb7b982b8e325637417560081d5885c099e9f7ab3f855805db481b60156431ce1654cd849a94199932064e6a3133fab27b2e293fae1834e5a7c3b4f121cfecae390835e2a058ca505c95e1ee8c8eed0114fc7b2fdcc8cb175cfb0052f4904a14b693c91d4ff7467c1163ab10897708b",
+          "1_instance": {
+            "0_tag": "0xe7e75371acfe15e6446b83669fc8f377b05d4a7918a413afe0e170dccafca129",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xf7708714131df128536004d3796e8056c26db32493840473b2327f5b9a4fa21a",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c2113c1a4fa2a24dbfd8f027999001f4b6a31e403f06f787068b0f24abc5dc4bd225733d2d46c5ffcdf87b1a0787f1c11ea0cee6f8ff619285ad529ad302b476a0991c1bdfd5e2ccdbb7da187bc6b3f96c7275710727cb8f1e907ac5f9400c6f81736d7641f666647f4bbef9ae8f131966b7ab80a30eb857a2d21358021580dd3270a6fd81977dbfc1167491f8c07667552fb9ccc82122841dade7a36091489472241f2ab7c390802b1299e51ec998ddb8b0d870ce49bce1fcbe3246ac4cbc45c0c77e4edb3987b3116b74ebe94774973bac8335b4fc8fe673e4c98f92b03dda7291e25889c1fa1477842e04d0c951e585ef5c522878e6d963ad195745a681152",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x1a941b8e5f437684f13478e0c605c1a55ea560426c6853f992a62a8acfbe2afe",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xe7e75371acfe15e6446b83669fc8f377b05d4a7918a413afe0e170dccafca129",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1d820e107138a099a11490b9c627fc62018c6c98855ef170756add25af44bcad18d5c2aa64904b6a85ed1841b100ada83f49f1c106d065430e5aff9d243e5dd221d2263a61d0fbc9b5affc9ed13f2c960ec73da8214d20646f359e6183c0efca1ca2e1db3d466581e2c7fe2dceccee4fbd6a52bfa2a5d8ee22594acbedd97fe20c9ded4645959594a64615c05d8756320713ae1ce6f4f700e3cec12c71dc51a019253dd8c3e961f1e9ddb1e2e127cf0ea7b4d802bdac01eebefe6439c048deb0110ea6f824f0e264e22d39430835c69eb0db4216a390ff9c684f610f358eb78c2c7b3e79e944634551ad249fe915b59798e8379bde9332525ffd8415c2842ef4",
+          "1_instance": {
+            "0_tag": "0x62e6de4123cb16a9e8311951214c4c34b4914e1b77e002e625d168c5f835353c",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x1d2f9f184cd4a0cc019050b14723c342398b7ca320699ce3b67f93ae8c7b93c6",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c08bbd91b9ad1903979a84eb684c65d919f9706cf27976ad19e1a3a82aeedcbdd1eb0ff6b87d3ab92cfa8d576933af2c1b3209762eea1270cbe4fdb533bdcf1be08a52338d9293caae613fb7ea7f01c9345f91483f876bc34a2b96bdbb03fab5109914ea3875192731215e7366256911ab6baf8ca05b4f171a5369ee42a791e2429495c2d1af8c4f70202e2a7cd42b2af5f00cfdc7b240abb3d46c613caa691c902788c11b74e90e88f3dc678d3ce33167db0c19c133d9d452aa23dbec5c5921b2e6a3b442865917f5651bab0dc7dcfb0621b3fe39b9db8a8a4ba0aa689e031fe1707dbf949117ab7a35c4157265993de5a5d93ee6cc840eea97a3f57e74bf719",
+          "1_instance": {
+            "0_tag": "0x1977629c2d25b3aa3a37bddcc8eeddcde9c4e3a813c1e2c12c36ac19ecf96157",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x1d2f9f184cd4a0cc019050b14723c342398b7ca320699ce3b67f93ae8c7b93c6",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1c83d69b828097099d93668c9dff6756192b6b9ea154bc17475b9310334bc6dc1c3ba57fb4a196f78b18aa3648ccc79039027b6c55692fd74643c04e97ce4169117992a4f70acb9b030f0693a436ba7b0e4cca26672e2a99689d5c5da04051c822f9ccdd332b3b218a9762510e52b118c4d756f2d8e25330d503cd37876ec31c0930b26d7c6980dd174b8ece04a6dac7f648198710e39f2093c2bad7f778b7441fcb62af90794891191ac48f65217882bf6af04878f8bc0e6d68a53c87904ef30258add6761684dbd70dadbc8a6dd141da1c2d176f4344f8b520cc1a23964c3b0c5b6898d78f56d4418f879cebfbf07ba22fe9d7daa91f633ec01b22c598f971",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x62e6de4123cb16a9e8311951214c4c34b4914e1b77e002e625d168c5f835353c",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x1977629c2d25b3aa3a37bddcc8eeddcde9c4e3a813c1e2c12c36ac19ecf96157",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c26198e03f37f9a028407cc492d31b7593e32b16b86f29dc2a41e8cae2dc4c37d04a75941cd2ab14f5975eeaf5579f34062695e79088def2a010e2db9b27a23b10c7befe13443a8ed935a9bbde800dc45b9b2ac4672062ee8a86edfd79d7100cc1c5cefb04a197825e002460bf093729fe04c510211ff89430084c3f9bef28bed161cf888557a63cc63b3fa417d6eef2c9c1afbeddb9a9cd2579e30979d260eab194410fb7d8233bebc254963c40e4a0f609666704502ac58b34a732a6d6c3e4c1f4986d0724f97cd5dfe573623dd82626b9c3beb74dbf0b2d0acf45258c4a432082e7f74648a5fac636a108d13b0976d7ad32abe69de06d18054c8fe7157fe9b",
+          "1_instance": {
+            "0_tag": "0xe7ecf9e577e44d5d5aa7c7275b67ac490959e1ad6d27c270c574bc7646234474",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xad5f9bfb09866886ca5c404daac81a624c49a59f1beaba9f9a0acf916be15828",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c1689b424a9c115f90b5642f92d24c27959c61e39c76e965154b8de85b58d14681fc40a20ca2e9defdcd5285615da2af67b8692d98c8921a5939b2554305d5d872094c1f704e58d9b2b5aa9f8c0bd979593e86150cf8b344a2f174bbb858178570b6113906d3e0729a231dbcccd34ce8e799d5ba415b35f0a5a3564e64254745d10e0be9461c8afe9201e5c18a82ca125f72f65c4b70712986a9bae100f78e3430303aeca94e9f07a0d430dd2a4f788f15b5868354e58d7f2b6b0c2a4b0fde12d1b80a6163d7fd571d302b4291bd4e9a27af0f0ec7913e385b5dcddbcaa3975741cfc4ed9d1400d3764aa66d0a94c232e02929d1c4336976e055538fe3fb1bdae",
+          "1_instance": {
+            "0_tag": "0xab3b91a036ddd232f270ae95ea2fd8a9f3c0d330328b7b45ecf108318bc0e87b",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xad5f9bfb09866886ca5c404daac81a624c49a59f1beaba9f9a0acf916be15828",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c064fccfba9e79d548c6c40939b6233c117f4169735ae5e6ea1f8d7e50df97d2108da2a91a07c811ebf619586c4401bf9f9ab360f7dfb86a8df3ffa8299670ee710e1627a06140596fe3f67a6fc8ca0938262c00d557b1c293e363111081eb56400c1069e90b8e7f2813a02668e578b36c8d8984f584654d2c8948854b2f5ea342e9e77c6ce123cb2893c362c66afae5083c2447ef968fcd8410483d25c31fc53133da6d3f52ffd43da7d22a42d9258062d00bc0d637156588e5ac7d0f992acd6011a4dff8179e8d2f796dedc466b70b5727241716df09c419af54b58956b09be001a6e55dac412cbcb2df86ba8e81c846a7afbb8544d0d43ec7f313a6ba7a55a",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xe7ecf9e577e44d5d5aa7c7275b67ac490959e1ad6d27c270c574bc7646234474",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xab3b91a036ddd232f270ae95ea2fd8a9f3c0d330328b7b45ecf108318bc0e87b",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c0c224b08a87011373f14cc14520a4235b8b99397428c5c8f7aa73a1ac17a85530aa2ac979c0f35fc237df706fc9ef47785b171a0561b9025e2f9cfd6d1233cef1bf231a8bda31edb74451f04f91f4a704be7e0ebb528d835085acb5b0ce7cad2194960d6edc404cfcf54e2f65c1001821810f4b865a7abd4179ef56401fbd6da1ea0714fac657ab117e623f2a4d08770c22fee42cd3c0a33b82610dd9bf443c40a762b5625772e6b110405b512537445428b5b9a42f649399fa853135283cf1d23ec93479e5558beaf06f29af76bc4c84344507ccac95b8f0af836cffa803b79226ef274710cf64f251259a59840d9a384c9858e117a6e728deade51628540f5",
+          "1_instance": {
+            "0_tag": "0xce07840a26243d55cb3f4554b091b15877adbbeb01f6c6ca3f5796273a2face9",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x4fc7c9c2317000af307bc11d93c4dd8fef19e2f16797c382115073f416aa8bce",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c221a4d914ec26cf6617fa163d50fbd4e346f1d1327119365818fd5ed836e8bba2f824921ca0108dade9e1d685c9f90f15c63f7f908a7c49842d3d06486b544bc0004e872cba4c14362384854bf253da7d4fd25e0e8db255f3748a9b5098506682649f3ca5e4013c503793ac777fd1d53dafad2099eb8b34b6f3be67c97f378f012eebeac7c79b900b173651eabdf823eba1cb03a5510e5c3d920af1795b4195903229070bb514acc7b94bac689aa45dba6b74f1d3e7aa0aba5227d1cf778b9a31b4a033b4dd55acde49cc6e67b3f77749e966586cca013ffcc9f1bb46913118a176f5e6341ca8ed9d80f29de43f85735bd07ec7b4f69a6ad6efe7e7a9ba153a1",
+          "1_instance": {
+            "0_tag": "0xa2f9965ce2c0d4a04f885f1c634983e4b81bddbbd988f97d6eb8b1226a68ce5c",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x4fc7c9c2317000af307bc11d93c4dd8fef19e2f16797c382115073f416aa8bce",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c0bdcae0540b030afeb6cef927054f91f901782147176a08712299efe021438bb0489b7d2375bfc2abae9ee50f81b7326515ce6cf9c78526f84b2596460d1941e2acb246c742aa3797751c885a0108e1927fde2d3bbc83eba658abfb4f037a3e7205e8f5532556bf2579b8900526e439b10934d4f5a34b1fa77f521ed044b157709c675722491617dd648728a708e53dd63b51d3d6e3fb2cb34f485a6ad0352fb2c8eb7648fb13635166a528c1e13a1daf159b92b2b4c302b46f8fc9117101e782a73e29aee7255f6027f89097784a64932569fa554cb9074860013824e715f55142654826203ea582c6cf514988b1e5109680bc240c02b9b4bdc63efe0c4ee7c",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xce07840a26243d55cb3f4554b091b15877adbbeb01f6c6ca3f5796273a2face9",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xa2f9965ce2c0d4a04f885f1c634983e4b81bddbbd988f97d6eb8b1226a68ce5c",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1c2e4187048a9ff5a758e2ac9a821cffbda5fdf0d7067f52cd671858c3f2bace06f7ce51b12e4f6b06393477bde0a46a9d97cead09ae3c42a6e389d4cec39b210959732072d121665b3cbcc98a103cebb07bc7f86508011e73440dc4ec910c6c0c30d004a3f3db7a8a7085d435bf0b8355e8a8bf1b9d142be6a6826f472cef2f29a799c4a761d3786213019ae1e8854303902cd19d4c70b3226cb1041e60d8642ea9c0b54cec78aefb57cfa7e12222a1e3547a0787c46f1e657136ec45b302e02c9df838e57d6d0789ea309db53da6234e5d2ddf4103892058f0f5a05b66068626d9cdc9122bee3fdc54b182649482a50cd95c98923f9d37e7a05afd4099d900",
+          "1_instance": {
+            "0_tag": "0xbc9c874421394e62014e6177227819ea27d2eb32de70c07513083cdfcfaaa904",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x8f0db8fb556f7025c2212cbfe2d2dfab18e77154d90a4d95701f788942463781",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c05dddc5a11ea44764a8d746dd8644453ad5fe741a84462db2da53b6db32b7c612363f65b5f381a6cf3313a7ffeee2bd82b38b8c5ba2b22afd05a1cfe2ab2e1521e2880f6af03672cda1e458c535dc544421bd0647d5be9858356442e15b175a9206f52e96b2ddfcbcfd957e7d8fad1043c4a06402ff17f5034645f606ab5f7a525f74b17950e5a5cfc3930ccc369bed6c5595be451da82a83e8e629621970cad011197afb12493e2066869c43660a07ca9f67f7247fffeec93028b4cddd904330bb3c723e54203c3226fbdacc9a52e086c8e9add7733d62f977df8ad199d54a701635629ae0b88f94eddb9755cf91e1f0e2f7f9950733a7c92945850f3dcd0e5",
+          "1_instance": {
+            "0_tag": "0x833cecd55c2842bda80b7ee018f241c454e5eba43fe29f118fd18453a443bc2a",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x8f0db8fb556f7025c2212cbfe2d2dfab18e77154d90a4d95701f788942463781",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1f450affa8af6816cd1874e0bf9481c89c2297b3d07bf0411e0a759c9788d96e12bb68de2366b9486f14f9f7c7c94a6ea77ca3644e3b663009c62ecfb197c31d0729a99d4f392fce7fcf71a711b49f3ee1c47ab8c084cab76cce454e0890b5822f7edf380bded36e347d78eaace1c6257bf5e8b4ef225e509a011d46fa9da8b514088a4f6a43206c18cf647705ef32cb9e252c5ec195ba6a8d2919172e34dc530b7727301670bf979d2c8f2f5ebf0541f1f01e9251bebea1a6c3c37790e23bf51ba38a6e7c40e6dd8d9cc164268f8e3131acb5d633c1d01e6dda4208e56db58e27ee1d20ef84935ed200a7435bcc8485dc7f678029a8684f32d6689d93f5c7cc",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xbc9c874421394e62014e6177227819ea27d2eb32de70c07513083cdfcfaaa904",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x833cecd55c2842bda80b7ee018f241c454e5eba43fe29f118fd18453a443bc2a",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c18fa9f05e9418fa26dfbdf996b46a3d8e155b76c63714783aea8492c67eb8c530700a14bb5394a1c51a754006999a10079a9cd7d792261229d2dd5d7cda9fcf20b829d6eee848e912b91526c8bbcbf03cc1e8c1189baa521238c67f0b85da1081a1accb08127892e191bfad964a158ae9c916b1d8812db411297624711d96d7401d6cdd7dc3b5dc52ab224856fd0c75dfa12787bd46c8825aca57e333f5357a327e0bf1b29f91cda7f6215a3b0c925ed5429f8e21bd6d6a744f8c6d83631d81f1a466195f3677c98d9a6c66e1244de4c2ff88a40eb27bc7b61a936ac7ab675f300d3301f938ba1ad75c6d35c02013a30f7b57c9d233d375dea56e869bc673cb1",
+          "1_instance": {
+            "0_tag": "0x907d7460a9b22dc76891e3c78d7c1703ebc7b7cb00c01d9d17866229be07d86b",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xa1462be147df75c1f588443549107531919b3cd70eac15c590f1f988c5ee86d5",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c2e5e00fcea4d3f9e71930c08a8e14bf62c51b986ffa8881d31fa7663c60b2614267c62f22b952ac330c0c30352d864d750a4367ba8f4794cb7eac6fe71ee6f4601c35a866b10f5ad7d14069f849d1f46c5dc67b6a6814e11b11a765350197238125136bec8e38354932effde36913832be458bfaf053f87e02b5449c76ec838b097f7348c961d5915320dd8267973008edcd8d8c503b930b823bc4c61f790da01e5d9ae8a17af4dad108dd94550c4414d723d7f19c0dfb5c8024d91bec118638055aecdd68c2b8d6d4418f655fd98bf0ec563a444297c8d7325cca19fac4bcc52bee1dcba09d90a4a3d4835f7f19d8fcf450adc4aa031e5c93c59d9e6d85070a",
+          "1_instance": {
+            "0_tag": "0xa546bf43cfbea59e43814ae636fcbb218166610c33386253e1a507fade8c650e",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xa1462be147df75c1f588443549107531919b3cd70eac15c590f1f988c5ee86d5",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c12087ccb3954c66b9429f4b64656a1e6058de81e091aea603f4cbbf9dad06e410a3ad0979aef36a109314df07c8ffbc1976073c65853cafee9c44a6428e7210d2a3158dd02dccb9487731ec6dfd16f04209dbed37082043b03721544664f2f332351876507b6bc9e53d0832251280e69336debbd59983ff0d87dfba421ef0e0607270b232b4da4886cdffac03bdb7e47a55b8b3a862ff003d36ef28377a2c8562c31d3d903030a1ce32dadb96c39cabf69de82e72488914bc15ef52fc5e55ad71cc2a6c3638aa1c070541b252a6ccf6c9a9c51ede49574829d91d7f298de16700edac04ca0b5bea3e6960cf01e8eed3f043dba4fba1fcb11bbe909251db03176",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x907d7460a9b22dc76891e3c78d7c1703ebc7b7cb00c01d9d17866229be07d86b",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xa546bf43cfbea59e43814ae636fcbb218166610c33386253e1a507fade8c650e",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c12038135fc466747b34dec172cc53943e55317f21039a4bd279ce798179fe81f0fca52b748cf499877a131e997f434e1fe55aa2809011846af72417a10e6526308f2a9dc1abe64c0cbca5f9e59322842d67d9b358be68ed9ad096c945c50af472c1e7da6d0c93eba6ab40a0b03b37526d12b02003b0a9b41e0ef5d1be5702e9d0d10784ad219b11c096f89bd573cdbfec1956b94765a72bf0d0747d77b7d4f9419796e0c171385fcd9de71e2f1da1ec3aa7ab110ef616335b3341986d1e4e8c0251f12df0d6a0872cd3ea526cf83ef00198968950af852bda3bca572323ca2bc2125157457c21a7cfb23cc0e87aa7a743337f929247e03df6fc7df4d6e46fa89",
+          "1_instance": {
+            "0_tag": "0x52377c57b9964bb18bef6281b3699f6300f088914b0b415502cc976581bdfcbf",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x04af2896575feb495023ba304445f8fe6612cedd1829c32863b0d473bfa812b2",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c090b7cdd0c59deab8918c563644b247e70cea69267bf63f81848daf3a4304b3020a6e85262fd59e424fde286a38d35c4e32c485e496cf733ffca8cd8659cb70828eecd5b22fe0befa8511481c3bb7c8e8337d44e863e64afa165e74a8318d7f82346ee7bd00ae96f5b0f0e52872254d4b9855d8ca971f86dc9964ff6934f516e13c5e69952a2d77c5fad7add6d7adc73118b82963bde5995f7aac02246191d04049f25fa8258ec3215c9f0481ddce632d35c9bbdb4d6c2911e13cddf2438abbf049c71f1909ddf70f706fc31523e765581c0650e911502cff49f03817097eaf31d7cd5f6e0f710586dee813032176c9b1dde36cc96690a989cd75a4486d6a4d9",
+          "1_instance": {
+            "0_tag": "0x53cd546c37602497b9b3df34d238b32c69dd07370458e186ee3b58d0baa49e95",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x04af2896575feb495023ba304445f8fe6612cedd1829c32863b0d473bfa812b2",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c02e8a6a1c5ac673d253112bc966bdbbfe59532453c4458e3a5daf6cab2e5f70b26de3b8c051af5e03e712892d6876ca97c0002e901e50b2d9467c9b499f1fe831e18af814d72bf4c565792f67f39c088a3a75fe64b4d05ed7139309d476e08e4049e7bac7600f8926fb944324056b169435fed5a4caa607c435440438e0286d5288f1dcc35606cfba71831dbe0903fb0c40cb32cb2963463670df1c377f7664a1d3ef3f4606771edc6cd6de1cd1b929cae30434172a0f9ec89c75ce79af5091c0285db31d0dfab27da5ece56d0d0a89abe38dae83dbe4ca4be7796be3b01b5f5069cbd359420a02c6258d5e4a5f64a9ed0efdc396b8b5bb258473d7eef466f5f",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x52377c57b9964bb18bef6281b3699f6300f088914b0b415502cc976581bdfcbf",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x53cd546c37602497b9b3df34d238b32c69dd07370458e186ee3b58d0baa49e95",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1d465bcb845bf19407ca647be11d9eda8bbaa86e5a701b053b3854ff5ed5842a0cb5b40ce06235c82b064795e01f95d686c5eed10039b6bdc40c558604f03107148bc38e4caaedb34708c81e1f2bc5754d9a626a9e4374e8b0204495c9bc839a0da513e0dac9d9dda44b15bc7bff36096c37eaad19d8a357a461d7918f6747660814f4afe27c89fe6b7ef46eb253a313740b766d5634aa6d8743caea96999c4e2a66f6b9b142611652cbeefb2acece03a28c452b06c6357be55d5b6754dd5c530a14016113be3719c04ee63d27bfc81d1b62a04e1d782e0225965eef125d7f80100eb4557e9e2d2b6c8c073f71f66fe302e625478b7e90874d500d10cf305681",
+          "1_instance": {
+            "0_tag": "0xcbc90920d1402cdd93881132bcd1dd55cc1ed85629f902473f296ee727ef3f6f",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xdb34e4fef410e56a4df05743db9fc70756db3d192ec89ac9483902d29791ed80",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c202af1949f8b74f9dc645c9a4dbe6b393b07282efde212485c037f2352bb94310fae20b2234208693b44ea5d07ca9c5738c0a26787d2d708a73a205e71a0b5d425a6b3b801915a22ef7aa23f47ef8352666b1bb9c22f2dd555a232fa1e4646512783774528bfd711c1f4e1692739464be5ddd7dd001ec82b4c171c4af2001dbc24cf65f0bd24ce37ba73cc2da758f85d0f6fb34362f123404b7e862c1efdbfb3227daef2a1d98a83bed479be900df5cb8081c5ed070204cfe8b6494964816dce232417675017e6f7f557b8440826ee45e4cd6ed5ff4fd0ed16f3582f9c77106013821432c1ab8b9d228020376e48dd3afc3dc0a67e54e525592ddea430473896",
+          "1_instance": {
+            "0_tag": "0xafc2057b07f15f211e09c706aa8d194349ca60cf5b781d6703e21f41fde203d6",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xdb34e4fef410e56a4df05743db9fc70756db3d192ec89ac9483902d29791ed80",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c21caa7dd7258753b462a0390dfb9d82bd89e4ea52dc026eb430a49a851b1f72c068e4acaa04cf80e3ca34f8acedc612d2d6a0ed0946715baa7464cee0f48696b18f5a98348e7a358401ad1c33be13d1ab8e9f5a58e65507d27d116ca4c0dd1531bada043dd1e1b72b5ce8e6fb7a78fdecd8a1df068ead02b56291e219fd02b1f0c778d91a669b36dded12c589ee96b85c6b5ce17e0050a9ac7e033cdcedf3c4f0ca234fe6e1ac2d092b7cb83c41bdee76130f466660822c793ae795281a9483d089580ddfae732b308c301966c2f4d6b335ca361e41f9981a57e897abfc654eb000d1202d3106d99e68331df847e495228eb237b57c45618e1bf0b078a9602e9",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xcbc90920d1402cdd93881132bcd1dd55cc1ed85629f902473f296ee727ef3f6f",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xafc2057b07f15f211e09c706aa8d194349ca60cf5b781d6703e21f41fde203d6",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c00020acdd397c9bbdfec27597c212d920dec3ea3ee13b50673c575a24654f29002354fef2b5f043b7293b9a2bcfa8864244deec5f5ef2a7875a8efcf75ccfb242d007ab4a238258d47b9eadecc6ad2e8e1165fc39fd2f487435af220fef5a9a12ee30925367a8b7c5179951e6928a3856f84db8d98337721546a7804134ea5a92c47ad4b0961e1f9148fcb80414b9c03d48cdcbf1c41617a4d41aba2013674011d2c0a9c75347697c8d2e0d927682b4cd8c4fb8d8674dc731efa8bbc59b9d71b20cb538d597fa44c8fbf7b8ed44373a81926b3ed1908559e00299db90713b6992a69b3840e22107d80be0be5cdf0e4ae8adec0da20d9fb64e9f13e3697c2a57b",
+          "1_instance": {
+            "0_tag": "0xdda233bdd71c33dc3e11abebd718ef2058578850e57185d0a4fc4823b8b2c2d9",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x4210a1bb6a73fda981d2c73818dfd589326214294eef95836fae4f3be6e15460",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c1ddc145c0a3eea1fa740a25634e9ece5772a724bd0022fd398bf0511d6089a9d02d1985191d2e326f5f04cdcf33c48abbc833fa91b88718b1c33764336ea498316563a36066d0da09780520c0639608012fa845b91970a980f44d734d77865f91982b9000343d44e402a9f7d02c36071eafb671ec8726c60776e2bc0d8f845dd175c6ec3d287e9ce3b9f6bfda559d0b36a0af45818dd025183a9c5693a558bd31a5cbbc52992ae59a146fa6bdce062c50d29e2ca4de022030d307bc140acede218852bfebf89c2377ab90d55d40b3ed657561285d9d5e1abe9472a3cc61a17de037a0e02d5543858bda6ef68d8c235a502a906f5f26a6302df8769f8710569ad",
+          "1_instance": {
+            "0_tag": "0x653d550520138449582c67e1a7c374f64e18182b383a03dd2512e8cdc0b1b63f",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x4210a1bb6a73fda981d2c73818dfd589326214294eef95836fae4f3be6e15460",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c2ccd904814aaacda8105b70ff8559f689329a744038d6b992fbd86c91b333dd21797e488eeb59ff5ef5f21edc6594338af015a5d667b2f8457ee8555e4d1495a1f8a1a4a07e52b00a56a3a3a6804b602452849d0df75a5b55ab8138275c44f4421ad761525fbf1f84cab95cd20b23f93819465587db2058d5a439d9eb821c7a30abb8f77c43ae09d99f104582ed2d6181b7d4854d977082b4f725c080f72bd1c0fc876c3d9d13eb1c93bb99fe94877dbf4a588503d2a207a1f2306a89faa4eb412fc934eb45d09e8e77b3df4d52f042dbfd327bf383300504627649593f21228011a5fbcaaf781087cc546a735274c542da8bddb7db43e9e2af59427cbad40b3",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xdda233bdd71c33dc3e11abebd718ef2058578850e57185d0a4fc4823b8b2c2d9",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x653d550520138449582c67e1a7c374f64e18182b383a03dd2512e8cdc0b1b63f",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1fd8e6d788a3c179e60b5059229902fb2bc8ec4c9923d9793d0d5edc522abf6d12205f682cdc8ef3e69bad233edbf62324f9b7fd7757a66defbff40f165100fc1407890feb913722984ebd923d3fca5e2a3018a529454a2697a904f17636b7930ba8ade51abb9d1d9aa67fd5d22c68cd094b329a36c6280a63fb1ed27e200197197bf39dbb8ded80f65579837a94db32c967b974a25451954de3ad13213b813b0b14e407222f0ba1b6c9e5b696f41621547a5ed7f5dba465a18f86000fdf8b060679587170b0225b0d039eb96c9252be77a9f50d240f948cd4b14b5f76def4af0855b74d9239ab49ad290957c4ed16776bf36016caf236916f0d1b914a019daa",
+          "1_instance": {
+            "0_tag": "0x8e75e133e8e6947b627c75015689d9def26e08d6f1d14a09b6b5f4fd58a0c871",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xafb8b07fff21d261f24616f7c4bd15203c97a1a26714628080230fc5f618ec47",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c13ceed1e95f55c0581ccb3e43b47fc595db674a16f3628f4b2e9608e29b9f4861f5dd07bea581cbd0f78fa93af97bf0483d45e339c22efc11120c9fd4c3c70710e203018a4187a409265430c372e24987cab7e839acdafb7efb2cc9ab39d7391057ff738785c0b367cb453302a3d80670102cdb2b28540e0d912ae4cf862bace2cf8285a09ea9b23a974f6d99a41a211e9606de9bb8fec6628e1508978010761029452abdb03c38d9a935858f35c5e9fe588e7bc908db6a5d39d8c19ce64958a06efab791f1add903a29f00dec711d7ea18d6c9c0bde532a9d7c9dce451cc6b01b6457fab31b984cff4b20c97a756a9e34b89eaab6986555821afebce0c2cc58",
+          "1_instance": {
+            "0_tag": "0xec1316605658faffc3277ce11f8ecd0fa96c020bb164f1315a95e38ddfadccb8",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xafb8b07fff21d261f24616f7c4bd15203c97a1a26714628080230fc5f618ec47",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c064b7e09efdbf26ffbfa9c3ae24f6f1b626d5406b4ada6545f65fdc44f3ec60116c6d0458cc63c917f50942733e5ccecf8ad27c5c9d284a9bc5d5a124c1b85f12e79878d79e1b8c0b49f0a7faea6364bb67c411c89f03d97cc92ecf6413dc511128d9649e5a46cdce93489c9f9c69db3e73d9aff23e6e03f855a45da9642c13206629437dedfd779d831edb6c1b1ffa704db68a52b24299092427656b53707dc238dfcd14e4a1e0e361274f3d1d724ac449bf7e6d81ad41c0bff5c3fe8c486531778fa084449d4d7db7e1a790df8b3f840f83edc1861a3639bd60432941536e820fde0eb2b0cfff96f50ea742a3275e83a437442532a96b3d57cf35142fda827",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x8e75e133e8e6947b627c75015689d9def26e08d6f1d14a09b6b5f4fd58a0c871",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xec1316605658faffc3277ce11f8ecd0fa96c020bb164f1315a95e38ddfadccb8",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c2b53f43815c4a6218bd1d401f9ca853128ac5d86cb90ff47b42af723058ff05b2e4081facbc632acae413dccbbbdec6a443bfea6b6e827809b7143d5f52d522a2d6fc4e72ca9fa4f6c50c79a7cd5c79e65d95a16ac3ed65778c1a7979ae7ffe21c14ef47fb51bbbc30b0572a8ba25fb85112c6a9f0a7bf50019f96728966501912203f63acaace0a511e39e5fa1877c128f5d8ea632cb9cd90a6c3369c90ef6118b634d099c986a8eab533149d184ee823134a0524ec1716a17d0fa04a9a522a0b4299a4507132d386302c3d71e0a4a890e4e0eac59cfff938533af492720dab26a3bbcc644c206525518317d24348750c59ece2738b653f87d78ac850f643ad",
+          "1_instance": {
+            "0_tag": "0xa552eaee0818afd82482344046267793016ff1161095c068d0bddb86fc53d17a",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x02e2b517048b9b28c63cfc939fa01e41c46aec6f3e03afbe9fa236d2f8c44b1a",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c1fd6c8fcc78f323605601cd3af6668ba7807d6aee1ecbe53875769779e88ba73268df5530fc8736c9883f0f6726d799d11b816777cc2389fe8ac5bc29176143d1dd84a405716326601dc7ed0c47574c071aadeeaff335454f753a15bd3320f642f271abad22de233f25f9075c182dd2592c0c33aeabbeff4ddfb498016140ccc2dabf8b04e5623f232e18860ac3852659a168ed93ab313183d23023c99c586b6053a58d9ddf6004d16688fb4a1d686f6301eb95e3f91aa7e4d0d0cb002405bb30939b4cb599b7dea79c174b2ba930e00686093659f26cb895ee38cf942c4b78b2dbad760386cd541aa2b27e2ead7526799f97307a88c4fcb0dc5fa91625f2992",
+          "1_instance": {
+            "0_tag": "0xda48290b8a950691c0fb225d38c3eb62ba69e8f1b6d2e238516ac5a19016fc41",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x02e2b517048b9b28c63cfc939fa01e41c46aec6f3e03afbe9fa236d2f8c44b1a",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c2e6c058ae72525152e46c86bfcd592c6f636c029f3e6259dcae00a2fbdc7132128997a818bcb303550ee9688a9d3ac30c6650c62963c6425744e8804ddef74e62fec13c377c6ffd50fd946300304542659c244973431f73e47812b724fea16ca0f8c230d0631df06290df1b182313dcc558589b109dd487b4e138960f52f0c7a2100c8ca2471bcc76a51423ff8728d31644b25f2a722b544c2baabdc069b6db20c55a34a975160f9e816178ea947690fc8b1b3b0a2113100ffe3b13e12d64d792cd6917aca93eb6cc88bd85f49a06831eeed02d4fd1cd12d8c37aa09932bf8ce1835b46f22cb37ebdccfb4fde6d3f744b27dc3ffdcbde159ef1bbebaa9df9c7b",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xa552eaee0818afd82482344046267793016ff1161095c068d0bddb86fc53d17a",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xda48290b8a950691c0fb225d38c3eb62ba69e8f1b6d2e238516ac5a19016fc41",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1f7c52e6c1d0b55478c5563cd527421c692b6526f7f38d8e89790d4978e64cef2eb60fc983e41381dc0afc6cc1a9a9a73e959f39bb3e8a0714f0ff6ff6c9523003318dd97612e3f0c869359c309b2eca919f6763af2a432b5e76a6a6f200fd160a8f28f3a3f46d5ba627061b40f93c9e82aaef94f4171f96cafedfa62b321e7b07b80612efdae3b35114727bc28e7f004713702f242d8a2ca1bb824ea82638501ec7cc7d63cc79b94e3c8fa1aedeba41eb18335154abd7042865b9d7d9be57462f548aeba51c743dadfbf57f5cb81fe87c75bbcd648ef96048702580c0d72c9a293a39e80329a64e196b7c057113a83d32e7b4974794feefcd7a1ccaedf6b340",
+          "1_instance": {
+            "0_tag": "0xdb8b6b6c1f1a6711cf35eede0bab682d9bb7159dfca99a90f9114e0f22509688",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x36fcc7e03ff7c684a41a2e70fc77496e6877e7cb2fee4827089cae8ab34db63a",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c0afc7bf4f0f950820c6c900b4bad0cd88eeec4d532f1c2eae819339dddfadf342067c7b68f3450866c4f4aeb856db296e5162ce40fd7b5368985f359c84bd49d1ebedb56a81792743e0627ada61ec323e4ebef1bef295931dcee756df4a2a9660ff940a153c1caef6c50daaf493e70bf0da05a35a777b9386a9c87c73a7dc6730bd5d52efaa3ade04af6d099b3e542b6010b0ac10db59e5c052f1766f627e29105141872f48f004d1d1b2f5174f10692797b7d27944755af356f6b643b59f8b023eeca653785a531d1d46a7af6e4063c7dc9a36ec3cca9ae73cf22f83896e08d1f97195bbb495a3bc6bf6f6904c8f29e936671f0bd4a611278fbc8214e6716b3",
+          "1_instance": {
+            "0_tag": "0xf38dbd2e269453784dea7d586f34f6904e2430e3c897dc9439d629fa8d657ced",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x36fcc7e03ff7c684a41a2e70fc77496e6877e7cb2fee4827089cae8ab34db63a",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c11cc22ba3c7aff1411de5414eac5e5ff8d6402782493ff36d71ef856052034cd2c3de9e7a625cbe0157e8acd86243fb93517c6262f7e6789f5f1f62be64ede51187c88d9d1cb82dc905bf4632fa83d42224ba367f9675d0ab01b305f2e6200ae1ee9cca0848fc1a73713e952757404480061883ba1e0805ac562121fb5c663a015679217fd0c89901324b298b351219a56fae5aad07ef458f7cacd7dc98f84ad2d6d6c5b94de360d4da978e8d0ea93f1b3b2cca731c716cb9db0b9958c2c95b61d4b448b33a5a24478542229550749e8c4269d0e4138b39b46cd32c40c28abca28ecbee77aca91092130fca83315548f7316ab3810ee2381194596c44d363f7d",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xdb8b6b6c1f1a6711cf35eede0bab682d9bb7159dfca99a90f9114e0f22509688",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xf38dbd2e269453784dea7d586f34f6904e2430e3c897dc9439d629fa8d657ced",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c2f9ad43e8400cd694302619d7ce1caa60cfd6d740c638adc973f427f39b600020441592a1069eeebd78081a9de2fe0a445238e9d1c0617639e28a104a322fe922cdd555894f465249c51f8370467b7c2ca3c70afa91ad49ff8a22c01c75e0aba1f426f209d4f5a13e463fd1eadb31ba4265b2862579e9cc70f2c85fdae13ce3e1451732d977c85a68e950331417f7eb104b1550e933900e97a62dd0a3e865d2b024a85b7b3031e1d15321f268d965e2bf98ed9e8161795b213780fa243a84e43031f71ba240e8ca9083601b19bdd15d50e3fa36cea272fac64a281e688034476234b33f0e258f7b79d8cd7abcdab6408fbe2275f911a51e50bf2f9d30698c609",
+          "1_instance": {
+            "0_tag": "0x0b491a2a5a18954b90f7b1d2c2dd4d2989c1e6b908d27c0e4d007a2d75a635dc",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x3709b7093fdac72651f3629afd009a08f9e347a3b4883a5dfbfc29bea17ebc0b",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c19f124b37525f21052a2eb69d8aeb3c7dedce292d29e8e6dccc707f1a751fd321b02f8ce2c4aab41d788385cfc17159cc49db3eb2e80fececb500aa7d36a57521a7f49035b551fe81a35a0489e98aca76e1ff9bd4ea34d5687feb4970f03f297189a7ac386a057aa99de6cf12a9b746fa9e3bc4ce565e6cbf4f72d14a5b4a1fe279f769c137daf11d6e1f1267c0e25758a0bd36d3c19dd39d6d1bd53215b60552578efb105d053055cab3e13eb49aab7b12b66ea64aef8e517f87e9dd074cb0908a416981defeccf77ef6834a2f760d93c967273ae8cba5e6e09abaa349836a9177ce259d1287cc07f9cb14539e07b7df7b7db9ec524b7d01cd19ce44d14e8bf",
+          "1_instance": {
+            "0_tag": "0xf780c6a074c6bc3576b1f8f4ee791f0c566586561c579e8932b64615eb49388f",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x3709b7093fdac72651f3629afd009a08f9e347a3b4883a5dfbfc29bea17ebc0b",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c11502437dd20cf9761dd75397245a38873bcafcfce8b4a211d7daa966ff02187215740a6b0d5436210043bda4e82044899c851d89e645f91f315af2310d1795c27fc33b4c0e3b400ea8726c3a83cc5a4a6a506598668404e06dc99b5c9430c871f676ae6a8c69b5f7001aafcda7f2f445bfc9328bcdecb2145fcbe968f00f22d19168fd032e4ae1b3207200961b8468775189ac0249bf0701f6217c212ba50a80c2791347ca66c48324f8de9241bd11ee423a3854c05a5f5fd78836485ee44ac0df11c0543533bb3e5c11e7189819a390ce328a21ec7cebc46d1cc022d618ec91fa759dca5122c12eb9e2e5f6402a694752be9b294e23359db8d48401200cbbf",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x0b491a2a5a18954b90f7b1d2c2dd4d2989c1e6b908d27c0e4d007a2d75a635dc",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xf780c6a074c6bc3576b1f8f4ee791f0c566586561c579e8932b64615eb49388f",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c0909811855894c7d25aac95f65d3fd2805eeaf1b738b6af7192bc2e08577db2f2f88587bdc314c2c6b284bd2be14d1fa3bda696eb534c3f8f849fac9c9686dec076ee963fd526c6c2a243c73bce274e34322aea93ef42cf032966378177f94902c8bff36bcd3f9d6a9f533c8460922c4d75c28bbee90a00defb67f171417e5ee259ea75f3fd9972fc37c070d34606555395903a28b4a7bbb95755e1f093d890d060a6e656760388e39877ca3b50ffcfd40c76c979a2e8bcc65408998becf6f4e0fb0047246e19d2589874b9a514f183d490ad0d3b6f3b21e2e70a0da3ab2cf9a0df5537f7e0bc0229f8d9fa84577f7449a3e856a3a766b0ce86cbbd47bcde1ba",
+          "1_instance": {
+            "0_tag": "0xef7746845725e818c17b2b0f84349801c66b2e280deb51ffa3de2be56176972a",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xf8c8f58fb795ad0e04d5e6cf6279dc79ca65d6e859e63e17767f60e42dfc6206",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c10bc39f49483853b6d46d9f14574a897586fd937ead36f5c9202a033eeb784b00712ea446f398fb9f3f8679d4a4f29154d2dcf868845d3404a893f1a3736554614dcdffd0ace30830169207993052ac29dc78149f49ce51b48af3bfe9266e1cb1370645746f1ea86e7820cd30e4bf39acac096fe18d0366bf8576d6db03fee87103413f2eaae9ed6e152c9d892725e63e5be1fe5d017addb32a34c879224be9608c5fad4cfa0635faf03414b46d8c92e7f017666a620957afbe04f8cd4cefbaf0109be4c34f889be148ebbad2b6be4086e67b60fff0ac9fc0a040086a6c7c20d23dd8bf527d23d57a3822a1a8d4590b3de02d11e2f445592e7c4f7c75c539c74",
+          "1_instance": {
+            "0_tag": "0x7afe435be93efe0b312b3c088427075ab37d74be3cdcea3edc8a140445e8a5de",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xf8c8f58fb795ad0e04d5e6cf6279dc79ca65d6e859e63e17767f60e42dfc6206",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c11974b7cf0b8ae0cbc2be69de785a4f2bd43678504562b9bcd3ba334336af53c052f266afe3c1abdbe6ee2822860a3ea30bf19764fbe84bc037816dd3628fcd81e48651b22cb8f542423798d236dded7934a38c5c87ed742c75d78e1a14f20e5053610544ce5025002a5107905197b0e7d1b3b67776c3936a4b115384ed0ff1a0911f46e13ae52374480072b663733f421e14d6bb6035f61e5e9b7524f1edb26030e95ce8a5b8da456512a621d395bf341f2c21ac276c730e6335b801bc3d9d32ee10bc8390b098f5296a954db50cc5c4f9e70d9db34f787ca7469c4c005aa630161ebdd04d4574094efc23d8b745eb8feba2e1aa10851db98cd191817bbc3cb",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xef7746845725e818c17b2b0f84349801c66b2e280deb51ffa3de2be56176972a",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x7afe435be93efe0b312b3c088427075ab37d74be3cdcea3edc8a140445e8a5de",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1a34b7953cb96cf1e892331cf0df61ea8eed78f96f0f473e61a4119221c75bc82a06a2fb10ba9397f71a1ab1c7e2bbc2a9514c0560542cafcbe21bc762f2e63010ac8f82f99042ee8e968d70b5bdd47e599ad876fade27041d6e7126006daf94046c7562f94bfee18b4afd96bfb0ace9adf862742bd10a65d96b6a7eccfc64e20e5547fd79909ab2c0059f37989a884ac3fa8ec431c46dbcfff31a0efda5af9320bed3b9d7e801927a710954e22b9e4597dd741c67afe221a9be01cfabb24c8104f9dc92352eb3048640d3d96083f3b61de2f4e9c3e3dc6062c9664c217e56d1218c4831de41e02995716fef24c7cc8a265068745d7b3f41ee212d67c3fa6e1c",
+          "1_instance": {
+            "0_tag": "0x7692880c8be937c1db6ec3c71ffef7ccfc2c52151447173c6a54e7b9227a1ef8",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x6d9cabbe6ac7ad988069ba873cdbd462ed00eb612d85f335bc4f486059cf9286",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c1d3f7dda129979ebb2f7b8ad334a0d8d5f58201b9985e02aabe29c5b374da72c1de08518cceecbbad4e1d5bc28a4f0b6bba7908ff6e4185164ff3c422aa291b40c799605c5b7f543566489bbf21c12c1f02fad478fd4a83ba2fd586095a1fe1a27d9f0216b59bde56104d25cbfd177eac3a5f8834d0c241ee6e7e033b88080070b16077586f56bac20f49e29620ecd49fcecbafe44e8dea8921895377597c8b01afe612a76a0265f8ce5c425dacad27290e06572e515ac79e18aee14c9f03b5919462e3d17a09ed6cd881a822a64a9861fe8186f5e69d9a48ba79ed383edaeff302d5b8599cea1464a38f5b9b499271a7c4d3780bb8b639a985b512e022a3007",
+          "1_instance": {
+            "0_tag": "0xe6002b808f59430cf033675e4e18de52548ee4faa2bc4cebc07b5fd5c2c0d0e8",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x6d9cabbe6ac7ad988069ba873cdbd462ed00eb612d85f335bc4f486059cf9286",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c00e678bb1cc2fff43413c93ede2945b3419440eb4a2e18f430d33dda589a2f812cbbf608b7187d6fc7e5f32d1cfc2aa3a57a45f31a20526d5644bb695cfc5b3609964fec27bbec5c666be0a2e1aa2d8986adadc322ca7f8a67a1784cc13ef6e61f994645334f84033615ffd381d4513ed57b3444e4c24b40c7e997fe35e928181a3fdb978f767844e42843dfebc3e75ccb54c2c7085dcf020b30eed2b7659c3c1af819a55e9ae42ccd5228b25c0c109c8e44047a5bec3745b20c8aa37ec103272caa1eb2cacf33b6f42f94348d596a35de9f69af28d1f23c5173eb00c4ab08fc1d5475b48288d0482990b22230807eb0db869b54eacf591de8001f5fa28bb0db",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x7692880c8be937c1db6ec3c71ffef7ccfc2c52151447173c6a54e7b9227a1ef8",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xe6002b808f59430cf033675e4e18de52548ee4faa2bc4cebc07b5fd5c2c0d0e8",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c193d45c01f209b62b4fb2a446d3887b86c76c093fbeefb7a0b42e32c3ef719011b22685852377f4e40a1d75259ffd18347b075ecac07f9c7ce5f389fc8acdb8c025d667d03967601ca14c03dfd1516648b2a5839edf6afa74ac01b55c36fdd1e01b8c67c51d524257ea8e597e1adc9baf53f0cbbd917d5b66caf11557b673f861f880ed38130aa0d0a43b7068d473e251331fa6d30749c08641dcc8fc0a3d47c04c2087fc51c0e80d37218804a26621294fbe955b1104a6e3bf6c90586b3a8071d4d9b4d092ad36613006fd3f487767949bc857138ba9f4e35f1cec452f53c6a1111adbbba5258665fa96fdf04ed99983b62e8592a2f60e4088d5e119616b83a",
+          "1_instance": {
+            "0_tag": "0xbdbc799774712d403e7009c8abf975eb1a9deaef95cff89c4740ba879eaba25b",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xf11364db89a8faeeb8ea4460b4d9506b0dccb6390af2cf90622e8cc982ef75d7",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c2375b894ab8ea1d8143795bb81473c6dc187e9b0529f8feb60cb6c2d474657e706d68f01171b59895ee8d7aea286675df29ecfc497457e12264e57f52126a7362dcd5208b8f02502339283b1bb7196b93059dab64ffffd798d5c3e381f00921d0c5ee8be04fd2c99bf960e94bde49830c735897dcb0833267c1e4f7c03568182181de4d5f6469f63fca7247d245ee4512d8d9f245204ddbfe48b0254f932703a2f6ef61f4da47265aba96f1205bfe53eb626f29185e8c677ad5849b786aaab840aba599aea860b7dc94b8332da6557793c94f70b7ed26251742852d14e7345102e5cdcae6b81fdaa2be9e60ab19db5a707031b2ca677c6054759c01c8ccd9179",
+          "1_instance": {
+            "0_tag": "0xf1fc640125a1b4584ce828e077e144426bd8c037ec30823e0e53c5ecd31a1edc",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xf11364db89a8faeeb8ea4460b4d9506b0dccb6390af2cf90622e8cc982ef75d7",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1f65ce12f6e05511fc0a2d25496cdfadb3bce7102c4ec6d5720f1f4ec0f1623600ad94a9af08d44c2b867c1cc57049ce634f1dd0c5c687447c3776b12587e48f0927a8fb2b4232b7aabee8d579490687593b3a410d48091c83f4840ae856337720590d20952ee528305257c0effb188c303944d2e4cbd4852419b24912efbca1027e2180d2dcb48187661dc2ee74dcfeb46e9659ae76079096db41dc239d935b0e3c64c9a6414fc302adafa7e3f72b8a142959c65b98b9c923fc4a4890230e9e2c110a95a687a7b8ddaa36c85c28b473d55569d799ee3e0279ff08dd7025bed614caf514b8a0d5ca8183844cd99fcbe1dbd90f76c2c40a06f50bb5f86f58bd6e",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xbdbc799774712d403e7009c8abf975eb1a9deaef95cff89c4740ba879eaba25b",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xf1fc640125a1b4584ce828e077e144426bd8c037ec30823e0e53c5ecd31a1edc",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c0a5ccff7b1fc2874ff6b7fb599722112ff6078775cbf5768434fa9fb8576a8ad0f1b2c5ec579a7a78612ee133909314fd71119f97acb952335a8d2fe5d1e61b51f237b1deca08d5b03b1ff0c78392e8697ef06d7c26a0141f2c7fb0ff330d52f105833962db575b492236f83e11d71bf079d77b9cc15efdbb5fe230c6276bc1921e478a36d6bf84d69471576dde672b0cf2633431bae97af5cf086bb7cd1a297068ff41488e4d2b489f4880fbb4d8a07aa3ed781e0a92ca5b2f62b5ef64782ad1ad6b4b65a6fe8d6538700fba246d819714413ffde641f00380ff91572b6e41e26f727fa72a5cb09f746f1f143ed29191c75b7b19c11bd7054d1d6625f82deae",
+          "1_instance": {
+            "0_tag": "0xc8faea43626d12539488c24bfd03375bb97fb4cfdf78d0bcd629aa95c8e32a96",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xf80f6b005702adda0a544a6d6df6e6d308806d5cc86cb9d0c676baf128c1e0be",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c11c4b99a9249581d9bace30c80520dc064684ec24d47eee352483ced1f02aaa70a393fe8a025ae845937dc12bb2c45a5de76d38fa9a597955a51d2240e37017f108fc33979b85c430fa7b776480e6a46d4c9c93c95404e18f6e68337e7b6bb901756d64b8027bc3d956ffa840ce987cf9b689f5099e20c9e7d33e584fc0981cc2db9e8a5c3b3a8cc92437fe73fdf9b74bfff164e776df4b848aeecab236f476d2f687fa870b6ba8a2cefcdfc874158565ae19c96e358aa049eefce4d9655d77319255cf212a14e45351dae95479a075a6486a8979ceb5f9c38db36538f0f4f731d53d6ff44150f44a8a58238ba78cb19aa11dc1572ba4570febd976437a4095e",
+          "1_instance": {
+            "0_tag": "0xdd1735291133a43840ffaa4f8ec3894a7d17a2f8de7f9cd3ab0acb54e7016436",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xf80f6b005702adda0a544a6d6df6e6d308806d5cc86cb9d0c676baf128c1e0be",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1a4bd86b7bbd92d223bbf1156fb12dbe6165b6dec87d422b53ec3c3b1611a67d0cd78a758256e54fe5e8ea93eb7f45695af27283c167bde2d4f19cca3ed1dea01e815f670d034ec9ba4dbfcf80ea2428d0d92fba5c5519c08f8febca14a055fe305413ac59a551df3e5d44a14eb04df9dbac148a99d431f52b9634f1771dec5d050085901161d68c4179bebf6ab9ae7c3adc8a8a68f4a696667a63bced7abc970bcd3896ef8b55eab8da943f36dd5b89db4d5b89bad5c0c3a8894cec66057f36286726d98f9176c45b93be0010e4b15c698d82ab34890bbc57c2bb1db55ce8690d5b6156269c68e07bc5a4c7176a6d29f06b08f716e579ea4c6a52bf5b43a0ca",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xc8faea43626d12539488c24bfd03375bb97fb4cfdf78d0bcd629aa95c8e32a96",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xdd1735291133a43840ffaa4f8ec3894a7d17a2f8de7f9cd3ab0acb54e7016436",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c267f9c2a2c9da905dc84955db01ad1a49536c0e324f43a9c93d44d74c077f6350e2f2c9366381f6806dbe7791339fa9f9d6cbfca0dfa115a1e680c0e3b32924b0ea456220ed511db1ae16259db99c7af606fbcf6a4e3760cc3b7492d8956164d147e10c7eee2780fb5450d4b212170bc82bab480ab15b41852d4c3e0772c2c461db0c5a1d0850bb6871c5b6c86909e8bb7ece945924e589509407893f82ba9972f68ba6f9c0cea62e38ea522dcd403e2e8f61583d47d73a69b443d03b0a428d20d3da9f6c51de7ae2490ef92dc5352916cf39b0e99e7d004c766ee696a58520d29581d33f315576fb62807f40b9ab0a4164cfeadefb8e105521cbc348a30d7ec",
+          "1_instance": {
+            "0_tag": "0x5c2a800151b6c9a9e37d825ad0bfc75db7ceed9c379104af09a114e72ee85423",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x8af177d818fd6efe486acc2881b390b61bedc697b0845786d31cecf076912a4e",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c2dd30987c906d3dbd6a7a0ab9d3ef5792f147385ff7fdcd2433216008212b54b0ce235d66d300d084d3d0b5be1ac3d7ce0fe590ad04cbcdb3ec1f5705ce989ff159011060e886882c37e430c52866de948d947e2973671aef5e666112859b08e16c15920d2d899fcaa7749aba24541597565a36380955f3d5acc676cc40a96901cbd46f0f7cb907a05930b028492d404a7321aac1cf757c6ac07fdf8e7fc1afc162a6088f67144350db1683e178fc0db112b3d37f3970217412433459b33780d21d417756ded30d9c771c424cf84d076ccecd86578d189fa928df3afc057f3452f9d043947d30f0ebf65b74f10710a08ad326d958f44d87923229ab379b00f9a",
+          "1_instance": {
+            "0_tag": "0x2f0dc9781556b7bf35ceac9c1011843da583c703e235b6d9fcfae06807969fee",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x8af177d818fd6efe486acc2881b390b61bedc697b0845786d31cecf076912a4e",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c266a1dcb7c8f543acb986425f685995c78eb07d9acfac74823fb9de34bd2bb310c057db2db979e8bcd72e693f89a3719416fe702e08007282f00f534b8cab90108104a57e88da5ec880bec379ea17e7a6e3813f2ee62e3caa3c615caf07b12631ac4cafe56ca92c6a516df1b2e9680c57272b3f07a4ab2c7d50209910638ea8321efe8c67ec88261fc59c7a1752be34c280117722ed6b09b93b36f11b044742a0f9ba090970cb5d4f512f4556c0f84f6579160672b765353794502b18a28889a1c1443f2ee0346fce513b5ffa518a7f5cfb0b45df6a5923f40cd201c1a57743f07f38e2879f144d0108ccf79b0d5cccc55e4e073eda8bd9fa1ed2575d04e5aee",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x5c2a800151b6c9a9e37d825ad0bfc75db7ceed9c379104af09a114e72ee85423",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x2f0dc9781556b7bf35ceac9c1011843da583c703e235b6d9fcfae06807969fee",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c240d8551290aafcd3db485b4f0cea893f89a5a99096175b3d0bb4278ec61cadb2a451515af82b8b35e8cf9562d4ff58dbc48ea8a854c21a71e191366badb6e5a16faa4307d05ece9f919bfef71d5e89d7ca40203f39551b71cd6e959825b9daf0c178bde80b17d217ae94963508d3794f01e68b069915b532a8be282cef98c190593008b90b18203be20e881b4a3c24bd40f8515265de028925dd8d80b0dee601a16bec07004fc502fb660a928c16828874145c1a9e705252e2e40b2e8f1c98d0da1630a76577696446d5a83fde8a2a8b4c441338e4f07a3853eab982bea564402fa774ae4fec03eb9d556de030d1a0ea2aaade4340f456a2beac21e1774e1e8",
+          "1_instance": {
+            "0_tag": "0xfc08064a069157f25d5e583070d9a8c63663fcffbfb6003f0d925658fb3c2a66",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xd0c26608cf45289955178a978a923cd56041447497bdd64ad9c0db9275a2e7f9",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c24b74092a131d59d843e2f5ca5f21ba49129d356498dbde7c740cd926ee8122800e2eb66d56c2d00791334aab5f2e1baa7cb853dd6dd94f416f210c36674b74915ee63623f14e13a60b256d2888b4b7f0e63df0f91ef70f64b569a8bdb33109916cd150bfe28a69e9d08aa9104c1bfaec64c3380684a9c3d1d3107d71dc00bf913ef46698ef1fe2f58dad21c1e3d5a220c5a7f612966c40ad7054eda3715df0c200ff06ddf8e5d7b205225e99d65ee1451bd88ae9defcdd7fa62339ae8409beb219a11bf804a2bf514a4fe84f1edbeb9793e915ec288b4101762d9a1a04b42e82d4385debee4a495487f93fc3559a23c82a87a489467f52976261be216b344ac",
+          "1_instance": {
+            "0_tag": "0xf9c71b7825462e0ca90464c9aa5780b4b6fb110e8ab129587df6c50a91402e30",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xd0c26608cf45289955178a978a923cd56041447497bdd64ad9c0db9275a2e7f9",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c0df00a51d8936030e95c3396b37432a938b3b6387c0e2d6ba46b8b690aac976f04ab87e3e5bee61a3cccefd1af83c14a04d8068faa989a481929524a3117292e191980542199a186a4da3f470e1e94b9f72ec7bf66f57ca0d5f6fc0126e253ff24d27500e30bffea3e8d4a54908c6abcd127d82c316a1eb114755e90cfd7a61121830e54dbb6afa3ef4796ee7a063b736972214036990d272e5d8f9688e6a94128884f7956635d15030309e8070a8db2707d71b29dce5e56298e8257c74183d3236963787be879b4203b3ed43d470d007a40b8f1dd7f88971cbaca8ab44af19f11e9eec74f9c70063ae6e398372204c069a05188b881ad5711a6971e9f91487d",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xfc08064a069157f25d5e583070d9a8c63663fcffbfb6003f0d925658fb3c2a66",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xf9c71b7825462e0ca90464c9aa5780b4b6fb110e8ab129587df6c50a91402e30",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c0fda4084cd8f6e6683aba86f78f866dfaa6dcb7c520c9ccc234a73a3680363ca232421c872fc82cda48a9912631d74d26129ec130406b1319b2f6b88d86a00d00d5541162218312a768cff5338c1661eeb263fdd219a93e2dcdb0761d95e8b9f08005c4f176f1a4a369e0ad4c22c2d2d8e77180454fdcee61b3a5253ea11dada16d724b678b1d864590ce07dcfb81d93d0ee81d09156443a1f33edf128772d810e1475a29e191c99fdf9f0aaa4b5f60a18b64710f502aa3ae4683441284f30af02a61d70a73ef7bd6de2bbb93ead4c85014abd754d1bc48677b1bcc9b1e87d542003454b71ea75fadcb9e2453be1b859ae1983996c25477c6a09364d6bb1d00b",
+          "1_instance": {
+            "0_tag": "0x875b28f63cd596004f70a26a0dee24aa7ce7c90579a0229ab004ba34116720f3",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x5af20367eb38fec9805f5f1a848551e96295a0a7eb72df841d2454b620112eef",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c06776ab63772d88e180f400ed857213f8681958ef96ac49103984f882fce289218d7f926e2987c0c666fc8ba431361659640c272addd7814ddfcaa394a4d3f112cac09390c7e9c53eeb4d9850b821f2d7870e42e1f482d6fd4189fb85e0ffeb40c6914a0537e043c7690acc5199de2461b343b4f2e403fddb5b2be2dc21557a81d62162cf6f63c823f03c13a75ebafdea7a7af5f86f36d323bacf4bcd413fd1e0cdd8944a1231e465b0bc0b7ba8c9dec346662c4e66661e0b356d3b6a567d1712644e483a08d9ad2825d8f446cbd5a9189b57d0e1fd5aae8275aacc9aa66b0c000e3a758fa8661b09651c2c55122927ce769f7c18122dfd27d69d0d89f5c2329",
+          "1_instance": {
+            "0_tag": "0xed3e723d9ef5ae0d2064adf607743dfb0dea734f77d42289675a103fa27b9411",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x5af20367eb38fec9805f5f1a848551e96295a0a7eb72df841d2454b620112eef",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c10667ec57307a86c26067ee80b5640d0ad9febfe3cd74a50d739ef3efb213c29258fab45be4fbd1cc3aecceeb47b12e58b06676475a7bdfc6de86eadfd5e0da305ea9dce913be0f241982d7da2065e7485ffd3504f52b09cd2a598d5702a1f96168f672591394f7f5d4cb793fdd34742109eb0e96765811ceb4d6269e9594f5e1ce6f9d20039b33627eecb71d6003db2713a0cb24dc69f9a49d0526cb5a1f9ef1d1e649519d92fd995b17d6352a6227a48cf9ad2d560f9ffcb4628ef846b355b0e07b4bdad216b94b0c679e136b152bd74b4ae6596f63f84d214df09e63c2db2032a253253b825219cf8de8f0e49edf27e98e47a99b2b245d2057b269b95ed50",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x875b28f63cd596004f70a26a0dee24aa7ce7c90579a0229ab004ba34116720f3",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xed3e723d9ef5ae0d2064adf607743dfb0dea734f77d42289675a103fa27b9411",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c0332043c47008ce6f2d84afecbf91286283bf63933fd6ad43abc0f9501b34d622f585889dc938bdbeebfdc81dae45b553acf14c8fe7a499d8da26741d7d05b660709d98e0803af58ae3c3ac4145e016f59b137105e9907c6127ff511cefded0912ee86157cbefa32d76df4ee0b1087df8934ac6d4c6c06f9a400bea989a9956c0a8e0e29dde7d8142d2c6aa94e3092342168b83fe96c620a3171d802fecc60a004d696711aaa54472c65b35abcc9b8004fd0c12b296e2c0340b3294e2f55a4ae07cbc8ad25108c07992d31b4b5ce33e1ed97e792170b4656e907c3b1369801061142a3d051e6ed7352a795d2b47b6f26c350a1e64ac9e97c5c5443690f2f1872",
+          "1_instance": {
+            "0_tag": "0xa6970cee9e89b1ebd30e58630730358c2b839dd006e38e4a4be5b65527da39c4",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x42127cb77030e794143088feb1e108b3babd48c4734db5aab56faf304e9f5c35",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c0b83f9f3bc43a8574183622fc86ae7542b960841e5631575ca093f18bfdc516a2fdd4e52e59ad429087c295d11f53c0e8bbed6ec22270f16ce622c9d7bffa9d8228da67ff95c162c1607362b23c4d2a68e283cd23176cdea3ac29cbb53f7884c24f55c1e5324a959304d219fcd53791d78edb8abe8cf7643aefa3b8bcc8fd4f612c61923a604a6464301bb211b5476a95df3c9ff1a35d11ed6a8b0c33d461c882f9537271dc3d9d0aa743385b682b6a3b02e08ebac626a649fdd0de5ec7efa3b0b95eb5a9b3ac59395be5af24b5f2b726dff639a5862683af23ea05305f7dee7195940c7caa9a60e81fcf350a321e987ca8f63810da07b213aa02beebdd88350",
+          "1_instance": {
+            "0_tag": "0x9e110e93eac32297154ae30d489ac06c0d5668768655c27f15f46e0d72b4b14f",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x42127cb77030e794143088feb1e108b3babd48c4734db5aab56faf304e9f5c35",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c15165c20e7bb2bc0acd98acf93d0aef493b3f8af211242f8edfc8f544f2d288d16ad01d7e22f8b2cf3a51248ace187daec9cc5fb56abfa58f50743a728f0c8be291238fdd80663fdd26806b4e364ee0a314e4a4761827f8defcfd4f2883426a02462c90dfd7935e1046c9331368d31e2f55367de9f67191efad6aab1e974cadd19ee77e39c686d5d7d6de070c1c9ac7fe5ac2596894fb42532fdf026b14bca6614c4f48b698111a3cde6a1195ba813573e887b22c1cefe6d2632119ab69b24ae1541e4266bce60712f08c6ec97f8d033409e473e6660c75d9a337dc7e59f6b352e10e68e9089b5bbb8730fae5b7999628bd20f28de3745371c87c25359bb741b",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xa6970cee9e89b1ebd30e58630730358c2b839dd006e38e4a4be5b65527da39c4",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x9e110e93eac32297154ae30d489ac06c0d5668768655c27f15f46e0d72b4b14f",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1d7696c2c980cb295d3c8e87d0123206932688834fb00fc965d0ecdd8cad37b2202c05bc4286736e3502a721148433bc481d6dee1ab8ffc5b7bd0551c3b1d78f161a0c7f96419a47901079fb471c1f2c805bd2e3502c123b24ee5f863f719ec721f8d7ca9810c6f6fd9a2e036f30b8636cf5fe67ee44e798e17003af872480940f2b4ddfb5cb63d9e901a79895ffeee0501db639107a1b551034bb22292841031eec692ba3cfd79280d2c259c256709159d61166c76eb26f24279a7ffad392c10d9dcb69ee74d45b6946222223b8ec8aafa735523cfd2b0d62046ffed22316e5191960bcb5cf3c4c303273ccd068bd012fb2f55f314ab9d5a91fb472f10db957",
+          "1_instance": {
+            "0_tag": "0x14059f945a588a878db9401a63182c39be3336aabd68bb998b3be397043b0390",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xd7ffe5eadbb42843f98330897f05892538ce80dccb031415ee437b7d7b47f8b1",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c245fa299c3f397d0c7c1cccd429122a68e22960ef6255b1e9dc121928a349d5714a5c0887ef6eb12367b04e553e0ead099c72412eaf59386621960f4f09e76310eb2471f63a3021dc5ae8e5e7a757a45d38aef7a6a163e4aa2671cc85ae046ef1892f85669ae2fe9d9302ecb894c521817c51e06284eeded7b81b091b77f6a151ac5a267535f9f5a073d7412fbf7a309bf38094418c5d64e1e748ce2f394f77a29b34e10bf252454fabb8130a6f6b775069b36e0cf0598ef6cb1d447c0b18d080421cabd45619a48e6044e47c2110567f55398cc8bd3ae326bf73975db5e95ff189c012cea8b86237f57849a3918339405bd99a5ac4d6e49b8752ee9d7a83455",
+          "1_instance": {
+            "0_tag": "0x8114a12e9d3ba0b0cd5fc0f24f27c78a09f617e086c83464ab70deb9f1f6d7b9",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xd7ffe5eadbb42843f98330897f05892538ce80dccb031415ee437b7d7b47f8b1",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c02788b55d85c92974ffee2ced0e4db03ebb603b8594a4ed4963589956a64ab8f0cd7e660e51e7bf1e4726ae0862a7576e2ce3a6b47d4b242e7eb5212850350db04775aa0a2bf1a61cf1705f7cf51525b6a6cc592d35a3b47beb8e83ece8bd5462823a8927e17a03cb53effe8c4b97df09447206ecf828bd0c040ab2c7e8873e929f9905e788797ad6745df1f6933dd631302e07fd6767e04ea768de12819be0223890cda8ff37f62d001c8dbec01fa04720df38ac23af29ab631d820d6c2e20c24a8ec2d37e30f75d31e6f9c27127676116f8840e9abd717ead1f60df873345f0c1a163948f4c92b1246f28820b6d08b53b03aa02f3c56c1cc1dcbda430a482b",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x14059f945a588a878db9401a63182c39be3336aabd68bb998b3be397043b0390",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x8114a12e9d3ba0b0cd5fc0f24f27c78a09f617e086c83464ab70deb9f1f6d7b9",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c16e0f343ec68481b7b0454c6e95f851944d652b28fae927bae8584f921594a61244de7d5c8511703c3dae850125618c749de4e14131ed384df5722ea6dc1d382071d437f766565b275d5889214189dbf2912d839fd9da3f91202babd76beffdc21037256302c931cce49d9e8acd61eba00c449c519d62c8cb26cd3096da705cc1b11f997e26b2cfaecded6f56104f119e1d19af493bc3968c95a9cc7b7d5d9010339f82fbcbfbf53966a87032eb1f937f58918a9753bef6d584877f145d8234a028c6f1c6e7ca3001fed0fa55b07b48d3efb20cb227d91d196774c6ca12dd1991c1f398d6665d2548fb3b2d2d50923fddbafcf30007a0798191cf80b729e5172",
+          "1_instance": {
+            "0_tag": "0x649b4efb2b27e0aefce7cc42fe80521ba17bc6a58baecbb370f20ca563baad25",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xa1a3f13943ddd86057aa6e19815f23577debddb99135f31eb45037bb3c4667c5",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c0b61c972fb935b4d94603860aa943c7dcbbfa0184b2e96eed93aaca41b6ecac52a9522426470b88465435745e936629c5d04d8b921c0ffbea583b5a0ffef28690f103601e4cfd25147a6e418967332009b3ef78e49bdc27b593f1c230053c9e110616483925cd51e7730fffa51dabe10ba8d3e89b0eef7aed3abd5d4e5b98f1a036c41d4bd89ed1dc856eeabad4b261d543a9a3eafad6ac776d8fc911584182b1360179b00292d86d2541282055690583ced6875541f94a9c27fbeec45027d08195f8c71de03d113da23661b9b7fa68df9894dbf50a8ed7224bb0af8268e63b10415890bf5b78725bd25ca1538d5078e5ed023e52279a1aee3fa70faaec24a6e",
+          "1_instance": {
+            "0_tag": "0xfc8d04ff5e2dfeedf176078c757f33563e01402bd9fd354530bfee1f14e7571d",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xa1a3f13943ddd86057aa6e19815f23577debddb99135f31eb45037bb3c4667c5",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1fc05f4af57e9c53cc937a4776cad7b2c755f753bffbb06f17e85a18c2f0a9321d59ee4e8617dcd4abfab0b1f380fef5b1d32ae92576f583e948c4ebd3c649aa1abc9afc1be952108c5f8df1762b8a2c5084260e8af84a23944d31b96317ef352bafa89d576185a09197c32fe87d722465e55d3d807d692a04bb1f321f7b13070eef6a26fdf2acf033c019cb3f3c47307dc4b5286d341a83156371d57b32caac12a43d63035463a50204b8fd19b05b17dead3520639e2823c9906be3b343e91723090bcda9ae34b345360ad87dd3fee125f060138de3e12190594beddcc85e470b596ea949dafda387f1886a801580d574cbaf9baad4e9628209ec6896026959",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x649b4efb2b27e0aefce7cc42fe80521ba17bc6a58baecbb370f20ca563baad25",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xfc8d04ff5e2dfeedf176078c757f33563e01402bd9fd354530bfee1f14e7571d",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1c0af27e13fe34c24c1b5ed60cc28729d5c9e1aa98d2032414b2d36012efadc12a1cf7f7b8b0c3395ae99f988c86f1fcf7ef1db5817af581c40fb05c4655cd28209a30ae715e1644b02b105442e72adea76f3150a964002a2b09bf9a6696a72300dbd717720b96d13cc0d65c26bb7c678a6ec5060d0b569eb69fb3f3732d48f626e8cd89302422c329db23b71344dca9723ff7bb255f092d973c3b304e46e2a114d5bc792aa479d4b375401d35ec4d4490ad858354e19a6e5529e256932ad8d904ee13a8a49312d68f69c65ac0d9b53236a61972ec891d25bc6cbc7306e054881a9098ab77ba5c5f44c3e2fdb56fc09652d82a3e6cb9c7773c90e11705245b7a",
+          "1_instance": {
+            "0_tag": "0x7b4bb99d2a67d36447a5f47e8f583e3253d589a54bba64850b3cf269ce79260d",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xedbd324a93be5e6914d0e1e9cfad4d7b540739e4dd09551d4bd0cccf12080c34",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c156b3143fb82d68e41cf93720422eb470766d125dbddf84eeeb82442338299ca114ef79e77dd6e9df938f8258b131ea8b31b5bbe896e2052d2455c3b5e0cb6091088d94e9abf98a180caab74f3cf8b1f4c131055aadc00d2b4dc8f12e91358f62bff7d41fb3b1148bc1747c5cbb9cc6f7d4bd276fa619ac5e8166ce4add73b1e21c9546efee6e27f62797447ff92e880943731ace782a3337e3da2742f6b47111c7484462a96054877846384dad282e5f273ab21c108018d63884f1fc4284d762eb35e95f15caaf29a386879b9437b8e9301537032365c1b1588bc62dc3b90d60c2c0fb6cce36ea07c60d028c200aa1185c5752af978c65c7a8a0cc45eb3f830",
+          "1_instance": {
+            "0_tag": "0x73159fc36d0e3cbb54b3540433b03c6d5bf2adea3b4bb2162bb8f0c5d3baab88",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xedbd324a93be5e6914d0e1e9cfad4d7b540739e4dd09551d4bd0cccf12080c34",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c19f5e59760e01676a714eca15056462edca770c203b1b8f246768216eb0b7e0722d13cfdf1e33dee3e291c4f9eba41538907c9d49aee82afd0b08f85a8289ab11bad302f2473a0cd46df760b9697a0aea7666698c1d7a48275bfa7eb1912ba0329a6a43c2f43daaa3f1ac36e39b956a294504a8748ea7d90d13b9a7cf546ee870ef4f4d6611ecdd6ff243453e6c62c759c29c22e08b73d382b9000272557c0f51e4616829ac1e0f53d63b755dd01dad7d3155e9f091859451e6dd3a09fb39f3d0bed5cc7cf152d1e09a717bc8be6249160a249b2fd20a719130cb0a8e069779b0dc963836a803d5d5d2e864aa16e5ec0bca37ac5403b68d7e89da7f3c8d8dff0",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x7b4bb99d2a67d36447a5f47e8f583e3253d589a54bba64850b3cf269ce79260d",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x73159fc36d0e3cbb54b3540433b03c6d5bf2adea3b4bb2162bb8f0c5d3baab88",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c11c8eb736bbf918e4d8fcdd116fdc9df3d85809dad239d5ab677a891c01d281a19f7c2af80f281d4cda34f84f3d75cfca794e42a5682ec2c26eb72833ade9daf2dc8662f3a9cf40ce9707fb5a34fb383b55e6bceba466d7d1d009ffb2afa07171116c186db5500f20df0dc938a76c8941a6d0a25bd8ba53f96eba33d6da04cc1256fda9624eec9629428c722c0e7957c782d82de51cede4fe368f151eaabfbba02949c9f58fc484721bdc0508a89245e2db675360f3300d7607b6a91f415cefb244f5424d96125254e1c571b362932e0f7301bb61cdf715feb5904134b79a9fe217343a1c96f7096fb37dd858f59771c3b2648b218c0f67883b898a9e85cd923",
+          "1_instance": {
+            "0_tag": "0xd6a9059b3b6f9738952347151b0a23c48a1fd7eb6c45b63998959633e14e8f3b",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x679b64bfed3fce296e7d32c8edb6c9d40f890d5081ca7d8e68995988a620812b",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c17c0288f9ad3441570b37d4ae841baba0faa94eceb48965a94c62bc6cbc1e24010dd66d18fb655f1da19919f8ac7c2aeaa294a0c575956a374b5249fa27eace42aa64553485b5e360700564a15c9fefd5ecb2bb9b39e13ca2a603ceeb906e581037d0fb9b417e0f10b88f78cbc5ad7fe37641c8dd35df7bb71dd3e6780dbb4ab23b21dbb5695fff690a46c9d6aa6d1f1d5fbfcb4f08d3e514a7d5995dd03ebf70d8f9cce9651d500ee95e11133efd44d70fbc78a479060992c576acd3a189435274758311bfac7dc0ef443996505860d521c73dc338b53a92350020b66086df00d1bec4e29c40892b0d8ee899c65142fb710bb24b6e252888eaad56bf2f7d159",
+          "1_instance": {
+            "0_tag": "0xdb2c2fe97ccab70b7778488bf064e8a84ade4cf06a8377c5b1c422a4bdfe91b1",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x679b64bfed3fce296e7d32c8edb6c9d40f890d5081ca7d8e68995988a620812b",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1927fc54a45d884b5a9ad0c0054302226371ff482b2424a5789fb273088d52ba128d0b187f2d55ebfca29c033d43af29ee3e893521f911e14eabcd1c9dcb76141d59fd633df8a11e6f4881efaa3a8efc5dc57ee48506c7d5d17acb0dce50cc8305300b621b4cd8c651a58efe1e21a668f3b4303d5f5acaa19508c69c9ddf713008f2201f556cde8e94fded784a5ebbd8c980f1d785f2aead47ba2e26f87da5a10160ef1206a572a4758bc3fa861000123d8976b0021725718e6ed53ece5404601810aadcc7d71108df822be4670bc495cf72f6d42141c73c6e2cd9a776dee6d30c8c3a64413ef9b97ba92aefe065447e55a142dd628044ebc84341fdbac19f82",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xd6a9059b3b6f9738952347151b0a23c48a1fd7eb6c45b63998959633e14e8f3b",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0xdb2c2fe97ccab70b7778488bf064e8a84ade4cf06a8377c5b1c422a4bdfe91b1",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c061ea4a458c64d1db294bab62200718e8b66a70999a9b5aaec65b45b22c9a3fa0a9159d5a637965439cd724274a1e5a61d2ad3b9a981b0d1fa684e9bc9b3d73f17a5e8901d4e38199732428a8b4dea91a250e7e9b1ef32eced9d0b723804226115e6da135cad752f3b7fb606964c1f9e8dcb60b49717eb341ba7479e5b640d8e1aed10204cf812a325d9d3f05185943f47e7a8e353b1af02b9e5ac1c9694a744175efb290d1b3e64507f416e8fd0d7c7b6f2fb5612e0b47e70c15ee8b690a89500ca867af276396217b1341ccc6a05e0e39c65a24ebd0d50021ddaeb9ae5d3c515a562159bd04c8f85f1fa8180043e97dd599f8382580e5bc8357a631ccb44ec",
+          "1_instance": {
+            "0_tag": "0x1106ffc900174e8ade5269a130e83b258a52bc65f93ab597484a5629db4ef5d5",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x10582c095afaa70c1c502d4bb8c5ed99e4ff2eb480c2b63a10def87a1dfd39fc",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c22786912d7fff50dc26b907cd0f373d58ba75e7ffada4e9e6fa71d1b4c34cec308edd48f3aa6ecb2ad7f5755ab7b9c6cb7675af51b907daa990f6542d9e10a9c2d96b86092c63715d27091e1d6bbdba16f4b9473d0d7a2d046f4107d74edba5c1bb33125122004d62827dc0909b1d4c311a6e763d371d02b99506df5b14061d322d520ea568be870daa0d6db7fbf21f25f37be5a3d0f297e588f7e59c5d3497b2f10b532deb256e7156eda300071fff6cc9c6044ad23aecabcca3ef5df7c71ee137e52dd0f82e82962f0d9c628dc348392ef80c6dc521f5622fd893d3eeea11d1d43b5bf3936122989698d35c8da58c1ace1543153c47d9d2f21d735e802e9b8",
+          "1_instance": {
+            "0_tag": "0x619e4980e9da8610c9edcb57946e1bf0007f0437c010a6fb54f0651f8f1b4fa2",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x10582c095afaa70c1c502d4bb8c5ed99e4ff2eb480c2b63a10def87a1dfd39fc",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1a1bee11b56ab78b7605a8035bf96535ccb40e06c04620fdc42a2b995d1d8ad2173c773f6197476267f98c070e19c15e57302862a1b7f7972255c5d63242d05c074988f07856454cd0a8348962fb609e8574c673b5eb558f67184a6773d1797d12629f8c6b77db62b8c8f2ce5d5d67a631665ae94869575b90e96c054a81b51f1ab67b0c1e033b8f421231db90fad3204e655036f499f689746165ac2ba7556e0cd717e0b97151135634b102b3f56bf1e256f48e5020002e8a0d06e9bfea730a21309fc7b7dbb5c0d53d497a90c43bf629ecb8b6edae88d00c9cba579bb558320e9bd3a23d1e53d0569b7ced477288a1746a6b17689388582292f753e2ce1f79",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0x1106ffc900174e8ade5269a130e83b258a52bc65f93ab597484a5629db4ef5d5",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x619e4980e9da8610c9edcb57946e1bf0007f0437c010a6fb54f0651f8f1b4fa2",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c084adc4245c91b6aa934d8e21ed14c0c607089f6c67f05443c35b10e82e4289326b5289a6bc498bd5bc55c51b04819de8460091af171546cb65e07a9e4e49950105bbe54175e848d259ca9e54307cc9d5938be7eef218535c0f413fe3e77a45b1c691874fd287c04a74b773515f54754c9fc7488b774fede665054a0a271acfd2e3fd184efd74dbf26e0b0df1c28755156fb0e6296759699af2277870aad6d1901742e9b55ba5b5dbbb1916851557c2f24ee356aa5b92c7e759e869435d8be2a1629fdd8458228c21da400b55f8c9803f12b54c8daac38b3be4c300a94a6d892234592dd3ab7e72e5a57ea3ef173b71892468b256fb709118902a1209799b3ed",
+          "1_instance": {
+            "0_tag": "0xc59fc4372849a2d390db2ec0c9731a6064d81f6fe7137d3db6a0e8b5800d6a36",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0xb9e2b96c24b8a80c967207cde87395dcbe6403034fbca054dda51bf09975a240",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c055ca591d1ed446c53c33c8657963d575456679099c7521eaf2bc5b5ed42f74e238cd15d7b3240ca7316a17c550cdc490f86f0af77cb9f132fea8c4e1ba712381162b2264f46f46f2cf0734db19051c35afc9e82a133212dea52d04e56b0d9da01e3ba1665470f50ef0818b4671d724624f7edf4cbe72038c80d8c2f99733e792fa84eb578e4a6f381a9c444bfe393ed71aa8f2114f9036baafd53f2440f11bc2b9f59f277d63c49d677fdaa8723f4222993d9eb9c66abb44b2b6e785037d6e422b4694950acdf481fb49b531b7d7108b4cfad7b4b2fda92003132dcbf23d02d0425b3762bd196cc7284b85541bb13dffa2048589d422a2fa4a83903aa7d930a",
+          "1_instance": {
+            "0_tag": "0x1eacf75e894be5997c5856cbfdcf626aace09ae91467b602268fa0f372cde8ad",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0xb9e2b96c24b8a80c967207cde87395dcbe6403034fbca054dda51bf09975a240",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c122856358d07ed5caae918fa2e079f0e16ecee0a55915c42c00abc43f6f7589516668c65b0ce850965b9f6834886f5670362434276a420005561d135c5b498e60d777018e470830d363a0de1ff03590c4d3261c33f03576bf373187dd46a54692ed78ce07d11c4a191b23d0f9d4bc1d134d800be1a70ebac77966d6a8632cddf04910f4faacb4cf481a5ca0187fce9c49f03bdf4dee53adb4bd306c0d82e67ca200e37a80ed011337d84ee7a52e495dc5b62915046c286cfe0fd5084f7b3106a005d8e93ccf7b581b8a133a0ef440d2147c0fe57bc6fee30bf437afb16a73c112f0d1e608e11d3e821486bd4f640a404db7ac45aec62994651d50829aaaddad2",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xc59fc4372849a2d390db2ec0c9731a6064d81f6fe7137d3db6a0e8b5800d6a36",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x1eacf75e894be5997c5856cbfdcf626aace09ae91467b602268fa0f372cde8ad",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    },
+    {
+      "0_logicVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c2543078bb1e3f4b21fbb0208a81f2081c26be54978bf48ffacab66eafaed1cd61ee838d3a4b61df9adbaccdbf9e30dbcbfa8b3fe97aaced57a3bd073a85755f615fc887aaf7b68e9e934ace4524a1e892de7e6f6e64619833c764dcdbf31af0629a4ebd5cc6b9f130ddca562eab6daffbd5ac3e27e41c4120ef4b5b2fcb9b4df179c0039cb9e27775a6a6a08cefc2f0dad0417104e5efee526d5d50aac7ee3e42892bde8573a42df9369dc2f47c165fb1e604e0c09feda5acffc185a4344a5651cb2d64d413f6f0b7b277e46e14f250838c95511f3c7f01c511cffe380350613075f6e35237dd60b0cc4d7808fee2e37b6a6d7748a2daf3f088d2c35d960e297",
+          "1_instance": {
+            "0_tag": "0xd7416dcd452ccbe91cd96ea6269463d43de19e9143cfdff6d355fbc2aaa6f5ac",
+            "1_isConsumed": true,
+            "2_actionTreeRoot": "0x9bad156f4a13c4df6cfa2a839edbbf8da922fc59a9d1b451e9e7c385abab1018",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        },
+        {
+          "0_proof": "0x9f39696c2b19f28bf708307603011a1ef69127a8e7ba5587d83033bead833b32dd5518d22e32fc98c3dfa72ca9cc56449f4261ea4503c85ab2c0f1efdce51b2072d1e15e190dacaa362fbe2db6f39adf02fba400d8ed7c9d146917c1346ed3a1ae8ba35e1d9312924b39d5297461c60dcdd54e81ae019329975fb2ddd0c428656082e5a1295a36b00c3dbb591c885ff159b187ba3ddfbf3784449dfed7834364c2bd42b32c446206d3cba1a96573a207ef58c4e33155f018fc29086294ec417321c1379e2feac69ebe9e1d10deb3147b726228b85cfe7eb91793ac566b575d4932806bee2ce266ce8ee6633ff18f7b895ba27b7bacdf79573c5aaba48c83a3ea0b4cef84",
+          "1_instance": {
+            "0_tag": "0x2c02cff36b02ff4e757afaadd9683d222ad3ec42cea7c40faf013fa1bf525c96",
+            "1_isConsumed": false,
+            "2_actionTreeRoot": "0x9bad156f4a13c4df6cfa2a839edbbf8da922fc59a9d1b451e9e7c385abab1018",
+            "3_ciphertext": "0x3f0000007f000000bf000000ff000000",
+            "4_appData": [
+              {
+                "0_deletionCriterion": 0,
+                "1_blob": "0x1f0000003f0000005f0000007f000000"
+              },
+              {
+                "0_deletionCriterion": 1,
+                "1_blob": "0x9f000000bf000000df000000ff000000"
+              }
+            ]
+          },
+          "2_verifyingKey": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+        }
+      ],
+      "1_complianceVerifierInputs": [
+        {
+          "0_proof": "0x9f39696c1c790c4df03546098d47248e71225c35c8d3dabd47a4abd81bde0e21501037ef12fa74d24efe0a21420ed70c2303af1db481acd9bf1c34bc0e9a93a1458b2b750202df0165da2d00970224915737620d6e401ba8820c3d5f558110d5b64ddcb60122536a679d5d1d91e3e7e5e2cda5a178af1fd3080761a2b2bac49833a9fa2f127277e0a411907b741291ab519a367bbf77094e3ee697e74b9ac99282c92e4527644dcbe1d45092aa08148445a0d436d690dc971b2d364d6d718105a8857a6304c182b5835f9986df94293187df3b939e5b6cfb9d4f059742d12be405c7d50d260e62be2f8d7472817c1acad730d1a627a1f860b12ef4689b94cf521adb4d7f",
+          "1_instance": {
+            "0_consumed": {
+              "0_nullifier": "0xd7416dcd452ccbe91cd96ea6269463d43de19e9143cfdff6d355fbc2aaa6f5ac",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b",
+              "2_commitmentTreeRoot": "0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
+            },
+            "1_created": {
+              "0_commitment": "0x2c02cff36b02ff4e757afaadd9683d222ad3ec42cea7c40faf013fa1bf525c96",
+              "1_logicRef": "0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b"
+            },
+            "2_unitDeltaX": "0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "3_unitDeltaY": "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+          }
+        }
+      ],
+      "2_resourceCalldataPairs": []
+    }
+  ],
+  "1_deltaProof": "0x6e91a586ea9120cf0f1ef4a0f806691600193bbeba7b77c332ccb43b26efcb183e194486267e38d5dc0f52ae13e5fa04be36bf50f3a38fd956cfcfb46f1493081b"
+}
