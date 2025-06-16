@@ -1,4 +1,4 @@
-use alloy::primitives::{Address, Bytes, B256, U256};
+use alloy::primitives::{Address, B256, Bytes, U256};
 use alloy::sol;
 
 use risc0_ethereum_contracts::encode_seal;
@@ -220,8 +220,15 @@ mod tests {
 
         println!("{:?}", aarm::constants::get_compliance_id());
 
-        let raw_tx = aarm::transaction::generate_test_transaction(1);
+        let n_actions = 1;
+
+        let raw_tx = aarm::transaction::generate_test_transaction(n_actions);
         let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
+        std::fs::write(
+            format!("test_tx{:02}.json", n_actions),
+            serde_json::to_string_pretty(&evm_tx).unwrap(),
+        )
+        .unwrap();
         println!("{:#?}", evm_tx);
     }
 }
