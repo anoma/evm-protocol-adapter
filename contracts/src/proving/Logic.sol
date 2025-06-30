@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ResourceForwarderCalldataPair} from "../Resource.sol";
+
 import {BlobStorage} from "../state/BlobStorage.sol";
 
 /// @notice A library containing type definitions and methods of the logic proving system.
@@ -12,12 +14,14 @@ library Logic {
     /// @param ciphertext Encrypted information for the receiver of the resource that will be emitted as an event.
     /// The ciphertext contains, at least, the resource plaintext and optional other application specific data.
     /// @param appData The application data associated with the resource.
+    /// @param resourceCalldataPair An optional external call.
     struct Instance {
         bytes32 tag;
         bool isConsumed;
         bytes32 actionTreeRoot;
         bytes ciphertext;
         BlobStorage.ExpirableBlob[] appData;
+        ResourceForwarderCalldataPair resourceCalldataPair;
     }
 
     /// @notice A struct containing all information required to verify a logic proof.

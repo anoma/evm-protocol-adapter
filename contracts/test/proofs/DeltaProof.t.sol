@@ -5,7 +5,7 @@ import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
 import {Test} from "forge-std/Test.sol";
 
 import {Delta} from "../../src/proving/Delta.sol";
-import {Transaction} from "../../src/Types.sol";
+import {Transaction} from "../../src/Transaction.sol";
 import {Example} from "../mocks/Example.sol";
 import {MockDelta} from "../mocks/MockDelta.sol";
 

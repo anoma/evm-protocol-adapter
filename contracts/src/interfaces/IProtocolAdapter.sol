@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Transaction} from "../Types.sol";
+import {Transaction} from "../Transaction.sol";
 
 interface IProtocolAdapter {
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
