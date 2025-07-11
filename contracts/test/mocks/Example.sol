@@ -4,7 +4,8 @@ pragma solidity ^0.8.30;
 import {Compliance} from "../../src/proving/Compliance.sol";
 import {Logic} from "../../src/proving/Logic.sol";
 import {BlobStorage} from "../../src/state/BlobStorage.sol";
-import {Transaction, ResourceForwarderCalldataPair, Action} from "../../src/Types.sol";
+import {ResourceForwarderCalldataPair} from "../../src/Resource.sol";
+import {Transaction, Action} from "../../src/Transaction.sol";
 
 import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
 
@@ -64,12 +65,15 @@ library Example {
     }
 
     function logicInstance(bool isConsumed) internal pure returns (Logic.Instance memory instance) {
+        ResourceForwarderCalldataPair memory empty;
+
         instance = Logic.Instance({
             tag: isConsumed ? _CONSUMED_NULLIFIER : _CREATED_COMMITMENT,
             isConsumed: isConsumed,
             actionTreeRoot: _ACTION_TREE_ROOT,
             ciphertext: ciphertext(),
-            appData: expirableBlobs()
+            appData: expirableBlobs(),
+            resourceCalldataPair: empty
         });
     }
 
@@ -82,8 +86,6 @@ library Example {
     }
 
     function transaction() internal pure returns (Transaction memory txn) {
-        ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
-
         Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2);
         logicVerifierInputs[0] = logicVerifierInput({isConsumed: true});
         logicVerifierInputs[1] = logicVerifierInput({isConsumed: false});
@@ -92,11 +94,8 @@ library Example {
         complianceVerifierInputs[0] = complianceVerifierInput();
 
         Action[] memory actions = new Action[](1);
-        actions[0] = Action({
-            logicVerifierInputs: logicVerifierInputs,
-            complianceVerifierInputs: complianceVerifierInputs,
-            resourceCalldataPairs: emptyForwarderCallData
-        });
+        actions[0] =
+            Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
 
         txn = Transaction({actions: actions, deltaProof: _DELTA_PROOF});
     }

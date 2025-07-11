@@ -16,10 +16,15 @@ import {Delta} from "./proving/Delta.sol";
 import {Logic} from "./proving/Logic.sol";
 import {BlobStorage} from "./state/BlobStorage.sol";
 import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
-
 import {NullifierSet} from "./state/NullifierSet.sol";
 
-import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
+import {
+    Resource,
+    ForwarderCalldata,
+    ResourceForwarderCalldataPair,
+    EMPTY_RESOURCE_FORWARDER_CALLDATA_PAIR_HASH
+} from "./Resource.sol";
+import {Transaction, Action} from "./Transaction.sol";
 
 contract ProtocolAdapter is
     IProtocolAdapter,
@@ -49,8 +54,6 @@ contract ProtocolAdapter is
 
     error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierAppDataMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierLabelMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierCommitmentNotFound(bytes32 commitment);
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifier The RISC Zero verifier contract. This contract can be trusted to work correctly.
@@ -92,11 +95,11 @@ contract ProtocolAdapter is
                 for (uint256 k = 0; k < nBlobs; ++k) {
                     _storeBlob(instance.appData[k]);
                 }
-            }
 
-            uint256 nForwarderCalls = action.resourceCalldataPairs.length;
-            for (uint256 j = 0; j < nForwarderCalls; ++j) {
-                _executeForwarderCall(action.resourceCalldataPairs[j].call);
+                if (keccak256(abi.encode(instance.resourceCalldataPair)) != EMPTY_RESOURCE_FORWARDER_CALLDATA_PAIR_HASH)
+                {
+                    _executeForwarderCall(instance.resourceCalldataPair.call);
+                }
             }
         }
 
@@ -151,11 +154,16 @@ contract ProtocolAdapter is
 
                     // Check consumed resources
                     _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
+                    // TODO! Modification: Check pre-existence in either cmAccRegular OR cmAccEmergency
                     _checkNullifierNonExistence(complianceVerifierInput.instance.consumed.nullifier);
+                    // TODO! Modification: Check non-existence in nfAccRegular AND nfAccEmergency
 
                     // Check created resources
                     _checkCommitmentNonExistence(complianceVerifierInput.instance.created.commitment);
+                    // TODO! Modification: Check non-existence in cmAccRegular AND cmAccEmergency
+                    // NOTE: Artem: not necessary "cmAccRegular AND"
 
+                    // Merkle path validation. Trees must have the same depth.
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
                         seal: complianceVerifierInput.proof,
                         imageId: Compliance._VERIFYING_KEY,
@@ -224,6 +232,7 @@ contract ProtocolAdapter is
                     if (input.instance.actionTreeRoot != computedActionTreeRoot) {
                         revert RootMismatch({expected: computedActionTreeRoot, actual: input.instance.actionTreeRoot});
                     }
+                    _verifyForwarderCalls(action);
 
                     // Check the compliance proof
                     _TRUSTED_RISC_ZERO_VERIFIER.verify({
@@ -250,32 +259,44 @@ contract ProtocolAdapter is
     /// @param action The action to verify the forwarder calls for.
     // slither-disable-next-line calls-loop
     function _verifyForwarderCalls(Action calldata action) internal view {
-        uint256 nForwarderCalls = action.resourceCalldataPairs.length;
-        for (uint256 i = 0; i < nForwarderCalls; ++i) {
-            Resource calldata carrier = action.resourceCalldataPairs[i].carrier;
-            ForwarderCalldata calldata call = action.resourceCalldataPairs[i].call;
+        uint256 nResources = action.logicVerifierInputs.length;
 
-            // Kind integrity check
-            {
-                bytes32 passedKind = carrier.kind();
+        for (uint256 i = 0; i < nResources; ++i) {
+            Logic.VerifierInput calldata input = action.logicVerifierInputs[i];
 
-                bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
+            if (
+                keccak256(abi.encode(input.instance.resourceCalldataPair))
+                    != EMPTY_RESOURCE_FORWARDER_CALLDATA_PAIR_HASH
+            ) {
+                Resource calldata carrier = input.instance.resourceCalldataPair.carrier;
+                ForwarderCalldata calldata call = input.instance.resourceCalldataPair.call;
 
-                if (passedKind != fetchedKind) {
-                    revert CalldataCarrierKindMismatch({expected: fetchedKind, actual: passedKind});
+                // Kind integrity check
+                {
+                    bytes32 passedKind = carrier.kind();
+
+                    bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
+
+                    if (passedKind != fetchedKind) {
+                        revert CalldataCarrierKindMismatch({expected: fetchedKind, actual: passedKind});
+                    }
                 }
-            }
 
-            // AppData integrity check
-            {
-                bytes32 expectedAppDataHash = keccak256(abi.encode(call.untrustedForwarder, call.input, call.output));
+                // AppData integrity check
+                // TODO! Can this be removed?
+                // NOTE: If the call-data is already part of the instance, this can be removed.
+                {
+                    bytes32 expectedAppDataHash =
+                        keccak256(abi.encode(call.untrustedForwarder, call.input, call.output));
 
-                // Lookup the first appData entry.
-                bytes32 actualAppDataHash =
-                    keccak256(abi.encode(action.logicVerifierInputs.lookup(carrier.commitment()).instance.appData[0]));
+                    // Lookup the first appData entry.
+                    bytes32 actualAppDataHash = keccak256(
+                        abi.encode(action.logicVerifierInputs.lookup(carrier.commitment()).instance.appData[0])
+                    );
 
-                if (actualAppDataHash != expectedAppDataHash) {
-                    revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});
+                    if (actualAppDataHash != expectedAppDataHash) {
+                        revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});
+                    }
                 }
             }
         }

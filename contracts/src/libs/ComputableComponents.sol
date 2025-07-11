@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Resource} from "../Types.sol";
+import {Resource} from "../Resource.sol";
 
 /// @notice A library containing methods to calculate computable components from resource objects.
 library ComputableComponents {

@@ -6,7 +6,7 @@ import {IRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
 import {Test} from "forge-std/Test.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Transaction, Action} from "../src/Types.sol";
+import {Transaction, Action} from "../src/Transaction.sol";
 import {Example} from "./mocks/Example.sol";
 
 contract ProtocolAdapterTest is Test {

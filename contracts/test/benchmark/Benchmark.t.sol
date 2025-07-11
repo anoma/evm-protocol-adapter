@@ -6,7 +6,7 @@ import {IRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
 import {Test} from "forge-std/Test.sol";
 
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {Transaction} from "../../src/Types.sol";
+import {Transaction} from "../../src/Transaction.sol";
 
 contract BenchmarkData is Test {
     function _parse(string memory path) internal view returns (Transaction memory txn) {
