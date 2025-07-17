@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
-import {IRiscZeroVerifier as TrustedRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
+import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
@@ -34,7 +34,7 @@ contract ProtocolAdapter is
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
-    TrustedRiscZeroVerifier internal immutable _TRUSTED_RISC_ZERO_VERIFIER;
+    RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
     uint8 internal immutable _ACTION_TAG_TREE_DEPTH;
 
     uint256 private _txCount;
@@ -53,13 +53,13 @@ contract ProtocolAdapter is
     error CalldataCarrierCommitmentNotFound(bytes32 commitment);
 
     /// @notice Constructs the protocol adapter contract.
-    /// @param riscZeroVerifier The RISC Zero verifier contract. This contract can be trusted to work correctly.
+    /// @param riscZeroVerifierRouter The RISC Zero verifier router contract. This contract can be trusted to work correctly.
     /// @param commitmentTreeDepth The depth of the commitment tree of the commitment accumulator.
     /// @param actionTagTreeDepth The depth of the tag tree of each action.
-    constructor(TrustedRiscZeroVerifier riscZeroVerifier, uint8 commitmentTreeDepth, uint8 actionTagTreeDepth)
+    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, uint8 commitmentTreeDepth, uint8 actionTagTreeDepth)
         CommitmentAccumulator(commitmentTreeDepth)
     {
-        _TRUSTED_RISC_ZERO_VERIFIER = riscZeroVerifier;
+        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
         _ACTION_TAG_TREE_DEPTH = actionTagTreeDepth;
     }
 
@@ -156,7 +156,7 @@ contract ProtocolAdapter is
                     // Check created resources
                     _checkCommitmentNonExistence(complianceVerifierInput.instance.created.commitment);
 
-                    _TRUSTED_RISC_ZERO_VERIFIER.verify({
+                    _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                         seal: complianceVerifierInput.proof,
                         imageId: Compliance._VERIFYING_KEY,
                         journalDigest: complianceVerifierInput.instance.toJournalDigest()
@@ -226,7 +226,7 @@ contract ProtocolAdapter is
                     }
 
                     // Check the compliance proof
-                    _TRUSTED_RISC_ZERO_VERIFIER.verify({
+                    _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                         seal: input.proof,
                         imageId: input.verifyingKey,
                         journalDigest: input.instance.toJournalDigest()

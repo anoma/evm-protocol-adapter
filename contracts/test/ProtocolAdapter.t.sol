@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Pausable} from "openzeppelin/contracts/utils/Pausable.sol";
-import {IRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
+import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Test} from "forge-std/Test.sol";
 
@@ -13,21 +13,29 @@ import {Example} from "./mocks/Example.sol";
 contract ProtocolAdapterTest is Test {
     ProtocolAdapter internal _pa;
 
+    RiscZeroVerifierRouter internal _sepoliaVerifierRouter;
+
     function setUp() public {
         // Fork Sepolia
         vm.selectFork(vm.createFork("sepolia"));
 
         string memory path = "./script/constructor-args.txt";
 
+        _sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
+
         _pa = new ProtocolAdapter({
-            riscZeroVerifier: IRiscZeroVerifier(vm.parseAddress(vm.readLine(path))), // Sepolia verifier
+            riscZeroVerifierRouter: RiscZeroVerifierRouter(_sepoliaVerifierRouter), // Sepolia verifier
             commitmentTreeDepth: uint8(vm.parseUint(vm.readLine(path))),
             actionTagTreeDepth: uint8(vm.parseUint(vm.readLine(path)))
         });
     }
 
     function test_execute() public {
-        vm.expectRevert(Pausable.EnforcedPause.selector);
+        address riscZeroEmergencyStop =
+            address(_sepoliaVerifierRouter.getVerifier(bytes4(Example._CONSUMED_LOGIC_PROOF)));
+
+        vm.expectRevert(Pausable.EnforcedPause.selector, riscZeroEmergencyStop);
+
         _pa.execute(Example.transaction());
     }
 
@@ -37,7 +45,10 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_verify() public {
-        vm.expectRevert(Pausable.EnforcedPause.selector);
+        address riscZeroEmergencyStop =
+            address(_sepoliaVerifierRouter.getVerifier(bytes4(Example._CONSUMED_LOGIC_PROOF)));
+
+        vm.expectRevert(Pausable.EnforcedPause.selector, riscZeroEmergencyStop);
         _pa.verify(Example.transaction());
     }
 
