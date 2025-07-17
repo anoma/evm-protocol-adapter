@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Pausable} from "openzeppelin/contracts/utils/Pausable.sol";
 import {IRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
 
 import {Test} from "forge-std/Test.sol";
@@ -26,6 +27,7 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_execute() public {
+        vm.expectRevert(Pausable.EnforcedPause.selector);
         _pa.execute(Example.transaction());
     }
 
@@ -34,7 +36,8 @@ contract ProtocolAdapterTest is Test {
         _pa.execute(txn);
     }
 
-    function test_verify() public view {
+    function test_verify() public {
+        vm.expectRevert(Pausable.EnforcedPause.selector);
         _pa.verify(Example.transaction());
     }
 

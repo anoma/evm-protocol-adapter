@@ -39,6 +39,13 @@ contract Benchmark is BenchmarkData {
             _txns[i + 1] = _parse(string.concat("/test/benchmark/", paths[i]));
         }
 
+        /* NOTE:
+         * Here we fork sepolia before emergency stop was called on the `RiscZeroVerifierEmergencyStop` contract for v2.0.0 
+         * See 
+         * - https://sepolia.etherscan.io/address/0x8A8023bf44CABa343CEef3b06A4639fc8EBeE629
+         * - https://github.com/risc0/risc0/security/advisories/GHSA-g3qg-6746-3mg9
+         * for the details.
+         */
         vm.selectFork(vm.createFork("sepolia", 8577299 - 1));
 
         string memory path = "./script/constructor-args.txt";
