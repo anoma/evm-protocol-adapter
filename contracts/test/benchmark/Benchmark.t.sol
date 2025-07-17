@@ -39,7 +39,7 @@ contract Benchmark is BenchmarkData {
             _txns[i + 1] = _parse(string.concat("/test/benchmark/", paths[i]));
         }
 
-        vm.selectFork(vm.createFork("sepolia"));
+        vm.selectFork(vm.createFork("sepolia", 8577299 - 1));
 
         string memory path = "./script/constructor-args.txt";
 
