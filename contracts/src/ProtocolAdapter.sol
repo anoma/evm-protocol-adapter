@@ -44,6 +44,7 @@ contract ProtocolAdapter is
     error InvalidCommitmentRef(bytes32 commitment);
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
 
+    error ComplianceMismatch(uint256 expected, uint256 actual);
     error RootMismatch(bytes32 expected, bytes32 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
 
@@ -143,9 +144,10 @@ contract ProtocolAdapter is
 
             _verifyForwarderCalls(action);
 
+            uint256 nCUs = action.complianceVerifierInputs.length;
+
             // Compliance Proofs
             {
-                uint256 nCUs = action.complianceVerifierInputs.length;
                 for (uint256 j = 0; j < nCUs; ++j) {
                     Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
@@ -210,6 +212,14 @@ contract ProtocolAdapter is
             // Logic Proofs
             {
                 uint256 nResources = action.logicVerifierInputs.length;
+
+                // Check that the CUs cover the action
+
+                // While there may be repeating nullifiers in CUs, the
+                // global checks should prevent these from being valid
+                if (nResources != nCUs * 2) {
+                    revert ComplianceMismatch({expected: nResources, actual: nCUs});
+                }
 
                 bytes32[] memory actionTags = new bytes32[](nResources);
                 for (uint256 j = 0; j < nResources; ++j) {
