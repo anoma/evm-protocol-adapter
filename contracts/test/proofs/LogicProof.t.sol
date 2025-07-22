@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Pausable} from "openzeppelin/contracts/utils/Pausable.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Test} from "forge-std/Test.sol";
@@ -23,23 +24,27 @@ contract LogicProofTest is Test {
         _sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
     }
 
-    function test_verify_example_logic_proof_consumed() public view {
+    function test_verify_example_logic_proof_consumed() public {
         Logic.VerifierInput memory input = Example.logicVerifierInput({isConsumed: true});
 
-        _sepoliaVerifierRouter.verify({
-            seal: input.proof,
-            imageId: input.verifyingKey,
-            journalDigest: input.instance.toJournalDigest()
-        });
+        bytes32 journalDigest = input.instance.toJournalDigest();
+
+        // TODO! Update example to a non-vulnerable version.
+        address riscZeroEmergencyStop = address(_sepoliaVerifierRouter.getVerifier(bytes4(input.proof)));
+        vm.expectRevert(Pausable.EnforcedPause.selector, riscZeroEmergencyStop);
+
+        _sepoliaVerifierRouter.verify({seal: input.proof, imageId: input.verifyingKey, journalDigest: journalDigest});
     }
 
-    function test_verify_example_logic_proof_created() public view {
-        Logic.VerifierInput memory lp = Example.logicVerifierInput({isConsumed: false});
+    function test_verify_example_logic_proof_created() public {
+        Logic.VerifierInput memory input = Example.logicVerifierInput({isConsumed: false});
 
-        _sepoliaVerifierRouter.verify({
-            seal: lp.proof,
-            imageId: lp.verifyingKey,
-            journalDigest: lp.instance.toJournalDigest()
-        });
+        bytes32 journalDigest = input.instance.toJournalDigest();
+
+        // TODO! Update example to a non-vulnerable version.
+        address riscZeroEmergencyStop = address(_sepoliaVerifierRouter.getVerifier(bytes4(input.proof)));
+        vm.expectRevert(Pausable.EnforcedPause.selector, riscZeroEmergencyStop);
+
+        _sepoliaVerifierRouter.verify({seal: input.proof, imageId: input.verifyingKey, journalDigest: journalDigest});
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IRiscZeroVerifier} from "@risc0-ethereum/IRiscZeroVerifier.sol";
+import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Test} from "forge-std/Test.sol";
 
@@ -39,12 +39,19 @@ contract Benchmark is BenchmarkData {
             _txns[i + 1] = _parse(string.concat("/test/benchmark/", paths[i]));
         }
 
-        vm.selectFork(vm.createFork("sepolia"));
+        /* NOTE:
+         * Here we fork sepolia before emergency stop was called on the `RiscZeroVerifierEmergencyStop` contract for v2.0.0 
+         * See 
+         * - https://sepolia.etherscan.io/address/0x8A8023bf44CABa343CEef3b06A4639fc8EBeE629
+         * - https://github.com/risc0/risc0/security/advisories/GHSA-g3qg-6746-3mg9
+         * for the details.
+         */
+        vm.selectFork(vm.createFork("sepolia", 8577299 - 1));
 
         string memory path = "./script/constructor-args.txt";
 
         _pa = new ProtocolAdapter({
-            riscZeroVerifier: IRiscZeroVerifier(vm.parseAddress(vm.readLine(path))), // Sepolia verifier
+            riscZeroVerifierRouter: RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path))), // Sepolia verifier
             commitmentTreeDepth: uint8(vm.parseUint(vm.readLine(path))),
             actionTagTreeDepth: uint8(vm.parseUint(vm.readLine(path)))
         });
