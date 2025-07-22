@@ -213,10 +213,8 @@ contract ProtocolAdapter is
             {
                 uint256 nResources = action.logicVerifierInputs.length;
 
-                // Check that the CUs cover the action
-
-                // While there may be repeating nullifiers in CUs, the
-                // global checks should prevent these from being valid
+                // While there may be repeating nullifiers in compliance units, the
+                // global checks should prevent these from being valid.
                 if (nResources != nCUs * 2) {
                     revert ComplianceMismatch({expected: nResources, actual: nCUs});
                 }
