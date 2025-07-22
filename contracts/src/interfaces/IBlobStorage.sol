@@ -3,6 +3,10 @@ pragma solidity ^0.8.30;
 
 import {BlobStorage} from "../state/BlobStorage.sol";
 
+/// @title IBlobStorage
+/// @author Anoma Foundation, 2025
+/// @notice The interface of the blob storage being inherited by the protocol adapter.
+/// @custom:security-contact security@anoma.foundation
 interface IBlobStorage {
     /// @notice Emitted if a blob is stored.
     /// @param blobHash The hash of the blob being stored.

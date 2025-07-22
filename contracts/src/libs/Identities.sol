@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+/// @title Universal
+/// @author Anoma Foundation, 2025
 /// @notice A library containing the cryptographic keys of the universally known identity,
 /// an identity with which everyone can compose their own identity.
 /// @dev This identity can own resources that everyone should be allowed to consume.
+/// @custom:security-contact security@anoma.foundation
 library Universal {
     // https://www.rfctools.com/ethereum-address-test-tool/
 

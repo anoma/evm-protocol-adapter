@@ -4,7 +4,10 @@ pragma solidity ^0.8.30;
 import {IForwarder} from "../interfaces/IForwarder.sol";
 import {ComputableComponents} from "../libs/ComputableComponents.sol";
 
-/// A contract owning EVM state and executing EVM calls.
+/// @title ForwarderBase
+/// @author Anoma Foundation, 2025
+/// @notice The base contract to inherit from to create a forwarder contracts owning EVM state and executing EVM calls.
+/// @custom:security-contact security@anoma.foundation
 abstract contract ForwarderBase is IForwarder {
     address internal immutable _PROTOCOL_ADAPTER;
 
@@ -13,6 +16,9 @@ abstract contract ForwarderBase is IForwarder {
 
     error UnauthorizedCaller(address caller);
 
+    /// @notice Initializes the ERC-20 forwarder contract.
+    /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
+    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef) {
         _CALLDATA_CARRIER_RESOURCE_KIND =
             ComputableComponents.kind({logicRef: calldataCarrierLogicRef, labelRef: sha256(abi.encode(address(this)))});
@@ -33,5 +39,8 @@ abstract contract ForwarderBase is IForwarder {
         kind = _CALLDATA_CARRIER_RESOURCE_KIND;
     }
 
+    /// @notice Forwards  calls to a target contract.
+    /// @param input The `bytes` encoded calldata (including the `bytes4` function selector).
+    /// @return output The `bytes` encoded output of the call.
     function _forwardCall(bytes calldata input) internal virtual returns (bytes memory output);
 }

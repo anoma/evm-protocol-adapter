@@ -4,7 +4,10 @@ pragma solidity ^0.8.30;
 import {Compliance} from "../proving/Compliance.sol";
 import {Logic} from "../proving/Logic.sol";
 
+/// @title RiscZeroUtils
+/// @author Anoma Foundation, 2025
 /// @notice A library containing utility functions to convert and encode types for RISC Zero.
+/// @custom:security-contact security@anoma.foundation
 library RiscZeroUtils {
     /// @notice Calculates the digest of the compliance instance (journal).
     /// @param instance The compliance instance.

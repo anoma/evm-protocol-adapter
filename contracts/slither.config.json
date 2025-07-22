@@ -1,4 +1,8 @@
 {
   "filter_paths": "lib/",
-  "detectors_to_exclude": ["pragma", "naming-convention"]
+  "detectors_to_exclude": [
+    "pragma",
+    "naming-convention",
+    "cyclomatic-complexity"
+  ]
 }

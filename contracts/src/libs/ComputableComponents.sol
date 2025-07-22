@@ -3,7 +3,10 @@ pragma solidity ^0.8.30;
 
 import {Resource} from "../Types.sol";
 
+/// @title ComputableComponents
+/// @author Anoma Foundation, 2025
 /// @notice A library containing methods to calculate computable components from resource objects.
+/// @custom:security-contact security@anoma.foundation
 library ComputableComponents {
     /// @notice Computes the resource commitment.
     /// @param resource The resource object.

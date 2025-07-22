@@ -58,7 +58,7 @@
     "avoid-tx-origin": "error",
     "check-send-result": "error",
     "compiler-version": ["error", "^0.8.24"],
-    "func-visibility": ["error", { "ignoreConstructors": true }],
+    "func-visibility": ["error", {"ignoreConstructors": true}],
 
     "multiple-sends": "error",
     "no-complex-fallback": "error",

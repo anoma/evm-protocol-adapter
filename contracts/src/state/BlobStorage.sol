@@ -3,6 +3,10 @@ pragma solidity ^0.8.30;
 
 import {IBlobStorage} from "../interfaces/IBlobStorage.sol";
 
+/// @title BlobStorage
+/// @author Anoma Foundation, 2025
+/// @notice A on-chain blob storage implementation being inherited by the protocol adapter with two deletion criteria.
+/// @custom:security-contact security@anoma.foundation
 contract BlobStorage is IBlobStorage {
     /// @notice An enum representing the supported blob deletion criteria.
     enum DeletionCriterion {
@@ -33,10 +37,17 @@ contract BlobStorage is IBlobStorage {
         blob = _lookupBlob(blobHash);
     }
 
+    /// @notice Stores a blob with a deletion criterion and returns the blob hash.
+    /// @param expirableBlob The deletion criterion and blob.
+    /// @return blobHash The resulting blob hash.
     function _storeBlob(ExpirableBlob calldata expirableBlob) internal returns (bytes32 blobHash) {
         blobHash = _storeBlob(expirableBlob.blob, expirableBlob.deletionCriterion);
     }
 
+    /// @notice Stores a blob with a deletion criterion and returns the blob hash.
+    /// @param blob The blob to be stored.
+    /// @param deletionCriterion The deletion criterion of the blob.
+    /// @return blobHash The resulting blob hash.
     function _storeBlob(bytes calldata blob, DeletionCriterion deletionCriterion) internal returns (bytes32 blobHash) {
         // Compute the blob hash
         blobHash = sha256(blob);
@@ -66,6 +77,9 @@ contract BlobStorage is IBlobStorage {
         revert DeletionCriterionNotSupported(deletionCriterion);
     }
 
+    /// @notice Looks up a blob hash and returns the blob success or reverts.
+    /// @param blobHash The blob hash to look up.
+    /// @return blob The associated blob.
     function _lookupBlob(bytes32 blobHash) internal view returns (bytes memory blob) {
         if (blobHash == _EMPTY_BLOB_HASH) {
             revert BlobEmpty();
@@ -76,17 +90,14 @@ contract BlobStorage is IBlobStorage {
             blob = _blobs[blobHash];
             bytes32 retrievedBlobHash = sha256(blob);
             if (retrievedBlobHash != _EMPTY_BLOB_HASH) {
-                _checkIntegrity(blobHash, retrievedBlobHash);
+                // Check integrity for the retrieved blob
+                if (blobHash != retrievedBlobHash) {
+                    revert BlobHashMismatch({expected: blobHash, actual: retrievedBlobHash});
+                }
                 return blob;
             }
         }
 
         revert BlobNotFound(blobHash);
-    }
-
-    function _checkIntegrity(bytes32 blobHash, bytes32 retrievedBlobHash) internal pure {
-        if (blobHash != retrievedBlobHash) {
-            revert BlobHashMismatch({expected: blobHash, actual: retrievedBlobHash});
-        }
     }
 }

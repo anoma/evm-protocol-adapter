@@ -4,7 +4,10 @@ pragma solidity ^0.8.30;
 import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
 import {EllipticCurveK256} from "../libs/EllipticCurveK256.sol";
 
+/// @title Delta
+/// @author Anoma Foundation, 2025
 /// @notice A library containing methods of the delta proving system.
+/// @custom:security-contact security@anoma.foundation
 library Delta {
     /// @notice Thrown if the recovered delta public key doesn't match the delta instance.
     error DeltaMismatch(address expected, address actual);
@@ -30,10 +33,12 @@ library Delta {
 
     /// @notice Computes the delta verifying key as the Keccak-256 hash of all nullifiers and commitments
     /// as ordered in the compliance units.
+    /// @param tags The list of nullifiers and commitments to compute the verifying key from.
+    /// @return verifyingKey The verifying key obtained from hashing the nullifiers and commitments.
     /// @dev The tags are encoded in packed form to remove the array header.
     /// Since all the tags are 32 bytes in size, tight variable packing will not occur.
-    function computeVerifyingKey(bytes32[] memory tags) internal pure returns (bytes32 hash) {
-        hash = keccak256(abi.encodePacked(tags));
+    function computeVerifyingKey(bytes32[] memory tags) internal pure returns (bytes32 verifyingKey) {
+        verifyingKey = keccak256(abi.encodePacked(tags));
     }
 
     /// @notice Verifies a delta proof.

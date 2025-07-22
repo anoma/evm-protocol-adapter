@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+/// @title Compliance
+/// @author Anoma Foundation, 2025
 /// @notice A library containing type definitions of the compliance proving system.
+/// @custom:security-contact security@anoma.foundation
 library Compliance {
     /// @notice The compliance instance containing the data required to verify the compliance unit.
     /// @param consumed References associated with the consumed resource in the compliance unit.

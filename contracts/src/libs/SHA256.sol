@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+/// @title SHA256
+/// @author Anoma Foundation, 2025
 /// @notice A library for computing SHA256 hashes.
+/// @custom:security-contact security@anoma.foundation
 library SHA256 {
     /// @notice The hash representing the empty leaf that is not expected to be part of the tree.
     /// @dev Obtained from `sha256("EMPTY")`.

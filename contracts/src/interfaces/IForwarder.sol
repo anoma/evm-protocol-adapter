@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+/// @title ICommitmentAccumulator
+/// @author Anoma Foundation, 2025
+/// @notice The interface of the forwarder base contract.
+/// @custom:security-contact security@anoma.foundation
 interface IForwarder {
     /// @notice Forwards an external call to read or write EVM state.
     /// @param input The `bytes` encoded calldata (including the `bytes4` function selector).

@@ -21,6 +21,10 @@ import {NullifierSet} from "./state/NullifierSet.sol";
 
 import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
 
+/// @title ProtocolAdapter
+/// @author Anoma Foundation, 2025
+/// @notice The protocol adapter contract verifying and executing resource machine transactions.
+/// @custom:security-contact security@anoma.foundation
 contract ProtocolAdapter is
     IProtocolAdapter,
     ReentrancyGuardTransient,
@@ -54,7 +58,7 @@ contract ProtocolAdapter is
     error CalldataCarrierCommitmentNotFound(bytes32 commitment);
 
     /// @notice Constructs the protocol adapter contract.
-    /// @param riscZeroVerifierRouter The RISC Zero verifier router contract. This contract can be trusted to work correctly.
+    /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
     /// @param commitmentTreeDepth The depth of the commitment tree of the commitment accumulator.
     /// @param actionTagTreeDepth The depth of the tag tree of each action.
     constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, uint8 commitmentTreeDepth, uint8 actionTagTreeDepth)
@@ -64,8 +68,8 @@ contract ProtocolAdapter is
         _ACTION_TAG_TREE_DEPTH = actionTagTreeDepth;
     }
 
+    // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
-    // slither-disable-next-line reentrancy-no-eth
     function execute(Transaction calldata transaction) external override nonReentrant {
         _verify(transaction);
 
@@ -104,6 +108,7 @@ contract ProtocolAdapter is
         // Store the latest root
         _storeRoot(newRoot);
     }
+    // slither-disable-end reentrancy-no-eth
 
     /// @inheritdoc IProtocolAdapter
     function verify(Transaction calldata transaction) external view override {
@@ -112,8 +117,8 @@ contract ProtocolAdapter is
 
     /// @notice Executes a call to a forwarder contracts.
     /// @param call The calldata to conduct the forwarder call.
-    // slither-disable-next-line calls-loop
     function _executeForwarderCall(ForwarderCalldata calldata call) internal {
+        // slither-disable-next-line calls-loop
         bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
 
         if (keccak256(output) != keccak256(call.output)) {
@@ -121,7 +126,9 @@ contract ProtocolAdapter is
         }
     }
 
-    // slither-disable-next-line calls-loop
+    // slither-disable-start calls-loop
+    /// @notice An internal function to verify a transaction.
+    /// @param transaction The transaction to verify.
     function _verify(Transaction calldata transaction) internal view {
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
@@ -139,6 +146,7 @@ contract ProtocolAdapter is
         // Reset the resource counter.
         resCounter = 0;
 
+        // slither-disable-next-line calls-loop
         for (uint256 i = 0; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
@@ -252,7 +260,6 @@ contract ProtocolAdapter is
 
     /// @notice Verifies the forwarder calls of a given action.
     /// @param action The action to verify the forwarder calls for.
-    // slither-disable-next-line calls-loop
     function _verifyForwarderCalls(Action calldata action) internal view {
         uint256 nForwarderCalls = action.resourceCalldataPairs.length;
         for (uint256 i = 0; i < nForwarderCalls; ++i) {
