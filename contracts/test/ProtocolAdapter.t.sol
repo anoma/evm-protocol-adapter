@@ -56,4 +56,10 @@ contract ProtocolAdapterTest is Test {
         Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
         _pa.verify(txn);
     }
+
+    function test_tx_with_cu_mismatch_fails() public view {
+        // TODO: create a transaction with no compliance units and two trivial resources
+        //       in the action
+        true;
+    }
 }
