@@ -62,4 +62,10 @@ contract ProtocolAdapterTest is Test {
         //       in the action
         true;
     }
+
+    function test_verify_reverts_on_action_with_repeating_nullifiers() public view {
+        // TODO: create a transaction with repeating actions (specifically nullifier)
+        //       and expect it to revert on appropriate error
+        true;
+    }
 }
