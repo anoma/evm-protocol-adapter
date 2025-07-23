@@ -126,7 +126,6 @@ contract ProtocolAdapter is
         }
     }
 
-    // slither-disable-start calls-loop
     /// @notice An internal function to verify a transaction.
     /// @param transaction The transaction to verify.
     function _verify(Transaction calldata transaction) internal view {
@@ -146,7 +145,6 @@ contract ProtocolAdapter is
         // Reset the resource counter.
         resCounter = 0;
 
-        // slither-disable-next-line calls-loop
         for (uint256 i = 0; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
@@ -162,6 +160,7 @@ contract ProtocolAdapter is
                     // Check consumed resources
                     _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
 
+                    // slither-disable-next-line calls-loop
                     _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                         seal: complianceVerifierInput.proof,
                         imageId: Compliance._VERIFYING_KEY,
@@ -179,7 +178,7 @@ contract ProtocolAdapter is
                                 actual: complianceVerifierInput.instance.consumed.logicRef
                             });
                         }
-                        // solhint-disable-next-line  gas-increment-by-one
+                        // solhint-disable-next-line gas-increment-by-one
                         tags[resCounter++] = nf;
                     }
                     {
@@ -192,7 +191,7 @@ contract ProtocolAdapter is
                                 actual: complianceVerifierInput.instance.created.logicRef
                             });
                         }
-                        // solhint-disable-next-line  gas-increment-by-one
+                        // solhint-disable-next-line gas-increment-by-one
                         tags[resCounter++] = cm;
                     }
 
@@ -238,6 +237,7 @@ contract ProtocolAdapter is
                     }
 
                     // Check the compliance proof
+                    // slither-disable-next-line calls-loop
                     _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                         seal: input.proof,
                         imageId: input.verifyingKey,
@@ -267,9 +267,11 @@ contract ProtocolAdapter is
             ForwarderCalldata calldata call = action.resourceCalldataPairs[i].call;
 
             // Kind integrity check
+
             {
                 bytes32 passedKind = carrier.kind();
 
+                // slither-disable-next-line calls-loop
                 bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
 
                 if (passedKind != fetchedKind) {
