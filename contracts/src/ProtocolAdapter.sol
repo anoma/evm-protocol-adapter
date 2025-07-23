@@ -14,7 +14,6 @@ import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
 import {Logic} from "./proving/Logic.sol";
-import {BlobStorage} from "./state/BlobStorage.sol";
 import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 
 import {NullifierSet} from "./state/NullifierSet.sol";
@@ -25,13 +24,7 @@ import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
 /// @author Anoma Foundation, 2025
 /// @notice The protocol adapter contract verifying and executing resource machine transactions.
 /// @custom:security-contact security@anoma.foundation
-contract ProtocolAdapter is
-    IProtocolAdapter,
-    ReentrancyGuardTransient,
-    CommitmentAccumulator,
-    NullifierSet,
-    BlobStorage
-{
+contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, CommitmentAccumulator, NullifierSet {
     using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
@@ -95,7 +88,7 @@ contract ProtocolAdapter is
 
                 uint256 nBlobs = instance.appData.length;
                 for (uint256 k = 0; k < nBlobs; ++k) {
-                    _storeBlob(instance.appData[k]);
+                    emit Blob(instance.appData[k]);
                 }
             }
 
