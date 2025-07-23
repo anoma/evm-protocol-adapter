@@ -3,7 +3,6 @@ pragma solidity ^0.8.30;
 
 import {Compliance} from "../../src/proving/Compliance.sol";
 import {Logic} from "../../src/proving/Logic.sol";
-import {BlobStorage} from "../../src/state/BlobStorage.sol";
 import {Transaction, ResourceForwarderCalldataPair, Action} from "../../src/Types.sol";
 
 import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
@@ -34,15 +33,15 @@ library Example {
         cipher = hex"3f0000007f000000bf000000ff000000";
     }
 
-    function expirableBlobs() internal pure returns (BlobStorage.ExpirableBlob[] memory blobs) {
-        blobs = new BlobStorage.ExpirableBlob[](2);
-        blobs[0] = BlobStorage.ExpirableBlob({
+    function expirableBlobs() internal pure returns (Logic.ExpirableBlob[] memory blobs) {
+        blobs = new Logic.ExpirableBlob[](2);
+        blobs[0] = Logic.ExpirableBlob({
             blob: hex"1f0000003f0000005f0000007f000000",
-            deletionCriterion: BlobStorage.DeletionCriterion.Immediately
+            deletionCriterion: Logic.DeletionCriterion.Immediately
         });
-        blobs[1] = BlobStorage.ExpirableBlob({
+        blobs[1] = Logic.ExpirableBlob({
             blob: hex"9f000000bf000000df000000ff000000",
-            deletionCriterion: BlobStorage.DeletionCriterion.Never
+            deletionCriterion: Logic.DeletionCriterion.Never
         });
     }
 
