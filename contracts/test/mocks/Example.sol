@@ -73,9 +73,13 @@ library Example {
     }
 
     function logicVerifierInput(bool isConsumed) internal pure returns (Logic.VerifierInput memory input) {
+        Logic.Instance memory instance = logicInstance(isConsumed);
         input = Logic.VerifierInput({
             proof: isConsumed ? _CONSUMED_LOGIC_PROOF : _CREATED_LOGIC_PROOF,
-            instance: logicInstance(isConsumed),
+            tag: instance.tag,
+            isConsumed: instance.isConsumed,
+            ciphertext: instance.ciphertext,
+            appData: instance.appData,
             verifyingKey: isConsumed ? _CONSUMED_LOGIC_REF : _CREATED_LOGIC_REF
         });
     }

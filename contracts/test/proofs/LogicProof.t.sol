@@ -25,9 +25,11 @@ contract LogicProofTest is Test {
     }
 
     function test_verify_example_logic_proof_consumed() public {
-        Logic.VerifierInput memory input = Example.logicVerifierInput({isConsumed: true});
+        Logic.Instance memory instance = Example.logicInstance({isConsumed: true});
 
-        bytes32 journalDigest = input.instance.toJournalDigest();
+        bytes32 journalDigest = instance.toJournalDigest();
+
+        Logic.VerifierInput memory input = Example.logicVerifierInput({isConsumed: true});
 
         // TODO! Update example to a non-vulnerable version.
         address riscZeroEmergencyStop = address(_sepoliaVerifierRouter.getVerifier(bytes4(input.proof)));
@@ -37,9 +39,11 @@ contract LogicProofTest is Test {
     }
 
     function test_verify_example_logic_proof_created() public {
-        Logic.VerifierInput memory input = Example.logicVerifierInput({isConsumed: false});
+         Logic.Instance memory instance = Example.logicInstance({isConsumed: false});
 
-        bytes32 journalDigest = input.instance.toJournalDigest();
+        bytes32 journalDigest = instance.toJournalDigest();
+
+        Logic.VerifierInput memory input = Example.logicVerifierInput({isConsumed: false});
 
         // TODO! Update example to a non-vulnerable version.
         address riscZeroEmergencyStop = address(_sepoliaVerifierRouter.getVerifier(bytes4(input.proof)));

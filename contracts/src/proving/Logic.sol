@@ -35,7 +35,10 @@ library Logic {
     //  in another circuit and can be hard-coded similar to the compliance proof verifying key.
     struct VerifierInput {
         bytes proof;
-        Instance instance;
+        bytes32 tag;
+        bool isConsumed;
+        bytes ciphertext;
+        ExpirableBlob[] appData;
         bytes32 verifyingKey;
     }
 
@@ -61,7 +64,7 @@ library Logic {
     {
         uint256 len = list.length;
         for (uint256 i = 0; i < len; ++i) {
-            if (list[i].instance.tag == tag) {
+            if (list[i].tag == tag) {
                 return foundElement = list[i];
             }
         }

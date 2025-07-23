@@ -75,16 +75,16 @@ contract ProtocolAdapterTest is Test {
 
         Transaction memory txn = Example.transaction();
         vm.expectEmit(address(_pa));
-        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[0].instance.appData[0]);
+        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[0].appData[0]);
 
         vm.expectEmit(address(_pa));
-        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[0].instance.appData[1]);
+        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[0].appData[1]);
 
         vm.expectEmit(address(_pa));
-        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[1].instance.appData[0]);
+        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[1].appData[0]);
 
         vm.expectEmit(address(_pa));
-        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[1].instance.appData[1]);
+        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[1].appData[1]);
 
         _pa.execute(txn);
     }
