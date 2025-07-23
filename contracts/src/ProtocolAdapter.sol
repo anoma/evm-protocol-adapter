@@ -76,7 +76,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
             uint256 nResources = action.logicVerifierInputs.length;
             for (uint256 j = 0; j < nResources; ++j) {
-                Logic.Instance calldata instance = action.logicVerifierInputs[j].instance;
+                Logic.VerifierInput calldata instance = action.logicVerifierInputs[j];
 
                 if (instance.isConsumed) {
                     _checkNullifierNonExistence(instance.tag);
@@ -217,24 +217,25 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                 bytes32[] memory actionTags = new bytes32[](nResources);
                 for (uint256 j = 0; j < nResources; ++j) {
-                    actionTags[j] = action.logicVerifierInputs[j].instance.tag;
+                    actionTags[j] = action.logicVerifierInputs[j].tag;
                 }
                 bytes32 computedActionTreeRoot = MerkleTree.computeRoot(actionTags, _ACTION_TAG_TREE_DEPTH);
 
                 for (uint256 j = 0; j < nResources; ++j) {
                     Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
 
-                    // Check root consistency
-                    if (input.instance.actionTreeRoot != computedActionTreeRoot) {
-                        revert RootMismatch({expected: computedActionTreeRoot, actual: input.instance.actionTreeRoot});
-                    }
-
                     // Check the compliance proof
                     // slither-disable-next-line calls-loop
                     _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                         seal: input.proof,
                         imageId: input.verifyingKey,
-                        journalDigest: input.instance.toJournalDigest()
+                        journalDigest: Logic.Instance({
+                        tag: input.tag,
+                        isConsumed: input.isConsumed,
+                        actionTreeRoot: computedActionTreeRoot,
+                        ciphertext: input.ciphertext,
+                        appData: input.appData
+                        }).toJournalDigest()
                     });
                 }
             }
@@ -278,7 +279,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                 // Lookup the first appData entry.
                 bytes32 actualAppDataHash =
-                    keccak256(abi.encode(action.logicVerifierInputs.lookup(carrier.commitment()).instance.appData[0]));
+                    keccak256(abi.encode(action.logicVerifierInputs.lookup(carrier.commitment()).appData[0]));
 
                 if (actualAppDataHash != expectedAppDataHash) {
                     revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});
