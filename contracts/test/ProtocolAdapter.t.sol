@@ -6,8 +6,8 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test} from "forge-std/Test.sol";
 
-import {ArrayLookup} from "../src/libs/ArrayLookup.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
+import {ArrayLookup} from "../src/libs/ArrayLookup.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Transaction, Action} from "../src/Types.sol";
 import {Example} from "./mocks/Example.sol";
