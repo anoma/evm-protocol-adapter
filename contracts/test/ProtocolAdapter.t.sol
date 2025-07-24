@@ -2,7 +2,6 @@
 pragma solidity ^0.8.30;
 
 import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
-
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Test} from "forge-std/Test.sol";
