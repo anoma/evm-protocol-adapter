@@ -2,14 +2,18 @@
 pragma solidity ^0.8.30;
 
 import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
+
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Test} from "forge-std/Test.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
-import {ArrayLookup} from "../src/libs/ArrayLookup.sol";
+import {TagLookup} from "../src/libs/TagLookup.sol";
+
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Transaction, Action} from "../src/Types.sol";
+import {Compliance} from "../src/proving/Compliance.sol";
+import {Logic} from "../src/proving/Logic.sol";
+import {Transaction, Action, ResourceForwarderCalldataPair} from "../src/Types.sol";
 import {Example} from "./mocks/Example.sol";
 
 contract ProtocolAdapterTest is Test {
@@ -81,13 +85,15 @@ contract ProtocolAdapterTest is Test {
     function test_verify_reverts_on_action_with_duplicated_nullifiers() public {
         ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
 
-        Transaction memory txn = Example.transaction();
+        Action[] memory actions = new Action[](1);
+        actions[0] = _actionWithDuplicatedComplianceUnit();
 
-        bytes32 duplicatedNullifier = txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
-        txn.actions[0].complianceVerifierInputs[0].instance.created.commitment = duplicatedNullifier;
+        bytes32 duplicatedNullifier = actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
+
+        Transaction memory txn = Transaction({actions: actions, deltaProof: ""});
 
         vm.expectRevert(
-            abi.encodeWithSelector(ArrayLookup.ElementDuplicated.selector, duplicatedNullifier), address(pa)
+            abi.encodeWithSelector(TagLookup.NullifierDuplicated.selector, duplicatedNullifier), address(pa)
         );
         pa.verify(txn);
     }
@@ -95,13 +101,16 @@ contract ProtocolAdapterTest is Test {
     function test_verify_reverts_on_action_with_duplicated_commitments() public {
         ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
 
-        Transaction memory txn = Example.transaction();
+        Action[] memory actions = new Action[](1);
+        actions[0] = _actionWithDuplicatedComplianceUnit();
 
-        bytes32 duplicatedCommitment = txn.actions[0].complianceVerifierInputs[0].instance.created.commitment;
-        txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier = duplicatedCommitment;
+        bytes32 duplicatedCommitment = actions[0].complianceVerifierInputs[0].instance.created.commitment;
+        actions[0].complianceVerifierInputs[1].instance.consumed.nullifier = keccak256("Not a duplicate");
+
+        Transaction memory txn = Transaction({actions: actions, deltaProof: ""});
 
         vm.expectRevert(
-            abi.encodeWithSelector(ArrayLookup.ElementDuplicated.selector, duplicatedCommitment), address(pa)
+            abi.encodeWithSelector(TagLookup.CommitmentDuplicated.selector, duplicatedCommitment), address(pa)
         );
         pa.verify(txn);
     }
@@ -134,6 +143,24 @@ contract ProtocolAdapterTest is Test {
             riscZeroVerifierRouter: RiscZeroVerifierRouter(_sepoliaVerifierRouter), // Sepolia verifier
             commitmentTreeDepth: uint8(vm.parseUint(vm.readLine(path))),
             actionTagTreeDepth: uint8(vm.parseUint(vm.readLine(path)))
+        });
+    }
+
+    function _actionWithDuplicatedComplianceUnit() internal pure returns (Action memory action) {
+        Compliance.VerifierInput[] memory complianceVerifierInputs = new Compliance.VerifierInput[](2);
+        complianceVerifierInputs[0] = Example.complianceVerifierInput();
+        complianceVerifierInputs[1] = Example.complianceVerifierInput();
+
+        Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](4);
+        logicVerifierInputs[0] = Example.logicVerifierInput({isConsumed: true});
+        logicVerifierInputs[1] = Example.logicVerifierInput({isConsumed: false});
+        logicVerifierInputs[2] = Example.logicVerifierInput({isConsumed: true});
+        logicVerifierInputs[3] = Example.logicVerifierInput({isConsumed: false});
+
+        action = Action({
+            logicVerifierInputs: logicVerifierInputs,
+            complianceVerifierInputs: complianceVerifierInputs,
+            resourceCalldataPairs: new ResourceForwarderCalldataPair[](0)
         });
     }
 }

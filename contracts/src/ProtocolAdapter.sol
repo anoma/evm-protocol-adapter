@@ -7,10 +7,10 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
-import {ArrayLookup} from "./libs/ArrayLookup.sol";
 import {ComputableComponents} from "./libs/ComputableComponents.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
+import {TagLookup} from "./libs/TagLookup.sol";
 
 import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
@@ -26,7 +26,7 @@ import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
 /// @notice The protocol adapter contract verifying and executing resource machine transactions.
 /// @custom:security-contact security@anoma.foundation
 contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, CommitmentAccumulator, NullifierSet {
-    using ArrayLookup for bytes32[];
+    using TagLookup for bytes32[];
     using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
@@ -152,15 +152,15 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
                     bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
-                    // Check that the root exists.
-                    _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
-
                     {
-                        // Check that the nullifier does not exists in the nullifier set.
-                        _checkNullifierNonExistence(nf);
+                        // Check that the root exists.
+                        _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
 
                         // Check that the nullifier does not already exist in the transaction.
-                        tags.checkNonExistence(nf);
+                        tags.checkNullifierNonExistence(nf);
+
+                        // Check that the nullifier does not exists in the nullifier set.
+                        _checkNullifierNonExistence(nf);
 
                         // Add the nullifier to the list of tags
                         // solhint-disable-next-line gas-increment-by-one
@@ -168,8 +168,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     }
 
                     {
-                        // Check that the nullifier does not already exist
-                        tags.checkNonExistence(cm);
+                        // Check that the commitment does not already exist
+                        tags.checkCommitmentNonExistence(cm);
 
                         // Check that the commitment does not exist in the commitment accumulator
                         _checkCommitmentNonExistence(cm);
