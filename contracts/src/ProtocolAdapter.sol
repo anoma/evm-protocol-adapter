@@ -36,9 +36,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     uint256 private _txCount;
 
-    error InvalidRootRef(bytes32 root);
-    error InvalidNullifierRef(bytes32 nullifier);
-    error InvalidCommitmentRef(bytes32 commitment);
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
 
     error ComplianceMismatch(uint256 expected, uint256 actual);
