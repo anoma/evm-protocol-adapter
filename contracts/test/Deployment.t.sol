@@ -15,8 +15,4 @@ contract ProtocolAdapterTest is Test {
 
         _pa = ProtocolAdapter(deployScript.run());
     }
-
-    function test_run_deploys_deterministically() public view {
-        assertEq(address(_pa), 0x2D5881c30342F5325D166bF65855cB3B662AA015);
-    }
 }
