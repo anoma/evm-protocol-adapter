@@ -6,8 +6,6 @@ pragma solidity ^0.8.30;
 /// @notice A library containing utility function to do array lookups.
 /// @custom:security-contact security@anoma.foundation
 library ArrayLookup {
-    error ElementNotFound(bytes32 tag);
-
     /// @notice Returns whether an array contains an element or not.
     /// @param arr The array to check.
     /// @param elem The element to check.
