@@ -77,16 +77,16 @@ contract ProtocolAdapterTest is Test {
         pa.verify(txn);
     }
 
+    // solhint-disable-next-line no-empty-blocks
     function test_tx_with_cu_mismatch_fails() public view {
         // TODO: create a transaction with no compliance units and two trivial resources
         //       in the action
-        true;
     }
 
-    function test_verify_reverts_on_action_with_repeating_nullifiers() public {
+    // solhint-disable-next-line no-empty-blocks
+    function test_verify_reverts_on_action_with_repeating_nullifiers() public view {
         // TODO: create a transaction with repeating actions (specifically nullifier)
         //       and expect it to revert on appropriate error
-        true;
     }
 
     function _sepoliaProtocolAdapter(bool forkBeforeRisc0Vulnerability) internal returns (ProtocolAdapter pa) {
