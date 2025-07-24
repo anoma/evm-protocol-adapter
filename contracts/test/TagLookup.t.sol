@@ -56,4 +56,12 @@ contract TagLookupTest is Test {
         assertEq(_tags.isFoundInEvenOrOddPosition({tag: _tags[0], even: false}), false);
         assertEq(_tags.isFoundInEvenOrOddPosition({tag: _tags[2], even: false}), false);
     }
+
+    function test_isFoundInEvenOrOddPosition_returns_false_if_a_tag_is_non_existent_in_both_even_or_odd_positions()
+        public
+        view
+    {
+        assertEq(_tags.isFoundInEvenOrOddPosition({tag: bytes32(type(uint256).max), even: true}), false);
+        assertEq(_tags.isFoundInEvenOrOddPosition({tag: bytes32(type(uint256).max), even: false}), false);
+    }
 }
