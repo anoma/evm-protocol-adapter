@@ -10,7 +10,7 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 contract ProtocolAdapterTest is Test {
     ProtocolAdapter internal _pa;
 
-    function setUp() public {
+    function test_deploy() public {
         Deploy deployScript = new Deploy();
 
         _pa = ProtocolAdapter(deployScript.run());
