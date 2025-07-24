@@ -6,6 +6,7 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test} from "forge-std/Test.sol";
 
+import {ArrayLookup} from "../src/libs/ArrayLookup.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Transaction, Action} from "../src/Types.sol";
@@ -77,16 +78,38 @@ contract ProtocolAdapterTest is Test {
         pa.verify(txn);
     }
 
+    function test_verify_reverts_on_action_with_duplicated_nullifiers() public {
+        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
+
+        Transaction memory txn = Example.transaction();
+
+        bytes32 duplicatedNullifier = txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
+        txn.actions[0].complianceVerifierInputs[0].instance.created.commitment = duplicatedNullifier;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ArrayLookup.ElementDuplicated.selector, duplicatedNullifier), address(pa)
+        );
+        pa.verify(txn);
+    }
+
+    function test_verify_reverts_on_action_with_duplicated_commitments() public {
+        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
+
+        Transaction memory txn = Example.transaction();
+
+        bytes32 duplicatedCommitment = txn.actions[0].complianceVerifierInputs[0].instance.created.commitment;
+        txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier = duplicatedCommitment;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ArrayLookup.ElementDuplicated.selector, duplicatedCommitment), address(pa)
+        );
+        pa.verify(txn);
+    }
+
     // solhint-disable-next-line no-empty-blocks
     function test_tx_with_cu_mismatch_fails() public view {
         // TODO: create a transaction with no compliance units and two trivial resources
         //       in the action
-    }
-
-    // solhint-disable-next-line no-empty-blocks
-    function test_verify_reverts_on_action_with_repeating_nullifiers() public view {
-        // TODO: create a transaction with repeating actions (specifically nullifier)
-        //       and expect it to revert on appropriate error
     }
 
     function _sepoliaProtocolAdapter(bool forkBeforeRisc0Vulnerability) internal returns (ProtocolAdapter pa) {
