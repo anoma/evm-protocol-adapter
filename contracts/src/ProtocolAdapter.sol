@@ -152,16 +152,32 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
                     bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
-                    // Check that there are no duplicated tags in the action.
-                    tags.checkNonExistence(nf);
-                    tags.checkNonExistence(cm);
-
                     // Check that the root exists.
                     _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
 
-                    // Check that the nullifier and commitments do not exist in the accumulators.
-                    _checkNullifierNonExistence(nf);
-                    _checkCommitmentNonExistence(cm);
+                    {
+                        // Check that the nullifier does not exists in the nullifier set.
+                        _checkNullifierNonExistence(nf);
+
+                        // Check that the nullifier does not already exist in the transaction.
+                        tags.checkNonExistence(nf);
+
+                        // Add the nullifier to the list of tags
+                        // solhint-disable-next-line gas-increment-by-one
+                        tags[resCounter++] = nf;
+                    }
+
+                    {
+                        // Check that the nullifier does not already exist
+                        tags.checkNonExistence(cm);
+
+                        // Check that the commitment does not exist in the commitment accumulator
+                        _checkCommitmentNonExistence(cm);
+
+                        // Add the nullifier to the list of tags
+                        // solhint-disable-next-line gas-increment-by-one
+                        tags[resCounter++] = cm;
+                    }
 
                     // slither-disable-next-line calls-loop
                     _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
@@ -180,8 +196,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                                 actual: complianceVerifierInput.instance.consumed.logicRef
                             });
                         }
-                        // solhint-disable-next-line gas-increment-by-one
-                        tags[resCounter++] = nf;
                     }
                     {
                         Logic.VerifierInput calldata logicVerifierInputs = action.logicVerifierInputs.lookup(cm);
@@ -192,8 +206,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                                 actual: complianceVerifierInput.instance.created.logicRef
                             });
                         }
-                        // solhint-disable-next-line gas-increment-by-one
-                        tags[resCounter++] = cm;
                     }
 
                     // Compute transaction delta
