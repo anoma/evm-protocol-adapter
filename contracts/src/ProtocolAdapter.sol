@@ -76,10 +76,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 Logic.Instance calldata instance = action.logicVerifierInputs[j].instance;
 
                 if (instance.isConsumed) {
-                    _checkNullifierNonExistence(instance.tag);
+                    // Nullifier non-existence was already checked in `_verify(transaction);` at the top.
                     _addNullifierUnchecked(instance.tag);
                 } else {
-                    _checkCommitmentNonExistence(instance.tag);
+                    // Commitment non-existence was already checked in `_verify(transaction);` at the top.
                     newRoot = _addCommitmentUnchecked(instance.tag);
                 }
 
@@ -149,6 +149,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                     // Check consumed resources
                     _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
+                    _checkNullifierNonExistence(complianceVerifierInput.instance.consumed.nullifier);
+
+                    // Check created resources
+                    _checkCommitmentNonExistence(complianceVerifierInput.instance.created.commitment);
 
                     // slither-disable-next-line calls-loop
                     _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
