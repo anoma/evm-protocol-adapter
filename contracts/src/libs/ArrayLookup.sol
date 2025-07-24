@@ -6,6 +6,8 @@ pragma solidity ^0.8.30;
 /// @notice A library containing utility function to do array lookups.
 /// @custom:security-contact security@anoma.foundation
 library ArrayLookup {
+    error ElementDuplicated(bytes32 elem);
+
     /// @notice Returns whether an array contains an element or not.
     /// @param arr The array to check.
     /// @param elem The element to check.
@@ -18,5 +20,14 @@ library ArrayLookup {
             }
         }
         return success = false;
+    }
+
+    /// @notice Checks if an element is non-existent in an array and reverts if it not.
+    /// @param arr The array to check.
+    /// @param elem The element to check non-existence for.
+    function checkNonExistence(bytes32[] memory arr, bytes32 elem) internal pure {
+        if (contains(arr, elem)) {
+            revert ElementDuplicated(elem);
+        }
     }
 }

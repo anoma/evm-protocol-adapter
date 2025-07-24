@@ -7,6 +7,7 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
+import {ArrayLookup} from "./libs/ArrayLookup.sol";
 import {ComputableComponents} from "./libs/ComputableComponents.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
@@ -25,6 +26,7 @@ import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
 /// @notice The protocol adapter contract verifying and executing resource machine transactions.
 /// @custom:security-contact security@anoma.foundation
 contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, CommitmentAccumulator, NullifierSet {
+    using ArrayLookup for bytes32[];
     using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
@@ -147,12 +149,19 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 for (uint256 j = 0; j < nCUs; ++j) {
                     Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
-                    // Check consumed resources
-                    _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
-                    _checkNullifierNonExistence(complianceVerifierInput.instance.consumed.nullifier);
+                    bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
+                    bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
-                    // Check created resources
-                    _checkCommitmentNonExistence(complianceVerifierInput.instance.created.commitment);
+                    // Check that there are no duplicated tags in the action.
+                    tags.checkNonExistence(nf);
+                    tags.checkNonExistence(cm);
+
+                    // Check that the root exists.
+                    _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
+
+                    // Check that the nullifier and commitments do not exist in the accumulators.
+                    _checkNullifierNonExistence(nf);
+                    _checkCommitmentNonExistence(cm);
 
                     // slither-disable-next-line calls-loop
                     _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
@@ -163,7 +172,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                     // Check the logic ref consistency
                     {
-                        bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
                         Logic.VerifierInput calldata logicVerifierInputs = action.logicVerifierInputs.lookup(nf);
 
                         if (complianceVerifierInput.instance.consumed.logicRef != logicVerifierInputs.verifyingKey) {
@@ -176,7 +184,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                         tags[resCounter++] = nf;
                     }
                     {
-                        bytes32 cm = complianceVerifierInput.instance.created.commitment;
                         Logic.VerifierInput calldata logicVerifierInputs = action.logicVerifierInputs.lookup(cm);
 
                         if (complianceVerifierInput.instance.created.logicRef != logicVerifierInputs.verifyingKey) {
