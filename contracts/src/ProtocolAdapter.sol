@@ -40,7 +40,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
 
-    error ComplianceMismatch(uint256 expected, uint256 actual);
+    error ResourceCountMismatch(uint256 expected, uint256 actual);
     error RootMismatch(bytes32 expected, bytes32 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
 
@@ -140,9 +140,15 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         for (uint256 i = 0; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
-            _verifyForwarderCalls(action);
-
             uint256 nCUs = action.complianceVerifierInputs.length;
+            uint256 nResources = action.logicVerifierInputs.length;
+
+            // Check that the resource counts in the action and compliance units match
+            if (nResources != nCUs * 2) {
+                revert ResourceCountMismatch({expected: nResources, actual: nCUs});
+            }
+
+            _verifyForwarderCalls(action);
 
             // Compliance Proofs
             {
@@ -227,14 +233,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
             // Logic Proofs
             {
-                uint256 nResources = action.logicVerifierInputs.length;
-
-                // While there may be repeating nullifiers in compliance units, the
-                // global checks should prevent these from being valid.
-                if (nResources != nCUs * 2) {
-                    revert ComplianceMismatch({expected: nResources, actual: nCUs});
-                }
-
                 bytes32[] memory actionTags = new bytes32[](nResources);
                 for (uint256 j = 0; j < nResources; ++j) {
                     actionTags[j] = action.logicVerifierInputs[j].instance.tag;
