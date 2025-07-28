@@ -97,8 +97,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             }
         }
 
-        // Store the latest root
-        _storeRoot(newRoot);
+        if (newRoot != 0) {
+            // Store the latest root
+            _storeRoot(newRoot);
+        }
     }
     // slither-disable-end reentrancy-no-eth
 
