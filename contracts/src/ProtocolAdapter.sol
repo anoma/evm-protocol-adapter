@@ -89,6 +89,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 for (uint256 k = 0; k < nBlobs; ++k) {
                     emit Blob(instance.appData[k]);
                 }
+
+                if (keccak256(instance.ciphertext) != keccak256("")) {
+                    emit CiphertextSent({prefix: abi.encode("TODO!"), ciphertext: instance.ciphertext});
+                }
             }
 
             uint256 nForwarderCalls = action.resourceCalldataPairs.length;
@@ -118,6 +122,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         if (keccak256(output) != keccak256(call.output)) {
             revert ForwarderCallOutputMismatch({expected: call.output, actual: output});
         }
+
+        emit ForwarderCallExecuted({untrustedForwarder: call.untrustedForwarder, input: call.input, output: call.output});
     }
 
     /// @notice An internal function to verify a transaction.
