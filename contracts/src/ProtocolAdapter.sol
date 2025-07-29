@@ -143,7 +143,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             uint256 nCUs = action.complianceVerifierInputs.length;
             uint256 nResources = action.logicVerifierInputs.length;
 
-            bytes32[] memory actionTags = new bytes32[](nResources);
+            bytes32[] memory actionTreeTags = new bytes32[](nResources);
 
             // Check that the resource counts in the action and compliance units match
             if (nResources != nCUs * 2) {
@@ -173,7 +173,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                         // Add the nullifier to the list of tags
                         // solhint-disable-next-line gas-increment-by-one
                         tags[resCounter++] = nf;
-                        actionTags[2 * j] = nf;
+                        actionTreeTags[2 * j] = nf;
                     }
 
                     {
@@ -186,7 +186,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                         // Add the nullifier to the list of tags
                         // solhint-disable-next-line gas-increment-by-one
                         tags[resCounter++] = cm;
-                        actionTags[(2 * j) + 1] = cm;
+                        actionTreeTags[(2 * j) + 1] = cm;
                     }
 
                     // slither-disable-next-line calls-loop
@@ -230,7 +230,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
             // Logic Proofs
             {
-                bytes32 computedActionTreeRoot = MerkleTree.computeRoot(actionTags, _ACTION_TAG_TREE_DEPTH);
+                bytes32 computedActionTreeRoot = MerkleTree.computeRoot(actionTreeTags, _ACTION_TAG_TREE_DEPTH);
 
                 for (uint256 j = 0; j < nResources; ++j) {
                     Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
