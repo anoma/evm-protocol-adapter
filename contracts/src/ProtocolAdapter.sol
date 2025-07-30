@@ -216,12 +216,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     }
 
                     // Compute transaction delta
-                    transactionDelta = transactionDelta.add(
-                        [
+                    transactionDelta = _addUnitDelta({
+                        transactionDelta: transactionDelta,
+                        unitDelta: [
                             uint256(complianceVerifierInput.instance.unitDeltaX),
                             uint256(complianceVerifierInput.instance.unitDeltaY)
                         ]
-                    );
+                    });
                 }
             }
 
@@ -265,7 +266,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice An internal function verifying a RISC0 logic proof.
     /// @param input The verifier input of the logic proof.
-    /// @dev This function is virtual to allow for it to be overridden, e.g., to use mock proofs with a mock verifier.
+    /// @dev This function is virtual to allow for it to be overridden, e.g., to mock proofs with a mock verifier.
     function _verifyLogicProof(Logic.VerifierInput calldata input) internal view virtual {
         // slither-disable-next-line calls-loop
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
@@ -279,7 +280,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param proof The delta proof.
     /// @param transactionDelta The transaction delta.
     /// @param tags The tags being part of the transaction in the order of appearance in the compliance units.
-    /// @dev This function is virtual to allow for it to be overridden, e.g., to use a mock delta proof.
+    /// @dev This function is virtual to allow for it to be overridden, e.g., to mock proofs.
     function _verifyDeltaProof(
         bytes calldata proof,
         uint256[2] memory transactionDelta, // TODO! Use calldata.
@@ -322,5 +323,19 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 }
             }
         }
+    }
+
+    /// @notice An internal function adding a unit delta to the transactionDelta.
+    /// @param transactionDelta The transaction delta.
+    /// @param unitDelta The unit delta to add.
+    /// @return sum The sum of the transaction delta and the unit delta.
+    /// @dev This function is virtual to allow for it to be overridden, e.g., to mock delta proofs.
+    function _addUnitDelta(uint256[2] memory transactionDelta, uint256[2] memory unitDelta)
+        internal
+        pure
+        virtual
+        returns (uint256[2] memory sum)
+    {
+        sum = transactionDelta.add(unitDelta);
     }
 }

@@ -6,9 +6,9 @@ import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.so
 
 import {Script} from "forge-std/Script.sol";
 
-contract DeployRiscZeroVerifierRouterMock is Script {
-    bytes4 internal constant _MOCK_VERIFIER_SELECTOR = bytes4(0xFFFFFFFF);
+bytes4 constant _MOCK_VERIFIER_SELECTOR = bytes4(0xFFFFFFFF);
 
+contract DeployRiscZeroVerifierRouterMock is Script {
     RiscZeroVerifierRouter internal _router;
     RiscZeroMockVerifier internal _verifier;
 

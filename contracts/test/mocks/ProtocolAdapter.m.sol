@@ -12,6 +12,7 @@ import {Logic} from "../../src/proving/Logic.sol";
 contract ProtocolAdapterMock is ProtocolAdapter {
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
+    using Delta for bytes32[];
 
     constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, uint8 commitmentTreeDepth, uint8 actionTagTreeDepth)
         ProtocolAdapter(riscZeroVerifierRouter, commitmentTreeDepth, actionTagTreeDepth)
@@ -42,14 +43,23 @@ contract ProtocolAdapterMock is ProtocolAdapter {
         pure
         override
     {
-        {
-            transactionDelta;
-            tags;
+        if (transactionDelta[0] != transactionDelta[1]) {
+            revert Delta.DeltaMismatch({expected: address(0), actual: address(0)});
         }
 
-        bool valid = abi.decode(proof, (bool));
-        if (!valid) {
-            revert Delta.DeltaMismatch({expected: address(type(uint160).max), actual: address(0)});
+        if (keccak256(proof) != tags.computeVerifyingKey()) {
+            revert Delta.DeltaMismatch({expected: address(type(uint160).max), actual: address(type(uint160).max)});
+        }
+    }
+
+    function _addUnitDelta(uint256[2] memory transactionDelta, uint256[2] memory unitDelta)
+        internal
+        pure
+        override
+        returns (uint256[2] memory sum)
+    {
+        unchecked {
+            sum = [transactionDelta[0] + unitDelta[0], transactionDelta[1] + unitDelta[1]];
         }
     }
 }

@@ -15,12 +15,28 @@ library ComputableComponents {
         cm = sha256(abi.encode(resource));
     }
 
+    /// @notice Computes the resource commitment.
+    /// @param resource The resource object.
+    /// @return cm The computed commitment.
+    function commitment_(Resource memory resource) internal pure returns (bytes32 cm) {
+        cm = sha256(abi.encode(resource));
+    }
+
     /// @notice Computes the resource nullifier given a nullifier key.
     /// @param resource The resource object.
     /// @param nullifierKey The nullifier key.
     /// @return nf The computed nullifier.
     /// @dev This methods does not check that the nullifier key commitment matches the nullifier key.
     function nullifier(Resource calldata resource, bytes32 nullifierKey) internal pure returns (bytes32 nf) {
+        nf = sha256(abi.encode(resource, nullifierKey));
+    }
+
+    /// @notice Computes the resource nullifier given a nullifier key.
+    /// @param resource The resource object.
+    /// @param nullifierKey The nullifier key.
+    /// @return nf The computed nullifier.
+    /// @dev This methods does not check that the nullifier key commitment matches the nullifier key.
+    function nullifier_(Resource memory resource, bytes32 nullifierKey) internal pure returns (bytes32 nf) {
         nf = sha256(abi.encode(resource, nullifierKey));
     }
 
