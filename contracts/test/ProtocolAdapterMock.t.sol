@@ -37,6 +37,15 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
+    function test_execute_1_txn_with_2_action_with_1_and_0_cus() public {
+        ExampleGen.ActionConfig[] memory configs = new ExampleGen.ActionConfig[](2);
+        configs[0] = ExampleGen.ActionConfig({nCUs: 1});
+        configs[1] = ExampleGen.ActionConfig({nCUs: 0});
+
+        (Transaction memory txn,) = _mockVerifier.transaction(0, configs);
+        _mockPa.execute(txn);
+    }
+
     function test_execute_1_txn_with_n_actions_and_n_cus(uint8 nActions, uint8 nCUs) public {
         ExampleGen.ActionConfig[] memory configs = ExampleGen.generateActionConfigs({
             nActions: uint8(bound(nActions, 0, 5)),
