@@ -32,7 +32,7 @@ bytecode_hash = "none"
 
 solc = "0.8.30"
 auto_detect_solc = false
-evm_version = "cancun"
+evm_version = "prague"
 fuzz = { runs = 1_000 }
 gas_reports = [
     "ProtocolAdapter",
