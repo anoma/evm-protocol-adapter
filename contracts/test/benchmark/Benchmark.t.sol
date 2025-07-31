@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {Transaction} from "../../src/Types.sol";
@@ -135,5 +136,32 @@ contract Benchmark is BenchmarkData {
 
     function test_verify_40() public view {
         _pa.verify(_txns[9]);
+    }
+
+    function test_print_calldata() public view {
+        for (uint256 i = 0; i < _txns.length; ++i) {
+            uint256 nCUs = 0;
+
+            uint256 nActions = _txns[i].actions.length;
+
+            for (uint256 j = 0; j < nActions; ++j) {
+                nCUs += _txns[i].actions[j].complianceVerifierInputs.length;
+            }
+
+            string memory output = string(
+                abi.encodePacked(
+                    "Actions: ",
+                    Strings.toString(nActions),
+                    ", ",
+                    "CUs: ",
+                    Strings.toString(nCUs),
+                    ", ",
+                    "Calldata (bytes): ",
+                    Strings.toString(abi.encode(_txns[i]).length)
+                )
+            );
+
+            console.log(output);
+        }
     }
 }

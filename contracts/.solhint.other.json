@@ -3,7 +3,7 @@
   "rules": {
     "explicit-types": "error",
     "max-states-count": "error",
-    "no-console": "error",
+    "no-console": "off",
     "no-empty-blocks": "error",
     "no-global-import": "error",
     "no-unused-import": "error",
@@ -49,7 +49,7 @@
     "avoid-tx-origin": "error",
     "check-send-result": "error",
     "compiler-version": ["error", "^0.8.24"],
-    "func-visibility": ["error", { "ignoreConstructors": true }],
+    "func-visibility": ["error", {"ignoreConstructors": true}],
 
     "multiple-sends": "error",
     "no-complex-fallback": "error",
