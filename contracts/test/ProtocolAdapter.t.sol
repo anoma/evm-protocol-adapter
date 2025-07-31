@@ -2,6 +2,8 @@
 pragma solidity ^0.8.30;
 
 import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
+
+import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Test} from "forge-std/Test.sol";
@@ -16,47 +18,68 @@ import {Transaction, Action, ResourceForwarderCalldataPair} from "../src/Types.s
 import {Example} from "./mocks/Example.sol";
 
 contract ProtocolAdapterTest is Test {
+    uint256 internal constant _SEPOLIA_EMERGENCY_STOP_TIME = 8577299;
+
     RiscZeroVerifierRouter internal _sepoliaVerifierRouter;
 
-    function setUp() public {
-        // Fork Sepolia
+    function test_constructor_reverts_on_vulnerable_risc_zero_verifier() public {
         vm.selectFork(vm.createFork("sepolia"));
 
         string memory path = "./script/constructor-args.txt";
+        RiscZeroVerifierRouter sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
+        uint8 commitmentTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
+        uint8 actionTagTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
 
-        _sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
+        vm.expectRevert(ProtocolAdapter.RiscZeroVerifierStopped.selector);
+        new ProtocolAdapter({
+            riscZeroVerifierRouter: sepoliaVerifierRouter,
+            commitmentTreeDepth: commitmentTreeDepth,
+            actionTagTreeDepth: actionTagTreeDepth
+        });
+    }
+
+    function test_verify_reverts_on_vulnerable_risc_zero_verifier() public {
+        ProtocolAdapter pa = _vulnerableSepoliaProtocolAdapter();
+        RiscZeroVerifierEmergencyStop riscZeroEmergencyStop =
+            RiscZeroVerifierEmergencyStop(address(_sepoliaVerifierRouter.getVerifier(pa.getRiscZeroVerifierSelector())));
+
+        vm.prank(riscZeroEmergencyStop.owner());
+        riscZeroEmergencyStop.estop();
+
+        vm.expectRevert(Pausable.EnforcedPause.selector, address(riscZeroEmergencyStop));
+        pa.verify(Example.transaction());
+    }
+
+    function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {
+        ProtocolAdapter pa = _vulnerableSepoliaProtocolAdapter();
+        RiscZeroVerifierEmergencyStop riscZeroEmergencyStop =
+            RiscZeroVerifierEmergencyStop(address(_sepoliaVerifierRouter.getVerifier(pa.getRiscZeroVerifierSelector())));
+
+        vm.prank(riscZeroEmergencyStop.owner());
+        riscZeroEmergencyStop.estop();
+
+        vm.expectRevert(Pausable.EnforcedPause.selector, address(riscZeroEmergencyStop));
+        pa.execute(Example.transaction());
     }
 
     function test_execute() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: false});
-
-        address riscZeroEmergencyStop =
-            address(_sepoliaVerifierRouter.getVerifier(bytes4(Example._CONSUMED_LOGIC_PROOF)));
-
-        vm.expectRevert(Pausable.EnforcedPause.selector, riscZeroEmergencyStop);
-
+        ProtocolAdapter pa = _vulnerableSepoliaProtocolAdapter();
         pa.execute(Example.transaction());
     }
 
     function test_execute_empty_tx() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: false});
-
+        ProtocolAdapter pa = _vulnerableSepoliaProtocolAdapter();
         Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
         pa.execute(txn);
     }
 
     function test_verify() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: false});
-
-        address riscZeroEmergencyStop =
-            address(_sepoliaVerifierRouter.getVerifier(bytes4(Example._CONSUMED_LOGIC_PROOF)));
-
-        vm.expectRevert(Pausable.EnforcedPause.selector, riscZeroEmergencyStop);
+        ProtocolAdapter pa = _vulnerableSepoliaProtocolAdapter();
         pa.verify(Example.transaction());
     }
 
     function test_execute_emits_the_Blob_event() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
+        ProtocolAdapter pa = _vulnerableSepoliaProtocolAdapter();
 
         Transaction memory txn = Example.transaction();
         vm.expectEmit(address(pa));
@@ -75,14 +98,14 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_verify_empty_tx() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
+        ProtocolAdapter pa = _vulnerableSepoliaProtocolAdapter();
 
         Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
         pa.verify(txn);
     }
 
     function test_verify_reverts_on_action_with_duplicated_nullifiers() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
+        ProtocolAdapter pa = _vulnerableSepoliaProtocolAdapter();
 
         Action[] memory actions = new Action[](1);
         actions[0] = _actionWithDuplicatedComplianceUnit();
@@ -98,7 +121,7 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_verify_reverts_on_action_with_duplicated_commitments() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
+        ProtocolAdapter pa = _vulnerableSepoliaProtocolAdapter();
 
         Action[] memory actions = new Action[](1);
         actions[0] = _actionWithDuplicatedComplianceUnit();
@@ -120,26 +143,22 @@ contract ProtocolAdapterTest is Test {
         //       in the action
     }
 
-    function _sepoliaProtocolAdapter(bool forkBeforeRisc0Vulnerability) internal returns (ProtocolAdapter pa) {
-        if (forkBeforeRisc0Vulnerability) {
-            /* NOTE:
+    function _vulnerableSepoliaProtocolAdapter() internal returns (ProtocolAdapter pa) {
+        /* NOTE:
              * Here we fork sepolia before emergency stop was called on the `RiscZeroVerifierEmergencyStop` contract for v2.0.0
              * See
              * - https://sepolia.etherscan.io/address/0x8A8023bf44CABa343CEef3b06A4639fc8EBeE629
              * - https://github.com/risc0/risc0/security/advisories/GHSA-g3qg-6746-3mg9
              * for the details.
              */
-            vm.selectFork(vm.createFork("sepolia", 8577299 - 1));
-        } else {
-            vm.selectFork(vm.createFork("sepolia"));
-        }
+        vm.selectFork(vm.createFork("sepolia", _SEPOLIA_EMERGENCY_STOP_TIME - 1));
 
         string memory path = "./script/constructor-args.txt";
 
         _sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
 
         pa = new ProtocolAdapter({
-            riscZeroVerifierRouter: RiscZeroVerifierRouter(_sepoliaVerifierRouter), // Sepolia verifier
+            riscZeroVerifierRouter: _sepoliaVerifierRouter, // Sepolia verifier
             commitmentTreeDepth: uint8(vm.parseUint(vm.readLine(path))),
             actionTagTreeDepth: uint8(vm.parseUint(vm.readLine(path)))
         });
