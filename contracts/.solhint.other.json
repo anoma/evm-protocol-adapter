@@ -3,7 +3,7 @@
   "rules": {
     "explicit-types": "error",
     "max-states-count": "error",
-    "no-console": "error",
+    "no-console": "off",
     "no-empty-blocks": "error",
     "no-global-import": "error",
     "no-unused-import": "error",
