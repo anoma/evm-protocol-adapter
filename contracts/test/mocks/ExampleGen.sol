@@ -105,12 +105,12 @@ library ExampleGen {
             uint256 index = (i * 2);
 
             Resource memory consumed =
-                ExampleGen.mockResource({nonce: updatedNonce++, logicRef: bytes32(i), quantity: nonce, eph: true});
+                ExampleGen.mockResource({nonce: updatedNonce++, logicRef: bytes32(i), quantity: nonce});
             resources[index] = consumed;
             actionTreeTags[index] = consumed.nullifier_({nullifierKey: 0});
 
             Resource memory created =
-                ExampleGen.mockResource({nonce: updatedNonce++, logicRef: bytes32(i), quantity: nonce, eph: true});
+                ExampleGen.mockResource({nonce: updatedNonce++, logicRef: bytes32(i), quantity: nonce});
             resources[index + 1] = created;
             actionTreeTags[index + 1] = created.commitment_();
         }
@@ -194,7 +194,7 @@ library ExampleGen {
         }
     }
 
-    function mockResource(uint256 nonce, bytes32 logicRef, uint256 quantity, bool eph)
+    function mockResource(uint256 nonce, bytes32 logicRef, uint256 quantity)
         internal
         pure
         returns (Resource memory mock)
@@ -207,7 +207,7 @@ library ExampleGen {
             quantity: quantity,
             nonce: nonce,
             randSeed: 0,
-            ephemeral: eph
+            ephemeral: true
         });
     }
 
