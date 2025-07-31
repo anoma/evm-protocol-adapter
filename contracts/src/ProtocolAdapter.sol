@@ -281,11 +281,11 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param transactionDelta The transaction delta.
     /// @param tags The tags being part of the transaction in the order of appearance in the compliance units.
     /// @dev This function is virtual to allow for it to be overridden, e.g., to mock proofs.
-    function _verifyDeltaProof(
-        bytes calldata proof,
-        uint256[2] memory transactionDelta, // TODO! Use calldata.
-        bytes32[] memory tags // TODO! Use calldata.
-    ) internal view virtual {
+    function _verifyDeltaProof(bytes calldata proof, uint256[2] memory transactionDelta, bytes32[] memory tags)
+        internal
+        view
+        virtual
+    {
         Delta.verify({proof: proof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
     }
 
