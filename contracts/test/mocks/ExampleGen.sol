@@ -21,6 +21,8 @@ library ExampleGen {
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
+    error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
+
     struct ActionConfig {
         uint256 nCUs;
     }
@@ -88,31 +90,25 @@ library ExampleGen {
         });
     }
 
-    function createAction(RiscZeroMockVerifier mockVerifier, uint256 nonce, uint256 nCUs)
+    function createAction(RiscZeroMockVerifier mockVerifier, Resource[] memory consumed, Resource[] memory created)
         internal
         view
-        returns (Action memory action, uint256 updatedNonce)
+        returns (Action memory action)
     {
-        updatedNonce = nonce;
+        if (consumed.length != created.length) {
+            revert ConsumedCreatedCountMismatch({nConsumed: consumed.length, nCreated: created.length});
+        }
+        uint256 nCUs = consumed.length;
 
         Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2 * nCUs);
         Compliance.VerifierInput[] memory complianceVerifierInputs = new Compliance.VerifierInput[](nCUs);
 
-        Resource[] memory resources = new Resource[](2 * nCUs);
         bytes32[] memory actionTreeTags = new bytes32[](2 * nCUs);
-
         for (uint256 i = 0; i < nCUs; ++i) {
             uint256 index = (i * 2);
 
-            Resource memory consumed =
-                ExampleGen.mockResource({nonce: updatedNonce++, logicRef: bytes32(i), quantity: nonce});
-            resources[index] = consumed;
-            actionTreeTags[index] = consumed.nullifier_({nullifierKey: 0});
-
-            Resource memory created =
-                ExampleGen.mockResource({nonce: updatedNonce++, logicRef: bytes32(i), quantity: nonce});
-            resources[index + 1] = created;
-            actionTreeTags[index + 1] = created.commitment_();
+            actionTreeTags[index] = consumed[i].nullifier_({nullifierKey: 0});
+            actionTreeTags[index + 1] = created[i].commitment_();
         }
 
         bytes32 actionTreeRoot = MerkleTree.computeRoot(actionTreeTags, 4);
@@ -123,22 +119,22 @@ library ExampleGen {
             logicVerifierInputs[index] = logicVerifierInput({
                 mockVerifier: mockVerifier,
                 actionTreeRoot: actionTreeRoot,
-                resource: resources[index],
+                resource: consumed[i],
                 isConsumed: true
             });
 
             logicVerifierInputs[index + 1] = logicVerifierInput({
                 mockVerifier: mockVerifier,
                 actionTreeRoot: actionTreeRoot,
-                resource: resources[index + 1],
+                resource: created[i],
                 isConsumed: false
             });
 
             complianceVerifierInputs[i] = complianceVerifierInput({
                 mockVerifier: mockVerifier,
                 commitmentTreeRoot: INITIAL_COMMITMENT_TREE_ROOT, // Note: Doesn't really matter since compliance proofs are mocked.
-                consumed: resources[index],
-                created: resources[index + 1]
+                consumed: consumed[i],
+                created: created[i]
             });
         }
 
@@ -151,18 +147,35 @@ library ExampleGen {
         });
     }
 
+    function createAction(RiscZeroMockVerifier mockVerifier, uint256 nonce, uint256 nCUs)
+        internal
+        view
+        returns (Action memory action, uint256 updatedNonce)
+    {
+        updatedNonce = nonce;
+
+        Resource[] memory consumed = new Resource[](nCUs);
+        Resource[] memory created = new Resource[](nCUs);
+
+        for (uint256 i = 0; i < nCUs; ++i) {
+            consumed[i] = ExampleGen.mockResource({nonce: updatedNonce++, logicRef: bytes32(i), quantity: 1 + nonce});
+            created[i] = ExampleGen.mockResource({nonce: updatedNonce++, logicRef: bytes32(i), quantity: 1 + nonce});
+        }
+
+        action = createAction({mockVerifier: mockVerifier, consumed: consumed, created: created});
+    }
+
     function transaction(RiscZeroMockVerifier mockVerifier, uint256 nonce, ActionConfig[] memory configs)
         internal
         view
         returns (Transaction memory txn, uint256 updatedNonce)
     {
-        uint256 nActions = configs.length;
-        Action[] memory actions = new Action[](nActions);
+        Action[] memory actions = new Action[](configs.length);
 
         updatedNonce = nonce;
 
         uint256 counter = 0;
-        for (uint256 i = 0; i < nActions; ++i) {
+        for (uint256 i = 0; i < configs.length; ++i) {
             uint256 nCUs = configs[i].nCUs;
 
             (actions[i], updatedNonce) = createAction({mockVerifier: mockVerifier, nonce: updatedNonce, nCUs: nCUs});
@@ -171,7 +184,7 @@ library ExampleGen {
         bytes32[] memory tags = new bytes32[](updatedNonce - nonce);
         counter = 0;
 
-        for (uint256 i = 0; i < nActions; ++i) {
+        for (uint256 i = 0; i < configs.length; ++i) {
             uint256 nCUs = actions[i].complianceVerifierInputs.length;
 
             for (uint256 j = 0; j < nCUs; ++j) {
