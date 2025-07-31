@@ -200,21 +200,21 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                     // Check the logic ref consistency
                     {
-                        Logic.VerifierInput calldata logicVerifierInputs = action.logicVerifierInputs.lookup(nf);
+                        Logic.VerifierInput calldata logicVerifierInput = action.logicVerifierInputs.lookup(nf);
 
-                        if (complianceVerifierInput.instance.consumed.logicRef != logicVerifierInputs.verifyingKey) {
+                        if (complianceVerifierInput.instance.consumed.logicRef != logicVerifierInput.verifyingKey) {
                             revert LogicRefMismatch({
-                                expected: logicVerifierInputs.verifyingKey,
+                                expected: logicVerifierInput.verifyingKey,
                                 actual: complianceVerifierInput.instance.consumed.logicRef
                             });
                         }
                     }
                     {
-                        Logic.VerifierInput calldata logicVerifierInputs = action.logicVerifierInputs.lookup(cm);
+                        Logic.VerifierInput calldata logicVerifierInput = action.logicVerifierInputs.lookup(cm);
 
-                        if (complianceVerifierInput.instance.created.logicRef != logicVerifierInputs.verifyingKey) {
+                        if (complianceVerifierInput.instance.created.logicRef != logicVerifierInput.verifyingKey) {
                             revert LogicRefMismatch({
-                                expected: logicVerifierInputs.verifyingKey,
+                                expected: logicVerifierInput.verifyingKey,
                                 actual: complianceVerifierInput.instance.created.logicRef
                             });
                         }
