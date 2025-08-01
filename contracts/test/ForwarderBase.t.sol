@@ -16,9 +16,9 @@ import {ForwarderTarget} from "./mocks/ForwarderTarget.m.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract ForwarderBaseTest is Test {
-    address internal constant _EMERGENCY_COMMITTEE = address(uint160(2));
-    address internal constant _EMERGENCY_CALLER = address(uint160(3));
-    address internal constant _UNAUTHORIZED_CALLER = address(uint160(4));
+    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
+    address internal constant _EMERGENCY_CALLER = address(uint160(2));
+    address internal constant _UNAUTHORIZED_CALLER = address(uint160(3));
 
     bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(type(uint256).max);
 
