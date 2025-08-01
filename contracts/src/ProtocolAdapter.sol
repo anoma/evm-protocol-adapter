@@ -191,12 +191,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                         actionTreeTags[(2 * j) + 1] = cm;
                     }
 
-                    // slither-disable-next-line calls-loop
-                    _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                        seal: complianceVerifierInput.proof,
-                        imageId: Compliance._VERIFYING_KEY,
-                        journalDigest: complianceVerifierInput.instance.toJournalDigest()
-                    });
+                    _verifyComplianceProof(complianceVerifierInput);
 
                     // Check the logic ref consistency
                     {
@@ -221,12 +216,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     }
 
                     // Compute transaction delta
-                    transactionDelta = transactionDelta.add(
-                        [
+                    transactionDelta = _addUnitDelta({
+                        transactionDelta: transactionDelta,
+                        unitDelta: [
                             uint256(complianceVerifierInput.instance.unitDeltaX),
                             uint256(complianceVerifierInput.instance.unitDeltaY)
                         ]
-                    );
+                    });
                 }
             }
 
@@ -242,13 +238,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                         revert RootMismatch({expected: computedActionTreeRoot, actual: input.instance.actionTreeRoot});
                     }
 
-                    // Check the compliance proof
-                    // slither-disable-next-line calls-loop
-                    _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                        seal: input.proof,
-                        imageId: input.verifyingKey,
-                        journalDigest: input.instance.toJournalDigest()
-                    });
+                    // Check the logic proof
+                    _verifyLogicProof(input);
                 }
             }
         }
@@ -256,12 +247,46 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // Check whether the transaction is empty
         if (nActions != 0) {
             // Check the delta proof
-            Delta.verify({
-                proof: transaction.deltaProof,
-                instance: transactionDelta,
-                verifyingKey: Delta.computeVerifyingKey(tags)
-            });
+
+            _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
         }
+    }
+
+    /// @notice An internal function verifying a RISC0 compliance proof.
+    /// @param input The verifier input of the compliance proof.
+    /// @dev This function is virtual to allow for it to be overridden, e.g., to use mock proofs with a mock verifier.
+    function _verifyComplianceProof(Compliance.VerifierInput calldata input) internal view virtual {
+        // slither-disable-next-line calls-loop
+        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+            seal: input.proof,
+            imageId: Compliance._VERIFYING_KEY,
+            journalDigest: input.instance.toJournalDigest()
+        });
+    }
+
+    /// @notice An internal function verifying a RISC0 logic proof.
+    /// @param input The verifier input of the logic proof.
+    /// @dev This function is virtual to allow for it to be overridden, e.g., to mock proofs with a mock verifier.
+    function _verifyLogicProof(Logic.VerifierInput calldata input) internal view virtual {
+        // slither-disable-next-line calls-loop
+        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+            seal: input.proof,
+            imageId: input.verifyingKey,
+            journalDigest: input.instance.toJournalDigest()
+        });
+    }
+
+    /// @notice An internal function verifying a delta proof.
+    /// @param proof The delta proof.
+    /// @param transactionDelta The transaction delta.
+    /// @param tags The tags being part of the transaction in the order of appearance in the compliance units.
+    /// @dev This function is virtual to allow for it to be overridden, e.g., to mock proofs.
+    function _verifyDeltaProof(bytes calldata proof, uint256[2] memory transactionDelta, bytes32[] memory tags)
+        internal
+        view
+        virtual
+    {
+        Delta.verify({proof: proof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
     }
 
     /// @notice Verifies the forwarder calls of a given action.
@@ -298,5 +323,19 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 }
             }
         }
+    }
+
+    /// @notice An internal function adding a unit delta to the transactionDelta.
+    /// @param transactionDelta The transaction delta.
+    /// @param unitDelta The unit delta to add.
+    /// @return sum The sum of the transaction delta and the unit delta.
+    /// @dev This function is virtual to allow for it to be overridden, e.g., to mock delta proofs.
+    function _addUnitDelta(uint256[2] memory transactionDelta, uint256[2] memory unitDelta)
+        internal
+        pure
+        virtual
+        returns (uint256[2] memory sum)
+    {
+        sum = transactionDelta.add(unitDelta);
     }
 }
