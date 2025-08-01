@@ -9,6 +9,7 @@ import {Test} from "forge-std/Test.sol";
 import {DeployRiscZeroVerifierRouterMock} from "../script/DeployRiscZeroVerifierRouterMock.s.sol";
 
 import {TagLookup} from "../src/libs/TagLookup.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {CommitmentAccumulator} from "../src/state/CommitmentAccumulator.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {Transaction} from "../src/Types.sol";
@@ -119,6 +120,32 @@ contract ProtocolAdapterMockTest is Test {
         txn.actions[0].complianceVerifierInputs[1].instance.created.commitment = duplicatedCm;
 
         vm.expectRevert(abi.encodeWithSelector(TagLookup.CommitmentDuplicated.selector, duplicatedCm), address(_mockPa));
+        _mockPa.verify(txn);
+    }
+
+    function test_verify_reverts_on_wrong_isConsumed_value_for_consumed_resource() public {
+        (Transaction memory txn,) =
+            _mockVerifier.transaction({nonce: 0, configs: ExampleGen.generateActionConfigs({nActions: 2, nCUs: 2})});
+
+        bool expected = true;
+        txn.actions[1].logicVerifierInputs[0].instance.isConsumed = !expected;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.ResourceLifecycleMismatch.selector, expected), (address(_mockPa))
+        );
+        _mockPa.verify(txn);
+    }
+
+    function test_verify_reverts_on_wrong_isConsumed_value_for_created_resource() public {
+        (Transaction memory txn,) =
+            _mockVerifier.transaction({nonce: 0, configs: ExampleGen.generateActionConfigs({nActions: 2, nCUs: 2})});
+
+        bool expected = false;
+        txn.actions[1].logicVerifierInputs[1].instance.isConsumed = !expected;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.ResourceLifecycleMismatch.selector, expected), (address(_mockPa))
+        );
         _mockPa.verify(txn);
     }
 }
