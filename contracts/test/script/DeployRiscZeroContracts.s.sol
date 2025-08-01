@@ -16,12 +16,10 @@ contract DeployRiscZeroContracts is Script {
             RiscZeroGroth16Verifier groth16Verifier
         )
     {
-        (, address defaultSender,) = vm.readCallers();
-
-        vm.startBroadcast();
+        vm.startBroadcast(msg.sender);
         groth16Verifier = new RiscZeroGroth16Verifier(ControlID.CONTROL_ROOT, ControlID.BN254_CONTROL_ID);
-        emergencyStop = new RiscZeroVerifierEmergencyStop({_verifier: groth16Verifier, guardian: defaultSender});
-        router = new RiscZeroVerifierRouter({admin: defaultSender});
+        emergencyStop = new RiscZeroVerifierEmergencyStop({_verifier: groth16Verifier, guardian: msg.sender});
+        router = new RiscZeroVerifierRouter({admin: msg.sender});
         router.addVerifier({selector: groth16Verifier.SELECTOR(), verifier: emergencyStop});
         vm.stopBroadcast();
     }

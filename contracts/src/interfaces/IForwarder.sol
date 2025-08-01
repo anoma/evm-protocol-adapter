@@ -20,10 +20,14 @@ interface IForwarder {
 
     /// @notice Sets the emergency caller. This function can be only called by the address
     /// set by emergency committee if the RISC Zero emergency stop is active.
-    /// @param emergencyCaller The emergency caller to set.
-    function setEmergencyCaller(address emergencyCaller) external;
+    /// @param newEmergencyCaller The emergency caller to set.
+    function setEmergencyCaller(address newEmergencyCaller) external;
 
     /// @notice Returns the kind of the calldata carrier resource.
     /// @return calldataCarrierKind The calldata carrier kind.
     function calldataCarrierResourceKind() external view returns (bytes32 calldataCarrierKind);
+
+    /// @notice Returns the emergency caller.
+    /// @return caller The emergency caller.
+    function emergencyCaller() external view returns (address caller);
 }

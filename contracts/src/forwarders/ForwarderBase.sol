@@ -25,8 +25,9 @@ abstract contract ForwarderBase is IForwarder {
     address internal _emergencyCaller;
 
     error ZeroNotAllowed();
-    error EmergencyCallerAlreadySet();
-    error EmergencyStopNotActivated();
+    error EmergencyCallerNotSet();
+    error EmergencyCallerAlreadySet(address emergencyCaller);
+    error ProtocolAdapterNotStopped();
     error UnauthorizedCaller(address expected, address actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
@@ -51,13 +52,15 @@ abstract contract ForwarderBase is IForwarder {
     function forwardCall(bytes calldata input) external returns (bytes memory output) {
         _checkCaller(address(_PROTOCOL_ADAPTER));
 
-        // TODO!
-
         output = _forwardCall(input);
     }
 
     /// @inheritdoc IForwarder
     function forwardEmergencyCall(bytes calldata input) external returns (bytes memory output) {
+        if (_emergencyCaller == address(0)) {
+            revert EmergencyCallerNotSet();
+        }
+
         _checkCaller(_emergencyCaller);
 
         _checkEmergencyStopped();
@@ -66,25 +69,30 @@ abstract contract ForwarderBase is IForwarder {
     }
 
     /// @inheritdoc IForwarder
-    function setEmergencyCaller(address emergencyCaller) external {
-        if (_emergencyCaller != address(0)) {
-            revert EmergencyCallerAlreadySet();
-        }
+    function setEmergencyCaller(address newEmergencyCaller) external {
+        _checkCaller(_EMERGENCY_COMMITTEE);
 
-        if (emergencyCaller == address(0)) {
+        if (newEmergencyCaller == address(0)) {
             revert ZeroNotAllowed();
         }
 
-        _checkCaller(_EMERGENCY_COMMITTEE);
+        if (_emergencyCaller != address(0)) {
+            revert EmergencyCallerAlreadySet(_emergencyCaller);
+        }
 
         _checkEmergencyStopped();
 
-        _emergencyCaller = emergencyCaller;
+        _emergencyCaller = newEmergencyCaller;
     }
 
     /// @inheritdoc IForwarder
     function calldataCarrierResourceKind() external view returns (bytes32 kind) {
         kind = _CALLDATA_CARRIER_RESOURCE_KIND;
+    }
+
+    /// @inheritdoc IForwarder
+    function emergencyCaller() external view returns (address caller) {
+        caller = _emergencyCaller;
     }
 
     /// @notice Forwards calls.
@@ -108,7 +116,7 @@ abstract contract ForwarderBase is IForwarder {
     /// @notice Checks that the protocol adapter has been emergency stopped.
     function _checkEmergencyStopped() internal view {
         if (!_PROTOCOL_ADAPTER.isEmergencyStopped()) {
-            revert EmergencyStopNotActivated();
+            revert ProtocolAdapterNotStopped();
         }
     }
 }
