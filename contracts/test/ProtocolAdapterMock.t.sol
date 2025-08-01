@@ -123,7 +123,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.verify(txn);
     }
 
-    function test_verify_reverts_on_wrong_isConsumed_value_for_consumed_resource() public {
+    function test_verify_reverts_on_wrong_isConsumed_value_in_consumed_resource_logic_proof() public {
         (Transaction memory txn,) =
             _mockVerifier.transaction({nonce: 0, configs: ExampleGen.generateActionConfigs({nActions: 2, nCUs: 2})});
 
@@ -136,7 +136,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.verify(txn);
     }
 
-    function test_verify_reverts_on_wrong_isConsumed_value_for_created_resource() public {
+    function test_verify_reverts_on_wrong_isConsumed_value_in_created_resource_logic_proof() public {
         (Transaction memory txn,) =
             _mockVerifier.transaction({nonce: 0, configs: ExampleGen.generateActionConfigs({nActions: 2, nCUs: 2})});
 
