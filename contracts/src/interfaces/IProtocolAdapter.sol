@@ -14,6 +14,15 @@ interface IProtocolAdapter {
     /// @param transaction The executed transaction.
     event TransactionExecuted(uint256 indexed id, Transaction transaction);
 
+    /// @notice Emitted when a forwarder call is executed.
+    /// @param untrustedForwarder The forwarder contract forwarding the call.
+    /// @param input The input data for the forwarded call that might or might not include the `bytes4` function selector.
+    /// @param output The anticipated output data from the forwarded call.
+    event ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, bytes output);
+
+    /// @notice Emitted when a ciphertext is provided.
+    event CiphertextSent(bytes indexed prefix, bytes ciphertext);
+
     /// @notice Emitted if a blob is to be stored by an indexer.
     /// @param expirableBlob The blob to be stored.
     event Blob(Logic.ExpirableBlob indexed expirableBlob);
