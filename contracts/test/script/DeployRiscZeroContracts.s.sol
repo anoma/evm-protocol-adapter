@@ -7,21 +7,22 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Script} from "forge-std/Script.sol";
 
-contract DeployRiscZeroVerifierRouter is Script {
-    function run() public returns (RiscZeroVerifierRouter router, bytes4 selector) {
+contract DeployRiscZeroContracts is Script {
+    function run()
+        public
+        returns (
+            RiscZeroVerifierRouter router,
+            RiscZeroVerifierEmergencyStop emergencyStop,
+            RiscZeroGroth16Verifier groth16Verifier
+        )
+    {
         (, address defaultSender,) = vm.readCallers();
 
         vm.startBroadcast();
-        RiscZeroGroth16Verifier groth16Verifier =
-            new RiscZeroGroth16Verifier(ControlID.CONTROL_ROOT, ControlID.BN254_CONTROL_ID);
-
-        selector = groth16Verifier.SELECTOR();
-
-        RiscZeroVerifierEmergencyStop emergencyStop =
-            new RiscZeroVerifierEmergencyStop({_verifier: groth16Verifier, guardian: defaultSender});
-
+        groth16Verifier = new RiscZeroGroth16Verifier(ControlID.CONTROL_ROOT, ControlID.BN254_CONTROL_ID);
+        emergencyStop = new RiscZeroVerifierEmergencyStop({_verifier: groth16Verifier, guardian: defaultSender});
         router = new RiscZeroVerifierRouter({admin: defaultSender});
-        router.addVerifier({selector: selector, verifier: emergencyStop});
+        router.addVerifier({selector: groth16Verifier.SELECTOR(), verifier: emergencyStop});
         vm.stopBroadcast();
     }
 }
