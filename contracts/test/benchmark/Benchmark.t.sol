@@ -2,10 +2,14 @@
 pragma solidity ^0.8.30;
 
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Test, console} from "forge-std/Test.sol";
 
+import {DeployRiscZeroVerifierRouter} from "../../script/DeployRiscZeroVerifierRouter.s.sol";
+
+import {Parameters} from "../../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {Transaction} from "../../src/Types.sol";
 
@@ -20,8 +24,11 @@ contract BenchmarkData is Test {
 }
 
 contract Benchmark is BenchmarkData {
-    Transaction[10] internal _txns;
+    RiscZeroVerifierRouter internal _router;
+    RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
+
+    Transaction[10] internal _txns;
 
     function setUp() public {
         string[9] memory paths = [
@@ -39,23 +46,17 @@ contract Benchmark is BenchmarkData {
         for (uint256 i = 0; i < paths.length; ++i) {
             _txns[i + 1] = _parse(string.concat("/test/benchmark/", paths[i]));
         }
+        {
+            bytes4 selector;
+            (_router, selector) = (new DeployRiscZeroVerifierRouter()).run();
+            _emergencyStop = RiscZeroVerifierEmergencyStop(address(_router.getVerifier(selector)));
 
-        /* NOTE:
-         * Here we fork sepolia before emergency stop was called on the `RiscZeroVerifierEmergencyStop` contract for v2.0.0 
-         * See 
-         * - https://sepolia.etherscan.io/address/0x8A8023bf44CABa343CEef3b06A4639fc8EBeE629
-         * - https://github.com/risc0/risc0/security/advisories/GHSA-g3qg-6746-3mg9
-         * for the details.
-         */
-        vm.selectFork(vm.createFork("sepolia", 8577299 - 1));
-
-        string memory path = "./script/constructor-args.txt";
-
-        _pa = new ProtocolAdapter({
-            riscZeroVerifierRouter: RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path))), // Sepolia verifier
-            commitmentTreeDepth: uint8(vm.parseUint(vm.readLine(path))),
-            actionTagTreeDepth: uint8(vm.parseUint(vm.readLine(path)))
-        });
+            _pa = new ProtocolAdapter({
+                riscZeroVerifierRouter: _router,
+                commitmentTreeDepth: Parameters.COMMITMENT_TREE_DEPTH,
+                actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
+            });
+        }
     }
 
     function test_execute_00() public {
