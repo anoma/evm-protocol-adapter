@@ -157,7 +157,7 @@ contract Benchmark is BenchmarkData {
                     Strings.toString(nCUs),
                     ", ",
                     "Calldata (bytes): ",
-                    Strings.toString(abi.encode(_txns[i]).length)
+                    Strings.toString(abi.encodeCall(ProtocolAdapter.execute, _txns[i]).length)
                 )
             );
 
