@@ -3,11 +3,12 @@ pragma solidity ^0.8.30;
 
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {BaseScript} from "./Base.s.sol";
+import {Script} from "forge-std/Script.sol";
 
-contract Deploy is BaseScript {
-    function run() public broadcast returns (address protocolAdapter) {
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+
+contract Deploy is Script {
+    function run() public returns (address protocolAdapter) {
         string memory path = "script/constructor-args.txt";
 
         RiscZeroVerifierRouter trustedSepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
@@ -16,6 +17,7 @@ contract Deploy is BaseScript {
 
         uint8 actionTagTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
 
+        vm.startBroadcast();
         protocolAdapter = address(
             new ProtocolAdapter{salt: sha256("ProtocolAdapterDraft")}({
                 riscZeroVerifierRouter: trustedSepoliaVerifierRouter,
@@ -23,5 +25,6 @@ contract Deploy is BaseScript {
                 actionTagTreeDepth: actionTagTreeDepth
             })
         );
+        vm.stopBroadcast();
     }
 }
