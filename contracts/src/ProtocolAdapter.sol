@@ -40,6 +40,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
 
+    error ResourceLifecycleMismatch(bool expected);
     error ResourceCountMismatch(uint256 expected, uint256 actual);
     error RootMismatch(bytes32 expected, bytes32 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
@@ -197,6 +198,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     {
                         Logic.VerifierInput calldata logicVerifierInput = action.logicVerifierInputs.lookup(nf);
 
+                        if (!logicVerifierInput.instance.isConsumed) {
+                            revert ResourceLifecycleMismatch({expected: true});
+                        }
+
                         if (complianceVerifierInput.instance.consumed.logicRef != logicVerifierInput.verifyingKey) {
                             revert LogicRefMismatch({
                                 expected: logicVerifierInput.verifyingKey,
@@ -206,6 +211,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     }
                     {
                         Logic.VerifierInput calldata logicVerifierInput = action.logicVerifierInputs.lookup(cm);
+
+                        if (logicVerifierInput.instance.isConsumed) {
+                            revert ResourceLifecycleMismatch({expected: false});
+                        }
 
                         if (complianceVerifierInput.instance.created.logicRef != logicVerifierInput.verifyingKey) {
                             revert LogicRefMismatch({

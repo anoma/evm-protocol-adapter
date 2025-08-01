@@ -21,8 +21,6 @@ library ExampleGen {
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
-    error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
-
     struct ActionConfig {
         uint256 nCUs;
     }
@@ -32,6 +30,8 @@ library ExampleGen {
         uint256 cuId;
         bool isConsumed;
     }
+
+    error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
 
     function complianceVerifierInput(
         RiscZeroMockVerifier mockVerifier,
