@@ -15,7 +15,7 @@ library Logic {
     /// @notice The instance of the logic proof associated with a specific resource.
     /// @param tag The nullifier or commitment of the resource depending on if the resource is consumed or not.
     /// @param isConsumed Whether the associated resource is consumed or not.
-    /// @param actionTreeRoot The root of the Merkle tree containing all nullifiers and commitments of the action/
+    /// @param actionTreeRoot The root of the Merkle tree containing all nullifiers and commitments of the action.
     /// @param ciphertext Encrypted information for the receiver of the resource that will be emitted as an event.
     /// The ciphertext contains, at least, the resource plaintext and optional other application specific data.
     /// @param appData The application data associated with the resource.
