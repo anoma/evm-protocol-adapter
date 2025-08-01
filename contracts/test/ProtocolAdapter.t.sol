@@ -8,8 +8,6 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test} from "forge-std/Test.sol";
 
-import {DeployRiscZeroVerifierRouter} from "../script/DeployRiscZeroVerifierRouter.s.sol";
-
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {Parameters} from "../src/libs/Parameters.sol";
 import {TagLookup} from "../src/libs/TagLookup.sol";
@@ -20,15 +18,15 @@ import {Logic} from "../src/proving/Logic.sol";
 import {Transaction, Action, ResourceForwarderCalldataPair} from "../src/Types.sol";
 import {Example} from "./mocks/Example.sol";
 
+import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
+
 contract ProtocolAdapterTest is Test {
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
 
     function setUp() public {
-        bytes4 selector;
-        (_router, selector) = (new DeployRiscZeroVerifierRouter()).run();
-        _emergencyStop = RiscZeroVerifierEmergencyStop(address(_router.getVerifier(selector)));
+        (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
 
         _pa = new ProtocolAdapter({
             riscZeroVerifierRouter: _router,

@@ -7,11 +7,11 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test, console} from "forge-std/Test.sol";
 
-import {DeployRiscZeroVerifierRouter} from "../../script/DeployRiscZeroVerifierRouter.s.sol";
-
 import {Parameters} from "../../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {Transaction} from "../../src/Types.sol";
+
+import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
 contract BenchmarkData is Test {
     function _parse(string memory path) internal view returns (Transaction memory txn) {
@@ -47,9 +47,7 @@ contract Benchmark is BenchmarkData {
             _txns[i + 1] = _parse(string.concat("/test/benchmark/", paths[i]));
         }
         {
-            bytes4 selector;
-            (_router, selector) = (new DeployRiscZeroVerifierRouter()).run();
-            _emergencyStop = RiscZeroVerifierEmergencyStop(address(_router.getVerifier(selector)));
+            (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
 
             _pa = new ProtocolAdapter({
                 riscZeroVerifierRouter: _router,
