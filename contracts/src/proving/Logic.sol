@@ -31,8 +31,8 @@ library Logic {
     /// @param proof The logic proof.
     /// @param instance The logic instance to the proof.
     /// @param verifyingKey The logic verifying key (i.e., the hash of the logic function).
-    /// @dev In the future and to achieve function privacy, the logic circuit validity will be proven
-    //  in another circuit and can be hard-coded similar to the compliance proof verifying key.
+    /// @dev In the future, to achieve function privacy, the logic circuit validity will be proven
+    /// in another circuit and can be hard-coded similar to the compliance proof verifying key.
     struct VerifierInput {
         bytes proof;
         Instance instance;

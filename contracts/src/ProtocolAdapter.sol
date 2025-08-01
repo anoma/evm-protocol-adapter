@@ -297,7 +297,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             Resource calldata carrier = action.resourceCalldataPairs[i].carrier;
             ForwarderCalldata calldata call = action.resourceCalldataPairs[i].call;
 
-            // Kind integrity check
+            // Resource kind integrity check
 
             {
                 bytes32 passedKind = carrier.kind();
@@ -310,7 +310,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 }
             }
 
-            // AppData integrity check
+            // Application data integrity check
             {
                 bytes32 expectedAppDataHash = keccak256(abi.encode(call.untrustedForwarder, call.input, call.output));
 
