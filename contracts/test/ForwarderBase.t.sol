@@ -24,7 +24,6 @@ contract ForwarderBaseTest is Test {
 
     uint256 internal constant _INPUT_VALUE = 123;
     uint256 internal constant _OUTPUT_VALUE = _INPUT_VALUE + 1;
-
     bytes internal constant _INPUT = abi.encodeCall(ForwarderTarget.increment, _INPUT_VALUE);
     bytes internal constant _EXPECTED_OUTPUT = abi.encode(_OUTPUT_VALUE);
 
