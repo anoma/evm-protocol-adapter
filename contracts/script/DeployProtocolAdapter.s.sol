@@ -7,7 +7,7 @@ import {Script} from "forge-std/Script.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
-contract Deploy is Script {
+contract DeployProtocolAdapter is Script {
     function run() public returns (address protocolAdapter) {
         string memory path = "script/constructor-args.txt";
 

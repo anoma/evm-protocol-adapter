@@ -2,11 +2,14 @@
 pragma solidity ^0.8.30;
 
 import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
+
+import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Test} from "forge-std/Test.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
+import {Parameters} from "../src/libs/Parameters.sol";
 import {TagLookup} from "../src/libs/TagLookup.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
@@ -15,75 +18,74 @@ import {Logic} from "../src/proving/Logic.sol";
 import {Transaction, Action, ResourceForwarderCalldataPair} from "../src/Types.sol";
 import {Example} from "./mocks/Example.sol";
 
+import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
+
 contract ProtocolAdapterTest is Test {
-    RiscZeroVerifierRouter internal _sepoliaVerifierRouter;
+    RiscZeroVerifierRouter internal _router;
+    RiscZeroVerifierEmergencyStop internal _emergencyStop;
+    ProtocolAdapter internal _pa;
 
     function setUp() public {
-        // Fork Sepolia
-        vm.selectFork(vm.createFork("sepolia"));
+        (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
 
-        string memory path = "./script/constructor-args.txt";
+        _pa = new ProtocolAdapter({
+            riscZeroVerifierRouter: _router,
+            commitmentTreeDepth: Parameters.COMMITMENT_TREE_DEPTH,
+            actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
+        });
+    }
 
-        _sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
+    function test_constructor_reverts_on_vulnerable_risc_zero_verifier() public {
+        vm.prank(_emergencyStop.owner());
+        _emergencyStop.estop();
+
+        vm.expectRevert(ProtocolAdapter.RiscZeroVerifierStopped.selector);
+        new ProtocolAdapter({riscZeroVerifierRouter: _router, commitmentTreeDepth: 32, actionTagTreeDepth: 4});
+    }
+
+    function test_verify_reverts_on_vulnerable_risc_zero_verifier() public {
+        vm.prank(_emergencyStop.owner());
+        _emergencyStop.estop();
+
+        vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
+        _pa.verify(Example.transaction());
+    }
+
+    function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {
+        vm.prank(_emergencyStop.owner());
+        _emergencyStop.estop();
+
+        vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
+        _pa.execute(Example.transaction());
     }
 
     function test_execute() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: false});
-
-        address riscZeroEmergencyStop =
-            address(_sepoliaVerifierRouter.getVerifier(bytes4(Example._CONSUMED_LOGIC_PROOF)));
-
-        vm.expectRevert(Pausable.EnforcedPause.selector, riscZeroEmergencyStop);
-
-        pa.execute(Example.transaction());
+        _pa.execute(Example.transaction());
     }
 
     function test_execute_empty_tx() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: false});
-
         Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
-        pa.execute(txn);
-    }
-
-    function test_verify() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: false});
-
-        address riscZeroEmergencyStop =
-            address(_sepoliaVerifierRouter.getVerifier(bytes4(Example._CONSUMED_LOGIC_PROOF)));
-
-        vm.expectRevert(Pausable.EnforcedPause.selector, riscZeroEmergencyStop);
-        pa.verify(Example.transaction());
+        _pa.execute(txn);
     }
 
     function test_execute_emits_the_Blob_event() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
-
         Transaction memory txn = Example.transaction();
-        vm.expectEmit(address(pa));
+        vm.expectEmit(address(_pa));
         emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[0].instance.appData[0]);
 
-        vm.expectEmit(address(pa));
+        vm.expectEmit(address(_pa));
         emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[0].instance.appData[1]);
 
-        vm.expectEmit(address(pa));
+        vm.expectEmit(address(_pa));
         emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[1].instance.appData[0]);
 
-        vm.expectEmit(address(pa));
+        vm.expectEmit(address(_pa));
         emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[1].instance.appData[1]);
 
-        pa.execute(txn);
-    }
-
-    function test_verify_empty_tx() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
-
-        Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
-        pa.verify(txn);
+        _pa.execute(txn);
     }
 
     function test_verify_reverts_on_action_with_duplicated_nullifiers() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
-
         Action[] memory actions = new Action[](1);
         actions[0] = _actionWithDuplicatedComplianceUnit();
 
@@ -92,14 +94,12 @@ contract ProtocolAdapterTest is Test {
         Transaction memory txn = Transaction({actions: actions, deltaProof: ""});
 
         vm.expectRevert(
-            abi.encodeWithSelector(TagLookup.NullifierDuplicated.selector, duplicatedNullifier), address(pa)
+            abi.encodeWithSelector(TagLookup.NullifierDuplicated.selector, duplicatedNullifier), address(_pa)
         );
-        pa.verify(txn);
+        _pa.verify(txn);
     }
 
     function test_verify_reverts_on_action_with_duplicated_commitments() public {
-        ProtocolAdapter pa = _sepoliaProtocolAdapter({forkBeforeRisc0Vulnerability: true});
-
         Action[] memory actions = new Action[](1);
         actions[0] = _actionWithDuplicatedComplianceUnit();
 
@@ -109,40 +109,24 @@ contract ProtocolAdapterTest is Test {
         Transaction memory txn = Transaction({actions: actions, deltaProof: ""});
 
         vm.expectRevert(
-            abi.encodeWithSelector(TagLookup.CommitmentDuplicated.selector, duplicatedCommitment), address(pa)
+            abi.encodeWithSelector(TagLookup.CommitmentDuplicated.selector, duplicatedCommitment), address(_pa)
         );
-        pa.verify(txn);
+        _pa.verify(txn);
+    }
+
+    function test_verify_empty_tx() public view {
+        Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
+        _pa.verify(txn);
+    }
+
+    function test_verify() public view {
+        _pa.verify(Example.transaction());
     }
 
     // solhint-disable-next-line no-empty-blocks
     function test_tx_with_cu_mismatch_fails() public view {
         // TODO: create a transaction with no compliance units and two trivial resources
         //       in the action
-    }
-
-    function _sepoliaProtocolAdapter(bool forkBeforeRisc0Vulnerability) internal returns (ProtocolAdapter pa) {
-        if (forkBeforeRisc0Vulnerability) {
-            /* NOTE:
-             * Here we fork sepolia before emergency stop was called on the `RiscZeroVerifierEmergencyStop` contract for v2.0.0
-             * See
-             * - https://sepolia.etherscan.io/address/0x8A8023bf44CABa343CEef3b06A4639fc8EBeE629
-             * - https://github.com/risc0/risc0/security/advisories/GHSA-g3qg-6746-3mg9
-             * for the details.
-             */
-            vm.selectFork(vm.createFork("sepolia", 8577299 - 1));
-        } else {
-            vm.selectFork(vm.createFork("sepolia"));
-        }
-
-        string memory path = "./script/constructor-args.txt";
-
-        _sepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
-
-        pa = new ProtocolAdapter({
-            riscZeroVerifierRouter: RiscZeroVerifierRouter(_sepoliaVerifierRouter), // Sepolia verifier
-            commitmentTreeDepth: uint8(vm.parseUint(vm.readLine(path))),
-            actionTagTreeDepth: uint8(vm.parseUint(vm.readLine(path)))
-        });
     }
 
     function _actionWithDuplicatedComplianceUnit() internal pure returns (Action memory action) {
