@@ -14,6 +14,12 @@ interface IProtocolAdapter {
     /// @param newRoot The new commitment tree root.
     event TransactionExecuted(uint256 indexed id, Transaction transaction, bytes32 newRoot);
 
+    /// @notice Emitted when a forwarder call is executed.
+    /// @param untrustedForwarder The forwarder contract forwarding the call.
+    /// @param input The input data for the forwarded call.
+    /// @param output The expected output data from the forwarded call.
+    event ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, bytes output);
+
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
     /// @param transaction The transaction to execute.
