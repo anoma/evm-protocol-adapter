@@ -1,29 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ControlID, RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
 import {Script} from "forge-std/Script.sol";
 
-contract DeployRiscZeroContracts is Script {
+bytes4 constant _MOCK_VERIFIER_SELECTOR = bytes4(0xFFFFFFFF);
+
+contract DeployRiscZeroContractsMock is Script {
     function run()
         public
         returns (
             RiscZeroVerifierRouter router,
             RiscZeroVerifierEmergencyStop emergencyStop,
-            RiscZeroGroth16Verifier groth16Verifier
+            RiscZeroMockVerifier mockVerifier
         )
     {
         vm.startBroadcast(msg.sender);
 
-        groth16Verifier = new RiscZeroGroth16Verifier(ControlID.CONTROL_ROOT, ControlID.BN254_CONTROL_ID);
+        mockVerifier = new RiscZeroMockVerifier(_MOCK_VERIFIER_SELECTOR);
 
-        emergencyStop = new RiscZeroVerifierEmergencyStop({_verifier: groth16Verifier, guardian: msg.sender});
+        emergencyStop = new RiscZeroVerifierEmergencyStop({_verifier: mockVerifier, guardian: msg.sender});
 
         router = new RiscZeroVerifierRouter({admin: msg.sender});
-        router.addVerifier({selector: groth16Verifier.SELECTOR(), verifier: emergencyStop});
+        router.addVerifier({selector: mockVerifier.SELECTOR(), verifier: emergencyStop});
 
         vm.stopBroadcast();
     }

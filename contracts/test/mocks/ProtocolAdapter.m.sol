@@ -9,6 +9,8 @@ import {Compliance} from "../../src/proving/Compliance.sol";
 import {Delta} from "../../src/proving/Delta.sol";
 import {Logic} from "../../src/proving/Logic.sol";
 
+import {_MOCK_VERIFIER_SELECTOR} from "../script/DeployRiscZeroContractsMock.s.sol";
+
 contract ProtocolAdapterMock is ProtocolAdapter {
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
@@ -20,6 +22,10 @@ contract ProtocolAdapterMock is ProtocolAdapter {
 
     function actionTreeDepth() external view returns (uint8 depth) {
         depth = _ACTION_TAG_TREE_DEPTH;
+    }
+
+    function getRiscZeroVerifierSelector() public pure override returns (bytes4 verifierSelector) {
+        verifierSelector = _MOCK_VERIFIER_SELECTOR;
     }
 
     function _verifyComplianceProof(Compliance.VerifierInput calldata input) internal view override {

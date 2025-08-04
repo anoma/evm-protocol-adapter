@@ -34,8 +34,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
-    bytes4 internal constant _RISC_ZERO_GROTH16_VERIFIER_SELECTOR = 0x9f39696c;
-
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
     uint8 internal immutable _ACTION_TAG_TREE_DEPTH;
 
@@ -120,15 +118,15 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     }
 
     /// @inheritdoc IProtocolAdapter
-    function getRiscZeroVerifierSelector() external pure override returns (bytes4 verifierSelector) {
-        verifierSelector = _RISC_ZERO_GROTH16_VERIFIER_SELECTOR;
+    function isEmergencyStopped() public view override returns (bool isStopped) {
+        isStopped = RiscZeroVerifierEmergencyStop(
+            address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))
+        ).paused();
     }
 
     /// @inheritdoc IProtocolAdapter
-    function isEmergencyStopped() public view override returns (bool isStopped) {
-        isStopped = RiscZeroVerifierEmergencyStop(
-            address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(_RISC_ZERO_GROTH16_VERIFIER_SELECTOR))
-        ).paused();
+    function getRiscZeroVerifierSelector() public pure virtual override returns (bytes4 verifierSelector) {
+        verifierSelector = 0x9f39696c;
     }
 
     /// @notice Executes a call to a forwarder contracts.
