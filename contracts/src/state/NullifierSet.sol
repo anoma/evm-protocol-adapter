@@ -18,6 +18,21 @@ contract NullifierSet is INullifierSet {
 
     error PreExistingNullifier(bytes32 nullifier);
 
+    /// @inheritdoc INullifierSet
+    function contains(bytes32 nullifier) external view override returns (bool isContained) {
+        isContained = _nullifierSet.contains(nullifier);
+    }
+
+    /// @inheritdoc INullifierSet
+    function length() external view override returns (uint256 len) {
+        len = _nullifierSet.length();
+    }
+
+    /// @inheritdoc INullifierSet
+    function at(uint256 index) external view override returns (bytes32 nullifier) {
+        nullifier = _nullifierSet.at(index);
+    }
+
     /// @notice Adds a nullifier to to the set, if it does not exist already.
     /// @param nullifier The nullifier to add.
     function _addNullifier(bytes32 nullifier) internal {
