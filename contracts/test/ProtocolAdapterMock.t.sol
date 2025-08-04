@@ -6,8 +6,6 @@ import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.so
 
 import {Test} from "forge-std/Test.sol";
 
-import {DeployRiscZeroVerifierRouterMock} from "../script/DeployRiscZeroVerifierRouterMock.s.sol";
-
 import {TagLookup} from "../src/libs/TagLookup.sol";
 import {CommitmentAccumulator} from "../src/state/CommitmentAccumulator.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
@@ -15,6 +13,7 @@ import {Transaction} from "../src/Types.sol";
 
 import {ExampleGen} from "./mocks/ExampleGen.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
+import {DeployRiscZeroVerifierRouterMock} from "./script/DeployRiscZeroVerifierRouterMock.s.sol";
 
 contract ProtocolAdapterMockTest is Test {
     using ExampleGen for RiscZeroMockVerifier;
