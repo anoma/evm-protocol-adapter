@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Logic} from "../proving/Logic.sol";
 import {Transaction} from "../Types.sol";
 
 /// @title IProtocolAdapter
@@ -12,11 +11,8 @@ interface IProtocolAdapter {
     /// @notice Emitted when a transaction is executed.
     /// @param id The transaction ID.
     /// @param transaction The executed transaction.
-    event TransactionExecuted(uint256 indexed id, Transaction transaction);
-
-    /// @notice Emitted if a blob is to be stored by an indexer.
-    /// @param expirableBlob The blob to be stored.
-    event Blob(Logic.ExpirableBlob indexed expirableBlob);
+    /// @param newRoot The new commitment tree root.
+    event TransactionExecuted(uint256 indexed id, Transaction transaction, bytes32 newRoot);
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.

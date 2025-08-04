@@ -8,7 +8,6 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test} from "forge-std/Test.sol";
 
-import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {Parameters} from "../src/libs/Parameters.sol";
 import {TagLookup} from "../src/libs/TagLookup.sol";
 
@@ -65,23 +64,6 @@ contract ProtocolAdapterTest is Test {
 
     function test_execute_empty_tx() public {
         Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
-        _pa.execute(txn);
-    }
-
-    function test_execute_emits_the_Blob_event() public {
-        Transaction memory txn = Example.transaction();
-        vm.expectEmit(address(_pa));
-        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[0].instance.appData[0]);
-
-        vm.expectEmit(address(_pa));
-        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[0].instance.appData[1]);
-
-        vm.expectEmit(address(_pa));
-        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[1].instance.appData[0]);
-
-        vm.expectEmit(address(_pa));
-        emit IProtocolAdapter.Blob(txn.actions[0].logicVerifierInputs[1].instance.appData[1]);
-
         _pa.execute(txn);
     }
 

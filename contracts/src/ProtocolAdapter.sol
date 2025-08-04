@@ -73,8 +73,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     function execute(Transaction calldata transaction) external override nonReentrant {
         _verify(transaction);
 
-        emit TransactionExecuted({id: ++_txCount, transaction: transaction});
-
         bytes32 newRoot = 0;
 
         uint256 nActions = transaction.actions.length;
@@ -90,11 +88,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 } else {
                     newRoot = _addCommitment(instance.tag);
                 }
-
-                uint256 nBlobs = instance.appData.length;
-                for (uint256 k = 0; k < nBlobs; ++k) {
-                    emit Blob(instance.appData[k]);
-                }
             }
 
             uint256 nForwarderCalls = action.resourceCalldataPairs.length;
@@ -107,6 +100,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             // Store the latest root
             _storeRoot(newRoot);
         }
+
+        // slither-disable-next-line reentrancy-benign
+        emit TransactionExecuted({id: ++_txCount, transaction: transaction, newRoot: newRoot});
     }
     // slither-disable-end reentrancy-no-eth
 
