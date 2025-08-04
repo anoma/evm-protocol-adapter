@@ -3,13 +3,13 @@ pragma solidity ^0.8.30;
 
 import {Address} from "@openzeppelin-contracts/utils/Address.sol";
 
-import {ForwarderBase} from "./ForwarderBase.sol";
+import {EmergencyMigratableForwarderBase} from "./EmergencyMigratableForwarderBase.sol";
 
 /// @title ERC20Forwarder
 /// @author Anoma Foundation, 2025
 /// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources.
 /// @custom:security-contact security@anoma.foundation
-contract ERC20Forwarder is ForwarderBase {
+contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     using Address for address;
 
     /// @notice The ERC-20 token contract address to forward calls to.
@@ -17,12 +17,12 @@ contract ERC20Forwarder is ForwarderBase {
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
+    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
-    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     /// @param erc20 The ERC-20 token contract to forward calls to.
-    constructor(address protocolAdapter, address emergencyCommittee, bytes32 calldataCarrierLogicRef, address erc20)
-        ForwarderBase(protocolAdapter, emergencyCommittee, calldataCarrierLogicRef)
+    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef, address emergencyCommittee, address erc20)
+        EmergencyMigratableForwarderBase(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee)
     {
         if (erc20 == address(0)) {
             revert ZeroNotAllowed();

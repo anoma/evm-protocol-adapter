@@ -3,10 +3,11 @@ pragma solidity ^0.8.30;
 
 import {Address} from "@openzeppelin-contracts/utils/Address.sol";
 
-import {ForwarderBase} from "../../src/forwarders/ForwarderBase.sol";
+import {EmergencyMigratableForwarderBase} from "../../src/forwarders/EmergencyMigratableForwarderBase.sol";
+
 import {ForwarderTarget} from "./ForwarderTarget.m.sol";
 
-contract ForwarderMock is ForwarderBase {
+contract EmergencyMigratableForwarderMock is EmergencyMigratableForwarderBase {
     using Address for address;
 
     address public immutable TARGET;
@@ -14,8 +15,8 @@ contract ForwarderMock is ForwarderBase {
     event CallForwarded(bytes input, bytes output);
     event EmergencyCallForwarded(bytes input, bytes output);
 
-    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef)
-        ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
+    constructor(address protocolAdapter, address emergencyCommittee, bytes32 calldataCarrierLogicRef)
+        EmergencyMigratableForwarderBase(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee)
     {
         TARGET = address(new ForwarderTarget());
     }
@@ -24,5 +25,11 @@ contract ForwarderMock is ForwarderBase {
         output = TARGET.functionCall(input);
 
         emit CallForwarded({input: input, output: output});
+    }
+
+    function _forwardEmergencyCall(bytes calldata input) internal override returns (bytes memory output) {
+        output = TARGET.functionCall(input);
+
+        emit EmergencyCallForwarded({input: input, output: output});
     }
 }
