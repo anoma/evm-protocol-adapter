@@ -29,21 +29,6 @@ contract NullifierSetTest is Test {
         _nfSet.addNullifier(_EXAMPLE_NF);
     }
 
-    function test_addNullifierUnchecked_adds_nullifier() public {
-        _nfSet.addNullifierUnchecked(_EXAMPLE_NF);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _EXAMPLE_NF), address(_nfSet)
-        );
-        _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
-    }
-
-    function test_addNullifierUnchecked_does_not_revert_on_duplicate() public {
-        _nfSet.addNullifierUnchecked(_EXAMPLE_NF);
-
-        _nfSet.addNullifierUnchecked(_EXAMPLE_NF);
-    }
-
     function test_checkNullifierNonExistence_reverts_on_existent_nullifier() public {
         _nfSet.addNullifier(_EXAMPLE_NF);
 

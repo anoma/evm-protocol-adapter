@@ -8,10 +8,6 @@ contract NullifierSetMock is NullifierSet {
         _addNullifier(nullifier);
     }
 
-    function addNullifierUnchecked(bytes32 nullifier) external {
-        _addNullifierUnchecked(nullifier);
-    }
-
     function checkNullifierNonExistence(bytes32 nullifier) external view {
         _checkNullifierNonExistence(nullifier);
     }

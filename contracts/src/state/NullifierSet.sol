@@ -18,7 +18,6 @@ contract NullifierSet is INullifierSet {
 
     error PreExistingNullifier(bytes32 nullifier);
 
-    // slither-disable-start dead-code
     /// @notice Adds a nullifier to to the set, if it does not exist already.
     /// @param nullifier The nullifier to add.
     function _addNullifier(bytes32 nullifier) internal {
@@ -26,16 +25,6 @@ contract NullifierSet is INullifierSet {
         if (!success) {
             revert PreExistingNullifier(nullifier);
         }
-        emit NullifierAdded({nullifier: nullifier, index: _nullifierSet.length() - 1});
-    }
-    // slither-disable-end dead-code
-
-    /// @notice Adds a nullifier to the set without checking if it exists already.
-    /// @param nullifier The nullifier to add.
-    function _addNullifierUnchecked(bytes32 nullifier) internal {
-        // slither-disable-next-line unused-return
-        _nullifierSet.add(nullifier);
-
         emit NullifierAdded({nullifier: nullifier, index: _nullifierSet.length() - 1});
     }
 
