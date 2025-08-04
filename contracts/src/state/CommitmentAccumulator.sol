@@ -74,26 +74,18 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         (siblings, directionBits) = _merkleProof(commitment);
     }
 
-    /// @notice Adds a commitment to the accumulator without checking if it exists already and returns the new root.
+    /// @notice Adds a commitment to to the set, if it does not exist already and returns the new root.
     /// @param commitment The commitment to add.
     /// @return newRoot The resulting new root.
-    function _addCommitmentUnchecked(bytes32 commitment) internal returns (bytes32 newRoot) {
+    function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
+        _checkCommitmentNonExistence(commitment);
+
         uint256 index;
         (index, newRoot) = _merkleTree.push(commitment);
         _indices[commitment] = index + _COMMITMENT_INDEX_OFFSET; // Add 1 to use 0 as a sentinel value
 
         emit CommitmentAdded({commitment: commitment, index: index});
     }
-
-    // slither-disable-start dead-code
-    /// @notice Adds a commitment to to the set, if it does not exist already and returns the new root.
-    /// @param commitment The commitment to add.
-    /// @return newRoot The resulting new root.
-    function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
-        _checkCommitmentNonExistence(commitment);
-        newRoot = _addCommitmentUnchecked(commitment);
-    }
-    // slither-disable-end dead-code
 
     /// @notice Stores a root in the set of historical roots.
     /// @param root The root to store.

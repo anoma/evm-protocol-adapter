@@ -16,10 +16,6 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
         newRoot = _addCommitment(commitment);
     }
 
-    function addCommitmentUnchecked(bytes32 commitment) external returns (bytes32 newRoot) {
-        newRoot = _addCommitmentUnchecked(commitment);
-    }
-
     function storeRoot(bytes32 root) external {
         _storeRoot(root);
     }

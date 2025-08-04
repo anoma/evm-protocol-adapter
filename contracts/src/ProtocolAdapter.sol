@@ -79,11 +79,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 Logic.Instance calldata instance = action.logicVerifierInputs[j].instance;
 
                 if (instance.isConsumed) {
-                    // Nullifier non-existence was already checked in `_verify(transaction);` at the top.
-                    _addNullifierUnchecked(instance.tag);
+                    _addNullifier(instance.tag);
                 } else {
-                    // Commitment non-existence was already checked in `_verify(transaction);` at the top.
-                    newRoot = _addCommitmentUnchecked(instance.tag);
+                    newRoot = _addCommitment(instance.tag);
                 }
 
                 uint256 nBlobs = instance.appData.length;
