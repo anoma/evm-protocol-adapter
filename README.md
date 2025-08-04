@@ -65,6 +65,44 @@ Run
 forge test
 ```
 
+#### Linting & Static Analysis
+
+As a pre-requisite, install `solhint` with
+
+```sh
+bun install solhint
+```
+
+or
+
+```sh
+bun install solhint
+```
+
+and `slither`
+
+via
+
+```sh
+python3 -m pip install slither-analyzer
+```
+
+Run the linter and analysis with
+
+```sh
+bunx --bun solhint --config .solhint.json 'src/**/*.sol' && \
+bunx --bun solhint --config .solhint.other.json 'script/**/*.sol' 'test/**/*.sol' && \
+slither .
+```
+
+or
+
+```sh
+npx solhint --config .solhint.json 'src/**/*.sol' && \
+npx solhint --config .solhint.other.json 'script/**/*.sol' 'test/**/*.sol' && \
+slither .
+```
+
 #### Deployment
 
 To simulate deployment on sepolia, run
