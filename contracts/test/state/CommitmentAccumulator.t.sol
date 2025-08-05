@@ -7,12 +7,12 @@ import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
 import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
 
-import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulatorMock.sol";
-import {MockTree} from "../mocks/MockTree.sol";
+import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
+import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulator.m.sol";
 
 bytes32 constant INITIAL_COMMITMENT_TREE_ROOT = 0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3;
 
-contract CommitmentAccumulatorTest is Test, MockTree {
+contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
     using MerkleTree for bytes32[];
 
     CommitmentAccumulatorMock internal _cmAcc;

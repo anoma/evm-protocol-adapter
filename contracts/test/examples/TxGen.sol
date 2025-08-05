@@ -14,7 +14,7 @@ import {Delta} from "../../src/proving/Delta.sol";
 import {Logic} from "../../src/proving/Logic.sol";
 import {Transaction, ResourceForwarderCalldataPair, Action, Resource} from "../../src/Types.sol";
 
-library ExampleGen {
+library TxGen {
     using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
@@ -168,7 +168,7 @@ library ExampleGen {
 
         for (uint256 i = 0; i < nCUs; ++i) {
             consumed[i] = ResourceAndAppData({
-                resource: ExampleGen.mockResource({
+                resource: TxGen.mockResource({
                     nonce: updatedNonce++,
                     logicRef: bytes32(i),
                     labelRef: bytes32(i),
@@ -177,7 +177,7 @@ library ExampleGen {
                 appData: expirableBlobs()
             });
             created[i] = ResourceAndAppData({
-                resource: ExampleGen.mockResource({
+                resource: TxGen.mockResource({
                     nonce: updatedNonce++,
                     logicRef: bytes32(i),
                     labelRef: bytes32(i),
@@ -246,9 +246,9 @@ library ExampleGen {
         pure
         returns (ActionConfig[] memory configs)
     {
-        configs = new ExampleGen.ActionConfig[](nActions);
+        configs = new TxGen.ActionConfig[](nActions);
         for (uint256 i = 0; i < nActions; ++i) {
-            configs[i] = ExampleGen.ActionConfig({nCUs: nCUs});
+            configs[i] = TxGen.ActionConfig({nCUs: nCUs});
         }
     }
 

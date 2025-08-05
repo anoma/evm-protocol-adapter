@@ -4,9 +4,9 @@ pragma solidity ^0.8.30;
 import {Test} from "forge-std/Test.sol";
 
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
-import {MockTree} from "../mocks/MockTree.sol";
+import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
 
-contract MerkleTreeTest is Test, MockTree {
+contract MerkleTreeTest is Test, MerkleTreeExample {
     using MerkleTree for MerkleTree.Tree;
     using MerkleTree for bytes32[];
 

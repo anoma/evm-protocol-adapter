@@ -7,7 +7,7 @@ import {Transaction, ResourceForwarderCalldataPair, Action} from "../../src/Type
 
 import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
 
-library Example {
+library TransactionExample {
     bytes32 internal constant _CONSUMED_NULLIFIER = 0x155d957de29e96a50517f3c033e1c618e697795e6853a5dc18ce684289d25497;
     bytes32 internal constant _CREATED_COMMITMENT = 0x9c590db144abb0434267475ac46554bc71377b1e678a6ce7dd86c8559b97cf1c;
     bytes32 internal constant _ACTION_TREE_ROOT = 0x190745ccc5568e6501a640df6f543b178b1bd4a058b6e7fea993e6697459e2d8;

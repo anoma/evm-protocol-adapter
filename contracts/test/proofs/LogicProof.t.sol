@@ -8,7 +8,7 @@ import {Test} from "forge-std/Test.sol";
 
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {Logic} from "../../src/proving/Logic.sol";
-import {Example} from "../mocks/Example.sol";
+import {TransactionExample} from "../examples/Transaction.e.sol";
 
 contract LogicProofTest is Test {
     using RiscZeroUtils for Logic.Instance;
@@ -25,7 +25,7 @@ contract LogicProofTest is Test {
     }
 
     function test_verify_example_logic_proof_consumed() public {
-        Logic.VerifierInput memory input = Example.logicVerifierInput({isConsumed: true});
+        Logic.VerifierInput memory input = TransactionExample.logicVerifierInput({isConsumed: true});
 
         bytes32 journalDigest = input.instance.toJournalDigest();
 
@@ -37,7 +37,7 @@ contract LogicProofTest is Test {
     }
 
     function test_verify_example_logic_proof_created() public {
-        Logic.VerifierInput memory input = Example.logicVerifierInput({isConsumed: false});
+        Logic.VerifierInput memory input = TransactionExample.logicVerifierInput({isConsumed: false});
 
         bytes32 journalDigest = input.instance.toJournalDigest();
 

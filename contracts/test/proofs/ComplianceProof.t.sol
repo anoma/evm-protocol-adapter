@@ -7,7 +7,7 @@ import {Test} from "forge-std/Test.sol";
 
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {Compliance} from "../../src/proving/Compliance.sol";
-import {Example} from "../mocks/Example.sol";
+import {TransactionExample} from "../examples/Transaction.e.sol";
 
 contract ComplianceProofTest is Test {
     using RiscZeroUtils for Compliance.Instance;
@@ -22,7 +22,7 @@ contract ComplianceProofTest is Test {
     }
 
     function tes_verify_example_compliance_proof() public view {
-        Compliance.VerifierInput memory cu = Example.complianceVerifierInput();
+        Compliance.VerifierInput memory cu = TransactionExample.complianceVerifierInput();
 
         _sepoliaVerifierRouter.verify({
             seal: cu.proof,
@@ -32,7 +32,7 @@ contract ComplianceProofTest is Test {
     }
 
     function test_compliance_instance_encoding() public pure {
-        Compliance.Instance memory instance = Example.complianceInstance();
+        Compliance.Instance memory instance = TransactionExample.complianceInstance();
 
         assertEq(
             abi.encode(instance),
