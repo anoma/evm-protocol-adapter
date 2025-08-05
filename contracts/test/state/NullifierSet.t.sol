@@ -7,7 +7,7 @@ import {NullifierSet} from "../../src/state/NullifierSet.sol";
 import {NullifierSetMock} from "../mocks/NullifierSetMock.sol";
 
 contract NullifierSetTest is Test {
-    bytes32 internal constant _EXAMPLE_NF = bytes32(0);
+    bytes32 internal constant _EXAMPLE_NF = bytes32(uint256(1));
 
     NullifierSetMock internal _nfSet;
 
@@ -38,7 +38,39 @@ contract NullifierSetTest is Test {
         _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
     }
 
+    function test_length_returns_the_length() public {
+        assertEq(_nfSet.length(), 0);
+
+        uint256 n = 10;
+        for (uint256 i = 1; i < n; ++i) {
+            _nfSet.addNullifier(bytes32(uint256(i)));
+            assertEq(_nfSet.length(), i);
+        }
+    }
+
+    function test_at_returns_the_nullifier_at_the_give_index() public {
+        uint256 n = 10;
+        for (uint256 i = 0; i < n; ++i) {
+            bytes32 nf = bytes32(uint256(i));
+            _nfSet.addNullifier(nf);
+        }
+
+        for (uint256 i = 0; i < n; ++i) {
+            bytes32 nf = bytes32(uint256(i));
+            assertEq(_nfSet.at(i), nf);
+        }
+    }
+
+    function test_contains_returns_true_if_the_nullifier_is_contained() public {
+        _nfSet.addNullifier(_EXAMPLE_NF);
+        assertEq(_nfSet.contains(_EXAMPLE_NF), true);
+    }
+
     function test_checkNullifierNonExistence_passes_on_non_existent_nullifier() public view {
         _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
+    }
+
+    function test_contains_returns_false_if_the_nullifier_is_not_contained() public view {
+        assertEq(_nfSet.contains(_EXAMPLE_NF), false);
     }
 }
