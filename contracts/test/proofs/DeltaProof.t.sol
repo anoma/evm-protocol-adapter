@@ -7,6 +7,7 @@ import {Test} from "forge-std/Test.sol";
 import {Delta} from "../../src/proving/Delta.sol";
 import {Transaction} from "../../src/Types.sol";
 import {TransactionExample} from "../examples/Transaction.e.sol";
+import {TxGen} from "../examples/TxGen.sol";
 import {DeltaMock} from "../mocks/Delta.m.sol";
 
 contract DeltaProofTest is Test {
@@ -31,17 +32,15 @@ contract DeltaProofTest is Test {
     }
 
     function test_verify_example_delta_proof() public pure {
-        bytes32[] memory tags = new bytes32[](2);
-        tags[0] = TransactionExample._CONSUMED_NULLIFIER;
-        tags[1] = TransactionExample._CREATED_COMMITMENT;
-
         Transaction memory txn = TransactionExample.transaction();
 
-        uint256[2] memory transactionDelta = [
-            uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaX),
-            uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaY)
-        ];
-
-        Delta.verify({proof: txn.deltaProof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
+        Delta.verify({
+            proof: txn.deltaProof,
+            instance: [
+                uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaX),
+                uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaY)
+            ],
+            verifyingKey: Delta.computeVerifyingKey(TxGen.collectTags(txn.actions))
+        });
     }
 }
