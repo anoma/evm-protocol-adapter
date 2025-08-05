@@ -11,7 +11,7 @@ import {TxGen} from "../examples/TxGen.sol";
 contract DeltaProofTest is Test {
     struct DeltaInputs {
         uint128 kind;
-        uint128 quantity;
+        int128 quantity;
         uint256 rcv;
         bytes32 verifyingKey;
     }
@@ -22,7 +22,8 @@ contract DeltaProofTest is Test {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         vm.assume(deltaInputs.rcv != 0);
         vm.assume(deltaInputs.kind != 0);
-        uint256 prod = (uint256(deltaInputs.kind) * uint256(deltaInputs.quantity)) % SECP256K1_ORDER;
+        int256 prod_aux = (int256(uint256(deltaInputs.kind)) * int256(deltaInputs.quantity));
+        uint256 prod = prod_aux >= 0 ? uint256(prod_aux) % SECP256K1_ORDER : SECP256K1_ORDER - (uint256(-prod_aux) % SECP256K1_ORDER);
         vm.assume(prod < SECP256K1_ORDER - deltaInputs.rcv);
         uint256 preDelta = (prod + deltaInputs.rcv) % SECP256K1_ORDER;
         vm.assume(preDelta != 0);
@@ -52,12 +53,9 @@ contract DeltaProofTest is Test {
         // Ensure that we're adding assets of the same kind over the same verifying key
         deltaInputs2.kind = deltaInputs1.kind;
         deltaInputs2.verifyingKey = deltaInputs1.verifyingKey;
-        // Simplify the quantities
-        deltaInputs1.quantity = uint128(deltaInputs1.quantity % SECP256K1_ORDER);
-        deltaInputs2.quantity = uint128(deltaInputs2.quantity % SECP256K1_ORDER);
         // Filter out overflows
-        vm.assume(0 < deltaInputs2.quantity && deltaInputs2.quantity < SECP256K1_ORDER - deltaInputs1.quantity);
-        vm.assume(0 < deltaInputs2.quantity && deltaInputs2.quantity < type(uint128).max - deltaInputs1.quantity);
+        vm.assume(deltaInputs1.quantity < 0 || deltaInputs2.quantity <= type(int128).max - deltaInputs1.quantity);
+        vm.assume(deltaInputs1.quantity >= 0 || type(int128).min - deltaInputs1.quantity <= deltaInputs2.quantity);
         vm.assume(0 < deltaInputs2.rcv && deltaInputs2.rcv <= type(uint256).max - deltaInputs1.rcv);
         // Compute the inputs corresponding to the sum of deltas
         DeltaInputs memory deltaInputs3 = DeltaInputs({
