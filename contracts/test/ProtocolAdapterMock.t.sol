@@ -258,4 +258,3 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.verify(txn);
     }
 }
-*/

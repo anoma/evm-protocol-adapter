@@ -103,7 +103,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         }
 
         // slither-disable-next-line reentrancy-benign
-        // solhint-disable-next-line gas-increment-by-one
         emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
     }
     // slither-disable-end reentrancy-no-eth
@@ -192,7 +191,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                         _checkNullifierNonExistence(nf);
 
                         // Add the nullifier to the list of tags
-                        // solhint-disable-next-line gas-increment-by-one
+
                         tags[resCounter++] = nf;
                         actionTreeTags[2 * j] = nf;
                     }
@@ -205,7 +204,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                         _checkCommitmentNonExistence(cm);
 
                         // Add the nullifier to the list of tags
-                        // solhint-disable-next-line gas-increment-by-one
                         tags[resCounter++] = cm;
                         actionTreeTags[(2 * j) + 1] = cm;
                     }
