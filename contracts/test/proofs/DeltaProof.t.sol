@@ -9,44 +9,67 @@ import {TransactionExample} from "../examples/Transaction.e.sol";
 import {TxGen} from "../examples/TxGen.sol";
 
 contract DeltaProofTest is Test {
-    /// @notice Generates a transaction delta proof and delta
-    /// @param preDelta The input/preimage to the delta hash
-    /// @param verifyingKey The bytes being authorized
-    function generateDelta(uint256 preDelta, bytes32 verifyingKey) public returns (bytes memory proof, uint256[2] memory instance) {
+    struct DeltaInputs {
+        uint128 kind;
+        uint128 quantity;
+        uint256 rcv;
+        bytes32 verifyingKey;
+    }
+
+    /// @notice Generates a transaction delta proof by signing verifyingKey with
+    /// rcv, and a delta instance by computing a(kind)^quantity * b^rcv
+    function generateDelta(DeltaInputs memory deltaInputs) public returns (bytes memory proof, uint256[2] memory instance) {
+        deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
+        vm.assume(deltaInputs.rcv != 0);
+        vm.assume(deltaInputs.kind != 0);
+        uint256 prod = (uint256(deltaInputs.kind) * uint256(deltaInputs.quantity)) % SECP256K1_ORDER;
+        vm.assume(prod < SECP256K1_ORDER - deltaInputs.rcv);
+        uint256 preDelta = (prod + deltaInputs.rcv) % SECP256K1_ORDER;
+        vm.assume(preDelta != 0);
         // Derive address and public key from transaction delta
-        VmSafe.Wallet memory wallet = vm.createWallet(preDelta);
+        VmSafe.Wallet memory valueWallet = vm.createWallet(preDelta);
         // Extract the transaction delta from the wallet
-        instance[0] = wallet.publicKeyX;
-        instance[1] = wallet.publicKeyY;
+        instance[0] = valueWallet.publicKeyX;
+        instance[1] = valueWallet.publicKeyY;
         // Compute the components of the transaction delta proof
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet, verifyingKey);
+        VmSafe.Wallet memory randomWallet = vm.createWallet(deltaInputs.rcv);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(randomWallet, deltaInputs.verifyingKey);
         // Finally compute the transaction delta proof
         proof = abi.encodePacked(r, s, v);
     }
 
     /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
-    /// @param preDelta The input/preimage to the delta hash
-    function test_verify_delta_succeeds(uint256 preDelta, bytes32 verifyingKey) public {
-        // Filter out inadmissible private keys
-        vm.assume(0 < preDelta && preDelta < SECP256K1_ORDER);
+    function test_verify_delta_succeeds(DeltaInputs memory deltaInputs) public {
         // Generate a delta proof and instance from the above tags and preimage
-        (bytes memory proof, uint256[2] memory instance) = generateDelta(preDelta, verifyingKey);
+        deltaInputs.quantity = 0;
+        (bytes memory proof, uint256[2] memory instance) = generateDelta(deltaInputs);
         // Verify that the generated delta proof is valid
-        Delta.verify({proof: proof, instance: instance, verifyingKey: verifyingKey});
+        Delta.verify({proof: proof, instance: instance, verifyingKey: deltaInputs.verifyingKey});
     }
 
     /// @notice Test that Delta.add correctly adds deltas
-    /// @param preDelta1 The input/preimage to the first delta hash
-    /// @param preDelta2 The input/preimage to the second delta hash
-    function test_add_delta_correctness(uint256 preDelta1, uint256 preDelta2, bytes32 verifyingKey) public {
-        // Filter out inadmissible private keys
-        vm.assume(0 < preDelta1 && preDelta1 < SECP256K1_ORDER);
-        vm.assume(0 < preDelta2 && preDelta2 < SECP256K1_ORDER - preDelta1);
-        uint256 preDelta3 = preDelta1 + preDelta2;
+    function test_add_delta_correctness(DeltaInputs memory deltaInputs1, DeltaInputs memory deltaInputs2) public {
+        // Ensure that we're adding assets of the same kind over the same verifying key
+        deltaInputs2.kind = deltaInputs1.kind;
+        deltaInputs2.verifyingKey = deltaInputs1.verifyingKey;
+        // Simplify the quantities
+        deltaInputs1.quantity = uint128(deltaInputs1.quantity % SECP256K1_ORDER);
+        deltaInputs2.quantity = uint128(deltaInputs2.quantity % SECP256K1_ORDER);
+        // Filter out overflows
+        vm.assume(0 < deltaInputs2.quantity && deltaInputs2.quantity < SECP256K1_ORDER - deltaInputs1.quantity);
+        vm.assume(0 < deltaInputs2.quantity && deltaInputs2.quantity < type(uint128).max - deltaInputs1.quantity);
+        vm.assume(0 < deltaInputs2.rcv && deltaInputs2.rcv <= type(uint256).max - deltaInputs1.rcv);
+        // Compute the inputs corresponding to the sum of deltas
+        DeltaInputs memory deltaInputs3 = DeltaInputs({
+            kind: deltaInputs1.kind,
+            quantity: deltaInputs1.quantity + deltaInputs2.quantity,
+            rcv: deltaInputs1.rcv + deltaInputs2.rcv,
+            verifyingKey: deltaInputs1.verifyingKey
+            });
         // Generate a delta proof and instance from the above tags and preimage
-        (, uint256[2] memory instance1) = generateDelta(preDelta1, verifyingKey);
-        (, uint256[2] memory instance2) = generateDelta(preDelta2, verifyingKey);
-        (, uint256[2] memory instance3) = generateDelta(preDelta3, verifyingKey);
+        (, uint256[2] memory instance1) = generateDelta(deltaInputs1);
+        (, uint256[2] memory instance2) = generateDelta(deltaInputs2);
+        (, uint256[2] memory instance3) = generateDelta(deltaInputs3);
         // Verify that the deltas add correctly
         uint256[2] memory instance4 = Delta.add(instance1, instance2);
         assertEq(instance3[0], instance4[0]);
@@ -54,36 +77,45 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    /// @param preDelta1 The input/preimage to the first delta hash
-    /// @param preDelta2 The input/preimage to the second delta hash
-    /// @param verifyingKey The hash being authorized
-    function test_verify_inconsistent_delta_fails1(uint256 preDelta1, uint256 preDelta2, bytes32 verifyingKey) public {
+    function test_verify_inconsistent_delta_fails1(DeltaInputs memory deltaInputs) public {
         // Filter out inadmissible private keys or equal keys
-        vm.assume(0 < preDelta1 && preDelta1 < SECP256K1_ORDER);
-        vm.assume(0 < preDelta2 && preDelta2 < SECP256K1_ORDER);
-        vm.assume(preDelta1 != preDelta2);
+        vm.assume(deltaInputs.kind != 0);
+        vm.assume(deltaInputs.quantity != 0);
         // Generate a delta proof and instance from the above tags and preimage
-        (bytes memory proof1, ) = generateDelta(preDelta1, verifyingKey);
-        (, uint256[2] memory instance2) = generateDelta(preDelta2, verifyingKey);
+        (bytes memory proof, uint256[2] memory instance) = generateDelta(deltaInputs);
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey});
+        Delta.verify({proof: proof, instance: instance, verifyingKey: deltaInputs.verifyingKey});
+    }
+
+    /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
+    function test_verify_inconsistent_delta_fails2(DeltaInputs memory deltaInputs1, DeltaInputs memory deltaInputs2) public {
+        deltaInputs2.verifyingKey = deltaInputs1.verifyingKey;
+        deltaInputs2.kind = deltaInputs1.kind;
+        deltaInputs2.quantity = deltaInputs1.quantity;
+        // Filter out inadmissible private keys or equal keys
+        vm.assume(deltaInputs1.rcv != deltaInputs2.rcv);
+        // Generate a delta proof and instance from the above tags and preimage
+        (bytes memory proof1, ) = generateDelta(deltaInputs1);
+        (, uint256[2] memory instance2) = generateDelta(deltaInputs2);
+        // Verify that the mixing deltas is invalid
+        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
+        Delta.verify({proof: proof1, instance: instance2, verifyingKey: deltaInputs1.verifyingKey});
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
-    /// @param preDelta The input/preimage to the delta hash
-    /// @param verifyingKey1 The first hash being authorized
-    /// @param verifyingKey2 The second hash being authorized
-    function test_verify_inconsistent_delta_fails2(uint256 preDelta, bytes32 verifyingKey1, bytes32 verifyingKey2) public {
+    function test_verify_inconsistent_delta_fails3(DeltaInputs memory deltaInputs1, DeltaInputs memory deltaInputs2) public {
+        deltaInputs2.kind = deltaInputs1.kind;
+        deltaInputs2.quantity = deltaInputs1.quantity;
+        deltaInputs2.rcv = deltaInputs1.rcv;
         // Filter out inadmissible private keys or equal keys
-        vm.assume(0 < preDelta && preDelta < SECP256K1_ORDER);
-        vm.assume(verifyingKey1 != verifyingKey2);
+        vm.assume(deltaInputs1.verifyingKey != deltaInputs2.verifyingKey);
         // Generate a delta proof and instance from the above tags and preimage
-        (bytes memory proof1, ) = generateDelta(preDelta, verifyingKey1);
-        (, uint256[2] memory instance2) = generateDelta(preDelta, verifyingKey2);
+        (bytes memory proof1, ) = generateDelta(deltaInputs1);
+        (, uint256[2] memory instance2) = generateDelta(deltaInputs2);
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey2});
+        Delta.verify({proof: proof1, instance: instance2, verifyingKey: deltaInputs2.verifyingKey});
     }
 
     function test_verify_example_delta_proof() public pure {
