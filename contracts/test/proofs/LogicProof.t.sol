@@ -8,7 +8,6 @@ import {Test} from "forge-std/Test.sol";
 
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {Logic} from "../../src/proving/Logic.sol";
-
 import {TransactionExample} from "../examples/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
