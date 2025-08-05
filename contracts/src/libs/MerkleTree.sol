@@ -56,7 +56,6 @@ library MerkleTree {
         uint256 treeDepth = depth(self);
 
         // Get the next leaf index and increment it after assignment.
-        // solhint-disable-next-line gas-increment-by-one
         index = self._nextLeafIndex++;
 
         // Check if the tree is already full.

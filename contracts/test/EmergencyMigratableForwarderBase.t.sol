@@ -9,7 +9,7 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {ForwarderBaseTest} from "./ForwarderBase.t.sol";
 import {EmergencyMigratableForwarderMock} from "./mocks/EmergencyMigratableForwarder.m.sol";
 import {ForwarderMock} from "./mocks/Forwarder.m.sol";
-import {ForwarderTarget} from "./mocks/ForwarderTarget.m.sol";
+import {ForwarderTarget, INPUT_VALUE, OUTPUT_VALUE, INPUT, EXPECTED_OUTPUT} from "./mocks/ForwarderTarget.m.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
@@ -89,7 +89,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         _stopProtocolAdapter();
 
         vm.expectRevert(EmergencyMigratableForwarderBase.EmergencyCallerNotSet.selector);
-        _emrgFwd.forwardEmergencyCall({input: _INPUT});
+        _emrgFwd.forwardEmergencyCall({input: INPUT});
     }
 
     function test_forwardEmergencyCall_reverts_if_the_pa_is_stopped_but_the_caller_is_not_the_emergency_caller()
@@ -102,7 +102,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         vm.expectRevert(
             abi.encodeWithSelector(ForwarderBase.UnauthorizedCaller.selector, _EMERGENCY_CALLER, _UNAUTHORIZED_CALLER)
         );
-        _emrgFwd.forwardEmergencyCall({input: _INPUT});
+        _emrgFwd.forwardEmergencyCall({input: INPUT});
     }
 
     function test_forwardEmergencyCall_forwards_calls_if_the_pa_is_stopped_and_the_caller_is_the_emergency_caller()
@@ -112,8 +112,8 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         _setEmergencyCaller();
 
         vm.prank(_EMERGENCY_CALLER);
-        bytes memory output = _emrgFwd.forwardEmergencyCall({input: _INPUT});
-        assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
+        bytes memory output = _emrgFwd.forwardEmergencyCall({input: INPUT});
+        assertEq(keccak256(output), keccak256(EXPECTED_OUTPUT));
     }
 
     function test_forwardEmergencyCall_emits_the_EmergencyCallForwarded_event() public {
@@ -122,8 +122,8 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
 
         vm.prank(_EMERGENCY_CALLER);
         vm.expectEmit(address(_emrgFwd));
-        emit ForwarderMock.EmergencyCallForwarded(_INPUT, _EXPECTED_OUTPUT);
-        _emrgFwd.forwardEmergencyCall({input: _INPUT});
+        emit ForwarderMock.EmergencyCallForwarded(INPUT, EXPECTED_OUTPUT);
+        _emrgFwd.forwardEmergencyCall({input: INPUT});
     }
 
     function test_forwardEmergencyCall_calls_the_function_in_the_target_contract() public {
@@ -132,8 +132,8 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         vm.prank(_EMERGENCY_CALLER);
 
         vm.expectEmit(address(_tgt));
-        emit ForwarderTarget.CallReceived(_INPUT_VALUE, _OUTPUT_VALUE);
-        _emrgFwd.forwardEmergencyCall({input: _INPUT});
+        emit ForwarderTarget.CallReceived(INPUT_VALUE, OUTPUT_VALUE);
+        _emrgFwd.forwardEmergencyCall({input: INPUT});
     }
 
     function test_emergencyCaller_returns_the_emergency_caller_after_it_has_been_set() public {

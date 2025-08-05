@@ -40,7 +40,7 @@
     "constructor-syntax": "error",
     "gas-calldata-parameters": "warn",
     "gas-custom-errors": "warn",
-    "gas-increment-by-one": "warn",
+    "gas-increment-by-one": "off",
     "gas-indexed-events": "warn",
     "gas-length-in-loops": "warn",
     "gas-multitoken1155": "warn",
