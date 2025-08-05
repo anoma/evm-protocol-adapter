@@ -13,39 +13,103 @@ library RiscZeroUtils {
     /// @param instance The compliance instance.
     /// @return digest The journal digest.
     function toJournalDigest(Compliance.Instance memory instance) internal pure returns (bytes32 digest) {
-        digest = sha256(abi.encode(instance));
+        bytes4 eight = hex"08000000";
+        bytes memory encodedInstance = abi.encodePacked(
+            eight,
+            instance.consumed.nullifier,
+            eight,
+            instance.consumed.logicRef,
+            eight,
+            instance.consumed.commitmentTreeRoot,
+            eight,
+            instance.created.commitment,
+            eight,
+            instance.created.logicRef,
+            eight,
+            instance.unitDeltaX,
+            eight,
+            instance.unitDeltaY
+        );
+        digest = sha256(encodedInstance);
     }
 
     /// @notice Calculates the digest of the logic instance (journal).
-    /// @param instance The logic instance.
+    /// @param input The logic verifier input.
+    /// @param root The action tree root computed per-action.
+    /// @param consumed The bool describing whether the input is for a consumed or created resource.
     /// @return digest The journal digest.
-    function toJournalDigest(Logic.Instance memory instance) internal pure returns (bytes32 digest) {
-        digest = sha256(convertJournal(instance));
+    function toJournalDigest(Logic.VerifierInput memory input, bytes32 root, bool consumed)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
+        digest = sha256(convertJournal(input, root, consumed));
     }
 
     /// @notice Converts the logic instance to match the RISC Zero journal.
-    /// @param instance The logic instance.
+    /// @param input The logic verifier input.
+    /// @param root The action tree root computed per-action.
+    /// @param consumed The bool describing whether the input is for a consumed or created resource.
     /// @return converted The converted journal.
-    function convertJournal(Logic.Instance memory instance) internal pure returns (bytes memory converted) {
-        uint32 nCiphertext = uint32(instance.ciphertext.length);
-        bytes memory encodedCipher = abi.encodePacked(toRiscZero(nCiphertext / 4), instance.ciphertext);
-
-        uint32 nBlobs = uint32(instance.appData.length);
+    function convertJournal(Logic.VerifierInput memory input, bytes32 root, bool consumed)
+        internal
+        pure
+        returns (bytes memory converted)
+    {
+        uint32 nBlobs = uint32(input.appData.resourcePayload.length);
         bytes memory encodedAppData = abi.encodePacked(toRiscZero(nBlobs));
         {
             for (uint256 i = 0; i < nBlobs; ++i) {
                 bytes memory blobEncoded = abi.encodePacked(
-                    toRiscZero(uint32(instance.appData[i].blob.length / 4)),
-                    instance.appData[i].blob,
-                    toRiscZero(uint32(instance.appData[i].deletionCriterion))
+                    toRiscZero(uint32(input.appData.resourcePayload[i].blob.length) / 4),
+                    input.appData.resourcePayload[i].blob,
+                    toRiscZero(uint32(input.appData.resourcePayload[i].deletionCriterion))
                 );
                 encodedAppData = abi.encodePacked(encodedAppData, blobEncoded);
             }
         }
 
-        converted = abi.encodePacked(
-            instance.tag, toRiscZero(instance.isConsumed), instance.actionTreeRoot, encodedCipher, encodedAppData
-        );
+        nBlobs = uint32(input.appData.discoveryPayload.length);
+        encodedAppData = abi.encodePacked(encodedAppData, toRiscZero(nBlobs));
+        {
+            for (uint256 i = 0; i < nBlobs; ++i) {
+                bytes memory blobEncoded = abi.encodePacked(
+                    toRiscZero(uint32(input.appData.discoveryPayload[i].blob.length) / 4),
+                    input.appData.discoveryPayload[i].blob,
+                    toRiscZero(uint32(input.appData.discoveryPayload[i].deletionCriterion))
+                );
+                encodedAppData = abi.encodePacked(encodedAppData, blobEncoded);
+            }
+        }
+
+        nBlobs = uint32(input.appData.externalPayload.length);
+        encodedAppData = abi.encodePacked(encodedAppData, toRiscZero(nBlobs));
+        {
+            for (uint256 i = 0; i < nBlobs; ++i) {
+                bytes memory blobEncoded = abi.encodePacked(
+                    toRiscZero(uint32(input.appData.externalPayload[i].blob.length) / 4),
+                    input.appData.externalPayload[i].blob,
+                    toRiscZero(uint32(input.appData.externalPayload[i].deletionCriterion))
+                );
+                encodedAppData = abi.encodePacked(encodedAppData, blobEncoded);
+            }
+        }
+
+        nBlobs = uint32(input.appData.applicationPayload.length);
+        encodedAppData = abi.encodePacked(encodedAppData, toRiscZero(nBlobs));
+        {
+            for (uint256 i = 0; i < nBlobs; ++i) {
+                bytes memory blobEncoded = abi.encodePacked(
+                    toRiscZero(uint32(input.appData.applicationPayload[i].blob.length) / 4),
+                    input.appData.applicationPayload[i].blob,
+                    toRiscZero(uint32(input.appData.applicationPayload[i].deletionCriterion))
+                );
+                encodedAppData = abi.encodePacked(encodedAppData, blobEncoded);
+            }
+        }
+
+        bytes4 eight = hex"08000000";
+        converted = abi.encodePacked(eight, input.tag, toRiscZero(consumed), eight, root, encodedAppData);
     }
 
     /// @notice Converts a `bool` to the RISC Zero format to `bytes4` by appending three zero bytes.

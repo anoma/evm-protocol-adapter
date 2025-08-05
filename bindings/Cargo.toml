@@ -1,0 +1,17 @@
+[package]
+name = "evm_protocol_adapter_bindings"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "ea01737898bb24df57cef61d1c16222a16904076", package = "arm", features = [
+    "groth16_prover",
+] }
+dotenv = "0.15"
+alloy = { version = "1.0.23", features = ["full"] }
+tokio = "1.44"
+serde = { version = "1.0.197", default-features = false }
+serde_json = "1.0.97"
+
+[dev-dependencies]
+alloy-sol-types = "1.0.23"

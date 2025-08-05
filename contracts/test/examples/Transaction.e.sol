@@ -1,33 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {Compliance} from "../../src/proving/Compliance.sol";
 import {Logic} from "../../src/proving/Logic.sol";
-import {Transaction, ResourceForwarderCalldataPair, Action} from "../../src/Types.sol";
+import {Transaction, /*ResourceForwarderCalldataPair,*/ Action} from "../../src/Types.sol";
 
 import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
 
 library TransactionExample {
-    bytes32 internal constant _CONSUMED_NULLIFIER = 0x155d957de29e96a50517f3c033e1c618e697795e6853a5dc18ce684289d25497;
-    bytes32 internal constant _CREATED_COMMITMENT = 0x9c590db144abb0434267475ac46554bc71377b1e678a6ce7dd86c8559b97cf1c;
-    bytes32 internal constant _ACTION_TREE_ROOT = 0x190745ccc5568e6501a640df6f543b178b1bd4a058b6e7fea993e6697459e2d8;
-    bytes32 internal constant _CONSUMED_LOGIC_REF = 0x6d49f043c79b753b897d478c617e06babc70c52259097b46ba618be8cb4a9e9b;
+    bytes32 internal constant _CONSUMED_NULLIFIER = 0x2fe6775e82ad71cd3f0531ebe9f85b9d00ad7bc21e8ac5f5c6fd1a68b4dfba2b;
+    bytes32 internal constant _CREATED_COMMITMENT = 0x193e55bfc8d65a9efd4471c0287c69c8918e7d9331901a01ee2841533ca1f719;
+    bytes32 internal constant _CONSUMED_LOGIC_REF = 0xf8047dc2cf6cbe45137a588a3f019814218e7d7199b1b86a57b51c310e04fae9;
     bytes32 internal constant _CREATED_LOGIC_REF = _CONSUMED_LOGIC_REF;
 
     bytes internal constant _CONSUMED_LOGIC_PROOF =
-        hex"9f39696c24c6a045434845e665d1cd7325abce657a45003425d3bebaaf347bdebd2752f91c2f06486cde04831ff104155a642fddcbe07a35a0d83b400750d0bee0acf87204eefa9b76b3c8791ccc01b91686eb7a9048db4aa2e0b0b1a3fc4adc0788dd5020115960eade78cea820986670850b8082f4be1ddfdff60db1109000d27e44ac0bb99bfab335ed477821f0a6db3b956cf8e1a3f234159fa9e042fbb7f7dc17ca18e46803044eb427809071feb7c26f31760f0e48ca388d1992e47e98c0c494cc207ab9c4b136e9e5fad22d0a94a2b2f28abf058976aacddccbcd182c1671b0ea1d35b4783abce8962ff9e0cf42642227967d1f1cae1fa5f42812c20d5060313a";
+        hex"bb001d4407a197561e75ff04be754784dd72c3bb032746ff6c60294708e9e16d6abd451d2b95b12955aa302ad11819e7e77ef4a2a013f4b3d66817b63af158bee50ae34803bddc43fbf30151ea56a7c68dbeccb98e1e09fd624af2b58c785953f9536c4e01c798fd6fd373e29e29170003ced169509e80d3d1a097b11c1495e9967379041a34fb79721bd2549bfbbdda742fa1fd5ffc7076e949fccd729f767a7c32dfad1f7f1eb14dfd537eaba372d3b81e3c3430b7ff9073ac69bbe9bf730458ed30ec240c0897034eb24cc64312048e78b796873e9974df828cc63c61eb513c0de1d204b7bb5a3632107b3f5ccc17d358a59b6f9518c704800163a63aab2d31958311";
 
     bytes internal constant _CREATED_LOGIC_PROOF =
-        hex"9f39696c0612ea1f1256d124c5ced3413a8c4aec16b1661d3a5d46c5f7d3d3fbdd67b6401caf702e3a413fc79ff88d9413aceee2e182bfc7712d09660a5000b631528f5c0144d6d194ccbd374b2fa79266ecbb82cd66587fd977aaa3652a064d0787bf850fa6c894b142ec32804e0472d80a5b80159c97b72ede655773bf78cf864dc3b61e0a0e0a24b40a8ce7b150ef9e6413460b1c4e1775ca995b6f7dace7c3a3cad020da0e8fffbb0424932619bee3271af61feb9e5e67b46e616659bf33cfd534ae2f9399f8ece74d547385c7d2268cae88642569c3cd13da05974789de006972640bbb4d015f227eb50e3af6d4d66129b21327ff6326937f482284e462568ca996";
+        hex"bb001d4413222060708b223191bbe0c578a2b28fc9f4b982b5788c58aaff238863acbda524182c1c33cbe89df260f2e8dc4694cb39d2c8dac0aefa047a4ab8ed96e381dd26faf7ec9e0de4d242ee5f611f5f8ea7cd3d480a07419cb10d33988c9d76845f00114cc6c2d0a1efa8037b873d9123f9523d080c4540de1f947bc8efa13aead9169bcbc91b74fb1c2ef5d58a2bdea1d12917e410826bd16a70c7e0949d8f3cc3190250fc7202f1402a17974e1eef5ed75704fb18511bb30f60b27538082a226b090002c42b32b9e206cad780f8dd00bb22a6ff98297ca03a5c020e4cac3e94672a1ba8e2b96c5819d6fec6705846c75af84fcb5f790f1c4340094567b8d9d1b8";
 
     bytes internal constant _COMPLIANCE_PROOF =
-        hex"9f39696c01b0e820d71779adfba58629aa41183cb48920c5b6a3631feacd50e535344b8103f73f02b368493947c8a1cec8fd6d6a3e342d9e3b6c5f17f5a9cf8bc34105050ca5dcdb85dea315fb4d0937b4eef77901b9b728cf983a86aeca8f8385aa187102c6cac99c63b4373cdbebb8531b0bc1791a3d7a4ba0e6414bfda91163f518c806e97ad945ff7a0be2234b29ba3c20d10bec83c84ac38cdf701ffee01932f32c1b210559fbe7f9b838cfe32bf274f0cfcc220ecad0d8bcee1f39330f43106dbd268d0ef44565e3864173ecb2c893ec4ff673ea47ac48dd074cca455f380470580ad948d4f8516ad29f9b42d9f2d7a6412f43e4dc2811256d40a6fe7b102bf508";
+        hex"bb001d44152a1d6fd8f45d1c979342581b7953614b228b43218a5c8559b0f4415b836f392fe183f44bd4b3488d3fe36c0f2c6de21bf11fe18c3403adf2d4a33e7b7a0bc50028b0681cb33df7b915d6bea43654f85cc42839accff571f27799d9b04641461057137e2297539f9bf791bd0f9a9c35a0e0b1a6f99bd3ec41d563a091d2d40d0178aa6fad1be69f3360a61d8f1ae6690bfb234b90bc6485985bc98eb04f33cd01f6c852998de57eaf57a369f4106164ffcbb550d41dffa8a2d75f1efa9ddd230def4d79a3d63170e0c68f52ba1593a32ce264a61a43f97f4304dedd8aea304609241a2c93a7447a309694603afcc4160531e0c9d3c2fe3630a25cf6aa55f1c3";
 
     bytes32 internal constant _UNIT_DELTA_X = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798;
     bytes32 internal constant _UNIT_DELTA_Y = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8;
 
     bytes internal constant _DELTA_PROOF =
-        hex"f464b94a2c5729fc15bc6ffe88a2ec3ee37d9f443f3598fb0d4a57de982e04802c57e886e5bf651e44e46c7038fb5d6ddec7bdd6ed7e0f67f9b481fd5711f7821b";
+        hex"84573c4cb7358f0251e661ac747756df1ade611cb00d76e17bf292952c0de69451f047436136cc0ada65d69bff88e872f5d147f4c5548c18b244822d7a758eeb1b";
 
     function ciphertext() internal pure returns (bytes memory cipher) {
         cipher = hex"3f0000007f000000bf000000ff000000";
@@ -62,27 +62,21 @@ library TransactionExample {
         unit = Compliance.VerifierInput({proof: _COMPLIANCE_PROOF, instance: complianceInstance()});
     }
 
-    function logicInstance(bool isConsumed) internal pure returns (Logic.Instance memory instance) {
-        instance = Logic.Instance({
-            tag: isConsumed ? _CONSUMED_NULLIFIER : _CREATED_COMMITMENT,
-            isConsumed: isConsumed,
-            actionTreeRoot: _ACTION_TREE_ROOT,
-            ciphertext: ciphertext(),
-            appData: expirableBlobs()
-        });
-    }
-
     function logicVerifierInput(bool isConsumed) internal pure returns (Logic.VerifierInput memory input) {
         input = Logic.VerifierInput({
-            proof: isConsumed ? _CONSUMED_LOGIC_PROOF : _CREATED_LOGIC_PROOF,
-            instance: logicInstance(isConsumed),
-            verifyingKey: isConsumed ? _CONSUMED_LOGIC_REF : _CREATED_LOGIC_REF
+            tag: isConsumed ? _CONSUMED_NULLIFIER : _CREATED_COMMITMENT,
+            verifyingKey: isConsumed ? _CONSUMED_LOGIC_REF : _CREATED_LOGIC_REF,
+            appData: Logic.AppData({
+                discoveryPayload: new Logic.ExpirableBlob[](0),
+                resourcePayload: new Logic.ExpirableBlob[](0),
+                externalPayload: new Logic.ExpirableBlob[](0),
+                applicationPayload: new Logic.ExpirableBlob[](0)
+            }),
+            proof: isConsumed ? _CONSUMED_LOGIC_PROOF : _CREATED_LOGIC_PROOF
         });
     }
 
     function transaction() internal pure returns (Transaction memory txn) {
-        ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
-
         Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2);
         logicVerifierInputs[0] = logicVerifierInput({isConsumed: true});
         logicVerifierInputs[1] = logicVerifierInput({isConsumed: false});
@@ -91,12 +85,17 @@ library TransactionExample {
         complianceVerifierInputs[0] = complianceVerifierInput();
 
         Action[] memory actions = new Action[](1);
-        actions[0] = Action({
-            logicVerifierInputs: logicVerifierInputs,
-            complianceVerifierInputs: complianceVerifierInputs,
-            resourceCalldataPairs: emptyForwarderCallData
-        });
+        actions[0] =
+            Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
 
         txn = Transaction({actions: actions, deltaProof: _DELTA_PROOF});
+    }
+
+    function treeRoot() internal pure returns (bytes32 root) {
+        bytes32[] memory leaves = new bytes32[](2);
+        leaves[0] = _CONSUMED_NULLIFIER;
+        leaves[1] = _CREATED_COMMITMENT;
+
+        root = MerkleTree.computeRoot(leaves, 4);
     }
 }

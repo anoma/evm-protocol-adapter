@@ -8,13 +8,14 @@ import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.so
 import {Test} from "forge-std/Test.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
+import {ComputableComponents} from "../src/libs/ComputableComponents.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
 import {TagLookup} from "../src/libs/TagLookup.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Logic} from "../src/proving/Logic.sol";
 import {CommitmentAccumulator} from "../src/state/CommitmentAccumulator.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
-import {Transaction, ResourceForwarderCalldataPair, ForwarderCalldata} from "../src/Types.sol";
+import {ForwarderCalldata, Transaction, Resource} from "../src/Types.sol";
 
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
 import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
@@ -24,6 +25,7 @@ import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.
 
 contract ProtocolAdapterMockTest is Test {
     using MerkleTree for bytes32[];
+    using ComputableComponents for Resource;
     using TxGen for RiscZeroMockVerifier;
     using TxGen for Transaction;
 
@@ -58,9 +60,8 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event() public {
-        uint256 nonce = 0;
-
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_created() public {
+        bytes32 nonce = 0;
         bytes32 logicRef = bytes32(uint256(123));
         ForwarderExample fwd =
             new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
@@ -72,34 +73,128 @@ contract ProtocolAdapterMockTest is Test {
             ForwarderCalldata memory call =
                 ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
 
-            Logic.ExpirableBlob[] memory blobs = new Logic.ExpirableBlob[](1);
-            blobs[0] = Logic.ExpirableBlob({
-                deletionCriterion: Logic.DeletionCriterion.Never,
-                blob: abi.encode(call.untrustedForwarder, call.input, call.output)
+            Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
+            externalBlobs[0] =
+                Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
+
+            bytes memory zero = new bytes(32);
+
+            Logic.AppData memory consumedAppData = Logic.AppData({
+                discoveryPayload: new Logic.ExpirableBlob[](0),
+                resourcePayload: new Logic.ExpirableBlob[](0),
+                externalPayload: new Logic.ExpirableBlob[](0),
+                applicationPayload: new Logic.ExpirableBlob[](0)
             });
 
             TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
-            TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
+
             consumed[0] = TxGen.ResourceAndAppData({
-                resource: TxGen.mockResource({nonce: nonce++, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
-                appData: blobs
+                resource: TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
+                appData: consumedAppData
             });
+
+            Logic.AppData memory createdAppData = Logic.AppData({
+                discoveryPayload: new Logic.ExpirableBlob[](0),
+                resourcePayload: new Logic.ExpirableBlob[](1),
+                externalPayload: new Logic.ExpirableBlob[](1),
+                applicationPayload: new Logic.ExpirableBlob[](0)
+            });
+
+            Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](1);
+            resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
+
+            createdAppData.externalPayload = externalBlobs;
+            createdAppData.resourcePayload = resourceBlobs;
+
+            TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
             created[0] = TxGen.ResourceAndAppData({
-                resource: TxGen.mockResource({nonce: nonce++, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
-                appData: blobs
+                resource: TxGen.mockResource({
+                    nonce: bytes32(uint256(nonce) + 1),
+                    logicRef: logicRef,
+                    labelRef: labelRef,
+                    quantity: 1
+                }),
+                appData: createdAppData
+            });
+
+            created[0].appData.resourcePayload[0].blob = abi.encode(created[0].resource);
+
+            TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+            resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+            txn = _mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH);
+        }
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(fwd),
+            input: INPUT,
+            output: EXPECTED_OUTPUT
+        });
+        _mockPa.execute(txn);
+    }
+
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed() public {
+        bytes32 nonce = 0;
+        bytes32 logicRef = bytes32(uint256(123));
+        ForwarderExample fwd =
+            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
+
+        bytes32 labelRef = sha256(abi.encode(address(fwd)));
+
+        Transaction memory txn;
+        {
+            ForwarderCalldata memory call =
+                ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
+
+            Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
+            externalBlobs[0] =
+                Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
+
+            bytes memory zero = new bytes(32);
+
+            Logic.AppData memory consumedAppData = Logic.AppData({
+                discoveryPayload: new Logic.ExpirableBlob[](0),
+                resourcePayload: new Logic.ExpirableBlob[](2),
+                externalPayload: new Logic.ExpirableBlob[](1),
+                applicationPayload: new Logic.ExpirableBlob[](0)
+            });
+
+            TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
+
+            Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](2);
+            resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
+            resourceBlobs[1] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
+
+            consumedAppData.externalPayload = externalBlobs;
+            consumedAppData.resourcePayload = resourceBlobs;
+
+            consumed[0] = TxGen.ResourceAndAppData({
+                resource: TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
+                appData: consumedAppData
+            });
+            consumed[0].appData.resourcePayload[0].blob = abi.encode(consumed[0].resource);
+
+            Logic.AppData memory createdAppData = Logic.AppData({
+                discoveryPayload: new Logic.ExpirableBlob[](0),
+                resourcePayload: new Logic.ExpirableBlob[](0),
+                externalPayload: new Logic.ExpirableBlob[](0),
+                applicationPayload: new Logic.ExpirableBlob[](0)
+            });
+
+            TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
+            created[0] = TxGen.ResourceAndAppData({
+                resource: TxGen.mockResource({
+                    nonce: bytes32(uint256(nonce) + 1),
+                    logicRef: logicRef,
+                    labelRef: labelRef,
+                    quantity: 1
+                }),
+                appData: createdAppData
             });
 
             TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
             resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
             txn = _mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH);
-
-            ResourceForwarderCalldataPair[] memory pairs = new ResourceForwarderCalldataPair[](1);
-            pairs[0] = ResourceForwarderCalldataPair({
-                carrier: created[0].resource,
-                call: ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT})
-            });
-
-            txn.actions[0].resourceCalldataPairs = pairs;
         }
 
         vm.expectEmit(address(_mockPa));
@@ -150,7 +245,7 @@ contract ProtocolAdapterMockTest is Test {
             nCUs: uint8(bound(nCUs, 0, 2 ** (_mockPa.actionTreeDepth() - 1)))
         });
 
-        (Transaction memory txn, uint256 updatedNonce) =
+        (Transaction memory txn, bytes32 updatedNonce) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
         _mockPa.execute(txn);
 
@@ -165,7 +260,7 @@ contract ProtocolAdapterMockTest is Test {
     function test_verify_reverts_on_pre_existing_nullifier() public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 1});
 
-        (Transaction memory tx1, uint256 updatedNonce) =
+        (Transaction memory tx1, bytes32 updatedNonce) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
         bytes32 preExistingNf = tx1.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
         _mockPa.execute(tx1);
@@ -185,7 +280,7 @@ contract ProtocolAdapterMockTest is Test {
     function test_verify_reverts_on_pre_existing_commitment() public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 1});
 
-        (Transaction memory tx1, uint256 updatedNonce) =
+        (Transaction memory tx1, bytes32 updatedNonce) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
         bytes32 preExistingCm = tx1.actions[0].complianceVerifierInputs[0].instance.created.commitment;
         _mockPa.execute(tx1);
@@ -227,34 +322,230 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.verify(txn);
     }
 
-    function test_verify_reverts_on_wrong_isConsumed_value_in_consumed_resource_logic_proof() public {
-        (Transaction memory txn,) = _mockVerifier.transaction({
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({nActions: 2, nCUs: 2}),
-            commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH
+    function test_verify_reverts_on_incorrect_commitment_computation() public {
+        bytes32 nonce = 0;
+        bytes32 logicRef = bytes32(uint256(123));
+        ForwarderExample fwd =
+            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
+
+        bytes32 labelRef = sha256(abi.encode(address(fwd)));
+
+        ForwarderCalldata memory call =
+            ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
+
+        Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
+        externalBlobs[0] =
+            Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
+
+        bytes memory zero = new bytes(32);
+
+        Logic.AppData memory consumedAppData = Logic.AppData({
+            discoveryPayload: new Logic.ExpirableBlob[](0),
+            resourcePayload: new Logic.ExpirableBlob[](0),
+            externalPayload: new Logic.ExpirableBlob[](0),
+            applicationPayload: new Logic.ExpirableBlob[](0)
         });
 
-        bool expected = true;
-        txn.actions[1].logicVerifierInputs[0].instance.isConsumed = !expected;
+        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
+
+        consumed[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
+            appData: consumedAppData
+        });
+
+        Logic.AppData memory createdAppData = Logic.AppData({
+            discoveryPayload: new Logic.ExpirableBlob[](0),
+            resourcePayload: new Logic.ExpirableBlob[](1),
+            externalPayload: new Logic.ExpirableBlob[](1),
+            applicationPayload: new Logic.ExpirableBlob[](0)
+        });
+
+        Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](1);
+        resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
+
+        createdAppData.externalPayload = externalBlobs;
+        createdAppData.resourcePayload = resourceBlobs;
+
+        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
+        created[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({
+                nonce: bytes32(uint256(nonce) + 1),
+                logicRef: logicRef,
+                labelRef: labelRef,
+                quantity: 1
+            }),
+            appData: createdAppData
+        });
+
+        Resource memory fakeCreated =
+            TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1});
+        created[0].appData.resourcePayload[0].blob = abi.encode(fakeCreated);
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = _mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH);
 
         vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.ResourceLifecycleMismatch.selector, expected), (address(_mockPa))
+            abi.encodeWithSelector(
+                ProtocolAdapter.CalldataCarrierCmMismatch.selector,
+                fakeCreated,
+                fakeCreated.commitment(),
+                txn.actions[0].complianceVerifierInputs[0].instance.created.commitment
+            )
         );
         _mockPa.verify(txn);
     }
 
-    function test_verify_reverts_on_wrong_isConsumed_value_in_created_resource_logic_proof() public {
-        (Transaction memory txn,) = _mockVerifier.transaction({
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({nActions: 2, nCUs: 2}),
-            commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH
+    function test_verify_reverts_on_incorrect_nullifier_computation_resource() public {
+        bytes32 nonce = 0;
+        bytes32 logicRef = bytes32(uint256(123));
+        ForwarderExample fwd =
+            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
+
+        bytes32 labelRef = sha256(abi.encode(address(fwd)));
+
+        ForwarderCalldata memory call =
+            ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
+
+        Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
+        externalBlobs[0] =
+            Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
+
+        bytes memory zero = new bytes(32);
+
+        Logic.AppData memory consumedAppData = Logic.AppData({
+            discoveryPayload: new Logic.ExpirableBlob[](0),
+            resourcePayload: new Logic.ExpirableBlob[](2),
+            externalPayload: new Logic.ExpirableBlob[](1),
+            applicationPayload: new Logic.ExpirableBlob[](0)
         });
 
-        bool expected = false;
-        txn.actions[1].logicVerifierInputs[1].instance.isConsumed = !expected;
+        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
+
+        Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](2);
+        resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
+        resourceBlobs[1] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
+
+        consumedAppData.externalPayload = externalBlobs;
+        consumedAppData.resourcePayload = resourceBlobs;
+
+        consumed[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
+            appData: consumedAppData
+        });
+        Resource memory fakeConsumed = TxGen.mockResource({
+            nonce: bytes32(uint256(nonce) + 1),
+            logicRef: logicRef,
+            labelRef: labelRef,
+            quantity: 1
+        });
+        // Encode a wrong resource
+        consumed[0].appData.resourcePayload[0].blob = abi.encode(fakeConsumed);
+
+        Logic.AppData memory createdAppData = Logic.AppData({
+            discoveryPayload: new Logic.ExpirableBlob[](0),
+            resourcePayload: new Logic.ExpirableBlob[](0),
+            externalPayload: new Logic.ExpirableBlob[](0),
+            applicationPayload: new Logic.ExpirableBlob[](0)
+        });
+
+        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
+        created[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({
+                nonce: bytes32(uint256(nonce) + 1),
+                logicRef: logicRef,
+                labelRef: labelRef,
+                quantity: 1
+            }),
+            appData: createdAppData
+        });
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = _mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH);
 
         vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.ResourceLifecycleMismatch.selector, expected), (address(_mockPa))
+            abi.encodeWithSelector(
+                ProtocolAdapter.CalldataCarrierNfMismatch.selector,
+                fakeConsumed,
+                fakeConsumed.nullifier(0),
+                txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
+            )
+        );
+        _mockPa.verify(txn);
+    }
+
+    function test_verify_reverts_on_incorrect_nullifier_computation_nonce() public {
+        bytes32 nonce = 0;
+        bytes32 logicRef = bytes32(uint256(123));
+        ForwarderExample fwd =
+            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
+
+        bytes32 labelRef = sha256(abi.encode(address(fwd)));
+
+        ForwarderCalldata memory call =
+            ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
+
+        Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
+        externalBlobs[0] =
+            Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
+
+        bytes memory zero = new bytes(32);
+
+        Logic.AppData memory consumedAppData = Logic.AppData({
+            discoveryPayload: new Logic.ExpirableBlob[](0),
+            resourcePayload: new Logic.ExpirableBlob[](2),
+            externalPayload: new Logic.ExpirableBlob[](1),
+            applicationPayload: new Logic.ExpirableBlob[](0)
+        });
+
+        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
+
+        Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](2);
+        resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
+        resourceBlobs[1] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
+
+        consumedAppData.externalPayload = externalBlobs;
+        consumedAppData.resourcePayload = resourceBlobs;
+
+        consumed[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
+            appData: consumedAppData
+        });
+        consumed[0].appData.resourcePayload[0].blob = abi.encode(consumed[0].resource);
+        // Encode a wrong nullifier key
+        bytes memory nkey = hex"3f0000007f000000bf000000ff000000";
+        consumed[0].appData.resourcePayload[1].blob = nkey;
+
+        Logic.AppData memory createdAppData = Logic.AppData({
+            discoveryPayload: new Logic.ExpirableBlob[](0),
+            resourcePayload: new Logic.ExpirableBlob[](0),
+            externalPayload: new Logic.ExpirableBlob[](0),
+            applicationPayload: new Logic.ExpirableBlob[](0)
+        });
+
+        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
+        created[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({
+                nonce: bytes32(uint256(nonce) + 1),
+                logicRef: logicRef,
+                labelRef: labelRef,
+                quantity: 1
+            }),
+            appData: createdAppData
+        });
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = _mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ProtocolAdapter.CalldataCarrierNfMismatch.selector,
+                consumed[0].resource,
+                consumed[0].resource.nullifier(bytes32(nkey)),
+                txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
+            )
         );
         _mockPa.verify(txn);
     }

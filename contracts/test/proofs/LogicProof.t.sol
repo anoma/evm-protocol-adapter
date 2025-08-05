@@ -12,8 +12,7 @@ import {TransactionExample} from "../examples/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
 contract LogicProofTest is Test {
-    using RiscZeroUtils for Logic.Instance;
-    using RiscZeroUtils for uint32;
+    using RiscZeroUtils for Logic.VerifierInput;
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
@@ -26,11 +25,21 @@ contract LogicProofTest is Test {
 
     function test_verify_example_logic_proof_consumed() public view {
         Logic.VerifierInput memory input = TransactionExample.logicVerifierInput({isConsumed: true});
-        _router.verify({seal: input.proof, imageId: input.verifyingKey, journalDigest: input.instance.toJournalDigest()});
+        bytes32 root = TransactionExample.treeRoot();
+        _router.verify({
+            seal: input.proof,
+            imageId: input.verifyingKey,
+            journalDigest: input.toJournalDigest(root, true)
+        });
     }
 
     function test_verify_example_logic_proof_created() public view {
         Logic.VerifierInput memory input = TransactionExample.logicVerifierInput({isConsumed: false});
-        _router.verify({seal: input.proof, imageId: input.verifyingKey, journalDigest: input.instance.toJournalDigest()});
+        bytes32 root = TransactionExample.treeRoot();
+        _router.verify({
+            seal: input.proof,
+            imageId: input.verifyingKey,
+            journalDigest: input.toJournalDigest(root, false)
+        });
     }
 }

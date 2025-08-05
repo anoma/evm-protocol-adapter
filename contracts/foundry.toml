@@ -2,15 +2,10 @@
 [profile.default]
 fs_permissions = [
     { access = "read", path = "./script/constructor-args.txt" },
-    { access = "read", path = "./test/benchmark/test_tx1.json" },
-    { access = "read", path = "./test/benchmark/test_tx5.json" },
-    { access = "read", path = "./test/benchmark/test_tx10.json" },
-    { access = "read", path = "./test/benchmark/test_tx15.json" },
-    { access = "read", path = "./test/benchmark/test_tx20.json" },
-    { access = "read", path = "./test/benchmark/test_tx25.json" },
-    { access = "read", path = "./test/benchmark/test_tx30.json" },
-    { access = "read", path = "./test/benchmark/test_tx35.json" },
-    { access = "read", path = "./test/benchmark/test_tx40.json" },
+    { access = "read", path = "./test/benchmark/test_tx01.bin" },
+    { access = "read", path = "./test/benchmark/test_tx05.bin" },
+    { access = "read", path = "./test/benchmark/test_tx10.bin" },
+    { access = "read", path = "./test/benchmark/test_tx15.bin" },
 ]
 
 

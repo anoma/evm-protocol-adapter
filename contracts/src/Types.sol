@@ -18,9 +18,9 @@ struct Resource {
     bytes32 labelRef;
     bytes32 valueRef;
     bytes32 nullifierKeyCommitment;
-    uint256 quantity;
-    uint256 nonce;
-    uint256 randSeed;
+    bytes32 nonce;
+    bytes32 randSeed;
+    uint128 quantity;
     bool ephemeral;
 }
 
@@ -40,16 +40,6 @@ struct Transaction {
 struct Action {
     Logic.VerifierInput[] logicVerifierInputs;
     Compliance.VerifierInput[] complianceVerifierInputs;
-    ResourceForwarderCalldataPair[] resourceCalldataPairs;
-}
-
-/// @notice A tuple containing data to allow the protocol adapter to call external contracts
-/// and to create and consume resources in correspondence to this external call.
-/// @param carrier The carrier resource making the calldata available in the RM state space.
-/// @param call The calldata containing in- and outputs of the external call being routed through a forwarder contract.
-struct ResourceForwarderCalldataPair {
-    Resource carrier;
-    ForwarderCalldata call;
 }
 
 /// @notice A data structure containing the input data to be forwarded to the untrusted forwarder contract

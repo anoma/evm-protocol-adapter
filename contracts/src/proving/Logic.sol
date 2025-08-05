@@ -12,31 +12,29 @@ library Logic {
         Never
     }
 
-    /// @notice The instance of the logic proof associated with a specific resource.
+    /// @notice A struct containing information required to verify a logic proof.
     /// @param tag The nullifier or commitment of the resource depending on if the resource is consumed or not.
-    /// @param isConsumed Whether the associated resource is consumed or not.
-    /// @param actionTreeRoot The root of the Merkle tree containing all nullifiers and commitments of the action/
-    /// @param ciphertext Encrypted information for the receiver of the resource that will be emitted as an event.
-    /// The ciphertext contains, at least, the resource plaintext and optional other application specific data.
-    /// @param appData The application data associated with the resource.
-    struct Instance {
-        bytes32 tag;
-        bool isConsumed;
-        bytes32 actionTreeRoot;
-        bytes ciphertext;
-        ExpirableBlob[] appData;
-    }
-
-    /// @notice A struct containing all information required to verify a logic proof.
-    /// @param proof The logic proof.
-    /// @param instance The logic instance to the proof.
     /// @param verifyingKey The logic verifying key (i.e., the hash of the logic function).
+    /// @param appData The application data associated with the resource.
     /// @dev In the future and to achieve function privacy, the logic circuit validity will be proven
     //  in another circuit and can be hard-coded similar to the compliance proof verifying key.
+    /// @param proof The logic proof.
     struct VerifierInput {
-        bytes proof;
-        Instance instance;
+        bytes32 tag;
         bytes32 verifyingKey;
+        AppData appData;
+        bytes proof;
+    }
+
+    /// @notice A struct containing payloads of different kinds.
+    /// @param resourcePayload The field for encoding resource plaintexts.
+    /// @param discoeryPayload The field for encoding random data for detection purposes..
+    /// @param externalPayload The field for encoding information for EVM interop.
+    struct AppData {
+        ExpirableBlob[] resourcePayload;
+        ExpirableBlob[] discoveryPayload;
+        ExpirableBlob[] externalPayload;
+        ExpirableBlob[] applicationPayload;
     }
 
     /// @notice A blob with a deletion criterion attached.
@@ -61,7 +59,7 @@ library Logic {
     {
         uint256 len = list.length;
         for (uint256 i = 0; i < len; ++i) {
-            if (list[i].instance.tag == tag) {
+            if (list[i].tag == tag) {
                 return foundElement = list[i];
             }
         }

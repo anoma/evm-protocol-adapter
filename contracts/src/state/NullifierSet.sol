@@ -29,7 +29,7 @@ contract NullifierSet is INullifierSet {
     }
 
     /// @inheritdoc INullifierSet
-    function at(uint256 index) external view override returns (bytes32 nullifier) {
+    function atIndex(uint256 index) external view override returns (bytes32 nullifier) {
         nullifier = _nullifierSet.at(index);
     }
 

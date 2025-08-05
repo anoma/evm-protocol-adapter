@@ -12,12 +12,12 @@ import {Compliance} from "../../src/proving/Compliance.sol";
 
 import {Delta} from "../../src/proving/Delta.sol";
 import {Logic} from "../../src/proving/Logic.sol";
-import {Transaction, ResourceForwarderCalldataPair, Action, Resource} from "../../src/Types.sol";
+import {Transaction, Action, Resource} from "../../src/Types.sol";
 
 library TxGen {
     using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
-    using RiscZeroUtils for Logic.Instance;
+    using RiscZeroUtils for Logic.VerifierInput;
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
@@ -27,7 +27,7 @@ library TxGen {
 
     struct ResourceAndAppData {
         Resource resource;
-        Logic.ExpirableBlob[] appData;
+        Logic.AppData appData;
     }
 
     struct ResourceLists {
@@ -43,8 +43,8 @@ library TxGen {
         Resource memory consumed,
         Resource memory created
     ) internal view returns (Compliance.VerifierInput memory unit) {
-        bytes32 nf = consumed.nullifier_({nullifierKey: 0});
-        bytes32 cm = created.commitment_();
+        bytes32 nf = consumed.nullifier({nullifierKey: 0});
+        bytes32 cm = created.commitment();
 
         bytes32 unitDeltaX;
         bytes32 unitDeltaY;
@@ -78,21 +78,19 @@ library TxGen {
         bytes32 actionTreeRoot,
         Resource memory resource,
         bool isConsumed,
-        Logic.ExpirableBlob[] memory appData
+        Logic.AppData memory appData
     ) internal view returns (Logic.VerifierInput memory input) {
-        Logic.Instance memory instance = Logic.Instance({
-            tag: isConsumed ? resource.nullifier_({nullifierKey: 0}) : resource.commitment_(),
-            isConsumed: isConsumed,
-            actionTreeRoot: actionTreeRoot,
-            ciphertext: ciphertext(),
-            appData: appData
+        input = Logic.VerifierInput({
+            tag: isConsumed ? resource.nullifier({nullifierKey: 0}) : resource.commitment(),
+            verifyingKey: resource.logicRef,
+            appData: appData,
+            proof: abi.encodePacked(uint32(0))
         });
 
-        input = Logic.VerifierInput({
-            proof: mockVerifier.mockProve({imageId: resource.logicRef, journalDigest: instance.toJournalDigest()}).seal,
-            instance: instance,
-            verifyingKey: resource.logicRef
-        });
+        input.proof = mockVerifier.mockProve({
+            imageId: resource.logicRef,
+            journalDigest: input.toJournalDigest(actionTreeRoot, isConsumed)
+        }).seal;
     }
 
     function createAction(
@@ -113,8 +111,8 @@ library TxGen {
         for (uint256 i = 0; i < nCUs; ++i) {
             uint256 index = (i * 2);
 
-            actionTreeTags[index] = consumed[i].resource.nullifier_({nullifierKey: 0});
-            actionTreeTags[index + 1] = created[i].resource.commitment_();
+            actionTreeTags[index] = consumed[i].resource.nullifier({nullifierKey: 0});
+            actionTreeTags[index + 1] = created[i].resource.commitment();
         }
 
         bytes32 actionTreeRoot = MerkleTree.computeRoot(actionTreeTags, 4);
@@ -145,22 +143,15 @@ library TxGen {
                 created: created[i].resource
             });
         }
-
-        ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
-
-        action = Action({
-            logicVerifierInputs: logicVerifierInputs,
-            complianceVerifierInputs: complianceVerifierInputs,
-            resourceCalldataPairs: emptyForwarderCallData
-        });
+        action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
     }
 
     function createDefaultAction(
         RiscZeroMockVerifier mockVerifier,
-        uint256 nonce,
+        bytes32 nonce,
         uint256 nCUs,
         uint8 commitmentTreeDepth
-    ) internal view returns (Action memory action, uint256 updatedNonce) {
+    ) internal view returns (Action memory action, bytes32 updatedNonce) {
         updatedNonce = nonce;
 
         ResourceAndAppData[] memory consumed = new ResourceAndAppData[](nCUs);
@@ -169,22 +160,34 @@ library TxGen {
         for (uint256 i = 0; i < nCUs; ++i) {
             consumed[i] = ResourceAndAppData({
                 resource: TxGen.mockResource({
-                    nonce: updatedNonce++,
+                    nonce: updatedNonce,
                     logicRef: bytes32(i),
                     labelRef: bytes32(i),
-                    quantity: 1 + nonce
+                    quantity: uint128(1 + uint256(nonce))
                 }),
-                appData: expirableBlobs()
+                appData: Logic.AppData({
+                    discoveryPayload: new Logic.ExpirableBlob[](0),
+                    resourcePayload: new Logic.ExpirableBlob[](0),
+                    externalPayload: new Logic.ExpirableBlob[](0),
+                    applicationPayload: new Logic.ExpirableBlob[](0)
+                })
             });
+            updatedNonce = bytes32(uint256(updatedNonce) + 1);
             created[i] = ResourceAndAppData({
                 resource: TxGen.mockResource({
-                    nonce: updatedNonce++,
+                    nonce: updatedNonce,
                     logicRef: bytes32(i),
                     labelRef: bytes32(i),
-                    quantity: 1 + nonce
+                    quantity: uint128(1 + uint256(nonce))
                 }),
-                appData: expirableBlobs()
+                appData: Logic.AppData({
+                    discoveryPayload: new Logic.ExpirableBlob[](0),
+                    resourcePayload: new Logic.ExpirableBlob[](0),
+                    externalPayload: new Logic.ExpirableBlob[](0),
+                    applicationPayload: new Logic.ExpirableBlob[](0)
+                })
             });
+            updatedNonce = bytes32(uint256(updatedNonce) + 1);
         }
 
         action = createAction({
@@ -222,10 +225,10 @@ library TxGen {
 
     function transaction(
         RiscZeroMockVerifier mockVerifier,
-        uint256 nonce,
+        bytes32 nonce,
         ActionConfig[] memory configs,
         uint8 commitmentTreeDepth
-    ) internal view returns (Transaction memory txn, uint256 updatedNonce) {
+    ) internal view returns (Transaction memory txn, bytes32 updatedNonce) {
         updatedNonce = nonce;
 
         Action[] memory actions = new Action[](configs.length);
@@ -274,7 +277,7 @@ library TxGen {
         }
     }
 
-    function mockResource(uint256 nonce, bytes32 logicRef, bytes32 labelRef, uint256 quantity)
+    function mockResource(bytes32 nonce, bytes32 logicRef, bytes32 labelRef, uint128 quantity)
         internal
         pure
         returns (Resource memory mock)
@@ -289,10 +292,6 @@ library TxGen {
             randSeed: 0,
             ephemeral: true
         });
-    }
-
-    function ciphertext() internal pure returns (bytes memory cipher) {
-        cipher = hex"3f0000007f000000bf000000ff000000";
     }
 
     function expirableBlobs() internal pure returns (Logic.ExpirableBlob[] memory blobs) {

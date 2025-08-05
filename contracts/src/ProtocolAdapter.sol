@@ -31,7 +31,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     using TagLookup for bytes32[];
     using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
-    using RiscZeroUtils for Logic.Instance;
+    using RiscZeroUtils for Logic.VerifierInput;
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
@@ -49,9 +49,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     error RiscZeroVerifierStopped();
 
     error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierAppDataMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierLabelMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierCommitmentNotFound(bytes32 commitment);
+    error CalldataCarrierCmMismatch(Resource resource, bytes32 expected, bytes32 actual);
+    error CalldataCarrierNfMismatch(Resource resource, bytes32 expected, bytes32 actual);
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
@@ -82,18 +81,20 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
             uint256 nResources = action.logicVerifierInputs.length;
             for (uint256 j = 0; j < nResources; ++j) {
-                Logic.Instance calldata instance = action.logicVerifierInputs[j].instance;
+                Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
 
-                if (instance.isConsumed) {
-                    _addNullifier(instance.tag);
-                } else {
-                    newRoot = _addCommitment(instance.tag);
+                if (input.appData.externalPayload.length != 0) {
+                    ForwarderCalldata memory call =
+                        abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
+                    _executeForwarderCall(call);
                 }
             }
 
-            uint256 nForwarderCalls = action.resourceCalldataPairs.length;
-            for (uint256 j = 0; j < nForwarderCalls; ++j) {
-                _executeForwarderCall(action.resourceCalldataPairs[j].call);
+            uint256 nCUs = action.complianceVerifierInputs.length;
+            for (uint256 k = 0; k < nCUs; ++k) {
+                Compliance.Instance calldata instance = action.complianceVerifierInputs[k].instance;
+                _addNullifier(instance.consumed.nullifier);
+                newRoot = _addCommitment(instance.created.commitment);
             }
         }
 
@@ -121,12 +122,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @inheritdoc IProtocolAdapter
     function getRiscZeroVerifierSelector() public pure virtual override returns (bytes4 verifierSelector) {
-        verifierSelector = 0x9f39696c;
+        verifierSelector = 0xbb001d44;
     }
 
     /// @notice Executes a call to a forwarder contracts.
     /// @param call The calldata to conduct the forwarder call.
-    function _executeForwarderCall(ForwarderCalldata calldata call) internal {
+    function _executeForwarderCall(ForwarderCalldata memory call) internal {
         // slither-disable-next-line calls-loop
         bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
 
@@ -170,8 +171,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 revert ResourceCountMismatch({expected: nResources, actual: nCUs});
             }
 
-            _verifyForwarderCalls(action);
-
             // Compliance Proofs
             {
                 for (uint256 j = 0; j < nCUs; ++j) {
@@ -210,13 +209,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                     _verifyComplianceProof(complianceVerifierInput);
 
-                    // Check the logic ref consistency
+                    // Check the logic ref consistency and calldata
                     {
                         Logic.VerifierInput calldata logicVerifierInput = action.logicVerifierInputs.lookup(nf);
-
-                        if (!logicVerifierInput.instance.isConsumed) {
-                            revert ResourceLifecycleMismatch({expected: true});
-                        }
 
                         if (complianceVerifierInput.instance.consumed.logicRef != logicVerifierInput.verifyingKey) {
                             revert LogicRefMismatch({
@@ -224,19 +219,23 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                                 actual: complianceVerifierInput.instance.consumed.logicRef
                             });
                         }
+
+                        if (logicVerifierInput.appData.externalPayload.length != 0) {
+                            _verifyForwarderCall(logicVerifierInput, true);
+                        }
                     }
                     {
                         Logic.VerifierInput calldata logicVerifierInput = action.logicVerifierInputs.lookup(cm);
-
-                        if (logicVerifierInput.instance.isConsumed) {
-                            revert ResourceLifecycleMismatch({expected: false});
-                        }
 
                         if (complianceVerifierInput.instance.created.logicRef != logicVerifierInput.verifyingKey) {
                             revert LogicRefMismatch({
                                 expected: logicVerifierInput.verifyingKey,
                                 actual: complianceVerifierInput.instance.created.logicRef
                             });
+                        }
+
+                        if (logicVerifierInput.appData.externalPayload.length != 0) {
+                            _verifyForwarderCall(logicVerifierInput, false);
                         }
                     }
 
@@ -253,18 +252,17 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
             // Logic Proofs
             {
-                bytes32 computedActionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
+                bytes32 actionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
 
                 for (uint256 j = 0; j < nResources; ++j) {
                     Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
-
-                    // Check root consistency
-                    if (input.instance.actionTreeRoot != computedActionTreeRoot) {
-                        revert RootMismatch({expected: computedActionTreeRoot, actual: input.instance.actionTreeRoot});
+                    if (TagLookup.isFoundInEvenOrOddPosition(actionTreeTags, input.tag, true)) {
+                        // Check the logic proof for nullified resource
+                        _verifyLogicProof(input, actionTreeRoot, true);
+                    } else {
+                        // Else the tag is a created resource
+                        _verifyLogicProof(input, actionTreeRoot, false);
                     }
-
-                    // Check the logic proof
-                    _verifyLogicProof(input);
                 }
             }
         }
@@ -291,14 +289,54 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice An internal function verifying a RISC0 logic proof.
     /// @param input The verifier input of the logic proof.
+    /// @param root The root of the action tree containing all tags of an action.
+    /// @param consumed Bool indicating whether the tag is a commitment or a nullifier.
     /// @dev This function is virtual to allow for it to be overridden, e.g., to mock proofs with a mock verifier.
-    function _verifyLogicProof(Logic.VerifierInput calldata input) internal view virtual {
+    function _verifyLogicProof(Logic.VerifierInput calldata input, bytes32 root, bool consumed) internal view virtual {
         // slither-disable-next-line calls-loop
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
             seal: input.proof,
             imageId: input.verifyingKey,
-            journalDigest: input.instance.toJournalDigest()
+            journalDigest: input.toJournalDigest(root, consumed)
         });
+    }
+
+    /// @notice Verifies the forwarder calls of a given action.
+    /// @param input The input to verify the forwarder calls for.
+    /// @param consumed The bool indicating whether the tag is commitment of nullifier
+    function _verifyForwarderCall(Logic.VerifierInput calldata input, bool consumed) internal view {
+        // The PA expects the forwarder calldata to be present at the head of the external payload
+        ForwarderCalldata memory call = abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
+        // The plaintext should be stored at the head of resource payload and be decodable
+        Resource memory resource = abi.decode(input.appData.resourcePayload[0].blob, (Resource));
+        // slither-disable-next-line calls-loop
+        bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
+
+        // Check kind correspondence
+        if (resource.kind() != fetchedKind) {
+            revert CalldataCarrierKindMismatch({expected: fetchedKind, actual: resource.kind()});
+        }
+
+        // Check tag correspondence
+        if (!consumed) {
+            // If created, just commit the plaintext and check agains the tag
+            if (resource.commitment() != input.tag) {
+                revert CalldataCarrierCmMismatch({
+                    resource: resource,
+                    actual: input.tag,
+                    expected: resource.commitment()
+                });
+            }
+        } else if (
+            // If consumed, we expect the nullifier key to be present in the resource payload as well
+            resource.nullifier(bytes32(input.appData.resourcePayload[1].blob)) != input.tag
+        ) {
+            revert CalldataCarrierNfMismatch({
+                resource: resource,
+                actual: input.tag,
+                expected: resource.nullifier(bytes32(input.appData.resourcePayload[1].blob))
+            });
+        }
     }
 
     /// @notice An internal function verifying a delta proof.
@@ -312,42 +350,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         virtual
     {
         Delta.verify({proof: proof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
-    }
-
-    /// @notice Verifies the forwarder calls of a given action.
-    /// @param action The action to verify the forwarder calls for.
-    function _verifyForwarderCalls(Action calldata action) internal view {
-        uint256 nForwarderCalls = action.resourceCalldataPairs.length;
-        for (uint256 i = 0; i < nForwarderCalls; ++i) {
-            Resource calldata carrier = action.resourceCalldataPairs[i].carrier;
-            ForwarderCalldata calldata call = action.resourceCalldataPairs[i].call;
-
-            // Kind integrity check
-
-            {
-                bytes32 passedKind = carrier.kind();
-
-                // slither-disable-next-line calls-loop
-                bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
-
-                if (passedKind != fetchedKind) {
-                    revert CalldataCarrierKindMismatch({expected: fetchedKind, actual: passedKind});
-                }
-            }
-
-            // AppData integrity check
-            {
-                bytes32 expectedAppDataHash = keccak256(abi.encode(call.untrustedForwarder, call.input, call.output));
-
-                // Lookup the first appData entry.
-                bytes32 actualAppDataHash =
-                    keccak256(action.logicVerifierInputs.lookup(carrier.commitment()).instance.appData[0].blob);
-
-                if (actualAppDataHash != expectedAppDataHash) {
-                    revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});
-                }
-            }
-        }
     }
 
     /// @notice An internal function adding a unit delta to the transactionDelta.
