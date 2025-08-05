@@ -4,9 +4,9 @@ pragma solidity ^0.8.30;
 import {Address} from "@openzeppelin-contracts/utils/Address.sol";
 
 import {ForwarderBase} from "../../src/forwarders/ForwarderBase.sol";
-import {ForwarderTarget} from "./ForwarderTarget.m.sol";
+import {ForwarderTargetExample} from "./ForwarderTarget.e.sol";
 
-contract ForwarderMock is ForwarderBase {
+contract ForwarderExample is ForwarderBase {
     using Address for address;
 
     address public immutable TARGET;
@@ -17,7 +17,7 @@ contract ForwarderMock is ForwarderBase {
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef)
         ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
     {
-        TARGET = address(new ForwarderTarget());
+        TARGET = address(new ForwarderTargetExample());
     }
 
     function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {

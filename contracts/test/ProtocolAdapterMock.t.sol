@@ -16,16 +16,16 @@ import {CommitmentAccumulator} from "../src/state/CommitmentAccumulator.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {Transaction, ResourceForwarderCalldataPair, ForwarderCalldata} from "../src/Types.sol";
 
-import {ExampleGen} from "./mocks/ExampleGen.sol";
-import {ForwarderMock} from "./mocks/Forwarder.m.sol";
-import {INPUT, EXPECTED_OUTPUT} from "./mocks/ForwarderTarget.m.sol";
+import {ForwarderExample} from "./examples/Forwarder.e.sol";
+import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
+import {TxGen} from "./examples/TxGen.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
 
 contract ProtocolAdapterMockTest is Test {
     using MerkleTree for bytes32[];
-    using ExampleGen for RiscZeroMockVerifier;
-    using ExampleGen for Transaction;
+    using TxGen for RiscZeroMockVerifier;
+    using TxGen for Transaction;
 
     uint8 internal constant _TEST_COMMITMENT_TREE_DEPTH = 8;
     uint8 internal constant _TEST_ACTION_TAG_TREE_DEPTH = 4;
@@ -44,7 +44,7 @@ contract ProtocolAdapterMockTest is Test {
     function test_execute_emits_the_TransactionExecuted_event() public {
         (Transaction memory txn,) = _mockVerifier.transaction({
             nonce: 0,
-            configs: ExampleGen.generateActionConfigs({nActions: 1, nCUs: 1}),
+            configs: TxGen.generateActionConfigs({nActions: 1, nCUs: 1}),
             commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH
         });
 
@@ -62,7 +62,8 @@ contract ProtocolAdapterMockTest is Test {
         uint256 nonce = 0;
 
         bytes32 logicRef = bytes32(uint256(123));
-        ForwarderMock fwd = new ForwarderMock({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
+        ForwarderExample fwd =
+            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
 
         bytes32 labelRef = sha256(abi.encode(address(fwd)));
 
@@ -77,19 +78,19 @@ contract ProtocolAdapterMockTest is Test {
                 blob: abi.encode(call.untrustedForwarder, call.input, call.output)
             });
 
-            ExampleGen.ResourceAndAppData[] memory consumed = new ExampleGen.ResourceAndAppData[](1);
-            ExampleGen.ResourceAndAppData[] memory created = new ExampleGen.ResourceAndAppData[](1);
-            consumed[0] = ExampleGen.ResourceAndAppData({
-                resource: ExampleGen.mockResource({nonce: nonce++, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
+            TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
+            TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
+            consumed[0] = TxGen.ResourceAndAppData({
+                resource: TxGen.mockResource({nonce: nonce++, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
                 appData: blobs
             });
-            created[0] = ExampleGen.ResourceAndAppData({
-                resource: ExampleGen.mockResource({nonce: nonce++, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
+            created[0] = TxGen.ResourceAndAppData({
+                resource: TxGen.mockResource({nonce: nonce++, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
                 appData: blobs
             });
 
-            ExampleGen.ResourceLists[] memory resourceLists = new ExampleGen.ResourceLists[](1);
-            resourceLists[0] = ExampleGen.ResourceLists({consumed: consumed, created: created});
+            TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+            resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
             txn = _mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH);
 
             ResourceForwarderCalldataPair[] memory pairs = new ResourceForwarderCalldataPair[](1);
@@ -113,27 +114,27 @@ contract ProtocolAdapterMockTest is Test {
     function test_execute_1_txn_with_1_action_and_0_cus() public {
         (Transaction memory txn,) = _mockVerifier.transaction({
             nonce: 0,
-            configs: ExampleGen.generateActionConfigs({nActions: 1, nCUs: 0}),
+            configs: TxGen.generateActionConfigs({nActions: 1, nCUs: 0}),
             commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH
         });
         _mockPa.execute(txn);
     }
 
     function test_execute_1_txn_with_2_action_with_1_and_0_cus() public {
-        ExampleGen.ActionConfig[] memory configs = new ExampleGen.ActionConfig[](2);
-        configs[0] = ExampleGen.ActionConfig({nCUs: 1});
-        configs[1] = ExampleGen.ActionConfig({nCUs: 0});
+        TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](2);
+        configs[0] = TxGen.ActionConfig({nCUs: 1});
+        configs[1] = TxGen.ActionConfig({nCUs: 0});
 
         (Transaction memory txn,) = _mockVerifier.transaction({
             nonce: 0,
-            configs: ExampleGen.generateActionConfigs({nActions: 1, nCUs: 1}),
+            configs: TxGen.generateActionConfigs({nActions: 1, nCUs: 1}),
             commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH
         });
         _mockPa.execute(txn);
     }
 
     function test_execute_1_txn_with_n_actions_and_n_cus(uint8 nActions, uint8 nCUs) public {
-        ExampleGen.ActionConfig[] memory configs = ExampleGen.generateActionConfigs({
+        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
             nActions: uint8(bound(nActions, 0, 5)),
             nCUs: uint8(bound(nCUs, 0, 2 ** (_mockPa.actionTreeDepth() - 1)))
         });
@@ -144,7 +145,7 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_2_txns_with_n_actions_and_n_cus(uint8 nActions, uint8 nCUs) public {
-        ExampleGen.ActionConfig[] memory configs = ExampleGen.generateActionConfigs({
+        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
             nActions: uint8(bound(nActions, 0, 5)),
             nCUs: uint8(bound(nCUs, 0, 2 ** (_mockPa.actionTreeDepth() - 1)))
         });
@@ -162,7 +163,7 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_verify_reverts_on_pre_existing_nullifier() public {
-        ExampleGen.ActionConfig[] memory configs = ExampleGen.generateActionConfigs({nActions: 1, nCUs: 1});
+        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 1});
 
         (Transaction memory tx1, uint256 updatedNonce) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
@@ -182,7 +183,7 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_verify_reverts_on_pre_existing_commitment() public {
-        ExampleGen.ActionConfig[] memory configs = ExampleGen.generateActionConfigs({nActions: 1, nCUs: 1});
+        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 1});
 
         (Transaction memory tx1, uint256 updatedNonce) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
@@ -203,7 +204,7 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_verify_reverts_on_duplicated_nullifier() public {
-        ExampleGen.ActionConfig[] memory configs = ExampleGen.generateActionConfigs({nActions: 1, nCUs: 2});
+        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 2});
 
         (Transaction memory txn,) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
@@ -215,7 +216,7 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_verify_reverts_on_duplicated_commitment() public {
-        ExampleGen.ActionConfig[] memory configs = ExampleGen.generateActionConfigs({nActions: 1, nCUs: 2});
+        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 2});
 
         (Transaction memory txn,) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
@@ -229,7 +230,7 @@ contract ProtocolAdapterMockTest is Test {
     function test_verify_reverts_on_wrong_isConsumed_value_in_consumed_resource_logic_proof() public {
         (Transaction memory txn,) = _mockVerifier.transaction({
             nonce: 0,
-            configs: ExampleGen.generateActionConfigs({nActions: 2, nCUs: 2}),
+            configs: TxGen.generateActionConfigs({nActions: 2, nCUs: 2}),
             commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH
         });
 
@@ -245,7 +246,7 @@ contract ProtocolAdapterMockTest is Test {
     function test_verify_reverts_on_wrong_isConsumed_value_in_created_resource_logic_proof() public {
         (Transaction memory txn,) = _mockVerifier.transaction({
             nonce: 0,
-            configs: ExampleGen.generateActionConfigs({nActions: 2, nCUs: 2}),
+            configs: TxGen.generateActionConfigs({nActions: 2, nCUs: 2}),
             commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH
         });
 

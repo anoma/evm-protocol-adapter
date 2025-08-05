@@ -11,8 +11,10 @@ import {ComputableComponents} from "../src/libs/ComputableComponents.sol";
 import {Parameters} from "../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
-import {ForwarderMock} from "./mocks/Forwarder.m.sol";
-import {ForwarderTarget, INPUT_VALUE, OUTPUT_VALUE, INPUT, EXPECTED_OUTPUT} from "./mocks/ForwarderTarget.m.sol";
+import {ForwarderExample} from "./examples/Forwarder.e.sol";
+import {
+    ForwarderTargetExample, INPUT_VALUE, OUTPUT_VALUE, INPUT, EXPECTED_OUTPUT
+} from "./examples/ForwarderTarget.e.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract ForwarderBaseTest is Test {
@@ -26,8 +28,8 @@ contract ForwarderBaseTest is Test {
     address internal _riscZeroAdmin;
     address internal _pa;
 
-    ForwarderMock internal _fwd;
-    ForwarderTarget internal _tgt;
+    ForwarderExample internal _fwd;
+    ForwarderTargetExample internal _tgt;
 
     function setUp() public virtual {
         (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
@@ -41,8 +43,8 @@ contract ForwarderBaseTest is Test {
             })
         );
 
-        _fwd = new ForwarderMock({protocolAdapter: _pa, calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
-        _tgt = ForwarderTarget(_fwd.TARGET());
+        _fwd = new ForwarderExample({protocolAdapter: _pa, calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
+        _tgt = ForwarderTargetExample(_fwd.TARGET());
     }
 
     function test_forwardCall_reverts_if_the_pa_is_not_the_caller() public {
@@ -61,7 +63,7 @@ contract ForwarderBaseTest is Test {
         vm.prank(_pa);
 
         vm.expectEmit(address(_fwd));
-        emit ForwarderMock.CallForwarded(INPUT, EXPECTED_OUTPUT);
+        emit ForwarderExample.CallForwarded(INPUT, EXPECTED_OUTPUT);
         _fwd.forwardCall({input: INPUT});
     }
 
@@ -69,7 +71,7 @@ contract ForwarderBaseTest is Test {
         vm.prank(_pa);
 
         vm.expectEmit(address(_tgt));
-        emit ForwarderTarget.CallReceived(INPUT_VALUE, OUTPUT_VALUE);
+        emit ForwarderTargetExample.CallReceived(INPUT_VALUE, OUTPUT_VALUE);
         _fwd.forwardCall({input: INPUT});
     }
 

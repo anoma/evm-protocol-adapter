@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {SHA256} from "../../src/libs/SHA256.sol";
 
-contract MockTree {
+contract MerkleTreeExample {
     uint8 internal constant _TREE_DEPTH = 2;
     uint256 internal constant _N_LEAFS = 2 ** _TREE_DEPTH;
     uint256 internal constant _N_NODES = 2 ** (_TREE_DEPTH - 1);

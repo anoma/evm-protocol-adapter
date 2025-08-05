@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Universal} from "../../src/libs/Identities.sol";
 import {Delta} from "../../src/proving/Delta.sol";
 
-library MockDelta {
+library DeltaMock {
     using Delta for uint256[2];
 
     /// @notice A message containing  the empty `bytes32` array.

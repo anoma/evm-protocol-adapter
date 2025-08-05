@@ -6,16 +6,19 @@ import {ForwarderBase} from "../src/forwarders/ForwarderBase.sol";
 import {Parameters} from "../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
+import {EmergencyMigratableForwarderExample} from "./examples/EmergencyMigratableForwarder.e.sol";
+import {ForwarderExample} from "./examples/Forwarder.e.sol";
+import {
+    ForwarderTargetExample, INPUT_VALUE, OUTPUT_VALUE, INPUT, EXPECTED_OUTPUT
+} from "./examples/ForwarderTarget.e.sol";
+
 import {ForwarderBaseTest} from "./ForwarderBase.t.sol";
-import {EmergencyMigratableForwarderMock} from "./mocks/EmergencyMigratableForwarder.m.sol";
-import {ForwarderMock} from "./mocks/Forwarder.m.sol";
-import {ForwarderTarget, INPUT_VALUE, OUTPUT_VALUE, INPUT, EXPECTED_OUTPUT} from "./mocks/ForwarderTarget.m.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(3));
 
-    EmergencyMigratableForwarderMock internal _emrgFwd;
+    EmergencyMigratableForwarderExample internal _emrgFwd;
 
     function setUp() public override {
         (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
@@ -29,15 +32,15 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
             })
         );
 
-        _emrgFwd = new EmergencyMigratableForwarderMock({
+        _emrgFwd = new EmergencyMigratableForwarderExample({
             protocolAdapter: _pa,
             emergencyCommittee: _EMERGENCY_COMMITTEE,
             calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
         });
 
-        _fwd = ForwarderMock(address(_emrgFwd));
+        _fwd = ForwarderExample(address(_emrgFwd));
 
-        _tgt = ForwarderTarget(_fwd.TARGET());
+        _tgt = ForwarderTargetExample(_fwd.TARGET());
     }
 
     function test_setEmergencyCaller_reverts_if_the_caller_is_not_the_emergency_committee() public {
@@ -122,7 +125,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
 
         vm.prank(_EMERGENCY_CALLER);
         vm.expectEmit(address(_emrgFwd));
-        emit ForwarderMock.EmergencyCallForwarded(INPUT, EXPECTED_OUTPUT);
+        emit ForwarderExample.EmergencyCallForwarded(INPUT, EXPECTED_OUTPUT);
         _emrgFwd.forwardEmergencyCall({input: INPUT});
     }
 
@@ -132,7 +135,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         vm.prank(_EMERGENCY_CALLER);
 
         vm.expectEmit(address(_tgt));
-        emit ForwarderTarget.CallReceived(INPUT_VALUE, OUTPUT_VALUE);
+        emit ForwarderTargetExample.CallReceived(INPUT_VALUE, OUTPUT_VALUE);
         _emrgFwd.forwardEmergencyCall({input: INPUT});
     }
 

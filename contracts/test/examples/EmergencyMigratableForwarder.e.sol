@@ -5,9 +5,9 @@ import {Address} from "@openzeppelin-contracts/utils/Address.sol";
 
 import {EmergencyMigratableForwarderBase} from "../../src/forwarders/EmergencyMigratableForwarderBase.sol";
 
-import {ForwarderTarget} from "./ForwarderTarget.m.sol";
+import {ForwarderTargetExample} from "./ForwarderTarget.e.sol";
 
-contract EmergencyMigratableForwarderMock is EmergencyMigratableForwarderBase {
+contract EmergencyMigratableForwarderExample is EmergencyMigratableForwarderBase {
     using Address for address;
 
     address public immutable TARGET;
@@ -18,7 +18,7 @@ contract EmergencyMigratableForwarderMock is EmergencyMigratableForwarderBase {
     constructor(address protocolAdapter, address emergencyCommittee, bytes32 calldataCarrierLogicRef)
         EmergencyMigratableForwarderBase(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee)
     {
-        TARGET = address(new ForwarderTarget());
+        TARGET = address(new ForwarderTargetExample());
     }
 
     function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {

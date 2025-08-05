@@ -10,13 +10,11 @@ import {Test} from "forge-std/Test.sol";
 
 import {Parameters} from "../src/libs/Parameters.sol";
 import {TagLookup} from "../src/libs/TagLookup.sol";
-
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Compliance} from "../src/proving/Compliance.sol";
 import {Logic} from "../src/proving/Logic.sol";
 import {Transaction, Action, ResourceForwarderCalldataPair} from "../src/Types.sol";
-import {Example} from "./mocks/Example.sol";
-
+import {TransactionExample} from "./examples/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract ProtocolAdapterTest is Test {
@@ -51,7 +49,7 @@ contract ProtocolAdapterTest is Test {
         _emergencyStop.estop();
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
-        _pa.verify(Example.transaction());
+        _pa.verify(TransactionExample.transaction());
     }
 
     function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {
@@ -59,11 +57,11 @@ contract ProtocolAdapterTest is Test {
         _emergencyStop.estop();
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
-        _pa.execute(Example.transaction());
+        _pa.execute(TransactionExample.transaction());
     }
 
     function test_execute() public {
-        _pa.execute(Example.transaction());
+        _pa.execute(TransactionExample.transaction());
     }
 
     function test_execute_empty_tx() public {
@@ -106,7 +104,7 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_verify() public view {
-        _pa.verify(Example.transaction());
+        _pa.verify(TransactionExample.transaction());
     }
 
     // solhint-disable-next-line no-empty-blocks
@@ -117,14 +115,14 @@ contract ProtocolAdapterTest is Test {
 
     function _actionWithDuplicatedComplianceUnit() internal pure returns (Action memory action) {
         Compliance.VerifierInput[] memory complianceVerifierInputs = new Compliance.VerifierInput[](2);
-        complianceVerifierInputs[0] = Example.complianceVerifierInput();
-        complianceVerifierInputs[1] = Example.complianceVerifierInput();
+        complianceVerifierInputs[0] = TransactionExample.complianceVerifierInput();
+        complianceVerifierInputs[1] = TransactionExample.complianceVerifierInput();
 
         Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](4);
-        logicVerifierInputs[0] = Example.logicVerifierInput({isConsumed: true});
-        logicVerifierInputs[1] = Example.logicVerifierInput({isConsumed: false});
-        logicVerifierInputs[2] = Example.logicVerifierInput({isConsumed: true});
-        logicVerifierInputs[3] = Example.logicVerifierInput({isConsumed: false});
+        logicVerifierInputs[0] = TransactionExample.logicVerifierInput({isConsumed: true});
+        logicVerifierInputs[1] = TransactionExample.logicVerifierInput({isConsumed: false});
+        logicVerifierInputs[2] = TransactionExample.logicVerifierInput({isConsumed: true});
+        logicVerifierInputs[3] = TransactionExample.logicVerifierInput({isConsumed: false});
 
         action = Action({
             logicVerifierInputs: logicVerifierInputs,
