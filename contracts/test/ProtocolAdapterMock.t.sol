@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
@@ -14,20 +15,21 @@ import {Transaction} from "../src/Types.sol";
 
 import {ExampleGen} from "./mocks/ExampleGen.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
-import {DeployRiscZeroVerifierRouterMock} from "./script/DeployRiscZeroVerifierRouterMock.s.sol";
+import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
 
 contract ProtocolAdapterMockTest is Test {
     using ExampleGen for RiscZeroMockVerifier;
     using ExampleGen for Transaction;
 
-    RiscZeroVerifierRouter internal _mockRouter;
+    RiscZeroVerifierRouter internal _router;
     RiscZeroMockVerifier internal _mockVerifier;
+    RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapterMock internal _mockPa;
 
     function setUp() public {
-        (_mockRouter, _mockVerifier) = (new DeployRiscZeroVerifierRouterMock()).run();
+        (_router, _emergencyStop, _mockVerifier) = new DeployRiscZeroContractsMock().run();
 
-        _mockPa = new ProtocolAdapterMock(_mockRouter, 32, 4);
+        _mockPa = new ProtocolAdapterMock(_router, 32, 4);
     }
 
     function test_execute_1_txn_with_1_action_and_0_cus() public {

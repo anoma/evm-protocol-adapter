@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
+import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {IForwarder} from "./interfaces/IForwarder.sol";
@@ -44,6 +45,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     error ResourceCountMismatch(uint256 expected, uint256 actual);
     error RootMismatch(bytes32 expected, bytes32 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
+    error RiscZeroVerifierStopped();
 
     error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierAppDataMismatch(bytes32 expected, bytes32 actual);
@@ -59,6 +61,11 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     {
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
         _ACTION_TAG_TREE_DEPTH = actionTagTreeDepth;
+
+        // Sanity check that the verifier has not been stopped already.
+        if (isEmergencyStopped()) {
+            revert RiscZeroVerifierStopped();
+        }
     }
 
     // slither-disable-start reentrancy-no-eth
@@ -106,6 +113,18 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @inheritdoc IProtocolAdapter
     function verify(Transaction calldata transaction) external view override {
         _verify(transaction);
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function isEmergencyStopped() public view override returns (bool isStopped) {
+        isStopped = RiscZeroVerifierEmergencyStop(
+            address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))
+        ).paused();
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function getRiscZeroVerifierSelector() public pure virtual override returns (bytes4 verifierSelector) {
+        verifierSelector = 0x9f39696c;
     }
 
     /// @notice Executes a call to a forwarder contracts.

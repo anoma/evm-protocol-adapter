@@ -1,0 +1,93 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
+
+import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
+import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
+
+import {Test} from "forge-std/Test.sol";
+
+import {ForwarderBase} from "../src/forwarders/ForwarderBase.sol";
+import {ComputableComponents} from "../src/libs/ComputableComponents.sol";
+import {Parameters} from "../src/libs/Parameters.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+
+import {ForwarderMock} from "./mocks/Forwarder.m.sol";
+import {ForwarderTarget} from "./mocks/ForwarderTarget.m.sol";
+import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
+
+contract ForwarderBaseTest is Test {
+    address internal constant _EMERGENCY_CALLER = address(uint160(1));
+    address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
+
+    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(type(uint256).max);
+
+    uint256 internal constant _INPUT_VALUE = 123;
+    uint256 internal constant _OUTPUT_VALUE = _INPUT_VALUE + 1;
+    bytes internal constant _INPUT = abi.encodeCall(ForwarderTarget.increment, _INPUT_VALUE);
+    bytes internal constant _EXPECTED_OUTPUT = abi.encode(_OUTPUT_VALUE);
+
+    RiscZeroVerifierRouter internal _router;
+    RiscZeroVerifierEmergencyStop internal _emergencyStop;
+    address internal _riscZeroAdmin;
+    address internal _pa;
+
+    ForwarderMock internal _fwd;
+    ForwarderTarget internal _tgt;
+
+    function setUp() public virtual {
+        (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
+        _riscZeroAdmin = _emergencyStop.owner();
+
+        _pa = address(
+            new ProtocolAdapter({
+                riscZeroVerifierRouter: _router,
+                commitmentTreeDepth: Parameters.COMMITMENT_TREE_DEPTH,
+                actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
+            })
+        );
+
+        _fwd = new ForwarderMock({protocolAdapter: _pa, calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
+        _tgt = ForwarderTarget(_fwd.TARGET());
+    }
+
+    function test_forwardCall_reverts_if_the_pa_is_not_the_caller() public {
+        vm.prank(_UNAUTHORIZED_CALLER);
+        vm.expectRevert(abi.encodeWithSelector(ForwarderBase.UnauthorizedCaller.selector, _pa, _UNAUTHORIZED_CALLER));
+        _fwd.forwardCall({input: _INPUT});
+    }
+
+    function test_forwardCall_forwards_calls_if_the_pa_is_the_caller() public {
+        vm.prank(_pa);
+        bytes memory output = _fwd.forwardCall({input: _INPUT});
+        assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
+    }
+
+    function test_forwardCall_emits_the_CallForwarded_event() public {
+        vm.prank(_pa);
+
+        vm.expectEmit(address(_fwd));
+        emit ForwarderMock.CallForwarded(_INPUT, _EXPECTED_OUTPUT);
+        _fwd.forwardCall({input: _INPUT});
+    }
+
+    function test_forwardCall_calls_the_function_in_the_target_contract() public {
+        vm.prank(_pa);
+
+        vm.expectEmit(address(_tgt));
+        emit ForwarderTarget.CallReceived(_INPUT_VALUE, _OUTPUT_VALUE);
+        _fwd.forwardCall({input: _INPUT});
+    }
+
+    function test_calldataCarrierResourceKind_returns_the_expected_kind() public view {
+        bytes32 expectedKind = ComputableComponents.kind({
+            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            labelRef: sha256(abi.encode(address(_fwd)))
+        });
+        assertEq(_fwd.calldataCarrierResourceKind(), expectedKind);
+    }
+
+    function _stopProtocolAdapter() internal {
+        vm.prank(_riscZeroAdmin);
+        _emergencyStop.estop();
+    }
+}

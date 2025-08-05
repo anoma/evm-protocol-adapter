@@ -3,34 +3,41 @@ pragma solidity ^0.8.30;
 
 import {IForwarder} from "../interfaces/IForwarder.sol";
 import {ComputableComponents} from "../libs/ComputableComponents.sol";
+import {ProtocolAdapter} from "../ProtocolAdapter.sol";
 
 /// @title ForwarderBase
 /// @author Anoma Foundation, 2025
 /// @notice The base contract to inherit from to create a forwarder contracts owning EVM state and executing EVM calls.
 /// @custom:security-contact security@anoma.foundation
 abstract contract ForwarderBase is IForwarder {
-    address internal immutable _PROTOCOL_ADAPTER;
+    /// @notice The protocol adapter contract that can forward calls.
+    ProtocolAdapter internal immutable _PROTOCOL_ADAPTER;
 
     /// @notice The the calldata carrier resource kind.
     bytes32 internal immutable _CALLDATA_CARRIER_RESOURCE_KIND;
 
-    error UnauthorizedCaller(address caller);
+    error ZeroNotAllowed();
+    error UnauthorizedCaller(address expected, address actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
+
     /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef) {
+        if (protocolAdapter == address(0) || calldataCarrierLogicRef == bytes32(0)) {
+            revert ZeroNotAllowed();
+        }
+
+        _PROTOCOL_ADAPTER = ProtocolAdapter(protocolAdapter);
+
         _CALLDATA_CARRIER_RESOURCE_KIND =
             ComputableComponents.kind({logicRef: calldataCarrierLogicRef, labelRef: sha256(abi.encode(address(this)))});
-
-        _PROTOCOL_ADAPTER = protocolAdapter;
     }
 
     /// @inheritdoc IForwarder
     function forwardCall(bytes calldata input) external returns (bytes memory output) {
-        if (msg.sender != _PROTOCOL_ADAPTER) {
-            revert UnauthorizedCaller(msg.sender);
-        }
+        _checkCaller(address(_PROTOCOL_ADAPTER));
+
         output = _forwardCall(input);
     }
 
@@ -39,8 +46,16 @@ abstract contract ForwarderBase is IForwarder {
         kind = _CALLDATA_CARRIER_RESOURCE_KIND;
     }
 
-    /// @notice Forwards  calls to a target contract.
-    /// @param input The `bytes` encoded calldata (including the `bytes4` function selector).
+    /// @notice Forwards calls.
+    /// @param input The `bytes` encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
     function _forwardCall(bytes calldata input) internal virtual returns (bytes memory output);
+
+    /// @notice Checks that an expected caller is calling the function and reverts otherwise.
+    /// @param expected The expected caller.
+    function _checkCaller(address expected) internal view {
+        if (msg.sender != expected) {
+            revert UnauthorizedCaller({expected: expected, actual: msg.sender});
+        }
+    }
 }

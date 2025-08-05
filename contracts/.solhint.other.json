@@ -34,7 +34,7 @@
     "gas-calldata-parameters": "warn",
     "gas-custom-errors": "warn",
     "gas-increment-by-one": "off",
-    "gas-indexed-events": "warn",
+    "gas-indexed-events": "off",
     "gas-multitoken1155": "warn",
     "gas-named-return-values": "warn",
     "gas-small-strings": "warn",
