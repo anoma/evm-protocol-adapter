@@ -88,8 +88,8 @@ contract ProtocolAdapterMockTest is Test {
                 appData: blobs
             });
 
-            ExampleGen.ActionResources[] memory resourceLists = new ExampleGen.ActionResources[](1);
-            resourceLists[0] = ExampleGen.ActionResources({consumed: consumed, created: created});
+            ExampleGen.ResourceLists[] memory resourceLists = new ExampleGen.ResourceLists[](1);
+            resourceLists[0] = ExampleGen.ResourceLists({consumed: consumed, created: created});
             txn = _mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH);
 
             ResourceForwarderCalldataPair[] memory pairs = new ResourceForwarderCalldataPair[](1);

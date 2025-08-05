@@ -25,18 +25,12 @@ library ExampleGen {
         uint256 nCUs;
     }
 
-    struct ResourcePosition {
-        uint256 actId;
-        uint256 cuId;
-        bool isConsumed;
-    }
-
     struct ResourceAndAppData {
         Resource resource;
         Logic.ExpirableBlob[] appData;
     }
 
-    struct ActionResources {
+    struct ResourceLists {
         ResourceAndAppData[] consumed;
         ResourceAndAppData[] created;
     }
@@ -161,11 +155,12 @@ library ExampleGen {
         });
     }
 
-    function createAction(RiscZeroMockVerifier mockVerifier, uint256 nonce, uint256 nCUs, uint8 commitmentTreeDepth)
-        internal
-        view
-        returns (Action memory action, uint256 updatedNonce)
-    {
+    function createDefaultAction(
+        RiscZeroMockVerifier mockVerifier,
+        uint256 nonce,
+        uint256 nCUs,
+        uint8 commitmentTreeDepth
+    ) internal view returns (Action memory action, uint256 updatedNonce) {
         updatedNonce = nonce;
 
         ResourceAndAppData[] memory consumed = new ResourceAndAppData[](nCUs);
@@ -202,7 +197,7 @@ library ExampleGen {
 
     function transaction(
         RiscZeroMockVerifier mockVerifier,
-        ActionResources[] memory actionResources,
+        ResourceLists[] memory actionResources,
         uint8 commitmentTreeDepth
     ) internal view returns (Transaction memory txn) {
         Action[] memory actions = new Action[](actionResources.length);
@@ -235,7 +230,7 @@ library ExampleGen {
 
         Action[] memory actions = new Action[](configs.length);
         for (uint256 i = 0; i < configs.length; ++i) {
-            (actions[i], updatedNonce) = createAction({
+            (actions[i], updatedNonce) = createDefaultAction({
                 mockVerifier: mockVerifier,
                 nonce: updatedNonce,
                 nCUs: configs[i].nCUs,
