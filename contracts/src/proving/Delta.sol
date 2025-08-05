@@ -45,7 +45,7 @@ library Delta {
     /// @param proof The delta proof.
     /// @param instance The transaction delta.
     /// @param verifyingKey The Keccak-256 hash of all nullifiers and commitments as ordered in the compliance units.
-    function verify(bytes memory proof, uint256[2] memory instance, bytes32 verifyingKey) internal pure {
+    function verify(bytes memory proof, uint256[2] memory instance, bytes32 verifyingKey) public pure {
         // Verify the delta proof using the ECDSA.recover API to obtain the address
         address recovered = ECDSA.recover({hash: verifyingKey, signature: proof});
 
