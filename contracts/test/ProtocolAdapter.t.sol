@@ -39,7 +39,11 @@ contract ProtocolAdapterTest is Test {
         _emergencyStop.estop();
 
         vm.expectRevert(ProtocolAdapter.RiscZeroVerifierStopped.selector);
-        new ProtocolAdapter({riscZeroVerifierRouter: _router, commitmentTreeDepth: 32, actionTagTreeDepth: 4});
+        new ProtocolAdapter({
+            riscZeroVerifierRouter: _router,
+            commitmentTreeDepth: Parameters.COMMITMENT_TREE_DEPTH,
+            actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
+        });
     }
 
     function test_verify_reverts_on_vulnerable_risc_zero_verifier() public {

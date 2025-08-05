@@ -5,14 +5,14 @@ import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.so
 
 import {ComputableComponents} from "../../src/libs/ComputableComponents.sol";
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
+
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
 import {Compliance} from "../../src/proving/Compliance.sol";
 
 import {Delta} from "../../src/proving/Delta.sol";
 import {Logic} from "../../src/proving/Logic.sol";
 import {Transaction, ResourceForwarderCalldataPair, Action, Resource} from "../../src/Types.sol";
-
-import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
 
 library ExampleGen {
     using ComputableComponents for Resource;
@@ -29,6 +29,16 @@ library ExampleGen {
         uint256 actId;
         uint256 cuId;
         bool isConsumed;
+    }
+
+    struct ResourceAndAppData {
+        Resource resource;
+        Logic.ExpirableBlob[] appData;
+    }
+
+    struct ActionResources {
+        ResourceAndAppData[] consumed;
+        ResourceAndAppData[] created;
     }
 
     error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
@@ -73,14 +83,15 @@ library ExampleGen {
         RiscZeroMockVerifier mockVerifier,
         bytes32 actionTreeRoot,
         Resource memory resource,
-        bool isConsumed
+        bool isConsumed,
+        Logic.ExpirableBlob[] memory appData
     ) internal view returns (Logic.VerifierInput memory input) {
         Logic.Instance memory instance = Logic.Instance({
             tag: isConsumed ? resource.nullifier_({nullifierKey: 0}) : resource.commitment_(),
             isConsumed: isConsumed,
             actionTreeRoot: actionTreeRoot,
             ciphertext: ciphertext(),
-            appData: expirableBlobs()
+            appData: appData
         });
 
         input = Logic.VerifierInput({
@@ -90,11 +101,12 @@ library ExampleGen {
         });
     }
 
-    function createAction(RiscZeroMockVerifier mockVerifier, Resource[] memory consumed, Resource[] memory created)
-        internal
-        view
-        returns (Action memory action)
-    {
+    function createAction(
+        RiscZeroMockVerifier mockVerifier,
+        ResourceAndAppData[] memory consumed,
+        ResourceAndAppData[] memory created,
+        uint8 commitmentTreeDepth
+    ) internal view returns (Action memory action) {
         if (consumed.length != created.length) {
             revert ConsumedCreatedCountMismatch({nConsumed: consumed.length, nCreated: created.length});
         }
@@ -107,8 +119,8 @@ library ExampleGen {
         for (uint256 i = 0; i < nCUs; ++i) {
             uint256 index = (i * 2);
 
-            actionTreeTags[index] = consumed[i].nullifier_({nullifierKey: 0});
-            actionTreeTags[index + 1] = created[i].commitment_();
+            actionTreeTags[index] = consumed[i].resource.nullifier_({nullifierKey: 0});
+            actionTreeTags[index + 1] = created[i].resource.commitment_();
         }
 
         bytes32 actionTreeRoot = MerkleTree.computeRoot(actionTreeTags, 4);
@@ -119,22 +131,24 @@ library ExampleGen {
             logicVerifierInputs[index] = logicVerifierInput({
                 mockVerifier: mockVerifier,
                 actionTreeRoot: actionTreeRoot,
-                resource: consumed[i],
-                isConsumed: true
+                resource: consumed[i].resource,
+                isConsumed: true,
+                appData: consumed[i].appData
             });
 
             logicVerifierInputs[index + 1] = logicVerifierInput({
                 mockVerifier: mockVerifier,
                 actionTreeRoot: actionTreeRoot,
-                resource: created[i],
-                isConsumed: false
+                resource: created[i].resource,
+                isConsumed: false,
+                appData: created[i].appData
             });
 
             complianceVerifierInputs[i] = complianceVerifierInput({
                 mockVerifier: mockVerifier,
-                commitmentTreeRoot: INITIAL_COMMITMENT_TREE_ROOT, // Note: Doesn't really matter since compliance proofs are mocked.
-                consumed: consumed[i],
-                created: created[i]
+                commitmentTreeRoot: initialRoot(commitmentTreeDepth),
+                consumed: consumed[i].resource,
+                created: created[i].resource
             });
         }
 
@@ -147,53 +161,89 @@ library ExampleGen {
         });
     }
 
-    function createAction(RiscZeroMockVerifier mockVerifier, uint256 nonce, uint256 nCUs)
+    function createAction(RiscZeroMockVerifier mockVerifier, uint256 nonce, uint256 nCUs, uint8 commitmentTreeDepth)
         internal
         view
         returns (Action memory action, uint256 updatedNonce)
     {
         updatedNonce = nonce;
 
-        Resource[] memory consumed = new Resource[](nCUs);
-        Resource[] memory created = new Resource[](nCUs);
+        ResourceAndAppData[] memory consumed = new ResourceAndAppData[](nCUs);
+        ResourceAndAppData[] memory created = new ResourceAndAppData[](nCUs);
 
         for (uint256 i = 0; i < nCUs; ++i) {
-            consumed[i] = ExampleGen.mockResource({nonce: updatedNonce++, logicRef: bytes32(i), quantity: 1 + nonce});
-            created[i] = ExampleGen.mockResource({nonce: updatedNonce++, logicRef: bytes32(i), quantity: 1 + nonce});
+            consumed[i] = ResourceAndAppData({
+                resource: ExampleGen.mockResource({
+                    nonce: updatedNonce++,
+                    logicRef: bytes32(i),
+                    labelRef: bytes32(i),
+                    quantity: 1 + nonce
+                }),
+                appData: expirableBlobs()
+            });
+            created[i] = ResourceAndAppData({
+                resource: ExampleGen.mockResource({
+                    nonce: updatedNonce++,
+                    logicRef: bytes32(i),
+                    labelRef: bytes32(i),
+                    quantity: 1 + nonce
+                }),
+                appData: expirableBlobs()
+            });
         }
 
-        action = createAction({mockVerifier: mockVerifier, consumed: consumed, created: created});
+        action = createAction({
+            mockVerifier: mockVerifier,
+            consumed: consumed,
+            created: created,
+            commitmentTreeDepth: commitmentTreeDepth
+        });
     }
 
-    function transaction(RiscZeroMockVerifier mockVerifier, uint256 nonce, ActionConfig[] memory configs)
-        internal
-        view
-        returns (Transaction memory txn, uint256 updatedNonce)
-    {
-        Action[] memory actions = new Action[](configs.length);
+    function transaction(
+        RiscZeroMockVerifier mockVerifier,
+        ActionResources[] memory actionResources,
+        uint8 commitmentTreeDepth
+    ) internal view returns (Transaction memory txn) {
+        Action[] memory actions = new Action[](actionResources.length);
 
+        for (uint256 i = 0; i < actionResources.length; ++i) {
+            if (actionResources[i].consumed.length != actionResources[i].created.length) {
+                revert ConsumedCreatedCountMismatch(
+                    actionResources[i].consumed.length, actionResources[i].created.length
+                );
+            }
+
+            actions[i] = createAction({
+                mockVerifier: mockVerifier,
+                consumed: actionResources[i].consumed,
+                created: actionResources[i].created,
+                commitmentTreeDepth: commitmentTreeDepth
+            });
+        }
+
+        txn = Transaction({actions: actions, deltaProof: abi.encodePacked(collectTags(actions))});
+    }
+
+    function transaction(
+        RiscZeroMockVerifier mockVerifier,
+        uint256 nonce,
+        ActionConfig[] memory configs,
+        uint8 commitmentTreeDepth
+    ) internal view returns (Transaction memory txn, uint256 updatedNonce) {
         updatedNonce = nonce;
 
-        uint256 counter = 0;
+        Action[] memory actions = new Action[](configs.length);
         for (uint256 i = 0; i < configs.length; ++i) {
-            uint256 nCUs = configs[i].nCUs;
-
-            (actions[i], updatedNonce) = createAction({mockVerifier: mockVerifier, nonce: updatedNonce, nCUs: nCUs});
+            (actions[i], updatedNonce) = createAction({
+                mockVerifier: mockVerifier,
+                nonce: updatedNonce,
+                nCUs: configs[i].nCUs,
+                commitmentTreeDepth: commitmentTreeDepth
+            });
         }
 
-        bytes32[] memory tags = new bytes32[](updatedNonce - nonce);
-        counter = 0;
-
-        for (uint256 i = 0; i < configs.length; ++i) {
-            uint256 nCUs = actions[i].complianceVerifierInputs.length;
-
-            for (uint256 j = 0; j < nCUs; ++j) {
-                tags[counter++] = actions[i].complianceVerifierInputs[j].instance.consumed.nullifier;
-                tags[counter++] = actions[i].complianceVerifierInputs[j].instance.created.commitment;
-            }
-        }
-
-        txn = Transaction({actions: actions, deltaProof: abi.encodePacked(tags)});
+        txn = Transaction({actions: actions, deltaProof: abi.encodePacked(collectTags(actions))});
     }
 
     function generateActionConfigs(uint256 nActions, uint256 nCUs)
@@ -207,14 +257,36 @@ library ExampleGen {
         }
     }
 
-    function mockResource(uint256 nonce, bytes32 logicRef, uint256 quantity)
+    function countComplianceUnits(Action[] memory actions) internal pure returns (uint256 nCUs) {
+        nCUs = 0;
+
+        for (uint256 i = 0; i < actions.length; ++i) {
+            nCUs += actions[i].complianceVerifierInputs.length;
+        }
+    }
+
+    function collectTags(Action[] memory actions) internal pure returns (bytes32[] memory tags) {
+        tags = new bytes32[](countComplianceUnits(actions) * 2);
+
+        uint256 n = 0;
+        for (uint256 i = 0; i < actions.length; ++i) {
+            uint256 nCUs = actions[i].complianceVerifierInputs.length;
+
+            for (uint256 j = 0; j < nCUs; ++j) {
+                tags[n++] = actions[i].complianceVerifierInputs[j].instance.consumed.nullifier;
+                tags[n++] = actions[i].complianceVerifierInputs[j].instance.created.commitment;
+            }
+        }
+    }
+
+    function mockResource(uint256 nonce, bytes32 logicRef, bytes32 labelRef, uint256 quantity)
         internal
         pure
         returns (Resource memory mock)
     {
         mock = Resource({
             logicRef: logicRef,
-            labelRef: bytes32(0),
+            labelRef: labelRef,
             valueRef: bytes32(0),
             nullifierKeyCommitment: bytes32(0),
             quantity: quantity,
@@ -238,5 +310,15 @@ library ExampleGen {
             blob: hex"9f000000bf000000df000000ff000000",
             deletionCriterion: Logic.DeletionCriterion.Never
         });
+    }
+
+    function initialRoot(uint8 treeDepth) internal pure returns (bytes32 root) {
+        bytes32 currentZero = SHA256.EMPTY_HASH;
+
+        for (uint256 i = 0; i < treeDepth; ++i) {
+            currentZero = SHA256.hash(currentZero, currentZero);
+        }
+
+        root = currentZero;
     }
 }

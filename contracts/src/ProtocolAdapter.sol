@@ -27,6 +27,7 @@ import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
 /// @notice The protocol adapter contract verifying and executing resource machine transactions.
 /// @custom:security-contact security@anoma.foundation
 contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, CommitmentAccumulator, NullifierSet {
+    using MerkleTree for bytes32[];
     using TagLookup for bytes32[];
     using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
@@ -37,7 +38,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
     uint8 internal immutable _ACTION_TAG_TREE_DEPTH;
 
-    uint256 private _txCount;
+    uint256 internal _txCount;
 
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
 
@@ -102,7 +103,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         }
 
         // slither-disable-next-line reentrancy-benign
-        emit TransactionExecuted({id: ++_txCount, transaction: transaction, newRoot: newRoot});
+        // solhint-disable-next-line gas-increment-by-one
+        emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
     }
     // slither-disable-end reentrancy-no-eth
 
@@ -253,7 +255,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
             // Logic Proofs
             {
-                bytes32 computedActionTreeRoot = MerkleTree.computeRoot(actionTreeTags, _ACTION_TAG_TREE_DEPTH);
+                bytes32 computedActionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
 
                 for (uint256 j = 0; j < nResources; ++j) {
                     Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
@@ -341,7 +343,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                 // Lookup the first appData entry.
                 bytes32 actualAppDataHash =
-                    keccak256(abi.encode(action.logicVerifierInputs.lookup(carrier.commitment()).instance.appData[0]));
+                    keccak256(action.logicVerifierInputs.lookup(carrier.commitment()).instance.appData[0].blob);
 
                 if (actualAppDataHash != expectedAppDataHash) {
                     revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});
