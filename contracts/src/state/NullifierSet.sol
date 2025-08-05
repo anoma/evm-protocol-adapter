@@ -25,7 +25,6 @@ contract NullifierSet is INullifierSet {
         if (!success) {
             revert PreExistingNullifier(nullifier);
         }
-        emit NullifierAdded({nullifier: nullifier, index: _nullifierSet.length() - 1});
     }
 
     /// @notice Checks if a nullifier does not exists already and reverts otherwise.

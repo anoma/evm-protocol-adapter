@@ -83,8 +83,6 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         uint256 index;
         (index, newRoot) = _merkleTree.push(commitment);
         _indices[commitment] = index + _COMMITMENT_INDEX_OFFSET; // Add 1 to use 0 as a sentinel value
-
-        emit CommitmentAdded({commitment: commitment, index: index});
     }
 
     /// @notice Stores a root in the set of historical roots.
@@ -93,7 +91,6 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         if (!_roots.add(root)) {
             revert PreExistingRoot(root);
         }
-        emit RootAdded(root);
     }
 
     /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.
