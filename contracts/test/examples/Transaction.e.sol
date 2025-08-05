@@ -91,11 +91,9 @@ library TransactionExample {
         complianceVerifierInputs[0] = complianceVerifierInput();
 
         Action[] memory actions = new Action[](1);
-        actions[0] = Action({
-            logicVerifierInputs: logicVerifierInputs,
-            complianceVerifierInputs: complianceVerifierInputs,
-            resourceCalldataPairs: emptyForwarderCallData
-        });
+        actions[0] =
+            Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
+        // TODO! resourceCalldataPairs: emptyForwarderCallData
 
         txn = Transaction({actions: actions, deltaProof: _DELTA_PROOF});
     }

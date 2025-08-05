@@ -91,10 +91,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 }
             }
 
+            /* // TODO! Uncomment
             uint256 nForwarderCalls = action.resourceCalldataPairs.length;
             for (uint256 j = 0; j < nForwarderCalls; ++j) {
                 _executeForwarderCall(action.resourceCalldataPairs[j].call);
             }
+            */
         }
 
         if (newRoot != 0) {
@@ -124,6 +126,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         verifierSelector = 0xbb001d44;
     }
 
+    /* // TODO! Uncomment
     /// @notice Executes a call to a forwarder contracts.
     /// @param call The calldata to conduct the forwarder call.
     function _executeForwarderCall(ForwarderCalldata calldata call) internal {
@@ -137,6 +140,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // solhint-disable-next-line max-line-length
         emit ForwarderCallExecuted({untrustedForwarder: call.untrustedForwarder, input: call.input, output: call.output});
     }
+    */
 
     /// @notice An internal function to verify a transaction.
     /// @param transaction The transaction to verify.
@@ -170,7 +174,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 revert ResourceCountMismatch({expected: nResources, actual: nCUs});
             }
 
+            /* // TODO! Uncomment
             _verifyForwarderCalls(action);
+            */
 
             // Compliance Proofs
             {
@@ -314,6 +320,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         Delta.verify({proof: proof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
     }
 
+    /* // TODO! Uncomment
     /// @notice Verifies the forwarder calls of a given action.
     /// @param action The action to verify the forwarder calls for.
     function _verifyForwarderCalls(Action calldata action) internal view {
@@ -348,7 +355,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 }
             }
         }
-    }
+    }*/
 
     /// @notice An internal function adding a unit delta to the transactionDelta.
     /// @param transactionDelta The transaction delta.

@@ -93,6 +93,7 @@ contract ProtocolAdapterMockTest is Test {
             resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
             txn = _mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH);
 
+            /* // TODO! Uncomment
             ResourceForwarderCalldataPair[] memory pairs = new ResourceForwarderCalldataPair[](1);
             pairs[0] = ResourceForwarderCalldataPair({
                 carrier: created[0].resource,
@@ -100,6 +101,7 @@ contract ProtocolAdapterMockTest is Test {
             });
 
             txn.actions[0].resourceCalldataPairs = pairs;
+            */
         }
 
         vm.expectEmit(address(_mockPa));

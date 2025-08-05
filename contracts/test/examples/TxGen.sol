@@ -148,11 +148,8 @@ library TxGen {
 
         ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
 
-        action = Action({
-            logicVerifierInputs: logicVerifierInputs,
-            complianceVerifierInputs: complianceVerifierInputs,
-            resourceCalldataPairs: emptyForwarderCallData
-        });
+        action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
+        // TODO! Uncomment // resourceCalldataPairs: emptyForwarderCallData
     }
 
     function createDefaultAction(

@@ -124,10 +124,7 @@ contract ProtocolAdapterTest is Test {
         logicVerifierInputs[2] = TransactionExample.logicVerifierInput({isConsumed: true});
         logicVerifierInputs[3] = TransactionExample.logicVerifierInput({isConsumed: false});
 
-        action = Action({
-            logicVerifierInputs: logicVerifierInputs,
-            complianceVerifierInputs: complianceVerifierInputs,
-            resourceCalldataPairs: new ResourceForwarderCalldataPair[](0)
-        });
+        action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
+        // TODO! Uncomment // resourceCalldataPairs: new ResourceForwarderCalldataPair[](0)
     }
 }
