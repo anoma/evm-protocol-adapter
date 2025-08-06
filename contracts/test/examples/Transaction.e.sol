@@ -2,13 +2,14 @@
 pragma solidity ^0.8.30;
 
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
 import {Compliance} from "../../src/proving/Compliance.sol";
 import {Logic} from "../../src/proving/Logic.sol";
 import {Transaction, Action} from "../../src/Types.sol";
 
-import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
-
 library TransactionExample {
+    using MerkleTree for bytes32[];
+
     bytes32 internal constant _CONSUMED_NULLIFIER = 0x2fe6775e82ad71cd3f0531ebe9f85b9d00ad7bc21e8ac5f5c6fd1a68b4dfba2b;
     bytes32 internal constant _CREATED_COMMITMENT = 0x193e55bfc8d65a9efd4471c0287c69c8918e7d9331901a01ee2841533ca1f719;
     bytes32 internal constant _CONSUMED_LOGIC_REF = 0xf8047dc2cf6cbe45137a588a3f019814218e7d7199b1b86a57b51c310e04fae9;
@@ -49,7 +50,7 @@ library TransactionExample {
         instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
                 nullifier: _CONSUMED_NULLIFIER,
-                commitmentTreeRoot: INITIAL_COMMITMENT_TREE_ROOT,
+                commitmentTreeRoot: SHA256.EMPTY_HASH,
                 logicRef: _CONSUMED_LOGIC_REF
             }),
             created: Compliance.CreatedRefs({commitment: _CREATED_COMMITMENT, logicRef: _CREATED_LOGIC_REF}),
@@ -96,6 +97,6 @@ library TransactionExample {
         leaves[0] = _CONSUMED_NULLIFIER;
         leaves[1] = _CREATED_COMMITMENT;
 
-        root = MerkleTree.computeRoot(leaves, 4);
+        root = leaves.computeRoot();
     }
 }
