@@ -9,16 +9,20 @@ import {TransactionExample} from "../examples/Transaction.e.sol";
 import {TxGen} from "../examples/TxGen.sol";
 
 contract DeltaProofTest is Test {
-    struct DeltaInputs {
+    struct DeltaInstanceInputs {
         uint128 kind;
         int128 quantity;
+        uint256 rcv;
+    }
+
+    struct DeltaProofInputs {
         uint256 rcv;
         bytes32 verifyingKey;
     }
 
     /// @notice Generates a transaction delta proof by signing verifyingKey with
     /// rcv, and a delta instance by computing a(kind)^quantity * b^rcv
-    function generateDelta(DeltaInputs memory deltaInputs) public returns (bytes memory proof, uint256[2] memory instance) {
+    function generateDeltaInstance(DeltaInstanceInputs memory deltaInputs) public returns (uint256[2] memory instance) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         vm.assume(deltaInputs.rcv != 0);
         vm.assume(deltaInputs.kind != 0);
@@ -31,6 +35,11 @@ contract DeltaProofTest is Test {
         // Extract the transaction delta from the wallet
         instance[0] = valueWallet.publicKeyX;
         instance[1] = valueWallet.publicKeyY;
+    }
+
+    function generateDeltaProof(DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
+        deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
+        vm.assume(deltaInputs.rcv != 0);
         // Compute the components of the transaction delta proof
         VmSafe.Wallet memory randomWallet = vm.createWallet(deltaInputs.rcv);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(randomWallet, deltaInputs.verifyingKey);
@@ -39,34 +48,34 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
-    function test_verify_delta_succeeds(DeltaInputs memory deltaInputs) public {
+    function test_verify_delta_succeeds(DeltaInstanceInputs memory deltaInstanceInputs, DeltaProofInputs memory deltaProofInputs) public {
         // Generate a delta proof and instance from the above tags and preimage
-        deltaInputs.quantity = 0;
-        (bytes memory proof, uint256[2] memory instance) = generateDelta(deltaInputs);
+        deltaInstanceInputs.quantity = 0;
+        deltaProofInputs.rcv = deltaInstanceInputs.rcv;
+        uint256[2] memory instance = generateDeltaInstance(deltaInstanceInputs);
+        bytes memory proof = generateDeltaProof(deltaProofInputs);
         // Verify that the generated delta proof is valid
-        Delta.verify({proof: proof, instance: instance, verifyingKey: deltaInputs.verifyingKey});
+        Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
 
     /// @notice Test that Delta.add correctly adds deltas
-    function test_add_delta_correctness(DeltaInputs memory deltaInputs1, DeltaInputs memory deltaInputs2) public {
+    function test_add_delta_correctness(DeltaInstanceInputs memory deltaInputs1, DeltaInstanceInputs memory deltaInputs2) public {
         // Ensure that we're adding assets of the same kind over the same verifying key
         deltaInputs2.kind = deltaInputs1.kind;
-        deltaInputs2.verifyingKey = deltaInputs1.verifyingKey;
         // Filter out overflows
         vm.assume(deltaInputs1.quantity < 0 || deltaInputs2.quantity <= type(int128).max - deltaInputs1.quantity);
         vm.assume(deltaInputs1.quantity >= 0 || type(int128).min - deltaInputs1.quantity <= deltaInputs2.quantity);
         vm.assume(0 < deltaInputs2.rcv && deltaInputs2.rcv <= type(uint256).max - deltaInputs1.rcv);
         // Compute the inputs corresponding to the sum of deltas
-        DeltaInputs memory deltaInputs3 = DeltaInputs({
+        DeltaInstanceInputs memory deltaInputs3 = DeltaInstanceInputs({
             kind: deltaInputs1.kind,
             quantity: deltaInputs1.quantity + deltaInputs2.quantity,
-            rcv: deltaInputs1.rcv + deltaInputs2.rcv,
-            verifyingKey: deltaInputs1.verifyingKey
+            rcv: deltaInputs1.rcv + deltaInputs2.rcv
             });
         // Generate a delta proof and instance from the above tags and preimage
-        (, uint256[2] memory instance1) = generateDelta(deltaInputs1);
-        (, uint256[2] memory instance2) = generateDelta(deltaInputs2);
-        (, uint256[2] memory instance3) = generateDelta(deltaInputs3);
+        uint256[2] memory instance1 = generateDeltaInstance(deltaInputs1);
+        uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
+        uint256[2] memory instance3 = generateDeltaInstance(deltaInputs3);
         // Verify that the deltas add correctly
         uint256[2] memory instance4 = Delta.add(instance1, instance2);
         assertEq(instance3[0], instance4[0]);
@@ -74,49 +83,48 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails1(DeltaInputs memory deltaInputs) public {
+    function test_verify_inconsistent_delta_fails1(DeltaInstanceInputs memory deltaInstanceInputs, DeltaProofInputs memory deltaProofInputs) public {
         // Filter out inadmissible private keys or equal keys
-        vm.assume(deltaInputs.kind != 0);
-        vm.assume(deltaInputs.quantity != 0);
+        deltaProofInputs.rcv = deltaInstanceInputs.rcv;
+        vm.assume(deltaInstanceInputs.kind != 0);
+        vm.assume(deltaInstanceInputs.quantity != 0);
         // Generate a delta proof and instance from the above tags and preimage
-        (bytes memory proof, uint256[2] memory instance) = generateDelta(deltaInputs);
+        uint256[2] memory instance = generateDeltaInstance(deltaInstanceInputs);
+        bytes memory proof = generateDeltaProof(deltaProofInputs);
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proof, instance: instance, verifyingKey: deltaInputs.verifyingKey});
+        Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails2(DeltaInputs memory deltaInputs1, DeltaInputs memory deltaInputs2) public {
-        deltaInputs2.verifyingKey = deltaInputs1.verifyingKey;
-        deltaInputs2.kind = deltaInputs1.kind;
-        deltaInputs2.quantity = deltaInputs1.quantity;
+    function test_verify_inconsistent_delta_fails2(DeltaProofInputs memory deltaInputs1, DeltaInstanceInputs memory deltaInputs2) public {
+        deltaInputs2.quantity = 0;
         // Filter out inadmissible private keys or equal keys
         vm.assume(deltaInputs1.rcv != deltaInputs2.rcv);
         // Generate a delta proof and instance from the above tags and preimage
-        (bytes memory proof1, ) = generateDelta(deltaInputs1);
-        (, uint256[2] memory instance2) = generateDelta(deltaInputs2);
+        bytes memory proof1 = generateDeltaProof(deltaInputs1);
+        uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof1, instance: instance2, verifyingKey: deltaInputs1.verifyingKey});
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
-    function test_verify_inconsistent_delta_fails3(DeltaInputs memory deltaInputs1, DeltaInputs memory deltaInputs2) public {
-        deltaInputs2.kind = deltaInputs1.kind;
-        deltaInputs2.quantity = deltaInputs1.quantity;
+    function test_verify_inconsistent_delta_fails3(DeltaProofInputs memory deltaInputs1, DeltaInstanceInputs memory deltaInputs2, bytes32 verifyingKey) public {
         deltaInputs2.rcv = deltaInputs1.rcv;
+        deltaInputs2.quantity = 0;
         // Filter out inadmissible private keys or equal keys
-        vm.assume(deltaInputs1.verifyingKey != deltaInputs2.verifyingKey);
+        vm.assume(deltaInputs1.verifyingKey != verifyingKey);
         // Generate a delta proof and instance from the above tags and preimage
-        (bytes memory proof1, ) = generateDelta(deltaInputs1);
-        (, uint256[2] memory instance2) = generateDelta(deltaInputs2);
+        bytes memory proof1 = generateDeltaProof(deltaInputs1);
+        uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proof1, instance: instance2, verifyingKey: deltaInputs2.verifyingKey});
+        Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey});
     }
 
     /// @notice Balance the delta inputs and also return the total value commitment randomness
-    function balanceDeltaInputs(DeltaInputs[] memory deltaInputs) public pure returns (DeltaInputs[] memory balancedDeltaInputs, uint256 rcv_acc) {
+    function balanceDeltaInputs(DeltaInstanceInputs[] memory deltaInputs) public pure returns (DeltaInstanceInputs[] memory balancedDeltaInputs, uint256 rcv_acc) {
         // Grab the kind to use for all deltas
         uint128 kind = deltaInputs.length > 0 ? deltaInputs[0].kind : 0;
         // Compute the window into which the deltas should sum
@@ -151,35 +159,32 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Grab the first length elements from deltaInputs
-    function truncateDeltaInputs(DeltaInputs[] memory deltaInputs, uint length) public pure returns (DeltaInputs[] memory truncatedDeltaInputs) {
-        truncatedDeltaInputs = new DeltaInputs[](length);
+    function truncateDeltaInputs(DeltaInstanceInputs[] memory deltaInputs, uint length) public pure returns (DeltaInstanceInputs[] memory truncatedDeltaInputs) {
+        truncatedDeltaInputs = new DeltaInstanceInputs[](length);
         for(uint i = 0; i < length; i++) {
             truncatedDeltaInputs[i] = deltaInputs[i];
         }
     }
 
     /// @notice Check that a balanced transaction does pass verification
-    function test_verify_balanced_delta_succeeds(DeltaInputs[] memory deltaInputs, bytes32 verifyingKey) public {
+    function test_verify_balanced_delta_succeeds(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
         // Truncate the delta inputs to improve test performance
-        deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % 10);
+        uint MAX_DELTA_LEN = 10;
+        deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % MAX_DELTA_LEN);
         // Make sure that the delta qquantities balance out
-        (DeltaInputs[] memory balancedDeltaInputs, uint256 rcv) = balanceDeltaInputs(deltaInputs);
+        (DeltaInstanceInputs[] memory balancedDeltaInputs, uint256 rcv) = balanceDeltaInputs(deltaInputs);
         for(uint i = 0; i < balancedDeltaInputs.length; i++) {
-            // This is not strictly necessary because verifying key is not used to compute delta instance
-            balancedDeltaInputs[i].verifyingKey = verifyingKey;
             // Compute the delta instance and accumulate it
-            (, uint256[2] memory instance) = generateDelta(balancedDeltaInputs[i]);
+            uint256[2] memory instance = generateDeltaInstance(balancedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
         }
         // Compute the proof for the balanced transaction
-        DeltaInputs memory sumDeltaInputs = DeltaInputs({
-            kind: 1,
-            quantity: 0,
+        DeltaProofInputs memory sumDeltaInputs = DeltaProofInputs({
             rcv: rcv,
             verifyingKey: verifyingKey
             });
-        (bytes memory proof, ) = generateDelta(sumDeltaInputs);
+        bytes memory proof = generateDeltaProof(sumDeltaInputs);
         // Verify that the balanced transaction proof succeeds
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
