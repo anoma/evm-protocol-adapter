@@ -5,6 +5,7 @@ use arm_risc0::action::Action;
 use arm_risc0::compliance::ComplianceInstance;
 use arm_risc0::logic_instance::{ExpirableBlob, LogicInstance};
 use arm_risc0::logic_proof::LogicProof;
+use arm_risc0::proving_system::encode_seal;
 use arm_risc0::resource::Resource as ArmResource;
 use arm_risc0::transaction::{Delta, Transaction};
 
@@ -68,7 +69,7 @@ impl From<LogicInstance> for Logic::Instance {
 impl From<LogicProof> for Logic::VerifierInput {
     fn from(logic_proof: LogicProof) -> Self {
         Self {
-            proof: Bytes::from(logic_proof.proof.clone()),
+            proof: Bytes::from(encode_seal(&logic_proof.proof)),
             instance: logic_proof.get_instance().into(),
             verifyingKey: B256::from_slice(&logic_proof.verifying_key),
         }
@@ -105,7 +106,7 @@ impl From<Action> for ProtocolAdapter::Action {
                 .compliance_units
                 .into_iter()
                 .map(|cu| Compliance::VerifierInput {
-                    proof: Bytes::from(cu.proof.clone()),
+                    proof: Bytes::from(encode_seal(&cu.proof)),
                     instance: cu.get_instance().into(),
                 })
                 .collect(),
