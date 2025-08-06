@@ -54,9 +54,9 @@ impl From<ExpirableBlob> for Logic::ExpirableBlob {
 impl From<LogicInstance> for Logic::Instance {
     fn from(instance: LogicInstance) -> Self {
         Self {
-            tag: B256::from_slice(&instance.tag),
+            tag: B256::from_slice(instance.tag.as_bytes()),
             isConsumed: instance.is_consumed,
-            actionTreeRoot: B256::from_slice(&instance.root),
+            actionTreeRoot: B256::from_slice(instance.root.as_bytes()),
             ciphertext: Bytes::from(insert_zeros(instance.cipher)),
             appData: instance
                 .app_data
@@ -81,16 +81,18 @@ impl From<ComplianceInstance> for Compliance::Instance {
     fn from(instance: ComplianceInstance) -> Self {
         Self {
             consumed: Compliance::ConsumedRefs {
-                nullifier: B256::from_slice(&instance.consumed_nullifier),
-                logicRef: B256::from_slice(&instance.consumed_logic_ref),
-                commitmentTreeRoot: B256::from_slice(&instance.consumed_commitment_tree_root),
+                nullifier: B256::from_slice(instance.consumed_nullifier.as_bytes()),
+                logicRef: B256::from_slice(instance.consumed_logic_ref.as_bytes()),
+                commitmentTreeRoot: B256::from_slice(
+                    instance.consumed_commitment_tree_root.as_bytes(),
+                ),
             },
             created: Compliance::CreatedRefs {
-                commitment: B256::from_slice(&instance.created_commitment),
-                logicRef: B256::from_slice(&instance.created_logic_ref),
+                commitment: B256::from_slice(instance.created_commitment.as_bytes()),
+                logicRef: B256::from_slice(instance.created_logic_ref.as_bytes()),
             },
-            unitDeltaX: B256::from_slice(&instance.delta_x),
-            unitDeltaY: B256::from_slice(&instance.delta_y),
+            unitDeltaX: B256::from_slice(instance.delta_x.as_bytes()),
+            unitDeltaY: B256::from_slice(instance.delta_y.as_bytes()),
         }
     }
 }
@@ -183,7 +185,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn print_tx() {
         dotenv().ok();
         env::var("BONSAI_API_KEY").expect("Couldn't read BONSAI_API_KEY");
