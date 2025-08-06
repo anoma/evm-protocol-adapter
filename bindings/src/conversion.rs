@@ -3,6 +3,7 @@ use alloy::sol;
 
 use arm_risc0::action::Action;
 use arm_risc0::compliance::ComplianceInstance;
+use arm_risc0::compliance_unit::ComplianceUnit;
 use arm_risc0::logic_instance::{ExpirableBlob, LogicInstance};
 use arm_risc0::logic_proof::LogicProof;
 use arm_risc0::proving_system::encode_seal;
@@ -94,6 +95,15 @@ impl From<ComplianceInstance> for Compliance::Instance {
     }
 }
 
+impl From<ComplianceUnit> for Compliance::VerifierInput {
+    fn from(compliance_unit: ComplianceUnit) -> Self {
+        Self {
+            proof: Bytes::from(encode_seal(&compliance_unit.proof)),
+            instance: compliance_unit.get_instance().into(),
+        }
+    }
+}
+
 impl From<Action> for ProtocolAdapter::Action {
     fn from(action: Action) -> Self {
         Self {
@@ -105,10 +115,7 @@ impl From<Action> for ProtocolAdapter::Action {
             complianceVerifierInputs: action
                 .compliance_units
                 .into_iter()
-                .map(|cu| Compliance::VerifierInput {
-                    proof: Bytes::from(encode_seal(&cu.proof)),
-                    instance: cu.get_instance().into(),
-                })
+                .map(|cu| cu.into())
                 .collect(),
         }
     }
