@@ -48,6 +48,13 @@ library ComputableComponents {
     }
 
     /// @notice Computes the resource kind.
+    /// @param resource The resource object.
+    /// @return k The computed kind.
+    function kind_(Resource memory resource) internal pure returns (bytes32 k) {
+        k = sha256(abi.encode(resource.logicRef, resource.labelRef));
+    }
+
+    /// @notice Computes the resource kind.
     /// @param logicRef The resource logic reference.
     /// @param labelRef The resource label reference.
     /// @return k The computed kind.

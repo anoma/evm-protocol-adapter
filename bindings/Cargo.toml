@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-aarm_core = { git = "https://github.com/anoma/aarm-risc0.git", rev = "eebee1752dc7536ebcce5a4b6de72f135b45d957", package = "aarm_core" }
-aarm = { git = "https://github.com/anoma/aarm-risc0.git", rev = "eebee1752dc7536ebcce5a4b6de72f135b45d957", package = "aarm" }
-risc0-ethereum-contracts = { git = "https://github.com/risc0/risc0-ethereum", tag = "v2.0.0" }
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "f8bf028211ed4b2e2cbdd55b29ea3478b261abd2", package = "arm" }
+risc0-ethereum-contracts = { git = "https://github.com/risc0/risc0-ethereum", tag = "v2.2.2" }
 dotenv = "0.15"
-alloy = { version = "0.12", features = ["full"] }
+alloy = { version = "1.0.1", features = ["full"] }
 tokio = "1.44"
 serde = { version = "1.0.197", default-features = false }
 serde_json = "1.0.97"
+bytes = "1.10.1"

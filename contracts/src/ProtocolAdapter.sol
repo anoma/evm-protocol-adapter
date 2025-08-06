@@ -320,6 +320,19 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         Delta.verify({proof: proof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
     }
 
+    function dummyResource(Resource calldata res) public pure returns (Resource memory dummy) {
+        dummy = Resource({
+            logicRef: res.logicRef,
+            labelRef: res.labelRef,
+            valueRef: res.valueRef,
+            nullifierKeyCommitment: bytes32(0),
+            quantity: 0,
+            nonce: 0,
+            randSeed: 0,
+            ephemeral: true
+        });
+    }
+
     /* // TODO! Uncomment
     /// @notice Verifies the forwarder calls of a given action.
     /// @param action The action to verify the forwarder calls for.

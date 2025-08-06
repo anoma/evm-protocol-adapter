@@ -5,12 +5,13 @@ pub mod conversion;
 mod tests {
     use super::*;
     use alloy::primitives::{B256, Bytes, U256};
+    use conversion::ProtocolAdapter;
+
     use alloy::sol_types::SolType;
-    use conversion::ProtocolAdapter::Resource;
 
     #[test]
     fn test_encode_resource() {
-        let res = Resource {
+        let res = ProtocolAdapter::Resource {
             logicRef: B256::from_slice(&[0x11; 32]),
             labelRef: B256::from_slice(&[0x22; 32]),
             quantity: U256::from(12),
@@ -21,7 +22,7 @@ mod tests {
             randSeed: U256::from(0),
         };
 
-        let encoded: Vec<u8> = Resource::abi_encode(&res);
+        let encoded: Vec<u8> = ProtocolAdapter::Resource::abi_encode(&res);
         println!("{}", Bytes::from(encoded));
     }
 }

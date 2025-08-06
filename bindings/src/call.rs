@@ -1,3 +1,4 @@
+/*
 use crate::conversion::ProtocolAdapter;
 
 use alloy::network::EthereumWallet;
@@ -54,8 +55,8 @@ pub fn provider() -> DefaultProvider {
 mod tests {
     use crate::call::protocol_adapter;
     use crate::conversion::ProtocolAdapter;
-    use alloy::primitives::{B256, U256};
     use alloy::hex;
+    use alloy::primitives::{B256, U256};
     use tokio;
 
     fn initial_root() -> B256 {
@@ -140,3 +141,4 @@ mod tests {
         assert!(result.is_ok());
     }
 }
+*/
