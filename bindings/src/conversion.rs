@@ -1,4 +1,4 @@
-use alloy::primitives::{B256, Bytes, U256};
+use alloy::primitives::{Bytes, B256, U256};
 use alloy::sol;
 
 use arm_risc0::action::Action;
@@ -35,7 +35,7 @@ impl From<ArmResource> for ProtocolAdapter::Resource {
             valueRef: B256::from_slice(&r.value_ref),
             ephemeral: r.is_ephemeral,
             nonce: U256::from_le_slice(r.nonce.as_slice()),
-            nullifierKeyCommitment: B256::from_slice(&r.nk_commitment.inner()),
+            nullifierKeyCommitment: B256::from_slice(r.nk_commitment.inner()),
             randSeed: U256::from_le_slice(r.rand_seed.as_slice()),
         }
     }
