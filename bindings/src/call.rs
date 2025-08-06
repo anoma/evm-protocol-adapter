@@ -1,6 +1,6 @@
 use crate::conversion::ProtocolAdapter;
 
-use alloy::network::{Ethereum, EthereumWallet};
+use alloy::network::EthereumWallet;
 use alloy::primitives::Address;
 use alloy::providers::fillers::{
     BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, WalletFiller,
