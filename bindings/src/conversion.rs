@@ -191,10 +191,10 @@ mod tests {
         let raw_tx = arm_risc0::transaction::generate_test_transaction(n_actions);
         let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
         std::fs::write(
-            format!("test_tx{:02}.json", n_actions),
+            format!("test_tx{n_actions:02}.json"),
             serde_json::to_string_pretty(&evm_tx).unwrap(),
         )
         .unwrap();
-        println!("{:#?}", evm_tx);
+        println!("{evm_tx:#?}");
     }
 }

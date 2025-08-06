@@ -1220,7 +1220,7 @@ dependencies = [
 [[package]]
 name = "arm"
 version = "0.2.0"
-source = "git+https://github.com/anoma/arm-risc0.git?rev=f8bf028211ed4b2e2cbdd55b29ea3478b261abd2#f8bf028211ed4b2e2cbdd55b29ea3478b261abd2"
+source = "git+https://github.com/anoma/arm-risc0.git?rev=3ca1cd7fe4a27d7ecbd5945782d112a34586df84#3ca1cd7fe4a27d7ecbd5945782d112a34586df84"
 dependencies = [
  "aes-gcm",
  "bincode",
@@ -2239,9 +2239,7 @@ version = "0.1.0"
 dependencies = [
  "alloy",
  "arm",
- "bytes",
  "dotenv",
- "risc0-ethereum-contracts",
  "serde",
  "serde_json",
  "tokio",
@@ -4461,20 +4459,6 @@ dependencies = [
  "nvtx",
  "puffin",
  "rand_core 0.6.4",
-]
-
-[[package]]
-name = "risc0-ethereum-contracts"
-version = "2.2.2"
-source = "git+https://github.com/risc0/risc0-ethereum?tag=v2.2.2#15db3fe560f6174839d676a9b5e732a81131347c"
-dependencies = [
- "alloy",
- "alloy-sol-types",
- "anyhow",
- "cfg-if",
- "risc0-zkvm",
- "thiserror 2.0.12",
- "tracing",
 ]
 
 [[package]]

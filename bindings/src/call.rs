@@ -1,7 +1,6 @@
-/*
 use crate::conversion::ProtocolAdapter;
 
-use alloy::network::EthereumWallet;
+use alloy::network::{Ethereum, EthereumWallet};
 use alloy::primitives::Address;
 use alloy::providers::fillers::{
     BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, WalletFiller,
@@ -22,7 +21,7 @@ type DefaultProvider = FillProvider<
     RootProvider,
 >;
 
-pub fn protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<(), DefaultProvider> {
+pub fn protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<DefaultProvider> {
     dotenv().ok();
 
     let protocol_adapter = env::var("PROTOCOL_ADAPTER_ADDRESS_SEPOLIA")
@@ -30,7 +29,7 @@ pub fn protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<(), Defaul
         .parse::<Address>()
         .expect("Wrong address format");
 
-    ProtocolAdapter::new(protocol_adapter, crate::call::provider())
+    ProtocolAdapter::new(protocol_adapter, provider())
 }
 
 pub fn provider() -> DefaultProvider {
@@ -46,9 +45,11 @@ pub fn provider() -> DefaultProvider {
         env::var("API_KEY_ALCHEMY").expect("Couldn't read API_KEY_ALCHEMY")
     );
 
+    let wallet: EthereumWallet = signer.into();
+
     ProviderBuilder::new()
-        .wallet(signer)
-        .on_http(rpc_url.parse().expect("Failed to parse RPC URL"))
+        .wallet(wallet)
+        .connect_http(rpc_url.parse().expect("Failed to parse RPC URL"))
 }
 
 #[cfg(test)]
@@ -111,13 +112,12 @@ mod tests {
                 .call()
                 .await
                 .unwrap()
-                .isContained
         );
     }
 
     #[tokio::test]
     async fn call_latest_root() {
-        let root = protocol_adapter().latestRoot().call().await.unwrap().root;
+        let root = protocol_adapter().latestRoot().call().await.unwrap();
         assert_ne!(root, initial_root());
     }
 
@@ -141,4 +141,3 @@ mod tests {
         assert!(result.is_ok());
     }
 }
-*/
