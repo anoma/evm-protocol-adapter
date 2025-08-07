@@ -119,8 +119,7 @@ slither .
 To simulate deployment on sepolia, run
 
 ```sh
-forge script script/Deploy.s.sol:Deploy \
-   --rpc-url sepolia
+forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter --rpc-url sepolia
 ```
 
 Append the
