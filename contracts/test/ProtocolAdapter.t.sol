@@ -8,7 +8,6 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test} from "forge-std/Test.sol";
 
-import {Parameters} from "../src/libs/Parameters.sol";
 import {TagLookup} from "../src/libs/TagLookup.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Compliance} from "../src/proving/Compliance.sol";
@@ -25,11 +24,7 @@ contract ProtocolAdapterTest is Test {
     function setUp() public {
         (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
 
-        _pa = new ProtocolAdapter({
-            riscZeroVerifierRouter: _router,
-            commitmentTreeDepth: Parameters.COMMITMENT_TREE_DEPTH,
-            actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
-        });
+        _pa = new ProtocolAdapter(_router);
     }
 
     function test_constructor_reverts_on_vulnerable_risc_zero_verifier() public {
@@ -37,11 +32,7 @@ contract ProtocolAdapterTest is Test {
         _emergencyStop.estop();
 
         vm.expectRevert(ProtocolAdapter.RiscZeroVerifierStopped.selector);
-        new ProtocolAdapter({
-            riscZeroVerifierRouter: _router,
-            commitmentTreeDepth: Parameters.COMMITMENT_TREE_DEPTH,
-            actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
-        });
+        new ProtocolAdapter(_router);
     }
 
     function test_verify_reverts_on_vulnerable_risc_zero_verifier() public {

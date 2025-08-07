@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {SHA256} from "../../src/libs/SHA256.sol";
 import {Compliance} from "../../src/proving/Compliance.sol";
 import {Logic} from "../../src/proving/Logic.sol";
 import {Transaction, ResourceForwarderCalldataPair, Action} from "../../src/Types.sol";
-
-import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
 
 library TransactionExample {
     bytes32 internal constant _CONSUMED_NULLIFIER = 0x155d957de29e96a50517f3c033e1c618e697795e6853a5dc18ce684289d25497;
@@ -49,7 +48,7 @@ library TransactionExample {
         instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
                 nullifier: _CONSUMED_NULLIFIER,
-                commitmentTreeRoot: INITIAL_COMMITMENT_TREE_ROOT,
+                commitmentTreeRoot: SHA256.EMPTY_HASH,
                 logicRef: _CONSUMED_LOGIC_REF
             }),
             created: Compliance.CreatedRefs({commitment: _CREATED_COMMITMENT, logicRef: _CREATED_LOGIC_REF}),

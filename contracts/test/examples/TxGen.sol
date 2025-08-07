@@ -15,6 +15,7 @@ import {Logic} from "../../src/proving/Logic.sol";
 import {Transaction, ResourceForwarderCalldataPair, Action, Resource} from "../../src/Types.sol";
 
 library TxGen {
+    using MerkleTree for bytes32[];
     using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
@@ -117,7 +118,7 @@ library TxGen {
             actionTreeTags[index + 1] = created[i].resource.commitment_();
         }
 
-        bytes32 actionTreeRoot = MerkleTree.computeRoot(actionTreeTags, 4);
+        bytes32 actionTreeRoot = actionTreeTags.computeRoot();
 
         for (uint256 i = 0; i < nCUs; ++i) {
             uint256 index = i * 2;

@@ -36,7 +36,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     using Delta for uint256[2];
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
-    uint8 internal immutable _ACTION_TAG_TREE_DEPTH;
 
     uint256 internal _txCount;
 
@@ -55,13 +54,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
-    /// @param commitmentTreeDepth The depth of the commitment tree of the commitment accumulator.
-    /// @param actionTagTreeDepth The depth of the tag tree of each action.
-    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, uint8 commitmentTreeDepth, uint8 actionTagTreeDepth)
-        CommitmentAccumulator(commitmentTreeDepth)
-    {
+    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter) CommitmentAccumulator() {
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
-        _ACTION_TAG_TREE_DEPTH = actionTagTreeDepth;
 
         // Sanity check that the verifier has not been stopped already.
         if (isEmergencyStopped()) {
@@ -253,7 +247,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
             // Logic Proofs
             {
-                bytes32 computedActionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
+                bytes32 computedActionTreeRoot = actionTreeTags.computeRoot();
 
                 for (uint256 j = 0; j < nResources; ++j) {
                     Logic.VerifierInput calldata input = action.logicVerifierInputs[j];

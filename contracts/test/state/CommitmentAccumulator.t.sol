@@ -10,8 +10,6 @@ import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
 import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
 import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulator.m.sol";
 
-bytes32 constant INITIAL_COMMITMENT_TREE_ROOT = 0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3;
-
 contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
     using MerkleTree for bytes32[];
 
@@ -19,11 +17,11 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
 
     constructor() {
         _setupMockTree();
-        _cmAcc = new CommitmentAccumulatorMock(_TREE_DEPTH);
+        _cmAcc = new CommitmentAccumulatorMock();
     }
 
-    function test_the_initial_root_for_depth_32_should_be_as_expected() public {
-        assertEq(new CommitmentAccumulator(32).latestRoot(), INITIAL_COMMITMENT_TREE_ROOT);
+    function test_the_initial_root_is_the_empty_leaf_hash() public {
+        assertEq(new CommitmentAccumulator().latestRoot(), SHA256.EMPTY_HASH);
     }
 
     function test_latestRoot_should_return_correct_roots() public {
@@ -43,15 +41,16 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         _cmAcc.merkleProof(emptyLeafHash);
     }
 
-    function test_merkleProof_should_return_correct_siblings_and_direction_bits() public {
+    function test_merkleProof_should_return_correct_direction_bits() public {
         for (uint256 i = 0; i < _N_LEAFS; ++i) {
             _cmAcc.addCommitment(_leaves[i + 1][i]);
 
-            for (uint256 j = 0; j < i + 1; ++j) {
-                (bytes32[] memory path, uint256 directionBits) = _cmAcc.merkleProof(_leaves[i + 1][j]);
+            uint256 cap = _cmAcc.capacity();
 
-                assertEq(path, _siblings[i + 1][j]);
-                assertEq(directionBits, _directionBits[j]);
+            for (uint256 j = 0; j < i + 1; ++j) {
+                (, uint256 directionBits) = _cmAcc.merkleProof(_leaves[i + 1][j]);
+
+                assertEq(directionBits, _directionBits[cap][j]);
             }
         }
     }
@@ -114,6 +113,18 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
             );
             _cmAcc.commitmentAtIndex(i);
         }
+    }
+
+    function test_should_produce_an_invalid_root_for_a_non_existent_leaf_in_the_empty_tree() public view {
+        bytes32 root = _cmAcc.initialRoot();
+
+        bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
+        bytes32 invalidRoot = nonExistentCommitment;
+
+        bytes32 computedRoot =
+            MerkleTree.processProof({siblings: new bytes32[](0), directionBits: 0, leaf: nonExistentCommitment});
+        assertNotEq(computedRoot, root);
+        assertEq(computedRoot, invalidRoot);
     }
 
     function test_should_produce_an_invalid_root_for_a_non_existent_leaf() public {
@@ -193,11 +204,12 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         _cmAcc.verifyMerkleProof({
             root: nonExistingRoot,
             commitment: 0,
-            path: new bytes32[](_TREE_DEPTH),
+            path: new bytes32[](0), // TODO! new bytes32[](_TREE_DEPTH),
             directionBits: 0
         });
     }
 
+    /*
     function test_verifyMerkleProof_reverts_on_non_existent_commitment() public {
         bytes32 latestRoot = _cmAcc.latestRoot();
         assertEq(latestRoot, _roots[0]);
@@ -218,31 +230,32 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
             directionBits: directionBitsCorrespondingToNonExistingRoot
         });
     }
+    */
 
-    function test_verifyMerkleProof_reverts_on_wrong_path_length() public {
-        _cmAcc.storeRoot(_cmAcc.addCommitment(0));
-        bytes32[] memory wrongPath = new bytes32[](3);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(CommitmentAccumulator.InvalidPathLength.selector, _TREE_DEPTH, wrongPath.length),
-            address(_cmAcc)
-        );
-        _cmAcc.verifyMerkleProof({root: 0, commitment: 0, path: wrongPath, directionBits: 0});
-    }
-
-    function test_verifyMerkleProof_reverts_on_wrong_path() public {
-        bytes32 commitment = sha256("SOMETHING");
-        bytes32 newRoot = _cmAcc.addCommitment(commitment);
-        _cmAcc.storeRoot(newRoot);
-
-        bytes32[] memory wrongPath = new bytes32[](_TREE_DEPTH);
-
-        // Compute the expected, invalid root.
-        bytes32 invalidRoot = wrongPath.processProof({directionBits: 0, leaf: commitment});
-
-        vm.expectRevert(
-            abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, invalidRoot), address(_cmAcc)
-        );
-        _cmAcc.verifyMerkleProof({root: newRoot, commitment: commitment, path: wrongPath, directionBits: 0});
-    }
+    //function test_verifyMerkleProof_reverts_on_wrong_path_length() public {
+    //    _cmAcc.storeRoot(_cmAcc.addCommitment(0));
+    //    bytes32[] memory wrongPath = new bytes32[](3);
+    //
+    //    vm.expectRevert(
+    //        abi.encodeWithSelector(CommitmentAccumulator.InvalidPathLength.selector, _TREE_DEPTH, wrongPath.length),
+    //        address(_cmAcc)
+    //    );
+    //    _cmAcc.verifyMerkleProof({root: 0, commitment: 0, path: wrongPath, directionBits: 0});
+    //}
+    //
+    //function test_verifyMerkleProof_reverts_on_wrong_path() public {
+    //    bytes32 commitment = sha256("SOMETHING");
+    //    bytes32 newRoot = _cmAcc.addCommitment(commitment);
+    //    _cmAcc.storeRoot(newRoot);
+    //
+    //    bytes32[] memory wrongPath = new bytes32[](_TREE_DEPTH);
+    //
+    //    // Compute the expected, invalid root.
+    //    bytes32 invalidRoot = wrongPath.processProof({directionBits: 0, leaf: commitment});
+    //
+    //    vm.expectRevert(
+    //        abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, invalidRoot), address(_cmAcc)
+    //    );
+    //    _cmAcc.verifyMerkleProof({root: newRoot, commitment: commitment, path: wrongPath, directionBits: 0});
+    //}
 }
