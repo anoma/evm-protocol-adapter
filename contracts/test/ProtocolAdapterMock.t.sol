@@ -11,13 +11,12 @@ import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
 import {TagLookup} from "../src/libs/TagLookup.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Logic} from "../src/proving/Logic.sol";
 import {CommitmentAccumulator} from "../src/state/CommitmentAccumulator.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
-import {Transaction, ResourceForwarderCalldataPair, ForwarderCalldata} from "../src/Types.sol";
+import /*ResourceForwarderCalldataPair, ForwarderCalldata,*/ {Transaction} from "../src/Types.sol";
 
-import {ForwarderExample} from "./examples/Forwarder.e.sol";
-import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
+//import {ForwarderExample} from "./examples/Forwarder.e.sol";
+//import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./examples/TxGen.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
@@ -58,6 +57,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
+    /*
     function test_execute_emits_the_ForwarderCallExecuted_event() public {
         uint256 nonce = 0;
 
@@ -93,7 +93,7 @@ contract ProtocolAdapterMockTest is Test {
             resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
             txn = _mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH);
 
-            /* // TODO! Uncomment
+            // TODO! 
             ResourceForwarderCalldataPair[] memory pairs = new ResourceForwarderCalldataPair[](1);
             pairs[0] = ResourceForwarderCalldataPair({
                 carrier: created[0].resource,
@@ -101,7 +101,7 @@ contract ProtocolAdapterMockTest is Test {
             });
 
             txn.actions[0].resourceCalldataPairs = pairs;
-            */
+            
         }
 
         vm.expectEmit(address(_mockPa));
@@ -112,6 +112,7 @@ contract ProtocolAdapterMockTest is Test {
         });
         _mockPa.execute(txn);
     }
+    */
 
     function test_execute_1_txn_with_1_action_and_0_cus() public {
         (Transaction memory txn,) = _mockVerifier.transaction({

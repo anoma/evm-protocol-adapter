@@ -5,7 +5,7 @@ import {ReentrancyGuardTransient} from "@openzeppelin-contracts/utils/Reentrancy
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {IForwarder} from "./interfaces/IForwarder.sol";
+//import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
 import {ComputableComponents} from "./libs/ComputableComponents.sol";
@@ -20,7 +20,7 @@ import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 
 import {NullifierSet} from "./state/NullifierSet.sol";
 
-import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
+import {Action, /*ForwarderCalldata,*/ Resource, Transaction} from "./Types.sol";
 
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -138,7 +138,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         }
 
         // solhint-disable-next-line max-line-length
-        emit ForwarderCallExecuted({untrustedForwarder: call.untrustedForwarder, input: call.input, output: call.output});
+        emit ForwarderCallExecuted({
+        untrustedForwarder: call.untrustedForwarder, 
+            input: call.input,
+            output: call.output});
     }
     */
 
@@ -320,6 +323,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         Delta.verify({proof: proof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
     }
 
+    /*
     function dummyResource(Resource calldata res) public pure returns (Resource memory dummy) {
         dummy = Resource({
             logicRef: res.logicRef,
@@ -332,6 +336,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             ephemeral: true
         });
     }
+    */
 
     /* // TODO! Uncomment
     /// @notice Verifies the forwarder calls of a given action.

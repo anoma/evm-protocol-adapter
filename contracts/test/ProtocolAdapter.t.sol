@@ -13,7 +13,7 @@ import {TagLookup} from "../src/libs/TagLookup.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Compliance} from "../src/proving/Compliance.sol";
 import {Logic} from "../src/proving/Logic.sol";
-import {Transaction, Action, ResourceForwarderCalldataPair} from "../src/Types.sol";
+import {Transaction, /*ResourceForwarderCalldataPair,*/ Action} from "../src/Types.sol";
 import {TransactionExample} from "./examples/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 

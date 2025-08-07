@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Compliance} from "../../src/proving/Compliance.sol";
 import {Logic} from "../../src/proving/Logic.sol";
-import {Transaction, ResourceForwarderCalldataPair, Action} from "../../src/Types.sol";
+import {Transaction, /*ResourceForwarderCalldataPair,*/ Action} from "../../src/Types.sol";
 
 import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
 
@@ -81,7 +81,7 @@ library TransactionExample {
     }
 
     function transaction() internal pure returns (Transaction memory txn) {
-        ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
+        //ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
 
         Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2);
         logicVerifierInputs[0] = logicVerifierInput({isConsumed: true});

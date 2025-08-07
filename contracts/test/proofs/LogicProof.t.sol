@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {Logic} from "../../src/proving/Logic.sol";
