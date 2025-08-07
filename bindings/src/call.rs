@@ -53,6 +53,7 @@ pub fn provider() -> DefaultProvider {
 }
 
 #[cfg(test)]
+
 mod tests {
     use crate::call::protocol_adapter;
     use crate::conversion::ProtocolAdapter;
@@ -67,6 +68,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn call_merkle_proof() {
         let commitment = B256::from(hex!(
             "9c590db144abb0434267475ac46554bc71377b1e678a6ce7dd86c8559b97cf1c"
@@ -84,6 +86,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn call_merkle_proof_revert() {
         let non_existent_commitment = B256::from(hex!(
             "0000000000000000000000000000000000000000000000000000000000000001"
@@ -105,6 +108,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn contains_initial_root() {
         assert!(
             protocol_adapter()
@@ -116,12 +120,14 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn call_latest_root() {
         let root = protocol_adapter().latestRoot().call().await.unwrap();
         assert_ne!(root, initial_root());
     }
 
     #[tokio::test]
+    #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn call_verify() {
         let empty_tx = ProtocolAdapter::Transaction {
             actions: vec![],
@@ -132,6 +138,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn call_execute() {
         let empty_tx = ProtocolAdapter::Transaction {
             actions: vec![],
