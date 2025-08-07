@@ -388,4 +388,18 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     {
         sum = transactionDelta.add(unitDelta);
     }
+
+    // TODO! Remove after fixing EVM interop
+    function dummyResource(Resource calldata res) public pure returns (Resource memory dummy) {
+        dummy = Resource({
+            logicRef: res.logicRef,
+            labelRef: res.labelRef,
+            valueRef: res.valueRef,
+            nullifierKeyCommitment: bytes32(0),
+            quantity: 0,
+            nonce: 0,
+            randSeed: 0,
+            ephemeral: true
+        });
+    }
 }
