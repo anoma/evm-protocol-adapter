@@ -47,5 +47,5 @@ library Compliance {
 
     /// @notice The compliance verifying key.
     /// @dev The key is fixed as long as the compliance circuit binary is not changed.
-    bytes32 internal constant _VERIFYING_KEY = 0xd15203a1b0a6a096d0187241329bed9c8536dd0e61dfe6e348ee5cd10b39cfb4;
+    bytes32 internal constant _VERIFYING_KEY = 0xb4d90d2e79f82537a0af2999d751ed17abe8fb2e3d5c757b8c85ace0d83fe316;
 }

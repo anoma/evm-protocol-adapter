@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Test} from "forge-std/Test.sol";
-
+import {Test} from "../../lib/forge-std/src/Test.sol";
 import {NullifierSet} from "../../src/state/NullifierSet.sol";
 import {NullifierSetMock} from "../mocks/NullifierSetMock.sol";
 
@@ -48,7 +47,7 @@ contract NullifierSetTest is Test {
         }
     }
 
-    function test_at_returns_the_nullifier_at_the_give_index() public {
+    function test_atIndex_returns_the_nullifier_at_the_give_index() public {
         uint256 n = 10;
         for (uint256 i = 0; i < n; ++i) {
             bytes32 nf = bytes32(uint256(i));
@@ -57,7 +56,7 @@ contract NullifierSetTest is Test {
 
         for (uint256 i = 0; i < n; ++i) {
             bytes32 nf = bytes32(uint256(i));
-            assertEq(_nfSet.at(i), nf);
+            assertEq(_nfSet.atIndex(i), nf);
         }
     }
 

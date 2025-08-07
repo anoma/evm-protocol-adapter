@@ -30,9 +30,12 @@ For more information on the EVM protocol adapter, find the related
 └── README.md
 ```
 
-The `contracts` folder contains the contracts written in [Solidity](https://soliditylang.org/) contracts as well as [Foundry forge](https://book.getfoundry.sh/forge/) tests and deploy scripts.
+The `contracts` folder contains the contracts written in [Solidity](https://soliditylang.org/) contracts as well
+as [Foundry forge](https://book.getfoundry.sh/forge/) tests and deploy scripts.
 
-The `bindings` folder contains bindings in [Rust](https://www.rust-lang.org/) to convert [Rust](https://www.rust-lang.org/) and [RISC Zero](https://risczero.com/) types into EVM types using the [`alloy-rs` library](https://github.com/alloy-rs).
+The `bindings` folder contains bindings in [Rust](https://www.rust-lang.org/) to
+convert [Rust](https://www.rust-lang.org/) and [RISC Zero](https://risczero.com/) types into EVM types using the [
+`alloy-rs` library](https://github.com/alloy-rs).
 
 ## Prerequisites
 
@@ -56,6 +59,14 @@ forge install
 ```
 
 ### Usage
+
+#### Build
+
+Build the contracts with following flags: //TODO! confirm this is needed
+
+```sh
+forge build --ast
+```
 
 #### Tests
 
@@ -108,8 +119,7 @@ slither .
 To simulate deployment on sepolia, run
 
 ```sh
-forge script script/Deploy.s.sol:Deploy \
-   --rpc-url sepolia
+forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter --rpc-url sepolia
 ```
 
 Append the
