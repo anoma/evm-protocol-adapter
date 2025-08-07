@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ExpirableBlob} from "../Resource.sol";
+
 /// @title Logic
 /// @author Anoma Foundation, 2025
 /// @notice A library containing type definitions and methods of the logic proving system.
 /// @custom:security-contact security@anoma.foundation
 library Logic {
-    /// @notice An enum representing the supported blob deletion criteria.
-    enum DeletionCriterion {
-        Immediately,
-        Never
-    }
-
     /// @notice The instance of the logic proof associated with a specific resource.
     /// @param tag The nullifier or commitment of the resource depending on if the resource is consumed or not.
     /// @param isConsumed Whether the associated resource is consumed or not.
@@ -37,14 +33,6 @@ library Logic {
         bytes proof;
         Instance instance;
         bytes32 verifyingKey;
-    }
-
-    /// @notice A blob with a deletion criterion attached.
-    /// @param deletionCriterion The deletion criterion.
-    /// @param blob The bytes-encoded blob data.
-    struct ExpirableBlob {
-        DeletionCriterion deletionCriterion;
-        bytes blob;
     }
 
     /// @notice Thrown if a tag is not found in a list of verifier inputs.

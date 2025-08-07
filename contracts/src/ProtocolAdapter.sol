@@ -9,6 +9,7 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
 import {ComputableComponents} from "./libs/ComputableComponents.sol";
+import {Universal} from "./libs/Identities.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 import {TagLookup} from "./libs/TagLookup.sol";
@@ -17,10 +18,15 @@ import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
 import {Logic} from "./proving/Logic.sol";
 import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
-
 import {NullifierSet} from "./state/NullifierSet.sol";
 
-import {Action, /*ForwarderCalldata,*/ Resource, Transaction} from "./Types.sol";
+import {
+    Resource,
+    ForwarderCalldata,
+    ResourceForwarderCalldataPair,
+    EMPTY_RESOURCE_FORWARDER_CALLDATA_PAIR_HASH
+} from "./Resource.sol";
+import {Transaction, Action} from "./Transaction.sol";
 
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -50,8 +56,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierAppDataMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierLabelMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierCommitmentNotFound(bytes32 commitment);
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
@@ -89,14 +93,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 } else {
                     newRoot = _addCommitment(instance.tag);
                 }
-            }
 
-            /* // TODO! Uncomment
-            uint256 nForwarderCalls = action.resourceCalldataPairs.length;
-            for (uint256 j = 0; j < nForwarderCalls; ++j) {
-                _executeForwarderCall(action.resourceCalldataPairs[j].call);
+                if (keccak256(instance.appData[0].blob) != EMPTY_RESOURCE_FORWARDER_CALLDATA_PAIR_HASH) {
+                    ResourceForwarderCalldataPair memory pair =
+                        abi.decode(instance.appData[0].blob, (ResourceForwarderCalldataPair));
+                    _executeForwarderCall(pair.call);
+                }
             }
-            */
         }
 
         if (newRoot != 0) {
@@ -126,10 +129,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         verifierSelector = 0xbb001d44;
     }
 
-    /* // TODO! Uncomment
     /// @notice Executes a call to a forwarder contracts.
     /// @param call The calldata to conduct the forwarder call.
-    function _executeForwarderCall(ForwarderCalldata calldata call) internal {
+    function _executeForwarderCall(ForwarderCalldata memory call) internal {
         // slither-disable-next-line calls-loop
         bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
 
@@ -143,7 +145,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             input: call.input,
             output: call.output});
     }
-    */
 
     /// @notice An internal function to verify a transaction.
     /// @param transaction The transaction to verify.
@@ -177,9 +178,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 revert ResourceCountMismatch({expected: nResources, actual: nCUs});
             }
 
-            /* // TODO! Uncomment
             _verifyForwarderCalls(action);
-            */
 
             // Compliance Proofs
             {
@@ -271,6 +270,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     if (input.instance.actionTreeRoot != computedActionTreeRoot) {
                         revert RootMismatch({expected: computedActionTreeRoot, actual: input.instance.actionTreeRoot});
                     }
+                    _verifyForwarderCalls(action);
 
                     // Check the logic proof
                     _verifyLogicProof(input);
@@ -338,42 +338,59 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     }
     */
 
-    /* // TODO! Uncomment
     /// @notice Verifies the forwarder calls of a given action.
     /// @param action The action to verify the forwarder calls for.
     function _verifyForwarderCalls(Action calldata action) internal view {
-        uint256 nForwarderCalls = action.resourceCalldataPairs.length;
-        for (uint256 i = 0; i < nForwarderCalls; ++i) {
-            Resource calldata carrier = action.resourceCalldataPairs[i].carrier;
-            ForwarderCalldata calldata call = action.resourceCalldataPairs[i].call;
+        uint256 nResources = action.logicVerifierInputs.length;
 
-            // Kind integrity check
+        for (uint256 i = 0; i < nResources; ++i) {
+            Logic.Instance calldata instance = action.logicVerifierInputs[i].instance;
 
-            {
-                bytes32 passedKind = carrier.kind();
+            if (instance.appData.length != 0) {
+                bytes memory blob = instance.appData[0].blob;
 
-                // slither-disable-next-line calls-loop
-                bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
+                if (keccak256(blob) != keccak256("")) {
+                    (Resource memory carrier, ForwarderCalldata memory call) =
+                        abi.decode(blob, (Resource, ForwarderCalldata));
 
-                if (passedKind != fetchedKind) {
-                    revert CalldataCarrierKindMismatch({expected: fetchedKind, actual: passedKind});
-                }
-            }
+                    // Kind integrity check
+                    {
+                        bytes32 passedKind = carrier.kind();
 
-            // AppData integrity check
-            {
-                bytes32 expectedAppDataHash = keccak256(abi.encode(call.untrustedForwarder, call.input, call.output));
+                        bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
 
-                // Lookup the first appData entry.
-                bytes32 actualAppDataHash =
-                    keccak256(action.logicVerifierInputs.lookup(carrier.commitment()).instance.appData[0].blob);
+                        if (passedKind != fetchedKind) {
+                            revert CalldataCarrierKindMismatch({expected: fetchedKind, actual: passedKind});
+                        }
+                    }
 
-                if (actualAppDataHash != expectedAppDataHash) {
-                    revert CalldataCarrierAppDataMismatch({actual: actualAppDataHash, expected: expectedAppDataHash});
+                    // Carrier resource presence check
+                    {
+                        if (instance.isConsumed) {
+                            if (instance.appData.length < 2) {
+                                revert NullifierKeyLookupFailed({nullifier: instance.tag});
+                            }
+
+                            bytes32 carrierNullifier = carrier.nullifier({nullifierKey: abi.decode(blob, (bytes32))});
+
+                            if (carrierNullifier == instance.tag) {
+                                revert CarrierTagMismatch({expected: instance.tag, actual: carrierNullifier});
+                            }
+                        } else {
+                            bytes32 carrierCommitment = carrier.commitment();
+
+                            if (carrierCommitment == instance.tag) {
+                                revert CarrierTagMismatch({expected: instance.tag, actual: carrierCommitment});
+                            }
+                        }
+                    }
                 }
             }
         }
-    }*/
+    }
+
+    error NullifierKeyLookupFailed(bytes32 nullifier);
+    error CarrierTagMismatch(bytes32 expected, bytes32 actual);
 
     /// @notice An internal function adding a unit delta to the transactionDelta.
     /// @param transactionDelta The transaction delta.

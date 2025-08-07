@@ -9,7 +9,7 @@ import {Test, console} from "forge-std/Test.sol";
 
 import {Parameters} from "../../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {Transaction} from "../../src/Types.sol";
+import {Transaction} from "../../src/Transaction.sol";
 
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 

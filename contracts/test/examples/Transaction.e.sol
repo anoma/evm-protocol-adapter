@@ -3,7 +3,9 @@ pragma solidity ^0.8.30;
 
 import {Compliance} from "../../src/proving/Compliance.sol";
 import {Logic} from "../../src/proving/Logic.sol";
-import {Transaction, /*ResourceForwarderCalldataPair,*/ Action} from "../../src/Types.sol";
+
+import {ExpirableBlob, DeletionCriterion, ResourceForwarderCalldataPair} from "../../src/Resource.sol";
+import {Transaction, Action} from "../../src/Transaction.sol";
 
 import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
 
@@ -33,16 +35,14 @@ library TransactionExample {
         cipher = hex"3f0000007f000000bf000000ff000000";
     }
 
-    function expirableBlobs() internal pure returns (Logic.ExpirableBlob[] memory blobs) {
-        blobs = new Logic.ExpirableBlob[](2);
-        blobs[0] = Logic.ExpirableBlob({
+    function expirableBlobs() internal pure returns (ExpirableBlob[] memory blobs) {
+        blobs = new ExpirableBlob[](2);
+        blobs[0] = ExpirableBlob({
             blob: hex"1f0000003f0000005f0000007f000000",
-            deletionCriterion: Logic.DeletionCriterion.Immediately
+            deletionCriterion: DeletionCriterion.Immediately
         });
-        blobs[1] = Logic.ExpirableBlob({
-            blob: hex"9f000000bf000000df000000ff000000",
-            deletionCriterion: Logic.DeletionCriterion.Never
-        });
+        blobs[1] =
+            ExpirableBlob({blob: hex"9f000000bf000000df000000ff000000", deletionCriterion: DeletionCriterion.Never});
     }
 
     function complianceInstance() internal pure returns (Compliance.Instance memory instance) {
@@ -67,8 +67,8 @@ library TransactionExample {
             tag: isConsumed ? _CONSUMED_NULLIFIER : _CREATED_COMMITMENT,
             isConsumed: isConsumed,
             actionTreeRoot: _ACTION_TREE_ROOT,
-            ciphertext: bytes(""), //ciphertext(),
-            appData: new Logic.ExpirableBlob[](0) //expirableBlobs()
+            ciphertext: ciphertext(),
+            appData: expirableBlobs()
         });
     }
 
@@ -81,8 +81,6 @@ library TransactionExample {
     }
 
     function transaction() internal pure returns (Transaction memory txn) {
-        //ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
-
         Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2);
         logicVerifierInputs[0] = logicVerifierInput({isConsumed: true});
         logicVerifierInputs[1] = logicVerifierInput({isConsumed: false});
@@ -93,7 +91,6 @@ library TransactionExample {
         Action[] memory actions = new Action[](1);
         actions[0] =
             Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
-        // TODO! resourceCalldataPairs: emptyForwarderCallData
 
         txn = Transaction({actions: actions, deltaProof: _DELTA_PROOF});
     }
