@@ -23,5 +23,5 @@ interface INullifierSet {
     /// @notice Returns the nullifier with the given index.
     /// @param index The index to return the nullifier for.
     /// @return nullifier The nullifier at the given index.
-    function at(uint256 index) external view returns (bytes32 nullifier);
+    function atIndex(uint256 index) external view returns (bytes32 nullifier);
 }

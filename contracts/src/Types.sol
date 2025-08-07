@@ -40,8 +40,8 @@ struct Transaction {
 struct Action {
     Logic.VerifierInput[] logicVerifierInputs;
     Compliance.VerifierInput[] complianceVerifierInputs;
-    ResourceForwarderCalldataPair[] resourceCalldataPairs;
 }
+//ResourceForwarderCalldataPair[] resourceCalldataPairs;
 
 /// @notice A tuple containing data to allow the protocol adapter to call external contracts
 /// and to create and consume resources in correspondence to this external call.

@@ -5,7 +5,7 @@ import {ReentrancyGuardTransient} from "@openzeppelin-contracts/utils/Reentrancy
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {IForwarder} from "./interfaces/IForwarder.sol";
+//import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
 import {ComputableComponents} from "./libs/ComputableComponents.sol";
@@ -20,7 +20,7 @@ import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 
 import {NullifierSet} from "./state/NullifierSet.sol";
 
-import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
+import {Action, /*ForwarderCalldata,*/ Resource, Transaction} from "./Types.sol";
 
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -91,10 +91,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 }
             }
 
+            /* // TODO! Uncomment
             uint256 nForwarderCalls = action.resourceCalldataPairs.length;
             for (uint256 j = 0; j < nForwarderCalls; ++j) {
                 _executeForwarderCall(action.resourceCalldataPairs[j].call);
             }
+            */
         }
 
         if (newRoot != 0) {
@@ -121,9 +123,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @inheritdoc IProtocolAdapter
     function getRiscZeroVerifierSelector() public pure virtual override returns (bytes4 verifierSelector) {
-        verifierSelector = 0x9f39696c;
+        verifierSelector = 0xbb001d44;
     }
 
+    /* // TODO! Uncomment
     /// @notice Executes a call to a forwarder contracts.
     /// @param call The calldata to conduct the forwarder call.
     function _executeForwarderCall(ForwarderCalldata calldata call) internal {
@@ -135,8 +138,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         }
 
         // solhint-disable-next-line max-line-length
-        emit ForwarderCallExecuted({untrustedForwarder: call.untrustedForwarder, input: call.input, output: call.output});
+        emit ForwarderCallExecuted({
+        untrustedForwarder: call.untrustedForwarder, 
+            input: call.input,
+            output: call.output});
     }
+    */
 
     /// @notice An internal function to verify a transaction.
     /// @param transaction The transaction to verify.
@@ -170,7 +177,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 revert ResourceCountMismatch({expected: nResources, actual: nCUs});
             }
 
+            /*
+            TODO! Uncomment when fixing EVM interop in https://github.com/anoma/evm-protocol-adapter/pull/162
             _verifyForwarderCalls(action);
+            */
 
             // Compliance Proofs
             {
@@ -314,6 +324,23 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         Delta.verify({proof: proof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
     }
 
+    /*
+    function dummyResource(Resource calldata res) public pure returns (Resource memory dummy) {
+        dummy = Resource({
+            logicRef: res.logicRef,
+            labelRef: res.labelRef,
+            valueRef: res.valueRef,
+            nullifierKeyCommitment: bytes32(0),
+            quantity: 0,
+            nonce: 0,
+            randSeed: 0,
+            ephemeral: true
+        });
+    }
+    */
+
+    /* 
+    TODO! Uncomment when fixing EVM interop in https://github.com/anoma/evm-protocol-adapter/pull/162
     /// @notice Verifies the forwarder calls of a given action.
     /// @param action The action to verify the forwarder calls for.
     function _verifyForwarderCalls(Action calldata action) internal view {
@@ -348,7 +375,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 }
             }
         }
-    }
+    }*/
 
     /// @notice An internal function adding a unit delta to the transactionDelta.
     /// @param transactionDelta The transaction delta.
@@ -362,5 +389,22 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         returns (uint256[2] memory sum)
     {
         sum = transactionDelta.add(unitDelta);
+    }
+
+    /// @dev This method is added to force the abi json to contain the resource struct definition. And can be removed
+    /// when the `_verifyForwarderCalls` and `_executeForwarderCall` are reintroduced.
+    // TODO! Remove when fixing EVM interop in https://github.com/anoma/evm-protocol-adapter/pull/162
+    // solhint-disable-next-line max-line-length, ordering, comprehensive-interface, use-natspec
+    function dummyResource(Resource calldata res) public pure returns (Resource memory dummy) {
+        dummy = Resource({
+            logicRef: res.logicRef,
+            labelRef: res.labelRef,
+            valueRef: res.valueRef,
+            nullifierKeyCommitment: bytes32(0),
+            quantity: 0,
+            nonce: 0,
+            randSeed: 0,
+            ephemeral: true
+        });
     }
 }

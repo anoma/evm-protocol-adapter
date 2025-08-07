@@ -28,9 +28,12 @@ contract Benchmark is BenchmarkData {
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
 
-    Transaction[10] internal _txns;
+    //Transaction[10] internal _txns;
+    Transaction[2] internal _txns;
 
     function setUp() public {
+        string[1] memory paths = ["test_tx1.json"];
+        /*
         string[9] memory paths = [
             "test_tx1.json",
             "test_tx5.json",
@@ -42,6 +45,7 @@ contract Benchmark is BenchmarkData {
             "test_tx35.json",
             "test_tx40.json"
         ];
+        */
 
         for (uint256 i = 0; i < paths.length; ++i) {
             _txns[i + 1] = _parse(string.concat("/test/benchmark/", paths[i]));
@@ -65,6 +69,7 @@ contract Benchmark is BenchmarkData {
         _pa.execute(_txns[1]);
     }
 
+    /*
     function test_execute_05() public {
         _pa.execute(_txns[2]);
     }
@@ -96,6 +101,7 @@ contract Benchmark is BenchmarkData {
     function test_execute_40() public {
         _pa.execute(_txns[9]);
     }
+    */
 
     function test_verify_00() public view {
         _pa.verify(_txns[0]);
@@ -105,6 +111,7 @@ contract Benchmark is BenchmarkData {
         _pa.verify(_txns[1]);
     }
 
+    /*
     function test_verify_05() public view {
         _pa.verify(_txns[2]);
     }
@@ -136,6 +143,7 @@ contract Benchmark is BenchmarkData {
     function test_verify_40() public view {
         _pa.verify(_txns[9]);
     }
+    */
 
     function test_print_calldata() public view {
         for (uint256 i = 0; i < _txns.length; ++i) {

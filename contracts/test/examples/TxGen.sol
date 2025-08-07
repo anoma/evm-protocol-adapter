@@ -12,7 +12,7 @@ import {Compliance} from "../../src/proving/Compliance.sol";
 
 import {Delta} from "../../src/proving/Delta.sol";
 import {Logic} from "../../src/proving/Logic.sol";
-import {Transaction, ResourceForwarderCalldataPair, Action, Resource} from "../../src/Types.sol";
+import {Transaction, Action, Resource} from "../../src/Types.sol";
 
 library TxGen {
     using ComputableComponents for Resource;
@@ -145,14 +145,7 @@ library TxGen {
                 created: created[i].resource
             });
         }
-
-        ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
-
-        action = Action({
-            logicVerifierInputs: logicVerifierInputs,
-            complianceVerifierInputs: complianceVerifierInputs,
-            resourceCalldataPairs: emptyForwarderCallData
-        });
+        action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
     }
 
     function createDefaultAction(
