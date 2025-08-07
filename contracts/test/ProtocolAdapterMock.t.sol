@@ -13,10 +13,12 @@ import {TagLookup} from "../src/libs/TagLookup.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {CommitmentAccumulator} from "../src/state/CommitmentAccumulator.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
-import /*ResourceForwarderCalldataPair, ForwarderCalldata,*/ {Transaction} from "../src/Types.sol";
 
-//import {ForwarderExample} from "./examples/Forwarder.e.sol";
-//import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
+import {ResourceForwarderCalldataPair, ForwarderCalldata, ExpirableBlob, DeletionCriterion} from "../src/Resource.sol";
+import {Transaction} from "../src/Transaction.sol";
+
+import {ForwarderExample} from "./examples/Forwarder.e.sol";
+import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./examples/TxGen.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
@@ -72,9 +74,9 @@ contract ProtocolAdapterMockTest is Test {
             ForwarderCalldata memory call =
                 ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
 
-            Logic.ExpirableBlob[] memory blobs = new Logic.ExpirableBlob[](1);
-            blobs[0] = Logic.ExpirableBlob({
-                deletionCriterion: Logic.DeletionCriterion.Never,
+            ExpirableBlob[] memory blobs = new ExpirableBlob[](1);
+            blobs[0] = ExpirableBlob({
+                deletionCriterion: DeletionCriterion.Never,
                 blob: abi.encode(call.untrustedForwarder, call.input, call.output)
             });
 

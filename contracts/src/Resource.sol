@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Compliance} from "./proving/Compliance.sol";
-import {Logic} from "./proving/Logic.sol";
-
 /// @notice The resource object constituting the atomic unit of state in the Anoma protocol.
 /// @param  logicRef The hash of the resource logic function.
 /// @param  labelRef The hash of the resource label, which can contain arbitrary data.
@@ -24,24 +21,19 @@ struct Resource {
     bool ephemeral;
 }
 
-/// @notice The transaction object containing all required data to conduct a RM state transition
-/// in which resource get consumed and created.
-/// @param actions The list of actions to be executed.
-/// @param deltaProof The proof for the transaction delta value.
-struct Transaction {
-    Action[] actions;
-    bytes deltaProof;
+/// @notice An enum representing the supported blob deletion criteria.
+enum DeletionCriterion {
+    Immediately,
+    Never
 }
 
-/// @notice The action object providing context separation between non-intersecting sets of resources.
-/// @param logicProofs The logic proofs of each resource consumed or created in the action.
-/// @param complianceVerifierInputs The compliance units comprising one consumed and one created resource, each.
-/// @param resourceCalldataPairs The external calls
-struct Action {
-    Logic.VerifierInput[] logicVerifierInputs;
-    Compliance.VerifierInput[] complianceVerifierInputs;
+/// @notice A blob with a deletion criterion attached.
+/// @param deletionCriterion The deletion criterion.
+/// @param blob The bytes-encoded blob data.
+struct ExpirableBlob {
+    DeletionCriterion deletionCriterion;
+    bytes blob;
 }
-//ResourceForwarderCalldataPair[] resourceCalldataPairs;
 
 /// @notice A tuple containing data to allow the protocol adapter to call external contracts
 /// and to create and consume resources in correspondence to this external call.
@@ -62,3 +54,26 @@ struct ForwarderCalldata {
     bytes input;
     bytes output;
 }
+
+/*
+keccak256(
+    abi.encode(
+        ResourceForwarderCalldataPair({
+            carrier: Resource({
+                logicRef: bytes32(0),
+                labelRef: bytes32(0),
+                valueRef: bytes32(0),
+                nullifierKeyCommitment: bytes32(0),
+                quantity: 0,
+                nonce: 0,
+                randSeed: 0,
+                ephemeral: false
+            }),
+            call: ForwarderCalldata({untrustedForwarder: address(0), input: bytes(""), output: bytes("")})
+        })
+    )
+);
+*/
+
+bytes32 constant EMPTY_RESOURCE_FORWARDER_CALLDATA_PAIR_HASH =
+    0x9b2b9991c8cc4869f398996364f5cb9bf8ec42e3c84141ef81445c71ec00c6f8;

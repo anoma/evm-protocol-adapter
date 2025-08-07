@@ -12,7 +12,8 @@ import {Compliance} from "../../src/proving/Compliance.sol";
 
 import {Delta} from "../../src/proving/Delta.sol";
 import {Logic} from "../../src/proving/Logic.sol";
-import {Transaction, Action, Resource} from "../../src/Types.sol";
+import {Resource, ExpirableBlob, DeletionCriterion} from "../../src/Resource.sol";
+import {Transaction, Action} from "../../src/Transaction.sol";
 
 library TxGen {
     using ComputableComponents for Resource;
@@ -27,7 +28,7 @@ library TxGen {
 
     struct ResourceAndAppData {
         Resource resource;
-        Logic.ExpirableBlob[] appData;
+        ExpirableBlob[] appData;
     }
 
     struct ResourceLists {
@@ -43,8 +44,8 @@ library TxGen {
         Resource memory consumed,
         Resource memory created
     ) internal view returns (Compliance.VerifierInput memory unit) {
-        bytes32 nf = consumed.nullifier_({nullifierKey: 0});
-        bytes32 cm = created.commitment_();
+        bytes32 nf = consumed.nullifier({nullifierKey: 0});
+        bytes32 cm = created.commitment();
 
         bytes32 unitDeltaX;
         bytes32 unitDeltaY;
@@ -78,10 +79,10 @@ library TxGen {
         bytes32 actionTreeRoot,
         Resource memory resource,
         bool isConsumed,
-        Logic.ExpirableBlob[] memory appData
+        ExpirableBlob[] memory appData
     ) internal view returns (Logic.VerifierInput memory input) {
         Logic.Instance memory instance = Logic.Instance({
-            tag: isConsumed ? resource.nullifier_({nullifierKey: 0}) : resource.commitment_(),
+            tag: isConsumed ? resource.nullifier({nullifierKey: 0}) : resource.commitment(),
             isConsumed: isConsumed,
             actionTreeRoot: actionTreeRoot,
             ciphertext: ciphertext(),
@@ -113,8 +114,8 @@ library TxGen {
         for (uint256 i = 0; i < nCUs; ++i) {
             uint256 index = (i * 2);
 
-            actionTreeTags[index] = consumed[i].resource.nullifier_({nullifierKey: 0});
-            actionTreeTags[index + 1] = created[i].resource.commitment_();
+            actionTreeTags[index] = consumed[i].resource.nullifier({nullifierKey: 0});
+            actionTreeTags[index + 1] = created[i].resource.commitment();
         }
 
         bytes32 actionTreeRoot = MerkleTree.computeRoot(actionTreeTags, 4);
@@ -145,6 +146,9 @@ library TxGen {
                 created: created[i].resource
             });
         }
+
+        // TODO! ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
+
         action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
     }
 
@@ -288,16 +292,14 @@ library TxGen {
         cipher = hex"3f0000007f000000bf000000ff000000";
     }
 
-    function expirableBlobs() internal pure returns (Logic.ExpirableBlob[] memory blobs) {
-        blobs = new Logic.ExpirableBlob[](2);
-        blobs[0] = Logic.ExpirableBlob({
+    function expirableBlobs() internal pure returns (ExpirableBlob[] memory blobs) {
+        blobs = new ExpirableBlob[](2);
+        blobs[0] = ExpirableBlob({
             blob: hex"1f0000003f0000005f0000007f000000",
-            deletionCriterion: Logic.DeletionCriterion.Immediately
+            deletionCriterion: DeletionCriterion.Immediately
         });
-        blobs[1] = Logic.ExpirableBlob({
-            blob: hex"9f000000bf000000df000000ff000000",
-            deletionCriterion: Logic.DeletionCriterion.Never
-        });
+        blobs[1] =
+            ExpirableBlob({blob: hex"9f000000bf000000df000000ff000000", deletionCriterion: DeletionCriterion.Never});
     }
 
     function initialRoot(uint8 treeDepth) internal pure returns (bytes32 root) {
