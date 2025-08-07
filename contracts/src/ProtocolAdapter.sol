@@ -177,7 +177,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 revert ResourceCountMismatch({expected: nResources, actual: nCUs});
             }
 
-            /* // TODO! Uncomment
+            /*
+            TODO! Uncomment when fixing EVM interop in https://github.com/anoma/evm-protocol-adapter/pull/162
             _verifyForwarderCalls(action);
             */
 
@@ -338,7 +339,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     }
     */
 
-    /* // TODO! Uncomment
+    /* 
+    TODO! Uncomment when fixing EVM interop in https://github.com/anoma/evm-protocol-adapter/pull/162
     /// @notice Verifies the forwarder calls of a given action.
     /// @param action The action to verify the forwarder calls for.
     function _verifyForwarderCalls(Action calldata action) internal view {
@@ -389,7 +391,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         sum = transactionDelta.add(unitDelta);
     }
 
-    // TODO! Remove after fixing EVM interop
+    /// @dev This method is added to force the abi json to contain the resource struct definition. And can be removed
+    /// when the `_verifyForwarderCalls` and `_executeForwarderCall` are reintroduced.
+    // TODO! Remove when fixing EVM interop in https://github.com/anoma/evm-protocol-adapter/pull/162
+    // solhint-disable-next-line max-line-length, ordering, comprehensive-interface, use-natspec
     function dummyResource(Resource calldata res) public pure returns (Resource memory dummy) {
         dummy = Resource({
             logicRef: res.logicRef,
