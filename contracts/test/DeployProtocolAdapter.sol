@@ -9,7 +9,6 @@ contract DeployProtocolAdapterTest is Test {
     function test_DeployProtocolAdapter() public {
         DeployProtocolAdapter deployScript = new DeployProtocolAdapter();
 
-        vm.expectRevert(); // TODO! Remove this when the RISC Zero version has been updated.
         deployScript.run();
     }
 }
