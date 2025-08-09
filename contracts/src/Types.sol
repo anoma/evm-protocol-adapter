@@ -5,14 +5,14 @@ import {Compliance} from "./proving/Compliance.sol";
 import {Logic} from "./proving/Logic.sol";
 
 /// @notice The resource object constituting the atomic unit of state in the Anoma protocol.
-/// @param  logicRef The hash of the resource logic function.
-/// @param  labelRef The hash of the resource label, which can contain arbitrary data.
-/// @param  valueRef The hash of the resource value, which can contain arbitrary data.
-/// @param  nullifierKeyCommitment The commitment to the nullifier key.
-/// @param  quantity The quantity that the resource represents.
-/// @param  nonce The nonce guaranteeing the resource's uniqueness.
-/// @param  randSeed The randomness seed that can be used to derive pseudo-randomness for applications.
-/// @param  ephemeral The resource's ephemerality.
+/// @param logicRef The hash of the resource logic function.
+/// @param labelRef The hash of the resource label, which can contain arbitrary data.
+/// @param valueRef The hash of the resource value, which can contain arbitrary data.
+/// @param nullifierKeyCommitment The commitment to the nullifier key.
+/// @param quantity The quantity that the resource represents.
+/// @param nonce The nonce guaranteeing the resource's uniqueness.
+/// @param randSeed The randomness seed that can be used to derive pseudo-randomness for applications.
+/// @param ephemeral The resource's ephemerality.
 struct Resource {
     bytes32 logicRef;
     bytes32 labelRef;
@@ -34,9 +34,9 @@ struct Transaction {
 }
 
 /// @notice The action object providing context separation between non-intersecting sets of resources.
-/// @param logicProofs The logic proofs of each resource consumed or created in the action.
+/// @param logicVerifierInputs The logic proofs of each resource consumed or created in the action.
 /// @param complianceVerifierInputs The compliance units comprising one consumed and one created resource, each.
-/// @param resourceCalldataPairs The external calls
+/// @param resourceCalldataPairs The external calls associated with the action.
 struct Action {
     Logic.VerifierInput[] logicVerifierInputs;
     Compliance.VerifierInput[] complianceVerifierInputs;
