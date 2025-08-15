@@ -8,7 +8,6 @@ import {Test} from "forge-std/Test.sol";
 
 import {ForwarderBase} from "../src/forwarders/ForwarderBase.sol";
 import {ComputableComponents} from "../src/libs/ComputableComponents.sol";
-import {Parameters} from "../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
@@ -35,13 +34,7 @@ contract ForwarderBaseTest is Test {
         (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
         _riscZeroAdmin = _emergencyStop.owner();
 
-        _pa = address(
-            new ProtocolAdapter({
-                riscZeroVerifierRouter: _router,
-                commitmentTreeDepth: Parameters.COMMITMENT_TREE_DEPTH,
-                actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
-            })
-        );
+        _pa = address(new ProtocolAdapter(_router));
 
         _fwd = new ForwarderExample({protocolAdapter: _pa, calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
         _tgt = ForwarderTargetExample(_fwd.TARGET());

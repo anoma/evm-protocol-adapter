@@ -38,7 +38,7 @@ contract ProtocolAdapterMockTest is Test {
     function setUp() public {
         (_router, _emergencyStop, _mockVerifier) = new DeployRiscZeroContractsMock().run();
 
-        _mockPa = new ProtocolAdapterMock(_router, _TEST_COMMITMENT_TREE_DEPTH, _TEST_ACTION_TAG_TREE_DEPTH);
+        _mockPa = new ProtocolAdapterMock(_router);
     }
 
     function test_execute_emits_the_TransactionExecuted_event() public {
@@ -51,7 +51,7 @@ contract ProtocolAdapterMockTest is Test {
         bytes32[] memory cms = new bytes32[](1);
         cms[0] = txn.actions[0].complianceVerifierInputs[0].instance.created.commitment;
 
-        bytes32 expectedRoot = cms.computeRoot(_TEST_COMMITMENT_TREE_DEPTH);
+        bytes32 expectedRoot = cms.computeRoot();
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.TransactionExecuted({id: 0, transaction: txn, newRoot: expectedRoot});
@@ -134,10 +134,8 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_1_txn_with_n_actions_and_n_cus(uint8 nActions, uint8 nCUs) public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
-            nActions: uint8(bound(nActions, 0, 5)),
-            nCUs: uint8(bound(nCUs, 0, 2 ** (_mockPa.actionTreeDepth() - 1)))
-        });
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
         (Transaction memory txn,) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
@@ -145,10 +143,8 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_2_txns_with_n_actions_and_n_cus(uint8 nActions, uint8 nCUs) public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
-            nActions: uint8(bound(nActions, 0, 5)),
-            nCUs: uint8(bound(nCUs, 0, 2 ** (_mockPa.actionTreeDepth() - 1)))
-        });
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
         (Transaction memory txn, uint256 updatedNonce) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});

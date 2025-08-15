@@ -13,18 +13,9 @@ contract DeployProtocolAdapter is Script {
 
         RiscZeroVerifierRouter trustedSepoliaVerifierRouter = RiscZeroVerifierRouter(vm.parseAddress(vm.readLine(path)));
 
-        uint8 commitmentTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
-
-        uint8 actionTagTreeDepth = uint8(vm.parseUint(vm.readLine(path)));
-
         vm.startBroadcast();
-        protocolAdapter = address(
-            new ProtocolAdapter{salt: sha256("ProtocolAdapterDraft")}({
-                riscZeroVerifierRouter: trustedSepoliaVerifierRouter,
-                commitmentTreeDepth: commitmentTreeDepth,
-                actionTagTreeDepth: actionTagTreeDepth
-            })
-        );
+        protocolAdapter =
+            address(new ProtocolAdapter{salt: sha256("ProtocolAdapterDraft")}(trustedSepoliaVerifierRouter));
         vm.stopBroadcast();
     }
 }
