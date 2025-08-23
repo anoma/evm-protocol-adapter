@@ -37,13 +37,4 @@ library TagLookup {
             revert NullifierDuplicated(nullifier);
         }
     }
-
-    /// @notice Checks if a commitment is non-existent in an array of tags and reverts if it not.
-    /// @param tags The tags array to check.
-    /// @param commitment The commitment to check non-existence for.
-    function checkCommitmentNonExistence(bytes32[] memory tags, bytes32 commitment) internal pure {
-        if (isFoundInEvenOrOddPosition({tags: tags, tag: commitment, even: false})) {
-            revert CommitmentDuplicated(commitment);
-        }
-    }
 }

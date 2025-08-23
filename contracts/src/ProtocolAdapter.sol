@@ -196,13 +196,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     }
 
                     {
-                        // Check that the commitment does not already exist
-                        tags.checkCommitmentNonExistence(cm);
-
-                        // Check that the commitment does not exist in the commitment accumulator
-                        _checkCommitmentNonExistence(cm);
-
-                        // Add the nullifier to the list of tags
+                        // Add the commitment to the list of tags
                         tags[resCounter++] = cm;
                         actionTreeTags[(2 * j) + 1] = cm;
                     }

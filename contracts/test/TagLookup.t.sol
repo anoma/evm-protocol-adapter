@@ -24,17 +24,8 @@ contract TagLookupTest is Test {
         _tags.checkNullifierNonExistence(_tags[0]);
     }
 
-    function test_checkCommitmentNonExistence_reverts_if_commitment_exists() public {
-        vm.expectRevert(abi.encodeWithSelector(TagLookup.CommitmentDuplicated.selector, _tags[1]), address(this));
-        _tags.checkCommitmentNonExistence(_tags[1]);
-    }
-
     function test_checkNullifierNonExistence_passes_if_the_nullifier_does_not_exist() public view {
         _tags.checkNullifierNonExistence(_tags[1]);
-    }
-
-    function test_checkCommitmentNonExistence_passes_if_the_commitment_does_not_exist() public view {
-        _tags.checkCommitmentNonExistence(_tags[0]);
     }
 
     function test_isFoundInEvenOrOddPosition_returns_true_for_existent_tag_in_even_positions() public view {

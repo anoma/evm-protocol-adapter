@@ -263,6 +263,7 @@ contract ProtocolAdapterMockTest is Test {
         (Transaction memory tx1, bytes32 updatedNonce) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
         bytes32 preExistingNf = tx1.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
+        bytes32 preExistingCm = tx1.actions[0].complianceVerifierInputs[0].instance.created.commitment;
         _mockPa.execute(tx1);
 
         (Transaction memory tx2,) = _mockVerifier.transaction({
@@ -277,48 +278,17 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.verify(tx2);
     }
 
-    function test_verify_reverts_on_pre_existing_commitment() public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 1});
-
-        (Transaction memory tx1, bytes32 updatedNonce) =
-            _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
-        bytes32 preExistingCm = tx1.actions[0].complianceVerifierInputs[0].instance.created.commitment;
-        _mockPa.execute(tx1);
-
-        (Transaction memory tx2,) = _mockVerifier.transaction({
-            nonce: updatedNonce,
-            configs: configs,
-            commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH
-        });
-        tx2.actions[0].complianceVerifierInputs[0].instance.created.commitment = preExistingCm;
-        vm.expectRevert(
-            abi.encodeWithSelector(CommitmentAccumulator.PreExistingCommitment.selector, preExistingCm),
-            address(_mockPa)
-        );
-        _mockPa.verify(tx2);
-    }
-
     function test_verify_reverts_on_duplicated_nullifier() public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 2});
 
         (Transaction memory txn,) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
         bytes32 duplicatedNf = txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
-        txn.actions[0].complianceVerifierInputs[1].instance.consumed.nullifier = duplicatedNf;
-
-        vm.expectRevert(abi.encodeWithSelector(TagLookup.NullifierDuplicated.selector, duplicatedNf), address(_mockPa));
-        _mockPa.verify(txn);
-    }
-
-    function test_verify_reverts_on_duplicated_commitment() public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 2});
-
-        (Transaction memory txn,) =
-            _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
         bytes32 duplicatedCm = txn.actions[0].complianceVerifierInputs[0].instance.created.commitment;
+        txn.actions[0].complianceVerifierInputs[1].instance.consumed.nullifier = duplicatedNf;
         txn.actions[0].complianceVerifierInputs[1].instance.created.commitment = duplicatedCm;
 
-        vm.expectRevert(abi.encodeWithSelector(TagLookup.CommitmentDuplicated.selector, duplicatedCm), address(_mockPa));
+        vm.expectRevert(abi.encodeWithSelector(TagLookup.NullifierDuplicated.selector, duplicatedNf), address(_mockPa));
         _mockPa.verify(txn);
     }
 

@@ -83,21 +83,6 @@ contract ProtocolAdapterTest is Test {
         _pa.verify(txn);
     }
 
-    function test_verify_reverts_on_action_with_duplicated_commitments() public {
-        Action[] memory actions = new Action[](1);
-        actions[0] = _actionWithDuplicatedComplianceUnit();
-
-        bytes32 duplicatedCommitment = actions[0].complianceVerifierInputs[0].instance.created.commitment;
-        actions[0].complianceVerifierInputs[1].instance.consumed.nullifier = keccak256("Not a duplicate");
-
-        Transaction memory txn = Transaction({actions: actions, deltaProof: ""});
-
-        vm.expectRevert(
-            abi.encodeWithSelector(TagLookup.CommitmentDuplicated.selector, duplicatedCommitment), address(_pa)
-        );
-        _pa.verify(txn);
-    }
-
     function test_verify_empty_tx() public view {
         Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
         _pa.verify(txn);
