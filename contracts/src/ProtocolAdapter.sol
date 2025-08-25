@@ -316,7 +316,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
         // Check tag correspondence
         if (!consumed) {
-            // If created, just commit the plaintext and check agains the tag
+            // If created, compute the commitment of a resource and check correspondence to tag
             if (resource.commitment() != input.tag) {
                 revert CalldataCarrierCommitmentMismatch({
                     resource: resource,
