@@ -73,7 +73,19 @@ contract ForwarderBaseTest is Test {
         _fwd.forwardCall(_CALLDATA_CARRIER_LOGIC_REF, _label, INPUT);
     }
 
-    function test_calldataCarrierResourceKind_succeeds_on_expected_kind() public view {
+    function test_authorizeCall_reverts_on_wrong_kind_logic() public {
+        vm.expectRevert(abi.encodeWithSelector(ForwarderBase.UnauthorizedResourceCaller.selector, 0, _label));
+        _fwd.authorizeCall(0, _label);
+    }
+
+    function test_authorizeCall_reverts_on_wrong_kind_label() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(ForwarderBase.UnauthorizedResourceCaller.selector, _CALLDATA_CARRIER_LOGIC_REF, 0)
+        );
+        _fwd.authorizeCall(_CALLDATA_CARRIER_LOGIC_REF, 0);
+    }
+
+    function test_authorizeCall_succeeds_on_expected_kind() public view {
         _fwd.authorizeCall(_CALLDATA_CARRIER_LOGIC_REF, sha256(abi.encode(address(_fwd))));
     }
 
