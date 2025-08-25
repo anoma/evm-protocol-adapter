@@ -11,14 +11,21 @@ import {TxGen} from "../examples/TxGen.sol";
 import {VmSafe} from "forge-std/Vm.sol";
 
 contract DeltaProofTest is Test {
+    // The parameters required to generate a delta instance
     struct DeltaInstanceInputs {
+        // The identifier of the asset
         uint128 kind;
+        // The quantity of the asset
         int128 quantity;
+        // Value commitment randomness
         uint256 rcv;
     }
 
+    // The parameters required to generate a delta proof
     struct DeltaProofInputs {
+        // Value commitment randomness
         uint256 rcv;
+        // The hash being signed over
         bytes32 verifyingKey;
     }
 
@@ -28,8 +35,8 @@ contract DeltaProofTest is Test {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         vm.assume(deltaInputs.rcv != 0);
         vm.assume(deltaInputs.kind != 0);
-        int256 prod_aux = (int256(uint256(deltaInputs.kind)) * int256(deltaInputs.quantity));
-        uint256 prod = prod_aux >= 0 ? uint256(prod_aux) : SECP256K1_ORDER - (uint256(-prod_aux) % SECP256K1_ORDER);
+        int256 prodAux = (int256(uint256(deltaInputs.kind)) * int256(deltaInputs.quantity));
+        uint256 prod = prodAux >= 0 ? uint256(prodAux) : SECP256K1_ORDER - (uint256(-prodAux) % SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
         vm.assume(preDelta != 0);
         // Derive address and public key from transaction delta
@@ -125,59 +132,19 @@ contract DeltaProofTest is Test {
         Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey});
     }
 
-    /// @notice Wrap the delta inputs in such a way that they can be balanced
-    /// and also return the total quantity and value commitment randomness
-    function wrapDeltaInputs(DeltaInstanceInputs[] memory deltaInputs) public pure returns (DeltaInstanceInputs[] memory wrappedDeltaInputs, int128 quantity_acc, uint256 rcv_acc) {
-        // Grab the kind to use for all deltas
-        uint128 kind = deltaInputs.length > 0 ? deltaInputs[0].kind : 0;
-        // Compute the window into which the deltas should sum
-        int128 half_max = type(int128).max >> 1;
-        int128 half_min = type(int128).min >> 1;
-        // Track the current quantity and value commitment randomness
-        quantity_acc = 0;
-        rcv_acc = 0;
-        // Wrap the deltas
-        for(uint i = 0; i < deltaInputs.length; i++) {
-            // Ensure that all the deltas have the same kind
-            deltaInputs[i].kind = kind;
-            // Accumulate the randomness commitments modulo SECP256K1_ORDER
-            rcv_acc = addmod(rcv_acc, deltaInputs[i].rcv, SECP256K1_ORDER);
-            // Adjust the delta inputs so that the sum remains in a specific range
-            if(deltaInputs[i].quantity >= 0 && quantity_acc > half_max - deltaInputs[i].quantity) {
-                int128 overflow = quantity_acc - (half_max - deltaInputs[i].quantity);
-                deltaInputs[i].quantity = half_min + overflow - 1 - quantity_acc;
-            } else if(deltaInputs[i].quantity < 0 && quantity_acc < half_min - deltaInputs[i].quantity) {
-                int128 underflow = (half_min - deltaInputs[i].quantity) - quantity_acc;
-                deltaInputs[i].quantity = half_max + 1 - underflow - quantity_acc;
-            }
-            // Finally, accumulate the adjusted quantity
-            quantity_acc += deltaInputs[i].quantity;
-        }
-        // Finally, return tbe wrapped deltas
-        wrappedDeltaInputs = deltaInputs;
-    }
-
-    /// @notice Grab the first length elements from deltaInputs
-    function truncateDeltaInputs(DeltaInstanceInputs[] memory deltaInputs, uint length) public pure returns (DeltaInstanceInputs[] memory truncatedDeltaInputs) {
-        truncatedDeltaInputs = new DeltaInstanceInputs[](length);
-        for(uint i = 0; i < length; i++) {
-            truncatedDeltaInputs[i] = deltaInputs[i];
-        }
-    }
-
     /// @notice Check that a balanced transaction does pass verification
     function test_verify_balanced_delta_succeeds(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
         // Truncate the delta inputs to improve test performance
-        uint MAX_DELTA_LEN = 10;
-        deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % MAX_DELTA_LEN);
+        uint256 maxDeltaLen = 10;
+        deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
         // Make sure that the delta quantities balance out
         (DeltaInstanceInputs[] memory wrappedDeltaInputs, int128 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
         // Adjust the last delta so that the full sum is zero
         if(quantity != 0) {
             wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity -= quantity;
         }
-        for(uint i = 0; i < wrappedDeltaInputs.length; i++) {
+        for(uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
             uint256[2] memory instance = generateDeltaInstance(wrappedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
@@ -196,13 +163,13 @@ contract DeltaProofTest is Test {
     function test_verify_imbalanced_delta_fails(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
         // Truncate the delta inputs to improve test performance
-        uint MAX_DELTA_LEN = 10;
-        deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % MAX_DELTA_LEN);
+        uint256 maxDeltaLen= 10;
+        deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
         // Accumulate the total quantity and randomness commitment
         (DeltaInstanceInputs[] memory wrappedDeltaInputs, int128 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
         // Assume that the deltas are imbalanced
         vm.assume(quantity != 0);
-        for(uint i = 0; i < wrappedDeltaInputs.length; i++) {
+        for(uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
             uint256[2] memory instance = generateDeltaInstance(wrappedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
@@ -218,9 +185,49 @@ contract DeltaProofTest is Test {
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
+    /// @notice Wrap the delta inputs in such a way that they can be balanced
+    /// and also return the total quantity and value commitment randomness
+    function wrapDeltaInputs(DeltaInstanceInputs[] memory deltaInputs) public pure returns (DeltaInstanceInputs[] memory wrappedDeltaInputs, int128 quantityAcc, uint256 rcvAcc) {
+        // Grab the kind to use for all deltas
+        uint128 kind = deltaInputs.length > 0 ? deltaInputs[0].kind : 0;
+        // Compute the window into which the deltas should sum
+        int128 halfMax = type(int128).max >> 1;
+        int128 halfMin = type(int128).min >> 1;
+        // Track the current quantity and value commitment randomness
+        quantityAcc = 0;
+        rcvAcc = 0;
+        // Wrap the deltas
+        for(uint256 i = 0; i < deltaInputs.length; i++) {
+            // Ensure that all the deltas have the same kind
+            deltaInputs[i].kind = kind;
+            // Accumulate the randomness commitments modulo SECP256K1_ORDER
+            rcvAcc = addmod(rcvAcc, deltaInputs[i].rcv, SECP256K1_ORDER);
+            // Adjust the delta inputs so that the sum remains in a specific range
+            if(deltaInputs[i].quantity >= 0 && quantityAcc > halfMax - deltaInputs[i].quantity) {
+                int128 overflow = quantityAcc - (halfMax - deltaInputs[i].quantity);
+                deltaInputs[i].quantity = halfMin + overflow - 1 - quantityAcc;
+            } else if(deltaInputs[i].quantity < 0 && quantityAcc < halfMin - deltaInputs[i].quantity) {
+                int128 underflow = (halfMin - deltaInputs[i].quantity) - quantityAcc;
+                deltaInputs[i].quantity = halfMax + 1 - underflow - quantityAcc;
+            }
+            // Finally, accumulate the adjusted quantity
+            quantityAcc += deltaInputs[i].quantity;
+        }
+        // Finally, return tbe wrapped deltas
+        wrappedDeltaInputs = deltaInputs;
+    }
+
+    /// @notice Grab the first length elements from deltaInputs
+    function truncateDeltaInputs(DeltaInstanceInputs[] memory deltaInputs, uint256 length) public pure returns (DeltaInstanceInputs[] memory truncatedDeltaInputs) {
+        truncatedDeltaInputs = new DeltaInstanceInputs[](length);
+        for(uint256 i = 0; i < length; i++) {
+            truncatedDeltaInputs[i] = deltaInputs[i];
+        }
+    }
+
     function test_verify_example_delta_proof() public pure {
         Transaction memory txn = TransactionExample.transaction();
-        
+
         Delta.verify({
             proof: txn.deltaProof,
             instance: [
