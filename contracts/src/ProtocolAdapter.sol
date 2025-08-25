@@ -84,9 +84,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
 
                 if (input.appData.externalPayload.length != 0) {
+                    Resource memory resource = abi.decode(input.appData.resourcePayload[0].blob, (Resource));
                     ForwarderCalldata memory call =
                         abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
-                    _executeForwarderCall(call);
+                    _executeForwarderCall(resource.logicRef, resource.labelRef, call);
                 }
             }
 
@@ -126,10 +127,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     }
 
     /// @notice Executes a call to a forwarder contracts.
+    /// @param logicRef The logic of the resource making the call.
+    /// @param labelRef The label of the resource making the call.
     /// @param call The calldata to conduct the forwarder call.
-    function _executeForwarderCall(ForwarderCalldata memory call) internal {
+    function _executeForwarderCall(bytes32 logicRef, bytes32 labelRef, ForwarderCalldata memory call) internal {
         // slither-disable-next-line calls-loop
-        bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
+        bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(logicRef, labelRef, call.input);
 
         if (keccak256(output) != keccak256(call.output)) {
             revert ForwarderCallOutputMismatch({expected: call.output, actual: output});
@@ -307,12 +310,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // The plaintext should be stored at the head of resource payload and be decodable
         Resource memory resource = abi.decode(input.appData.resourcePayload[0].blob, (Resource));
         // slither-disable-next-line calls-loop
-        bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
-
-        // Check kind correspondence
-        if (resource.kind() != fetchedKind) {
-            revert CalldataCarrierKindMismatch({expected: fetchedKind, actual: resource.kind()});
-        }
+        IForwarder(call.untrustedForwarder).authorizeCall(resource.logicRef, resource.labelRef);
 
         // Check tag correspondence
         if (!consumed) {

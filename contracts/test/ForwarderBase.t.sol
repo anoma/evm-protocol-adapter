@@ -7,7 +7,6 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 import {Test} from "forge-std/Test.sol";
 
 import {ForwarderBase} from "../src/forwarders/ForwarderBase.sol";
-import {ComputableComponents} from "../src/libs/ComputableComponents.sol";
 import {Parameters} from "../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
@@ -27,6 +26,7 @@ contract ForwarderBaseTest is Test {
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     address internal _riscZeroAdmin;
     address internal _pa;
+    bytes32 internal _label;
 
     ForwarderExample internal _fwd;
     ForwarderTargetExample internal _tgt;
@@ -42,45 +42,39 @@ contract ForwarderBaseTest is Test {
                 actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
             })
         );
-
         _fwd = new ForwarderExample({protocolAdapter: _pa, calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
+        _label = sha256(abi.encode(address(_fwd)));
         _tgt = ForwarderTargetExample(_fwd.TARGET());
     }
 
     function test_forwardCall_reverts_if_the_pa_is_not_the_caller() public {
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(abi.encodeWithSelector(ForwarderBase.UnauthorizedCaller.selector, _pa, _UNAUTHORIZED_CALLER));
-        _fwd.forwardCall({input: INPUT});
+        _fwd.forwardCall(_CALLDATA_CARRIER_LOGIC_REF, _label, INPUT);
     }
 
     function test_forwardCall_forwards_calls_if_the_pa_is_the_caller() public {
         vm.prank(_pa);
-        bytes memory output = _fwd.forwardCall({input: INPUT});
+        bytes memory output = _fwd.forwardCall(_CALLDATA_CARRIER_LOGIC_REF, _label, INPUT);
         assertEq(keccak256(output), keccak256(EXPECTED_OUTPUT));
     }
 
     function test_forwardCall_emits_the_CallForwarded_event() public {
         vm.prank(_pa);
-
         vm.expectEmit(address(_fwd));
         emit ForwarderExample.CallForwarded(INPUT, EXPECTED_OUTPUT);
-        _fwd.forwardCall({input: INPUT});
+        _fwd.forwardCall(_CALLDATA_CARRIER_LOGIC_REF, _label, INPUT);
     }
 
     function test_forwardCall_calls_the_function_in_the_target_contract() public {
         vm.prank(_pa);
-
         vm.expectEmit(address(_tgt));
         emit ForwarderTargetExample.CallReceived(INPUT_VALUE, OUTPUT_VALUE);
-        _fwd.forwardCall({input: INPUT});
+        _fwd.forwardCall(_CALLDATA_CARRIER_LOGIC_REF, _label, INPUT);
     }
 
-    function test_calldataCarrierResourceKind_returns_the_expected_kind() public view {
-        bytes32 expectedKind = ComputableComponents.kind({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            labelRef: sha256(abi.encode(address(_fwd)))
-        });
-        assertEq(_fwd.calldataCarrierResourceKind(), expectedKind);
+    function test_calldataCarrierResourceKind_succeeds_on_expected_kind() public view {
+        _fwd.authorizeCall(_CALLDATA_CARRIER_LOGIC_REF, sha256(abi.encode(address(_fwd))));
     }
 
     function _stopProtocolAdapter() internal {

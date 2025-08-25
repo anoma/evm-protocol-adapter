@@ -18,6 +18,7 @@ abstract contract ForwarderBase is IForwarder {
 
     error ZeroNotAllowed();
     error UnauthorizedCaller(address expected, address actual);
+    error UnauthorizedResourceCaller(bytes32 logicRef, bytes32 labelRef);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
@@ -35,15 +36,20 @@ abstract contract ForwarderBase is IForwarder {
     }
 
     /// @inheritdoc IForwarder
-    function forwardCall(bytes calldata input) external returns (bytes memory output) {
+    function forwardCall(bytes32, /*logicRef*/ bytes32, /*labelRef*/ bytes calldata input)
+        external
+        returns (bytes memory output)
+    {
         _checkCaller(address(_PROTOCOL_ADAPTER));
 
         output = _forwardCall(input);
     }
 
     /// @inheritdoc IForwarder
-    function calldataCarrierResourceKind() external view returns (bytes32 kind) {
-        kind = _CALLDATA_CARRIER_RESOURCE_KIND;
+    function authorizeCall(bytes32 logicRef, bytes32 labelRef) external view {
+        if (ComputableComponents.kind(logicRef, labelRef) != _CALLDATA_CARRIER_RESOURCE_KIND) {
+            revert UnauthorizedResourceCaller(logicRef, labelRef);
+        }
     }
 
     /// @notice Forwards calls.
