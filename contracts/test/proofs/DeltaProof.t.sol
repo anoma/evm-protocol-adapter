@@ -102,7 +102,7 @@ contract DeltaProofTest is Test {
     function test_verify_inconsistent_delta_fails2(DeltaProofInputs memory deltaInputs1, DeltaInstanceInputs memory deltaInputs2) public {
         deltaInputs2.quantity = 0;
         // Filter out inadmissible private keys or equal keys
-        vm.assume(deltaInputs1.rcv != deltaInputs2.rcv);
+        vm.assume((deltaInputs1.rcv % SECP256K1_ORDER) != (deltaInputs2.rcv % SECP256K1_ORDER));
         // Generate a delta proof and instance from the above tags and preimage
         bytes memory proof1 = generateDeltaProof(deltaInputs1);
         uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
@@ -125,17 +125,18 @@ contract DeltaProofTest is Test {
         Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey});
     }
 
-    /// @notice Balance the delta inputs and also return the total value commitment randomness
-    function balanceDeltaInputs(DeltaInstanceInputs[] memory deltaInputs) public pure returns (DeltaInstanceInputs[] memory balancedDeltaInputs, uint256 rcv_acc) {
+    /// @notice Wrap the delta inputs in such a way that they can be balanced
+    /// and also return the total quantity and value commitment randomness
+    function wrapDeltaInputs(DeltaInstanceInputs[] memory deltaInputs) public pure returns (DeltaInstanceInputs[] memory wrappedDeltaInputs, int128 quantity_acc, uint256 rcv_acc) {
         // Grab the kind to use for all deltas
         uint128 kind = deltaInputs.length > 0 ? deltaInputs[0].kind : 0;
         // Compute the window into which the deltas should sum
         int128 half_max = type(int128).max >> 1;
         int128 half_min = type(int128).min >> 1;
         // Track the current quantity and value commitment randomness
-        int128 quantity_acc = 0;
+        quantity_acc = 0;
         rcv_acc = 0;
-        // Balance out the deltas
+        // Wrap the deltas
         for(uint i = 0; i < deltaInputs.length; i++) {
             // Ensure that all the deltas have the same kind
             deltaInputs[i].kind = kind;
@@ -152,12 +153,8 @@ contract DeltaProofTest is Test {
             // Finally, accumulate the adjusted quantity
             quantity_acc += deltaInputs[i].quantity;
         }
-        // Adjust the last delta so that the full sum is zero
-        if(quantity_acc != 0) {
-            deltaInputs[deltaInputs.length - 1].quantity -= quantity_acc;
-        }
-        // Finally, return tbe balanced deltas
-        balancedDeltaInputs = deltaInputs;
+        // Finally, return tbe wrapped deltas
+        wrappedDeltaInputs = deltaInputs;
     }
 
     /// @notice Grab the first length elements from deltaInputs
@@ -174,11 +171,15 @@ contract DeltaProofTest is Test {
         // Truncate the delta inputs to improve test performance
         uint MAX_DELTA_LEN = 10;
         deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % MAX_DELTA_LEN);
-        // Make sure that the delta qquantities balance out
-        (DeltaInstanceInputs[] memory balancedDeltaInputs, uint256 rcv) = balanceDeltaInputs(deltaInputs);
-        for(uint i = 0; i < balancedDeltaInputs.length; i++) {
+        // Make sure that the delta quantities balance out
+        (DeltaInstanceInputs[] memory wrappedDeltaInputs, int128 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
+        // Adjust the last delta so that the full sum is zero
+        if(quantity != 0) {
+            wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity -= quantity;
+        }
+        for(uint i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
-            uint256[2] memory instance = generateDeltaInstance(balancedDeltaInputs[i]);
+            uint256[2] memory instance = generateDeltaInstance(wrappedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
         }
         // Compute the proof for the balanced transaction
@@ -188,6 +189,32 @@ contract DeltaProofTest is Test {
             });
         bytes memory proof = generateDeltaProof(sumDeltaInputs);
         // Verify that the balanced transaction proof succeeds
+        Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
+    }
+
+    /// @notice Check that an imbalanced transaction fails verification
+    function test_verify_imbalanced_delta_fails(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
+        uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
+        // Truncate the delta inputs to improve test performance
+        uint MAX_DELTA_LEN = 10;
+        deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % MAX_DELTA_LEN);
+        // Accumulate the total quantity and randomness commitment
+        (DeltaInstanceInputs[] memory wrappedDeltaInputs, int128 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
+        // Assume that the deltas are imbalanced
+        vm.assume(quantity != 0);
+        for(uint i = 0; i < wrappedDeltaInputs.length; i++) {
+            // Compute the delta instance and accumulate it
+            uint256[2] memory instance = generateDeltaInstance(wrappedDeltaInputs[i]);
+            deltaAcc = Delta.add(deltaAcc, instance);
+        }
+        // Compute the proof for the balanced transaction
+        DeltaProofInputs memory sumDeltaInputs = DeltaProofInputs({
+            rcv: rcv,
+            verifyingKey: verifyingKey
+            });
+        bytes memory proof = generateDeltaProof(sumDeltaInputs);
+        // Verify that the imbalanced transaction proof fails
+        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
