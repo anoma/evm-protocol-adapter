@@ -49,8 +49,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     error RiscZeroVerifierStopped();
 
     error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierCmMismatch(Resource resource, bytes32 expected, bytes32 actual);
-    error CalldataCarrierNfMismatch(Resource resource, bytes32 expected, bytes32 actual);
+    error CalldataCarrierCommitmentMismatch(Resource resource, bytes32 expected, bytes32 actual);
+    error CalldataCarrierNullifierMismatch(Resource resource, bytes32 expected, bytes32 actual);
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
@@ -318,7 +318,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         if (!consumed) {
             // If created, just commit the plaintext and check agains the tag
             if (resource.commitment() != input.tag) {
-                revert CalldataCarrierCmMismatch({
+                revert CalldataCarrierCommitmentMismatch({
                     resource: resource,
                     actual: input.tag,
                     expected: resource.commitment()
@@ -328,7 +328,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             // If consumed, we expect the nullifier key to be present in the resource payload as well
             resource.nullifier(bytes32(input.appData.resourcePayload[1].blob)) != input.tag
         ) {
-            revert CalldataCarrierNfMismatch({
+            revert CalldataCarrierNullifierMismatch({
                 resource: resource,
                 actual: input.tag,
                 expected: resource.nullifier(bytes32(input.appData.resourcePayload[1].blob))
