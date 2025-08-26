@@ -52,7 +52,7 @@ abstract contract ForwarderBase is IForwarder {
     }
 
     /// @inheritdoc IForwarder
-    function forwardCall(bytes32, bytes32, bytes calldata input) external returns (bytes memory output) {
+    function forwardCall(bytes calldata input) external returns (bytes memory output) {
         _checkCaller(address(_PROTOCOL_ADAPTER));
 
         output = _forwardCall(input);

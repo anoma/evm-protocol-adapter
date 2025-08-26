@@ -57,12 +57,12 @@ contract ForwarderBaseTest is Test {
     function test_forwardCall_reverts_if_the_pa_is_not_the_caller() public {
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(abi.encodeWithSelector(ForwarderBase.UnauthorizedCaller.selector, _pa, _UNAUTHORIZED_CALLER));
-        _fwd.forwardCall(_LOGIC_REF, _LABEL_REF, INPUT);
+        _fwd.forwardCall(INPUT);
     }
 
     function test_forwardCall_forwards_calls_if_the_pa_is_the_caller() public {
         vm.prank(_pa);
-        bytes memory output = _fwd.forwardCall(_LOGIC_REF, _LABEL_REF, INPUT);
+        bytes memory output = _fwd.forwardCall(INPUT);
         assertEq(keccak256(output), keccak256(EXPECTED_OUTPUT));
     }
 
@@ -70,14 +70,14 @@ contract ForwarderBaseTest is Test {
         vm.prank(_pa);
         vm.expectEmit(address(_fwd));
         emit ForwarderExample.CallForwarded(INPUT, EXPECTED_OUTPUT);
-        _fwd.forwardCall(_LOGIC_REF, _LABEL_REF, INPUT);
+        _fwd.forwardCall(INPUT);
     }
 
     function test_forwardCall_calls_the_function_in_the_target_contract() public {
         vm.prank(_pa);
         vm.expectEmit(address(_tgt));
         emit ForwarderTargetExample.CallReceived(INPUT_VALUE, OUTPUT_VALUE);
-        _fwd.forwardCall(_LOGIC_REF, _LABEL_REF, INPUT);
+        _fwd.forwardCall(INPUT);
     }
 
     function test_authorizeCall_reverts_on_wrong_kind_logic() public {
