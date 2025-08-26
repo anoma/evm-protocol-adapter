@@ -92,9 +92,9 @@ contract ForwarderBaseTest is Test {
 
     function test_authorizeCall_succeeds_on_expected_kinds() public view {
         _fwd.authorizeCall(_logic, _label);
-        //      _fwd.authorizeCall(_LOGIC_REF, _label);
-        // _fwd.authorizeCall(_LOGIC_REF, _LABEL_REF);
-        //  _fwd.authorizeCall(_logic, _LABEL_REF);
+        _fwd.authorizeCall(_LOGIC_REF, _label);
+        _fwd.authorizeCall(_LOGIC_REF, _LABEL_REF);
+        _fwd.authorizeCall(_logic, _LABEL_REF);
     }
 
     function _stopProtocolAdapter() internal {
