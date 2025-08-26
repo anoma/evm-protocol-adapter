@@ -32,6 +32,7 @@ contract MultiERC20Forwarder is EmergencyMigratableForwarderBase, IUpdatable {
     address internal immutable _APP_COMMITTEE;
 
     error UnsanctionedAppUpdate(address expected, address actual);
+    error LabelsNotUpdatable();
 
     /// @notice Initializes the ERC-20 forwarder contract supporting arbitrary tokens given
     /// approval from appropriate address.
@@ -56,14 +57,15 @@ contract MultiERC20Forwarder is EmergencyMigratableForwarderBase, IUpdatable {
 
     /// @inheritdoc IUpdatable
     function addLabel(bytes32 labelRef) external override returns (bool output) {
-        _appCommitteeCheck(msg.sender);
-        output = _labelRefSet.add(labelRef);
+        // slither-disable-next-line redundant-statements
+        labelRef;
+        revert LabelsNotUpdatable();
     }
 
     /// @inheritdoc IUpdatable
     function addLogic(bytes32 logicRef) external override returns (bool output) {
         _appCommitteeCheck(msg.sender);
-        output = _logicRefSet.add(logicRef);
+         output = _labelRefSet.add(logicRef);
     }
 
     /// @notice Forwards calls.
@@ -90,6 +92,13 @@ contract MultiERC20Forwarder is EmergencyMigratableForwarderBase, IUpdatable {
         } else {
             output = abi.encode(IERC20(call.erc20Addr).transfer(call.userAddr, call.ammount));
         }
+    }
+
+    /// @notice Allows for arbitrary label to pass
+    /// @param labelRef The labelRef of the resource making the call
+    function _authorizeLabel(bytes32 labelRef) internal view override {
+         // slither-disable-next-line redundant-statements
+        labelRef;
     }
 
     /// @notice Checks that the updates are submitted by specified address.

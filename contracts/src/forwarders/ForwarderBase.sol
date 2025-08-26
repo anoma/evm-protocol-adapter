@@ -60,17 +60,30 @@ abstract contract ForwarderBase is IForwarder {
 
     /// @inheritdoc IForwarder
     function authorizeCall(bytes32 logicRef, bytes32 labelRef) external view {
-        if (!_logicRefSet.contains(logicRef)) {
-            revert UnauthorizedResourceLogicCaller(logicRef);
-        } else if (!_labelRefSet.contains(labelRef)) {
-            revert UnauthorizedResourceLabelCaller(labelRef);
-        }
+        _authorizeLogic(logicRef);
+        _authorizeLabel(labelRef);
     }
 
     /// @notice Forwards calls.
     /// @param input The `bytes` encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
     function _forwardCall(bytes calldata input) internal virtual returns (bytes memory output);
+
+    /// @notice Authorizes call based on logic
+    /// @param logicRef The logicRef of the resource making the call
+    function _authorizeLogic(bytes32 logicRef) internal view virtual {
+        if (!_logicRefSet.contains(logicRef)) {
+            revert UnauthorizedResourceLogicCaller(logicRef);
+        }
+    }
+
+    /// @notice Authorizes call based on label
+    /// @param labelRef The labelRef of the resource making the call
+    function _authorizeLabel(bytes32 labelRef) internal view virtual {
+        if (!_labelRefSet.contains(labelRef)) {
+            revert UnauthorizedResourceLabelCaller(labelRef);
+        }
+    }
 
     /// @notice Checks that an expected caller is calling the function and reverts otherwise.
     /// @param expected The expected caller.
