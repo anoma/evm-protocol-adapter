@@ -8,7 +8,6 @@ fn main() {
         return;
     }
 
-
     // run forge build --ast in the ../contracts directory
     let status = Command::new("forge")
         .current_dir("../contracts")

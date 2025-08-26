@@ -7,7 +7,6 @@ edition = "2024"
 arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.3.0", package = "arm", features = [
     "groth16_prover",
 ] }
-dotenv = "0.15"
 alloy = { version = "1.0.23", features = ["full"] }
 tokio = "1.44"
 serde = { version = "1.0.197", default-features = false }
