@@ -20,13 +20,15 @@ contract ForwarderBaseTest is Test {
     address internal constant _EMERGENCY_CALLER = address(uint160(1));
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
 
-    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(type(uint256).max);
+    bytes32 internal constant _LOGIC_REF = bytes32(uint256(3));
+    bytes32 internal constant _LABEL_REF = bytes32(uint256(4));
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     address internal _riscZeroAdmin;
     address internal _pa;
     bytes32 internal _label;
+    bytes32 internal _logic;
 
     ForwarderExample internal _fwd;
     ForwarderTargetExample internal _tgt;
@@ -42,20 +44,25 @@ contract ForwarderBaseTest is Test {
                 actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
             })
         );
-        _fwd = new ForwarderExample({protocolAdapter: _pa, calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
+        bytes32[] memory logicRefs = new bytes32[](1);
+        bytes32[] memory labelRefs = new bytes32[](1);
+        logicRefs[0] = _LOGIC_REF;
+        labelRefs[0] = _LABEL_REF;
+        _fwd = new ForwarderExample({protocolAdapter: _pa, logicRefs: logicRefs, labelRefs: labelRefs});
         _label = sha256(abi.encode(address(_fwd)));
+        _logic = bytes32(uint256(123));
         _tgt = ForwarderTargetExample(_fwd.TARGET());
     }
 
     function test_forwardCall_reverts_if_the_pa_is_not_the_caller() public {
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(abi.encodeWithSelector(ForwarderBase.UnauthorizedCaller.selector, _pa, _UNAUTHORIZED_CALLER));
-        _fwd.forwardCall(_CALLDATA_CARRIER_LOGIC_REF, _label, INPUT);
+        _fwd.forwardCall(_LOGIC_REF, _LABEL_REF, INPUT);
     }
 
     function test_forwardCall_forwards_calls_if_the_pa_is_the_caller() public {
         vm.prank(_pa);
-        bytes memory output = _fwd.forwardCall(_CALLDATA_CARRIER_LOGIC_REF, _label, INPUT);
+        bytes memory output = _fwd.forwardCall(_LOGIC_REF, _LABEL_REF, INPUT);
         assertEq(keccak256(output), keccak256(EXPECTED_OUTPUT));
     }
 
@@ -63,30 +70,31 @@ contract ForwarderBaseTest is Test {
         vm.prank(_pa);
         vm.expectEmit(address(_fwd));
         emit ForwarderExample.CallForwarded(INPUT, EXPECTED_OUTPUT);
-        _fwd.forwardCall(_CALLDATA_CARRIER_LOGIC_REF, _label, INPUT);
+        _fwd.forwardCall(_LOGIC_REF, _LABEL_REF, INPUT);
     }
 
     function test_forwardCall_calls_the_function_in_the_target_contract() public {
         vm.prank(_pa);
         vm.expectEmit(address(_tgt));
         emit ForwarderTargetExample.CallReceived(INPUT_VALUE, OUTPUT_VALUE);
-        _fwd.forwardCall(_CALLDATA_CARRIER_LOGIC_REF, _label, INPUT);
+        _fwd.forwardCall(_LOGIC_REF, _LABEL_REF, INPUT);
     }
 
     function test_authorizeCall_reverts_on_wrong_kind_logic() public {
-        vm.expectRevert(abi.encodeWithSelector(ForwarderBase.UnauthorizedResourceCaller.selector, 0, _label));
-        _fwd.authorizeCall(0, _label);
+        vm.expectRevert(abi.encodeWithSelector(ForwarderBase.UnauthorizedResourceLogicCaller.selector, 0));
+        _fwd.authorizeCall(0, _LABEL_REF);
     }
 
     function test_authorizeCall_reverts_on_wrong_kind_label() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(ForwarderBase.UnauthorizedResourceCaller.selector, _CALLDATA_CARRIER_LOGIC_REF, 0)
-        );
-        _fwd.authorizeCall(_CALLDATA_CARRIER_LOGIC_REF, 0);
+        vm.expectRevert(abi.encodeWithSelector(ForwarderBase.UnauthorizedResourceLabelCaller.selector, 0));
+        _fwd.authorizeCall(_LOGIC_REF, 0);
     }
 
-    function test_authorizeCall_succeeds_on_expected_kind() public view {
-        _fwd.authorizeCall(_CALLDATA_CARRIER_LOGIC_REF, sha256(abi.encode(address(_fwd))));
+    function test_authorizeCall_succeeds_on_expected_kinds() public view {
+        _fwd.authorizeCall(_logic, _label);
+        //      _fwd.authorizeCall(_LOGIC_REF, _label);
+        // _fwd.authorizeCall(_LOGIC_REF, _LABEL_REF);
+        //  _fwd.authorizeCall(_logic, _LABEL_REF);
     }
 
     function _stopProtocolAdapter() internal {

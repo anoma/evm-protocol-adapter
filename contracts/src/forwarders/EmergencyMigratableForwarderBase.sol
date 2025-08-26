@@ -24,12 +24,16 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
-    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
+    /// @param logicRefs Permitted logics for making calls.
+    /// @param labelRefs Permitted labels for making calls.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
-    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef, address emergencyCommittee)
-        ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
-    {
+    constructor(
+        address protocolAdapter,
+        bytes32[] memory logicRefs,
+        bytes32[] memory labelRefs,
+        address emergencyCommittee
+    ) ForwarderBase(protocolAdapter, logicRefs, labelRefs) {
         if (emergencyCommittee == address(0)) {
             revert ZeroNotAllowed();
         }

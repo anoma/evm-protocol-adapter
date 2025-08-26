@@ -17,13 +17,18 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
-    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
+    /// @param logicRefs Permitted logics for making calls.
+    /// @param labelRefs Permitted labels for making calls.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
     /// @param erc20 The ERC-20 token contract to forward calls to.
-    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef, address emergencyCommittee, address erc20)
-        EmergencyMigratableForwarderBase(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee)
-    {
+    constructor(
+        address protocolAdapter,
+        bytes32[] memory logicRefs,
+        bytes32[] memory labelRefs,
+        address emergencyCommittee,
+        address erc20
+    ) EmergencyMigratableForwarderBase(protocolAdapter, logicRefs, labelRefs, emergencyCommittee) {
         if (erc20 == address(0)) {
             revert ZeroNotAllowed();
         }
