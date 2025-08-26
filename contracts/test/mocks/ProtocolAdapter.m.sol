@@ -13,7 +13,6 @@ import {_MOCK_VERIFIER_SELECTOR} from "../script/DeployRiscZeroContractsMock.s.s
 
 contract ProtocolAdapterMock is ProtocolAdapter {
     using RiscZeroUtils for Compliance.Instance;
-    using RiscZeroUtils for Logic.Instance;
     using Delta for bytes32[];
 
     constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, uint8 commitmentTreeDepth, uint8 actionTagTreeDepth)
@@ -36,11 +35,15 @@ contract ProtocolAdapterMock is ProtocolAdapter {
         });
     }
 
-    function _verifyLogicProof(Logic.VerifierInput calldata input) internal view override {
+    function _verifyLogicProof(Logic.VerifierInput calldata input, bytes32 tree, bool consumed)
+        internal
+        view
+        override
+    {
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
             seal: input.proof,
             imageId: input.verifyingKey,
-            journalDigest: input.instance.toJournalDigest()
+            journalDigest: RiscZeroUtils.toJournalDigest(input, tree, consumed)
         });
     }
 

@@ -10,14 +10,12 @@ import {Test} from "forge-std/Test.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
 import {TagLookup} from "../src/libs/TagLookup.sol";
-import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Logic} from "../src/proving/Logic.sol";
 import {CommitmentAccumulator} from "../src/state/CommitmentAccumulator.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
-import {Transaction, ResourceForwarderCalldataPair, ForwarderCalldata} from "../src/Types.sol";
+import /*ResourceForwarderCalldataPair, ForwarderCalldata,*/ {Transaction} from "../src/Types.sol";
 
-import {ForwarderExample} from "./examples/Forwarder.e.sol";
-import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
+//import {ForwarderExample} from "./examples/Forwarder.e.sol";
+//import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./examples/TxGen.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
@@ -58,6 +56,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
+    /*
     function test_execute_emits_the_ForwarderCallExecuted_event() public {
         uint256 nonce = 0;
 
@@ -93,6 +92,7 @@ contract ProtocolAdapterMockTest is Test {
             resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
             txn = _mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH);
 
+            // TODO! 
             ResourceForwarderCalldataPair[] memory pairs = new ResourceForwarderCalldataPair[](1);
             pairs[0] = ResourceForwarderCalldataPair({
                 carrier: created[0].resource,
@@ -100,6 +100,7 @@ contract ProtocolAdapterMockTest is Test {
             });
 
             txn.actions[0].resourceCalldataPairs = pairs;
+            
         }
 
         vm.expectEmit(address(_mockPa));
@@ -110,6 +111,7 @@ contract ProtocolAdapterMockTest is Test {
         });
         _mockPa.execute(txn);
     }
+    */
 
     function test_execute_1_txn_with_1_action_and_0_cus() public {
         (Transaction memory txn,) = _mockVerifier.transaction({
@@ -224,38 +226,6 @@ contract ProtocolAdapterMockTest is Test {
         txn.actions[0].complianceVerifierInputs[1].instance.created.commitment = duplicatedCm;
 
         vm.expectRevert(abi.encodeWithSelector(TagLookup.CommitmentDuplicated.selector, duplicatedCm), address(_mockPa));
-        _mockPa.verify(txn);
-    }
-
-    function test_verify_reverts_on_wrong_isConsumed_value_in_consumed_resource_logic_proof() public {
-        (Transaction memory txn,) = _mockVerifier.transaction({
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({nActions: 2, nCUs: 2}),
-            commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH
-        });
-
-        bool expected = true;
-        txn.actions[1].logicVerifierInputs[0].instance.isConsumed = !expected;
-
-        vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.ResourceLifecycleMismatch.selector, expected), (address(_mockPa))
-        );
-        _mockPa.verify(txn);
-    }
-
-    function test_verify_reverts_on_wrong_isConsumed_value_in_created_resource_logic_proof() public {
-        (Transaction memory txn,) = _mockVerifier.transaction({
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({nActions: 2, nCUs: 2}),
-            commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH
-        });
-
-        bool expected = false;
-        txn.actions[1].logicVerifierInputs[1].instance.isConsumed = !expected;
-
-        vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.ResourceLifecycleMismatch.selector, expected), (address(_mockPa))
-        );
         _mockPa.verify(txn);
     }
 }

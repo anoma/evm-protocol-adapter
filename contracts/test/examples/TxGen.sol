@@ -12,12 +12,12 @@ import {Compliance} from "../../src/proving/Compliance.sol";
 
 import {Delta} from "../../src/proving/Delta.sol";
 import {Logic} from "../../src/proving/Logic.sol";
-import {Transaction, ResourceForwarderCalldataPair, Action, Resource} from "../../src/Types.sol";
+import {Transaction, Action, Resource} from "../../src/Types.sol";
 
 library TxGen {
     using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
-    using RiscZeroUtils for Logic.Instance;
+    using RiscZeroUtils for Logic.VerifierInput;
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
@@ -27,7 +27,7 @@ library TxGen {
 
     struct ResourceAndAppData {
         Resource resource;
-        Logic.ExpirableBlob[] appData;
+        Logic.AppData appData;
     }
 
     struct ResourceLists {
@@ -78,21 +78,19 @@ library TxGen {
         bytes32 actionTreeRoot,
         Resource memory resource,
         bool isConsumed,
-        Logic.ExpirableBlob[] memory appData
+        Logic.AppData memory appData
     ) internal view returns (Logic.VerifierInput memory input) {
-        Logic.Instance memory instance = Logic.Instance({
+        input = Logic.VerifierInput({
             tag: isConsumed ? resource.nullifier_({nullifierKey: 0}) : resource.commitment_(),
-            isConsumed: isConsumed,
-            actionTreeRoot: actionTreeRoot,
-            ciphertext: ciphertext(),
-            appData: appData
+            verifyingKey: resource.logicRef,
+            appData: appData,
+            proof: abi.encodePacked(uint32(0))
         });
 
-        input = Logic.VerifierInput({
-            proof: mockVerifier.mockProve({imageId: resource.logicRef, journalDigest: instance.toJournalDigest()}).seal,
-            instance: instance,
-            verifyingKey: resource.logicRef
-        });
+        input.proof = mockVerifier.mockProve({
+            imageId: resource.logicRef,
+            journalDigest: input.toJournalDigest(actionTreeRoot, isConsumed)
+        }).seal;
     }
 
     function createAction(
@@ -145,14 +143,7 @@ library TxGen {
                 created: created[i].resource
             });
         }
-
-        ResourceForwarderCalldataPair[] memory emptyForwarderCallData = new ResourceForwarderCalldataPair[](0);
-
-        action = Action({
-            logicVerifierInputs: logicVerifierInputs,
-            complianceVerifierInputs: complianceVerifierInputs,
-            resourceCalldataPairs: emptyForwarderCallData
-        });
+        action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
     }
 
     function createDefaultAction(
@@ -174,7 +165,12 @@ library TxGen {
                     labelRef: bytes32(i),
                     quantity: 1 + nonce
                 }),
-                appData: expirableBlobs()
+                appData: Logic.AppData({
+                    discoveryPayload: new Logic.ExpirableBlob[](0),
+                    resourcePayload: new Logic.ExpirableBlob[](0),
+                    externalPayload: new Logic.ExpirableBlob[](0),
+                    applicationPayload: new Logic.ExpirableBlob[](0)
+                })
             });
             created[i] = ResourceAndAppData({
                 resource: TxGen.mockResource({
@@ -183,7 +179,12 @@ library TxGen {
                     labelRef: bytes32(i),
                     quantity: 1 + nonce
                 }),
-                appData: expirableBlobs()
+                appData: Logic.AppData({
+                    discoveryPayload: new Logic.ExpirableBlob[](0),
+                    resourcePayload: new Logic.ExpirableBlob[](0),
+                    externalPayload: new Logic.ExpirableBlob[](0),
+                    applicationPayload: new Logic.ExpirableBlob[](0)
+                })
             });
         }
 
@@ -289,10 +290,6 @@ library TxGen {
             randSeed: 0,
             ephemeral: true
         });
-    }
-
-    function ciphertext() internal pure returns (bytes memory cipher) {
-        cipher = hex"3f0000007f000000bf000000ff000000";
     }
 
     function expirableBlobs() internal pure returns (Logic.ExpirableBlob[] memory blobs) {
