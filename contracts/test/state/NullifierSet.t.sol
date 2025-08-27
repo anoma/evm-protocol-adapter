@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Test} from "../../lib/forge-std/src/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {NullifierSet} from "../../src/state/NullifierSet.sol";
 import {NullifierSetMock} from "../mocks/NullifierSetMock.sol";
 
