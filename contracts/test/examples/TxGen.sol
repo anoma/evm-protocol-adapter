@@ -84,7 +84,7 @@ library TxGen {
             tag: isConsumed ? resource.nullifier({nullifierKey: 0}) : resource.commitment(),
             verifyingKey: resource.logicRef,
             appData: appData,
-            proof: abi.encodePacked(uint32(0))
+            proof: ""
         });
 
         input.proof = mockVerifier.mockProve({
