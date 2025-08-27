@@ -8,6 +8,12 @@ import {Resource} from "../Types.sol";
 /// @notice A library containing methods to calculate computable components from resource objects.
 /// @custom:security-contact security@anoma.foundation
 library ComputableComponents {
+    /// @notice The personalization constant for computing commitments.
+    bytes17 internal constant _COMMITMENT_PERSONALIZATION = 0x52495343305f457870616e645365656401;
+
+    /// @notice The personalization constant for computing nullifiers.
+    bytes17 internal constant _NULLIFIER_PERSONALIZATION = 0x52495343305f457870616e645365656400;
+
     /// @notice Computes the resource commitment.
     /// @param resource The resource object.
     /// @return cm The computed commitment.
@@ -54,15 +60,13 @@ library ComputableComponents {
     /// @param resource The resource whose randomness we compute
     /// @return randCm The randomness for the resource commitment
     function rcm(Resource memory resource) internal pure returns (bytes32 randCm) {
-        bytes17 prfExpandPersonalization = 0x52495343305f457870616e645365656401;
-        randCm = sha256(abi.encodePacked(prfExpandPersonalization, resource.randSeed, resource.nonce));
+        randCm = sha256(abi.encodePacked(_COMMITMENT_PERSONALIZATION, resource.randSeed, resource.nonce));
     }
 
     /// @notice Computes the randomness for the nullifier
     /// @param resource The resource whose randomness we compute
     /// @return randNf The randomness for the resource nullifier
     function psi(Resource memory resource) internal pure returns (bytes32 randNf) {
-        bytes17 prfExpandPersonalization = 0x52495343305f457870616e645365656400;
-        randNf = sha256(abi.encodePacked(prfExpandPersonalization, resource.randSeed, resource.nonce));
+        randNf = sha256(abi.encodePacked(_NULLIFIER_PERSONALIZATION, resource.randSeed, resource.nonce));
     }
 }
