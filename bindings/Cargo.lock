@@ -2268,7 +2268,6 @@ dependencies = [
  "arm",
  "dotenv",
  "serde",
- "serde_json",
  "tokio",
 ]
 

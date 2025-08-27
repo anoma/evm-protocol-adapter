@@ -205,12 +205,6 @@ mod tests {
         let raw_tx = arm_risc0::transaction::generate_test_transaction(n_actions);
         println!("{:?}", raw_tx);
         let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
-        std::fs::write(
-            format!("test_tx{n_actions:02}.json"),
-            serde_json::to_string_pretty(&evm_tx).unwrap(),
-        )
-        .unwrap();
-        println!("{evm_tx:#?}");
 
         use alloy_sol_types::SolValue; // Import the trait for abi_encode
         let encoded_tx = evm_tx.abi_encode();
