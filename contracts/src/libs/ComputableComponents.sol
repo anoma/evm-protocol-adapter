@@ -57,6 +57,7 @@ library ComputableComponents {
     }
 
     /// @notice Computes the randomness for the commitment
+    /// see https://github.com/anoma/arm-risc0/blob/main/arm/src/resource.rs
     /// @param resource The resource whose randomness we compute
     /// @return randCm The randomness for the resource commitment
     function rcm(Resource memory resource) internal pure returns (bytes32 randCm) {
@@ -64,6 +65,7 @@ library ComputableComponents {
     }
 
     /// @notice Computes the randomness for the nullifier
+    /// see https://github.com/anoma/arm-risc0/blob/main/arm/src/resource.rs
     /// @param resource The resource whose randomness we compute
     /// @return randNf The randomness for the resource nullifier
     function psi(Resource memory resource) internal pure returns (bytes32 randNf) {
