@@ -60,7 +60,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_created() public {
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource() public {
         bytes32 nonce = 0;
         bytes32 logicRef = bytes32(uint256(123));
         ForwarderExample fwd =
@@ -133,7 +133,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed() public {
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
         bytes32 nonce = 0;
         bytes32 logicRef = bytes32(uint256(123));
         ForwarderExample fwd =
