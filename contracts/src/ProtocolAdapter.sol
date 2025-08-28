@@ -40,17 +40,17 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     uint256 internal _txCount;
 
-    error ForwarderCallOutputMismatch(bytes expected, bytes actual);
+    error ZeroNotAllowed();
 
-    error ResourceLifecycleMismatch(bool expected);
+    error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error ResourceCountMismatch(uint256 expected, uint256 actual);
     error RootMismatch(bytes32 expected, bytes32 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
     error RiscZeroVerifierStopped();
 
     error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierCmMismatch(Resource resource, bytes32 expected, bytes32 actual);
-    error CalldataCarrierNfMismatch(Resource resource, bytes32 expected, bytes32 actual);
+    error CalldataCarrierCommitmentMismatch(bytes32 expected, bytes32 actual);
+    error CalldataCarrierNullifierMismatch(bytes32 expected, bytes32 actual);
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
@@ -61,6 +61,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     {
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
         _ACTION_TAG_TREE_DEPTH = actionTagTreeDepth;
+
+        if (address(riscZeroVerifierRouter) == address(0)) {
+            revert ZeroNotAllowed();
+        }
 
         // Sanity check that the verifier has not been stopped already.
         if (isEmergencyStopped()) {
@@ -313,20 +317,15 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
         // Check tag correspondence
         if (!consumed) {
-            // If created, just commit the plaintext and check agains the tag
+            // If created, compute the commitment of a resource and check correspondence to tag
             if (resource.commitment() != input.tag) {
-                revert CalldataCarrierCmMismatch({
-                    resource: resource,
-                    actual: input.tag,
-                    expected: resource.commitment()
-                });
+                revert CalldataCarrierCommitmentMismatch({actual: input.tag, expected: resource.commitment()});
             }
         } else if (
             // If consumed, we expect the nullifier key to be present in the resource payload as well
             resource.nullifier(bytes32(input.appData.resourcePayload[1].blob)) != input.tag
         ) {
-            revert CalldataCarrierNfMismatch({
-                resource: resource,
+            revert CalldataCarrierNullifierMismatch({
                 actual: input.tag,
                 expected: resource.nullifier(bytes32(input.appData.resourcePayload[1].blob))
             });

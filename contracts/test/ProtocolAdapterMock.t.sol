@@ -13,7 +13,6 @@ import {MerkleTree} from "../src/libs/MerkleTree.sol";
 import {TagLookup} from "../src/libs/TagLookup.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Logic} from "../src/proving/Logic.sol";
-import {CommitmentAccumulator} from "../src/state/CommitmentAccumulator.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {ForwarderCalldata, Transaction, Resource} from "../src/Types.sol";
 
@@ -60,7 +59,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_created() public {
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource() public {
         bytes32 nonce = 0;
         bytes32 logicRef = bytes32(uint256(123));
         ForwarderExample fwd =
@@ -133,7 +132,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed() public {
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
         bytes32 nonce = 0;
         bytes32 logicRef = bytes32(uint256(123));
         ForwarderExample fwd =
@@ -263,7 +262,6 @@ contract ProtocolAdapterMockTest is Test {
         (Transaction memory tx1, bytes32 updatedNonce) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
         bytes32 preExistingNf = tx1.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
-        bytes32 preExistingCm = tx1.actions[0].complianceVerifierInputs[0].instance.created.commitment;
         _mockPa.execute(tx1);
 
         (Transaction memory tx2,) = _mockVerifier.transaction({
@@ -357,8 +355,7 @@ contract ProtocolAdapterMockTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapter.CalldataCarrierCmMismatch.selector,
-                fakeCreated,
+                ProtocolAdapter.CalldataCarrierCommitmentMismatch.selector,
                 fakeCreated.commitment(),
                 txn.actions[0].complianceVerifierInputs[0].instance.created.commitment
             )
@@ -436,8 +433,7 @@ contract ProtocolAdapterMockTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapter.CalldataCarrierNfMismatch.selector,
-                fakeConsumed,
+                ProtocolAdapter.CalldataCarrierNullifierMismatch.selector,
                 fakeConsumed.nullifier(0),
                 txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
             )
@@ -511,8 +507,7 @@ contract ProtocolAdapterMockTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapter.CalldataCarrierNfMismatch.selector,
-                consumed[0].resource,
+                ProtocolAdapter.CalldataCarrierNullifierMismatch.selector,
                 consumed[0].resource.nullifier(bytes32(nkey)),
                 txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
             )

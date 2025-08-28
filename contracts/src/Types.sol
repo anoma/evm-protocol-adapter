@@ -36,7 +36,6 @@ struct Transaction {
 /// @notice The action object providing context separation between non-intersecting sets of resources.
 /// @param logicProofs The logic proofs of each resource consumed or created in the action.
 /// @param complianceVerifierInputs The compliance units comprising one consumed and one created resource, each.
-/// @param resourceCalldataPairs The external calls
 struct Action {
     Logic.VerifierInput[] logicVerifierInputs;
     Compliance.VerifierInput[] complianceVerifierInputs;

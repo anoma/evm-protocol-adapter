@@ -61,7 +61,7 @@ library RiscZeroUtils {
         {
             for (uint256 i = 0; i < nBlobs; ++i) {
                 bytes memory blobEncoded = abi.encodePacked(
-                    toRiscZero(uint32(input.appData.resourcePayload[i].blob.length) / 4),
+                    toRiscZero(uint32(input.appData.resourcePayload[i].blob.length / 4)),
                     input.appData.resourcePayload[i].blob,
                     toRiscZero(uint32(input.appData.resourcePayload[i].deletionCriterion))
                 );
@@ -74,7 +74,7 @@ library RiscZeroUtils {
         {
             for (uint256 i = 0; i < nBlobs; ++i) {
                 bytes memory blobEncoded = abi.encodePacked(
-                    toRiscZero(uint32(input.appData.discoveryPayload[i].blob.length) / 4),
+                    toRiscZero(uint32(input.appData.discoveryPayload[i].blob.length / 4)),
                     input.appData.discoveryPayload[i].blob,
                     toRiscZero(uint32(input.appData.discoveryPayload[i].deletionCriterion))
                 );
@@ -87,7 +87,7 @@ library RiscZeroUtils {
         {
             for (uint256 i = 0; i < nBlobs; ++i) {
                 bytes memory blobEncoded = abi.encodePacked(
-                    toRiscZero(uint32(input.appData.externalPayload[i].blob.length) / 4),
+                    toRiscZero(uint32(input.appData.externalPayload[i].blob.length / 4)),
                     input.appData.externalPayload[i].blob,
                     toRiscZero(uint32(input.appData.externalPayload[i].deletionCriterion))
                 );
@@ -100,7 +100,7 @@ library RiscZeroUtils {
         {
             for (uint256 i = 0; i < nBlobs; ++i) {
                 bytes memory blobEncoded = abi.encodePacked(
-                    toRiscZero(uint32(input.appData.applicationPayload[i].blob.length) / 4),
+                    toRiscZero(uint32(input.appData.applicationPayload[i].blob.length / 4)),
                     input.appData.applicationPayload[i].blob,
                     toRiscZero(uint32(input.appData.applicationPayload[i].deletionCriterion))
                 );

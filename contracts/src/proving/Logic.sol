@@ -27,9 +27,10 @@ library Logic {
     }
 
     /// @notice A struct containing payloads of different kinds.
-    /// @param resourcePayload The field for encoding resource plaintexts.
-    /// @param discoeryPayload The field for encoding random data for detection purposes..
-    /// @param externalPayload The field for encoding information for EVM interop.
+    /// @param resourcePayload A list of blobs for encoding plaintext info connected to resources.
+    /// @param discoveryPayload A list of blobs for encoding data with public keys for discovery.
+    /// @param externalPayload A list of blobs for encoding data connected with external calls.
+    /// @param applicationPayload A list of blobs for application-specific purposes.
     struct AppData {
         ExpirableBlob[] resourcePayload;
         ExpirableBlob[] discoveryPayload;
