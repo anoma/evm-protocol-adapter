@@ -40,6 +40,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     uint256 internal _txCount;
 
+    error ZeroNotAllowed();
+
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error ResourceCountMismatch(uint256 expected, uint256 actual);
     error RootMismatch(bytes32 expected, bytes32 actual);
@@ -59,6 +61,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     {
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
         _ACTION_TAG_TREE_DEPTH = actionTagTreeDepth;
+
+        if (address(riscZeroVerifierRouter) == address(0)) {
+            revert ZeroNotAllowed();
+        }
 
         // Sanity check that the verifier has not been stopped already.
         if (isEmergencyStopped()) {
