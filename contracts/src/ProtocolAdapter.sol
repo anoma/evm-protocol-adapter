@@ -41,8 +41,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     uint256 internal _txCount;
 
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
-
-    error ResourceLifecycleMismatch(bool expected);
     error ResourceCountMismatch(uint256 expected, uint256 actual);
     error RootMismatch(bytes32 expected, bytes32 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
@@ -51,6 +49,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierCommitmentMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierNullifierMismatch(bytes32 expected, bytes32 actual);
+
+    /// @dev This error is not used and only there to enforce the `Resource` type to be part of the contract ABI.
+    error __UNUSED_ERROR__(Resource resource);
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
