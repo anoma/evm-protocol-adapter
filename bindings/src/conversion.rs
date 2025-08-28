@@ -7,7 +7,6 @@ use arm_risc0::compliance_unit::ComplianceUnit;
 use arm_risc0::logic_instance::{AppData, ExpirableBlob};
 use arm_risc0::logic_proof::LogicVerifierInputs;
 use arm_risc0::proving_system::encode_seal;
-use arm_risc0::resource::Resource as ArmResource;
 use arm_risc0::transaction::{Delta, Transaction};
 use arm_risc0::utils::words_to_bytes;
 
@@ -18,21 +17,6 @@ sol!(
     ProtocolAdapter,
     "../contracts/out/ProtocolAdapter.sol/ProtocolAdapter.json"
 );
-
-impl From<ArmResource> for ProtocolAdapter::Resource {
-    fn from(r: ArmResource) -> Self {
-        Self {
-            logicRef: B256::from_slice(&r.logic_ref),
-            labelRef: B256::from_slice(&r.label_ref),
-            quantity: r.quantity,
-            valueRef: B256::from_slice(&r.value_ref),
-            ephemeral: r.is_ephemeral,
-            nonce: B256::from_slice(&r.nonce),
-            nullifierKeyCommitment: B256::from_slice(r.nk_commitment.inner()),
-            randSeed: B256::from_slice(&r.rand_seed),
-        }
-    }
-}
 
 impl From<ExpirableBlob> for Logic::ExpirableBlob {
     fn from(expirable_blob: ExpirableBlob) -> Self {
@@ -149,44 +133,8 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 mod tests {
     use super::*;
     use crate::conversion::ProtocolAdapter;
-    use arm_risc0::nullifier_key::NullifierKeyCommitment;
     use dotenv::dotenv;
     use std::env;
-
-    #[test]
-    fn convert_resource() {
-        let logic_ref = &[0x11; 32];
-        let label_ref = &[0x22; 32];
-        let value_ref = &[0x33; 32];
-        let nkc = &[0x44; 32];
-        let quantity = 55;
-        let nonce = &[0x66; 32];
-        let rand_seed = &[0x77; 32];
-        let ephemeral = true;
-
-        assert_eq!(
-            ProtocolAdapter::Resource::from(ArmResource {
-                logic_ref: (*logic_ref).into(),
-                label_ref: (*label_ref).into(),
-                value_ref: (*value_ref).into(),
-                nk_commitment: NullifierKeyCommitment::from_bytes(nkc),
-                nonce: (*nonce).into(),
-                rand_seed: (*rand_seed).into(),
-                quantity,
-                is_ephemeral: ephemeral,
-            }),
-            ProtocolAdapter::Resource {
-                logicRef: B256::from_slice(logic_ref),
-                labelRef: B256::from_slice(label_ref),
-                valueRef: B256::from_slice(value_ref),
-                nullifierKeyCommitment: B256::from_slice(nkc),
-                nonce: B256::from_slice(nonce),
-                randSeed: B256::from_slice(rand_seed),
-                quantity: quantity,
-                ephemeral,
-            }
-        );
-    }
 
     #[test]
     #[ignore]

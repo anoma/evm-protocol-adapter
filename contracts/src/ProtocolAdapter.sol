@@ -50,9 +50,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     error CalldataCarrierCommitmentMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierNullifierMismatch(bytes32 expected, bytes32 actual);
 
-    /// @dev This error is not used and only there to enforce the `Resource` type to be part of the contract ABI.
-    error __UNUSED_ERROR__(Resource resource);
-
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
     /// @param commitmentTreeDepth The depth of the commitment tree of the commitment accumulator.
