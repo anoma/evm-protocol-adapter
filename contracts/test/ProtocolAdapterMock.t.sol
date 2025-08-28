@@ -388,7 +388,6 @@ contract ProtocolAdapterMockTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 ProtocolAdapter.CalldataCarrierCommitmentMismatch.selector,
-                fakeCreated,
                 fakeCreated.commitment(),
                 txn.actions[0].complianceVerifierInputs[0].instance.created.commitment
             )
@@ -467,8 +466,6 @@ contract ProtocolAdapterMockTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 ProtocolAdapter.CalldataCarrierNullifierMismatch.selector,
-                fakeConsumed,
-                nonce,
                 fakeConsumed.nullifier(0),
                 txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
             )
@@ -543,8 +540,6 @@ contract ProtocolAdapterMockTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 ProtocolAdapter.CalldataCarrierNullifierMismatch.selector,
-                consumed[0].resource,
-                bytes32(nkey),
                 consumed[0].resource.nullifier(bytes32(nkey)),
                 txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
             )
