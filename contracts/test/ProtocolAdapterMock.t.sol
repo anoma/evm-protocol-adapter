@@ -10,8 +10,11 @@ import {Test} from "forge-std/Test.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ComputableComponents} from "../src/libs/ComputableComponents.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
+import {RiscZeroUtils} from "../src/libs/RiscZeroUtils.sol";
 import {TagLookup} from "../src/libs/TagLookup.sol";
+
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {Compliance} from "../src/proving/Compliance.sol";
 import {Logic} from "../src/proving/Logic.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {ForwarderCalldata, Transaction, Resource} from "../src/Types.sol";
@@ -25,6 +28,7 @@ import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.
 contract ProtocolAdapterMockTest is Test {
     using MerkleTree for bytes32[];
     using ComputableComponents for Resource;
+    using RiscZeroUtils for Logic.VerifierInput;
     using TxGen for RiscZeroMockVerifier;
     using TxGen for Transaction;
 
@@ -281,10 +285,38 @@ contract ProtocolAdapterMockTest is Test {
 
         (Transaction memory txn,) =
             _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
-        bytes32 duplicatedNf = txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
-        bytes32 duplicatedCm = txn.actions[0].complianceVerifierInputs[0].instance.created.commitment;
+
+        Compliance.VerifierInput memory cu0 = txn.actions[0].complianceVerifierInputs[0];
+        Compliance.VerifierInput memory cu1 = txn.actions[0].complianceVerifierInputs[1];
+
+        // Put the nullifier of cu0 into cu1.
+        bytes32 duplicatedNf = cu0.instance.consumed.nullifier;
         txn.actions[0].complianceVerifierInputs[1].instance.consumed.nullifier = duplicatedNf;
-        txn.actions[0].complianceVerifierInputs[1].instance.created.commitment = duplicatedCm;
+
+        // Recompute the action tree root
+        bytes32 actionTreeRoot;
+        {
+            bytes32[] memory actionTreeTags = new bytes32[](4);
+            actionTreeTags[0] = duplicatedNf;
+            actionTreeTags[1] = cu0.instance.created.commitment;
+            actionTreeTags[2] = duplicatedNf;
+            actionTreeTags[3] = cu1.instance.created.commitment;
+
+            actionTreeRoot = actionTreeTags.computeRoot(_TEST_ACTION_TAG_TREE_DEPTH);
+        }
+
+        // Recompute the logic proofs
+        {
+            txn.actions[0].logicVerifierInputs[0].proof = _mockVerifier.mockProve({
+                imageId: cu0.instance.consumed.logicRef,
+                journalDigest: txn.actions[0].logicVerifierInputs[0].toJournalDigest({root: actionTreeRoot, consumed: true})
+            }).seal;
+
+            txn.actions[0].logicVerifierInputs[1].proof = _mockVerifier.mockProve({
+                imageId: cu0.instance.created.logicRef,
+                journalDigest: txn.actions[0].logicVerifierInputs[1].toJournalDigest({root: actionTreeRoot, consumed: false})
+            }).seal;
+        }
 
         vm.expectRevert(abi.encodeWithSelector(TagLookup.NullifierDuplicated.selector, duplicatedNf), address(_mockPa));
         _mockPa.verify(txn);
