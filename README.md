@@ -125,7 +125,7 @@ forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter --rpc-url 
 Append the
 
 - `--broadcast` flag to deploy on sepolia
-- `--verify` flag for subsequent contract verification on Etherscan
+- `--verify --slow` flags for subsequent contract verification on Etherscan (`--slow` adds 15 seconds of waiting time between verification attempts)
 - `--account <ACCOUNT_NAME>` flag to use a previously imported keystore (see
   `cast wallet --help` for more info)
 
