@@ -27,7 +27,7 @@ library ComputableComponents {
                 resource.ephemeral,
                 resource.nonce,
                 resource.nullifierKeyCommitment,
-                rcm(resource)
+                computeCommitmentRandomness(resource)
             )
         );
     }
@@ -38,7 +38,9 @@ library ComputableComponents {
     /// @return nf The computed nullifier.
     /// @dev This methods does not check that the nullifier key commitment matches the nullifier key.
     function nullifier(Resource memory resource, bytes32 nullifierKey) internal pure returns (bytes32 nf) {
-        nf = sha256(abi.encodePacked(nullifierKey, resource.nonce, psi(resource), commitment(resource)));
+        nf = sha256(
+            abi.encodePacked(nullifierKey, resource.nonce, computeNullifierRandomness(resource), commitment(resource))
+        );
     }
 
     /// @notice Computes the resource kind.
@@ -60,7 +62,7 @@ library ComputableComponents {
     /// see https://github.com/anoma/arm-risc0/blob/main/arm/src/resource.rs
     /// @param resource The resource whose randomness we compute
     /// @return randCm The randomness for the resource commitment
-    function rcm(Resource memory resource) internal pure returns (bytes32 randCm) {
+    function computeCommitmentRandomness(Resource memory resource) internal pure returns (bytes32 randCm) {
         randCm = sha256(abi.encodePacked(_COMMITMENT_PERSONALIZATION, resource.randSeed, resource.nonce));
     }
 
@@ -68,7 +70,7 @@ library ComputableComponents {
     /// see https://github.com/anoma/arm-risc0/blob/main/arm/src/resource.rs
     /// @param resource The resource whose randomness we compute
     /// @return randNf The randomness for the resource nullifier
-    function psi(Resource memory resource) internal pure returns (bytes32 randNf) {
+    function computeNullifierRandomness(Resource memory resource) internal pure returns (bytes32 randNf) {
         randNf = sha256(abi.encodePacked(_NULLIFIER_PERSONALIZATION, resource.randSeed, resource.nonce));
     }
 }
