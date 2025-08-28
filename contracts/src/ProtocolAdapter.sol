@@ -168,100 +168,101 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             uint256 nCUs = action.complianceVerifierInputs.length;
             uint256 nResources = action.logicVerifierInputs.length;
 
-            bytes32[] memory actionTreeTags = new bytes32[](nResources);
-
             // Check that the resource counts in the action and compliance units match
             if (nResources != nCUs * 2) {
                 revert ResourceCountMismatch({expected: nResources, actual: nCUs});
             }
 
-            // Compliance Proofs
+            // Compute the action tree root
+            bytes32 actionTreeRoot;
             {
+                bytes32[] memory actionTreeTags = new bytes32[](nResources);
+
+                // Prepare the action tree tags
                 for (uint256 j = 0; j < nCUs; ++j) {
                     Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
-                    bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
-                    bytes32 cm = complianceVerifierInput.instance.created.commitment;
-
-                    {
-                        // Check that the root exists.
-                        _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
-
-                        // Check that the nullifier does not already exist in the transaction.
-                        tags.checkNullifierNonExistence(nf);
-
-                        // Check that the nullifier does not exists in the nullifier set.
-                        _checkNullifierNonExistence(nf);
-
-                        // Add the nullifier to the list of tags
-
-                        tags[resCounter++] = nf;
-                        actionTreeTags[2 * j] = nf;
-                    }
-
-                    {
-                        // Add the commitment to the list of tags
-                        tags[resCounter++] = cm;
-                        actionTreeTags[(2 * j) + 1] = cm;
-                    }
-
-                    _verifyComplianceProof(complianceVerifierInput);
-
-                    // Check the logic ref consistency and calldata
-                    {
-                        Logic.VerifierInput calldata logicVerifierInput = action.logicVerifierInputs.lookup(nf);
-
-                        if (complianceVerifierInput.instance.consumed.logicRef != logicVerifierInput.verifyingKey) {
-                            revert LogicRefMismatch({
-                                expected: logicVerifierInput.verifyingKey,
-                                actual: complianceVerifierInput.instance.consumed.logicRef
-                            });
-                        }
-
-                        if (logicVerifierInput.appData.externalPayload.length != 0) {
-                            _verifyForwarderCall(logicVerifierInput, true);
-                        }
-                    }
-                    {
-                        Logic.VerifierInput calldata logicVerifierInput = action.logicVerifierInputs.lookup(cm);
-
-                        if (complianceVerifierInput.instance.created.logicRef != logicVerifierInput.verifyingKey) {
-                            revert LogicRefMismatch({
-                                expected: logicVerifierInput.verifyingKey,
-                                actual: complianceVerifierInput.instance.created.logicRef
-                            });
-                        }
-
-                        if (logicVerifierInput.appData.externalPayload.length != 0) {
-                            _verifyForwarderCall(logicVerifierInput, false);
-                        }
-                    }
-
-                    // Compute transaction delta
-                    transactionDelta = _addUnitDelta({
-                        transactionDelta: transactionDelta,
-                        unitDelta: [
-                            uint256(complianceVerifierInput.instance.unitDeltaX),
-                            uint256(complianceVerifierInput.instance.unitDeltaY)
-                        ]
-                    });
+                    actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
+                    actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
                 }
+
+                actionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
             }
 
-            // Logic Proofs
-            {
-                bytes32 actionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
+            for (uint256 j = 0; j < nCUs; ++j) {
+                Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
-                for (uint256 j = 0; j < nResources; ++j) {
-                    Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
-                    if (actionTreeTags.isNullifierContained({nullifier: input.tag})) {
-                        // Check the logic proof for nullified resource
-                        _verifyLogicProof(input, actionTreeRoot, true);
-                    } else {
-                        // Else the tag is a created resource
-                        _verifyLogicProof(input, actionTreeRoot, false);
-                    }
+                bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
+                bytes32 cm = complianceVerifierInput.instance.created.commitment;
+
+                // Check the compliance unit
+                {
+                    // Check that the root exists.
+                    _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
+
+                    // Check that the nullifier does not already exist in the transaction.
+                    tags.checkNullifierNonExistence(nf);
+
+                    // Check that the nullifier does not exists in the nullifier set.
+                    _checkNullifierNonExistence(nf);
+
+                    // Verify the compliance proof
+                    _verifyComplianceProof(complianceVerifierInput);
+
+                    tags[resCounter++] = nf;
+                    tags[resCounter++] = cm;
                 }
+
+                // Check consumed resource
+                {
+                    Logic.VerifierInput calldata consumedInput = action.logicVerifierInputs.lookup(nf);
+
+                    // Check logic ref consistency
+                    if (complianceVerifierInput.instance.consumed.logicRef != consumedInput.verifyingKey) {
+                        revert LogicRefMismatch({
+                            expected: consumedInput.verifyingKey,
+                            actual: complianceVerifierInput.instance.consumed.logicRef
+                        });
+                    }
+
+                    // Check the external call payload if present
+                    if (consumedInput.appData.externalPayload.length != 0) {
+                        _verifyForwarderCall(consumedInput, true);
+                    }
+
+                    // Check the logic proof
+                    _verifyLogicProof({input: consumedInput, root: actionTreeRoot, consumed: true});
+                }
+
+                // Check created resource
+                {
+                    Logic.VerifierInput calldata createdInput = action.logicVerifierInputs.lookup(cm);
+
+                    // Check logic ref consistency
+                    if (complianceVerifierInput.instance.created.logicRef != createdInput.verifyingKey) {
+                        revert LogicRefMismatch({
+                            expected: createdInput.verifyingKey,
+                            actual: complianceVerifierInput.instance.created.logicRef
+                        });
+                    }
+
+                    // Check the external call payload if present
+                    if (createdInput.appData.externalPayload.length != 0) {
+                        _verifyForwarderCall(createdInput, false);
+                    }
+
+                    // Check the logic proof
+                    _verifyLogicProof({input: createdInput, root: actionTreeRoot, consumed: false});
+                }
+
+                // Compute transaction delta
+                transactionDelta = _addUnitDelta({
+                    transactionDelta: transactionDelta,
+                    unitDelta: [
+                        uint256(complianceVerifierInput.instance.unitDeltaX),
+                        uint256(complianceVerifierInput.instance.unitDeltaY)
+                    ]
+                });
             }
         }
 

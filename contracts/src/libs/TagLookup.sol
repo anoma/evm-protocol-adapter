@@ -7,7 +7,6 @@ pragma solidity ^0.8.30;
 /// @custom:security-contact security@anoma.foundation
 library TagLookup {
     error NullifierDuplicated(bytes32 nullifier);
-    error CommitmentDuplicated(bytes32 commitment);
 
     /// @notice Returns whether an array of tags contains a nullifier or not.
     /// @param tags The tags array to check.
