@@ -9,31 +9,27 @@ library TagLookup {
     error NullifierDuplicated(bytes32 nullifier);
     error CommitmentDuplicated(bytes32 commitment);
 
-    /// @notice Returns whether an array contains a tag or not in even or odd positions.
+    /// @notice Returns whether an array of tags contains a nullifier or not.
     /// @param tags The tags array to check.
-    /// @param tag The tag to check.
-    /// @param even Whether even or odd positions should be checked.
-    /// @return found Whether the element was found in the array or not.
-    function isFoundInEvenOrOddPosition(bytes32[] memory tags, bytes32 tag, bool even)
-        internal
-        pure
-        returns (bool found)
-    {
+    /// @param nullifier The nullifier to check.
+    /// @return isContained Whether the element is contained in the array or not.
+    /// @dev This assumes that nullifiers and commitments are found in even and odd positions, respectively.
+    function isNullifierContained(bytes32[] memory tags, bytes32 nullifier) internal pure returns (bool isContained) {
         uint256 len = tags.length;
 
-        for (uint256 i = even ? 0 : 1; i < len; i += 2) {
-            if (tags[i] == tag) {
-                return found = true;
+        for (uint256 i = 0; i < len; i += 2) {
+            if (tags[i] == nullifier) {
+                return isContained = true;
             }
         }
-        return found = false;
+        return isContained = false;
     }
 
     /// @notice Checks if a nullifier is non-existent in an array of tags and reverts if it not.
     /// @param tags The tags array to check.
     /// @param nullifier The nullifier to check non-existence for.
     function checkNullifierNonExistence(bytes32[] memory tags, bytes32 nullifier) internal pure {
-        if (isFoundInEvenOrOddPosition({tags: tags, tag: nullifier, even: true})) {
+        if (isNullifierContained(tags, nullifier)) {
             revert NullifierDuplicated(nullifier);
         }
     }

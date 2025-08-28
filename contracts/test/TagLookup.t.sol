@@ -28,31 +28,14 @@ contract TagLookupTest is Test {
         _tags.checkNullifierNonExistence(_tags[1]);
     }
 
-    function test_isFoundInEvenOrOddPosition_returns_true_for_existent_tag_in_even_positions() public view {
-        assertEq(_tags.isFoundInEvenOrOddPosition({tag: _tags[0], even: true}), true);
-        assertEq(_tags.isFoundInEvenOrOddPosition({tag: _tags[2], even: true}), true);
+    function test_isNullifierContained_returns_true_for_existent_nullifier() public view {
+        assertEq(_tags.isNullifierContained({nullifier: _tags[0]}), true);
+        assertEq(_tags.isNullifierContained({nullifier: _tags[2]}), true);
     }
 
-    function test_isFoundInEvenOrOddPosition_returns_false_for_non_existent_tag_in_even_positions() public view {
-        assertEq(_tags.isFoundInEvenOrOddPosition({tag: _tags[1], even: true}), false);
-        assertEq(_tags.isFoundInEvenOrOddPosition({tag: _tags[3], even: true}), false);
-    }
-
-    function test_isFoundInEvenOrOddPosition_returns_true_for_existent_tag_in_odd_positions() public view {
-        assertEq(_tags.isFoundInEvenOrOddPosition({tag: _tags[1], even: false}), true);
-        assertEq(_tags.isFoundInEvenOrOddPosition({tag: _tags[3], even: false}), true);
-    }
-
-    function test_isFoundInEvenOrOddPosition_returns_false_for_non_existent_tag_in_odd_positions() public view {
-        assertEq(_tags.isFoundInEvenOrOddPosition({tag: _tags[0], even: false}), false);
-        assertEq(_tags.isFoundInEvenOrOddPosition({tag: _tags[2], even: false}), false);
-    }
-
-    function test_isFoundInEvenOrOddPosition_returns_false_if_a_tag_is_non_existent_in_both_even_or_odd_positions()
-        public
-        view
-    {
-        assertEq(_tags.isFoundInEvenOrOddPosition({tag: bytes32(type(uint256).max), even: true}), false);
-        assertEq(_tags.isFoundInEvenOrOddPosition({tag: bytes32(type(uint256).max), even: false}), false);
+    function test_isNullifierContained_returns_false_for_non_existent_nullifier() public view {
+        assertEq(_tags.isNullifierContained({nullifier: _tags[1]}), false);
+        assertEq(_tags.isNullifierContained({nullifier: _tags[3]}), false);
+        assertEq(_tags.isNullifierContained({nullifier: bytes32(type(uint256).max)}), false);
     }
 }
