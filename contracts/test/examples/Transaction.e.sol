@@ -11,7 +11,7 @@ import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol
 library TransactionExample {
     bytes32 internal constant _CONSUMED_NULLIFIER = 0x2fe6775e82ad71cd3f0531ebe9f85b9d00ad7bc21e8ac5f5c6fd1a68b4dfba2b;
     bytes32 internal constant _CREATED_COMMITMENT = 0x193e55bfc8d65a9efd4471c0287c69c8918e7d9331901a01ee2841533ca1f719;
-    bytes32 internal constant _CONSUMED_LOGIC_REF = 0xf8047dc2cf6cbe45137a588a3f019814218e7d7199b1b86a57b51c310e04fae9;
+    bytes32 internal constant _CONSUMED_LOGIC_REF = 0x9bfea4edf3f0f224b4b9f4ce0e3a717a3ff1342c6290a9dd2a6e3bdfb047373a;
     bytes32 internal constant _CREATED_LOGIC_REF = _CONSUMED_LOGIC_REF;
 
     bytes internal constant _CONSUMED_LOGIC_PROOF =

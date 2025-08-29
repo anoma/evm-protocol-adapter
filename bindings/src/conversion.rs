@@ -1,15 +1,15 @@
 use alloy::primitives::{B256, Bytes, U256};
 use alloy::sol;
 
-use arm_risc0::action::Action;
-use arm_risc0::compliance::ComplianceInstance;
-use arm_risc0::compliance_unit::ComplianceUnit;
-use arm_risc0::logic_instance::{AppData, ExpirableBlob};
-use arm_risc0::logic_proof::LogicVerifierInputs;
-use arm_risc0::proving_system::encode_seal;
-use arm_risc0::resource::Resource as ArmResource;
-use arm_risc0::transaction::{Delta, Transaction};
-use arm_risc0::utils::words_to_bytes;
+use arm::action::Action;
+use arm::compliance::ComplianceInstance;
+use arm::compliance_unit::ComplianceUnit;
+use arm::logic_instance::{AppData, ExpirableBlob};
+use arm::logic_proof::LogicVerifierInputs;
+use arm::proving_system::encode_seal;
+use arm::resource::Resource as ArmResource;
+use arm::transaction::{Delta, Transaction};
+use arm::utils::words_to_bytes;
 
 sol!(
     #[allow(missing_docs)]
@@ -149,7 +149,7 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 mod tests {
     use super::*;
     use crate::conversion::ProtocolAdapter;
-    use arm_risc0::nullifier_key::NullifierKeyCommitment;
+    use arm::nullifier_key::NullifierKeyCommitment;
     use std::env;
 
     #[test]
