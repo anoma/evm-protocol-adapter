@@ -75,39 +75,84 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant {
-        _verify(transaction);
-
         bytes32 newRoot = 0;
+        uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
         uint256 nActions = transaction.actions.length;
+
+        // Calculate the total number of resources.
+        uint256 resCounter = 0;
+        for (uint256 i = 0; i < nActions; ++i) {
+            resCounter += transaction.actions[i].logicVerifierInputs.length;
+        }
+
+        // Allocate the array.
+        bytes32[] memory tags = new bytes32[](resCounter);
+
+        // Reset the resource counter.
+        resCounter = 0;
+
         for (uint256 i = 0; i < nActions; ++i) {
             Action calldata action = transaction.actions[i];
 
+            uint256 nCUs = action.complianceVerifierInputs.length;
             uint256 nResources = action.logicVerifierInputs.length;
-            for (uint256 j = 0; j < nResources; ++j) {
-                Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
 
-                if (input.appData.externalPayload.length != 0) {
-                    ForwarderCalldata memory call =
-                        abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
-                    _executeForwarderCall(call);
-                }
+            // Check that the resource counts in the action and compliance units match
+            if (nResources != nCUs * 2) {
+                revert ResourceCountMismatch({expected: nResources, actual: nCUs});
             }
 
-            uint256 nCUs = action.complianceVerifierInputs.length;
-            for (uint256 k = 0; k < nCUs; ++k) {
-                Compliance.Instance calldata instance = action.complianceVerifierInputs[k].instance;
-                _addNullifier(instance.consumed.nullifier);
-                newRoot = _addCommitment(instance.created.commitment);
+            bytes32 actionTreeRoot = _computeActionTreeRoot(action, nResources, nCUs);
+
+            for (uint256 j = 0; j < nCUs; ++j) {
+                Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
+
+                bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
+                bytes32 cm = complianceVerifierInput.instance.created.commitment;
+
+                _verifyComplianceProof(complianceVerifierInput);
+
+                tags[resCounter++] = nf;
+                tags[resCounter++] = cm;
+
+                // Check consumed resource
+                _processResourceLogic(
+                    action.logicVerifierInputs.lookup(nf),
+                    complianceVerifierInput.instance.consumed.logicRef,
+                    actionTreeRoot,
+                    true
+                );
+
+                // Check created resource
+                _processResourceLogic(
+                    action.logicVerifierInputs.lookup(cm),
+                    complianceVerifierInput.instance.created.logicRef,
+                    actionTreeRoot,
+                    false
+                );
+
+                // Process global checks and update global state
+                newRoot = _processState(nf, cm, complianceVerifierInput.instance.consumed.commitmentTreeRoot);
+
+                // Compute transaction delta
+                transactionDelta = _addUnitDelta({
+                    transactionDelta: transactionDelta,
+                    unitDelta: [
+                        uint256(complianceVerifierInput.instance.unitDeltaX),
+                        uint256(complianceVerifierInput.instance.unitDeltaY)
+                    ]
+                });
             }
         }
+
+        _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
         if (newRoot != 0) {
             // Store the latest root
             _storeRoot(newRoot);
         }
 
-        // slither-disable-next-line reentrancy-benign
         emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
     }
     // slither-disable-end reentrancy-no-eth
@@ -141,6 +186,30 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
         // solhint-disable-next-line max-line-length
         emit ForwarderCallExecuted({untrustedForwarder: call.untrustedForwarder, input: call.input, output: call.output});
+    }
+
+    function _processState(bytes32 nf, bytes32 cm, bytes32 root) internal returns (bytes32 newRoot) {
+        _checkRootPreExistence(root);
+        _addNullifier(nf);
+        newRoot = _addCommitment(cm);
+    }
+
+    function _computeActionTreeRoot(Action calldata action, uint256 nResources, uint256 nCUs)
+        internal
+        view
+        returns (bytes32 actionTreeRoot)
+    {
+        bytes32[] memory actionTreeTags = new bytes32[](nResources);
+
+        // Prepare the action tree tags
+        for (uint256 j = 0; j < nCUs; ++j) {
+            Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
+
+            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
+            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
+        }
+
+        actionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
     }
 
     /// @notice An internal function to verify a transaction.
@@ -227,11 +296,11 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                     // Check the external call payload if present
                     if (consumedInput.appData.externalPayload.length != 0) {
-                        _verifyForwarderCall(consumedInput, true);
+                        //  _verifyForwarderCall(consumedInput, true);
                     }
 
                     // Check the logic proof
-                    _verifyLogicProof({input: consumedInput, root: actionTreeRoot, consumed: true});
+                    //   _verifyLogicProof({input: consumedInput, root: actionTreeRoot, consumed: true});
                 }
 
                 // Check created resource
@@ -248,7 +317,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                     // Check the external call payload if present
                     if (createdInput.appData.externalPayload.length != 0) {
-                        _verifyForwarderCall(createdInput, false);
+                        //      _verifyForwarderCall(createdInput, false);
                     }
 
                     // Check the logic proof
@@ -300,35 +369,56 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         });
     }
 
-    /// @notice Verifies the forwarder calls of a given action.
-    /// @param input The input to verify the forwarder calls for.
-    /// @param consumed The bool indicating whether the tag is commitment of nullifier
-    function _verifyForwarderCall(Logic.VerifierInput calldata input, bool consumed) internal view {
+    function _processResourceLogic(
+        Logic.VerifierInput calldata input,
+        bytes32 logicRef,
+        bytes32 actionTreeRoot,
+        bool consumed
+    ) internal {
+        if (logicRef != input.verifyingKey) {
+            revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
+        }
+
+        if (input.appData.externalPayload.length != 0) {
+            _processForwarderCall(input, consumed);
+        }
+        _verifyLogicProof({input: input, root: actionTreeRoot, consumed: consumed});
+    }
+
+    function _processForwarderCall(Logic.VerifierInput calldata input, bool consumed) internal {
         // The PA expects the forwarder calldata to be present at the head of the external payload
         ForwarderCalldata memory call = abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
-        // The plaintext should be stored at the head of resource payload and be decodable
-        Resource memory resource = abi.decode(input.appData.resourcePayload[0].blob, (Resource));
         // slither-disable-next-line calls-loop
         bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
+        _verifyForwarderCall(input.appData.resourcePayload, input.tag, fetchedKind, consumed);
+        _executeForwarderCall(call);
+    }
+
+    /// @notice Verifies the forwarder calls of a given action.
+    function _verifyForwarderCall(Logic.ExpirableBlob[] calldata payload, bytes32 tag, bytes32 kind, bool consumed)
+        internal
+    {
+        // The plaintext should be stored at the head of resource payload and be decodable
+        Resource memory resource = abi.decode(payload[0].blob, (Resource));
 
         // Check kind correspondence
-        if (resource.kind() != fetchedKind) {
-            revert CalldataCarrierKindMismatch({expected: fetchedKind, actual: resource.kind()});
+        if (resource.kind() != kind) {
+            revert CalldataCarrierKindMismatch({expected: kind, actual: resource.kind()});
         }
 
         // Check tag correspondence
         if (!consumed) {
             // If created, compute the commitment of a resource and check correspondence to tag
-            if (resource.commitment() != input.tag) {
-                revert CalldataCarrierCommitmentMismatch({actual: input.tag, expected: resource.commitment()});
+            if (resource.commitment() != tag) {
+                revert CalldataCarrierCommitmentMismatch({actual: tag, expected: resource.commitment()});
             }
         } else if (
             // If consumed, we expect the nullifier key to be present in the resource payload as well
-            resource.nullifier(bytes32(input.appData.resourcePayload[1].blob)) != input.tag
+            resource.nullifier(bytes32(payload[1].blob)) != tag
         ) {
             revert CalldataCarrierNullifierMismatch({
-                actual: input.tag,
-                expected: resource.nullifier(bytes32(input.appData.resourcePayload[1].blob))
+                actual: tag,
+                expected: resource.nullifier(bytes32(payload[1].blob))
             });
         }
     }
