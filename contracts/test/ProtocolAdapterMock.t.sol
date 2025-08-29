@@ -65,10 +65,14 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource() public {
         bytes32 nonce = 0;
-        bytes32 logicRef = bytes32(uint256(123));
-        ForwarderExample fwd =
-            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
+        // Starts with default label and logic references
+        ForwarderExample fwd = new ForwarderExample({
+            protocolAdapter: address(_mockPa),
+            logicRefs: new bytes32[](0),
+            labelRefs: new bytes32[](0)
+        });
 
+        bytes32 logicRef = bytes32(uint256(123));
         bytes32 labelRef = sha256(abi.encode(address(fwd)));
 
         Transaction memory txn;
@@ -138,10 +142,13 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
         bytes32 nonce = 0;
-        bytes32 logicRef = bytes32(uint256(123));
-        ForwarderExample fwd =
-            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
+        ForwarderExample fwd = new ForwarderExample({
+            protocolAdapter: address(_mockPa),
+            logicRefs: new bytes32[](0),
+            labelRefs: new bytes32[](0)
+        });
 
+        bytes32 logicRef = bytes32(uint256(123));
         bytes32 labelRef = sha256(abi.encode(address(fwd)));
 
         Transaction memory txn;
@@ -324,10 +331,13 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_verify_reverts_on_incorrect_commitment_computation() public {
         bytes32 nonce = 0;
-        bytes32 logicRef = bytes32(uint256(123));
-        ForwarderExample fwd =
-            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
+        ForwarderExample fwd = new ForwarderExample({
+            protocolAdapter: address(_mockPa),
+            logicRefs: new bytes32[](0),
+            labelRefs: new bytes32[](0)
+        });
 
+        bytes32 logicRef = bytes32(uint256(123));
         bytes32 labelRef = sha256(abi.encode(address(fwd)));
 
         ForwarderCalldata memory call =
@@ -397,10 +407,12 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_verify_reverts_on_incorrect_nullifier_computation_resource() public {
         bytes32 nonce = 0;
+        ForwarderExample fwd = new ForwarderExample({
+            protocolAdapter: address(_mockPa),
+            logicRefs: new bytes32[](0),
+            labelRefs: new bytes32[](0)
+        });
         bytes32 logicRef = bytes32(uint256(123));
-        ForwarderExample fwd =
-            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
-
         bytes32 labelRef = sha256(abi.encode(address(fwd)));
 
         ForwarderCalldata memory call =
@@ -475,9 +487,12 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_verify_reverts_on_incorrect_nullifier_computation_nonce() public {
         bytes32 nonce = 0;
+        ForwarderExample fwd = new ForwarderExample({
+            protocolAdapter: address(_mockPa),
+            logicRefs: new bytes32[](0),
+            labelRefs: new bytes32[](0)
+        });
         bytes32 logicRef = bytes32(uint256(123));
-        ForwarderExample fwd =
-            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: logicRef});
 
         bytes32 labelRef = sha256(abi.encode(address(fwd)));
 

@@ -12,15 +12,14 @@ contract DeployERC20Wrapper is Script {
 
     address internal constant _ERC20 = address(0x1111111111111111111111111111111111111111);
 
-    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(0);
-
     function run() public {
         vm.startBroadcast();
         new ERC20Forwarder{salt: sha256("ERC20ForwarderExample")}({
             protocolAdapter: address(_PROTOCOL_ADAPTER),
+            logicRefs: new bytes32[](0),
+            labelRefs: new bytes32[](0),
             emergencyCommittee: _EMERGENCY_COMMITTEE,
-            erc20: _ERC20,
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
+            erc20: _ERC20
         });
         vm.stopBroadcast();
     }

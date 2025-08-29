@@ -309,12 +309,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // The plaintext should be stored at the head of resource payload and be decodable
         Resource memory resource = abi.decode(input.appData.resourcePayload[0].blob, (Resource));
         // slither-disable-next-line calls-loop
-        bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
-
-        // Check kind correspondence
-        if (resource.kind() != fetchedKind) {
-            revert CalldataCarrierKindMismatch({expected: fetchedKind, actual: resource.kind()});
-        }
+        IForwarder(call.untrustedForwarder).authorizeCall(resource.logicRef, resource.labelRef);
 
         // Check tag correspondence
         if (!consumed) {

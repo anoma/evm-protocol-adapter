@@ -32,13 +32,21 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
             })
         );
 
+        bytes32[] memory logicRefs = new bytes32[](1);
+        bytes32[] memory labelRefs = new bytes32[](1);
+        logicRefs[0] = _LOGIC_REF;
+        labelRefs[0] = _LABEL_REF;
+
         _emrgFwd = new EmergencyMigratableForwarderExample({
             protocolAdapter: _pa,
             emergencyCommittee: _EMERGENCY_COMMITTEE,
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
+            logicRefs: logicRefs,
+            labelRefs: labelRefs
         });
 
         _fwd = ForwarderExample(address(_emrgFwd));
+        _label = sha256(abi.encode(address(_fwd)));
+        _logic = bytes32(uint256(123));
 
         _tgt = ForwarderTargetExample(_fwd.TARGET());
     }
