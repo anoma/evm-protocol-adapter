@@ -118,6 +118,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     action.logicVerifierInputs.lookup(nf),
                     complianceVerifierInput.instance.consumed.logicRef,
                     actionTreeRoot,
+                    true,
                     true
                 );
 
@@ -126,7 +127,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     action.logicVerifierInputs.lookup(cm),
                     complianceVerifierInput.instance.created.logicRef,
                     actionTreeRoot,
-                    false
+                    false,
+                    true
                 );
 
                 // Process state checks
@@ -389,25 +391,28 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         Logic.VerifierInput calldata input,
         bytes32 logicRef,
         bytes32 actionTreeRoot,
-        bool consumed
+        bool consumed,
+        bool global
     ) internal {
         if (logicRef != input.verifyingKey) {
             revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
         }
 
         if (input.appData.externalPayload.length != 0) {
-            _processForwarderCall(input, consumed);
+            _processForwarderCall(input, consumed, global);
         }
         _verifyLogicProof({input: input, root: actionTreeRoot, consumed: consumed});
     }
 
-    function _processForwarderCall(Logic.VerifierInput calldata input, bool consumed) internal {
+    function _processForwarderCall(Logic.VerifierInput calldata input, bool consumed, bool global) internal {
         // The PA expects the forwarder calldata to be present at the head of the external payload
         ForwarderCalldata memory call = abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
         // slither-disable-next-line calls-loop
         bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
         _verifyForwarderCall(input.appData.resourcePayload, input.tag, fetchedKind, consumed);
-        _executeForwarderCall(call);
+        if (global) {
+            _executeForwarderCall(call);
+        }
     }
 
     /// @notice Verifies the forwarder calls of a given action.
