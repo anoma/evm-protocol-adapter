@@ -61,19 +61,19 @@ contract Benchmark is BenchmarkData {
         _pa.execute(_txns[3]);
     }
 
-    function test_verify_01() public view {
+    function test_verify_01() public {
         _pa.verify(_txns[0]);
     }
 
-    function test_verify_05() public view {
+    function test_verify_05() public {
         _pa.verify(_txns[1]);
     }
 
-    function test_verify_10() public view {
+    function test_verify_10() public {
         _pa.verify(_txns[2]);
     }
 
-    function test_verify_15() public view {
+    function test_verify_15() public {
         _pa.verify(_txns[3]);
     }
 

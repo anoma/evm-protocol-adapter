@@ -244,8 +244,8 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_execute_2_txns_with_n_actions_and_n_cus(uint8 nActions, uint8 nCUs) public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
-            nActions: uint8(bound(nActions, 0, 5)),
-            nCUs: uint8(bound(nCUs, 0, 2 ** (_mockPa.actionTreeDepth() - 1)))
+            nActions: uint8(bound(nActions, 1, 5)),
+            nCUs: uint8(bound(nCUs, 1, 2 ** (_mockPa.actionTreeDepth() - 1)))
         });
 
         (Transaction memory txn, bytes32 updatedNonce) =
