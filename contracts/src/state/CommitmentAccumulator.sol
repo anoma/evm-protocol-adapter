@@ -63,16 +63,6 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         _verifyMerkleProof({root: root, commitment: commitment, path: path, directionBits: directionBits});
     }
 
-    /// @inheritdoc ICommitmentAccumulator
-    function merkleProof(bytes32 commitment)
-        external
-        view
-        override
-        returns (bytes32[] memory siblings, uint256 directionBits)
-    {
-        (siblings, directionBits) = _merkleProof(commitment);
-    }
-
     /// @notice Adds a commitment to to the set, if it does not exist already and returns the new root.
     /// @param commitment The commitment to add.
     /// @return newRoot The resulting new root.
@@ -102,8 +92,8 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         view
     {
         // Check length.
-        if (path.length != _merkleTree.depth()) {
-            revert InvalidPathLength({expected: _merkleTree.depth(), actual: path.length});
+        if (path.length != _merkleTree.height()) {
+            revert InvalidPathLength({expected: _merkleTree.height(), actual: path.length});
         }
 
         // Check root existence.
@@ -119,19 +109,6 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         }
     }
 
-    /// @notice An internal function returning the Merkle proof and associated root for a commitment leaf in the tree.
-    /// @param commitment The commitment leaf to proof inclusion in the tree for.
-    /// @return siblings The siblings constituting the path from the leaf to the root.
-    /// @return directionBits The direction bits for the proof.
-    function _merkleProof(bytes32 commitment)
-        internal
-        view
-        returns (bytes32[] memory siblings, uint256 directionBits)
-    {
-        uint256 leafIndex = _findCommitmentIndex(commitment);
-        (siblings, directionBits) = (_merkleTree.merkleProof(leafIndex));
-    }
-
     /// @notice Returns whether a commitment is already contained in the accumulator.
     /// @param commitment The commitment to check.
     /// @return isContained Whether the commitment is contained or not.
@@ -139,39 +116,6 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         uint256 index = _indices[commitment];
 
         isContained = index != 0;
-    }
-
-    /// @notice Finds the index of a commitment in the accumulator or reverts.
-    /// @param commitment The commitment to find the index for.
-    /// @return index The index of the commitment in the accumulator.
-    function _findCommitmentIndex(bytes32 commitment) internal view returns (uint256 index) {
-        if (commitment == _emptyLeaf()) {
-            revert EmptyCommitment();
-        }
-
-        index = _indices[commitment];
-
-        if (index == 0) {
-            revert NonExistingCommitment(commitment);
-        }
-
-        index -= _COMMITMENT_INDEX_OFFSET;
-
-        bytes32 retrieved = _commitmentAtIndex(index);
-        if (retrieved != commitment) {
-            revert CommitmentMismatch({expected: commitment, actual: retrieved});
-        }
-    }
-
-    /// @notice Returns a commitment based on its index in the accumulator or reverts.
-    /// @param index The index to find the commitment for.
-    /// @return commitment The commitment associated with the index.
-    function _commitmentAtIndex(uint256 index) internal view returns (bytes32 commitment) {
-        if (index + 1 > _merkleTree._nextLeafIndex) {
-            revert CommitmentIndexOutOfBounds({current: index, limit: _merkleTree._nextLeafIndex});
-        }
-
-        commitment = _merkleTree._nodes[0][index];
     }
 
     /// @notice Checks the non-existence of a commitment in the tree.
