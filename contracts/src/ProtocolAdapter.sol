@@ -75,99 +75,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant {
-        bytes32 newRoot = 0;
-        uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
-
-        uint256 nActions = transaction.actions.length;
-
-        // Calculate the total number of resources.
-        uint256 resCounter = 0;
-        for (uint256 i = 0; i < nActions; ++i) {
-            resCounter += transaction.actions[i].logicVerifierInputs.length;
-        }
-
-        // Allocate the array.
-        bytes32[] memory tags = new bytes32[](resCounter);
-
-        // Reset the resource counter.
-        resCounter = 0;
-
-        for (uint256 i = 0; i < nActions; ++i) {
-            Action calldata action = transaction.actions[i];
-
-            uint256 nCUs = action.complianceVerifierInputs.length;
-            uint256 nResources = action.logicVerifierInputs.length;
-
-            // Check that the resource counts in the action and compliance units match
-            if (nResources != nCUs * 2) {
-                revert ResourceCountMismatch({expected: nResources, actual: nCUs});
-            }
-
-            bytes32 actionTreeRoot = _computeActionTreeRoot(action, nResources, nCUs);
-
-            for (uint256 j = 0; j < nCUs; ++j) {
-                Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-
-                bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
-                bytes32 cm = complianceVerifierInput.instance.created.commitment;
-
-                _verifyComplianceProof(complianceVerifierInput);
-
-                // Check consumed resource
-                _processResourceLogic(
-                    action.logicVerifierInputs.lookup(nf),
-                    complianceVerifierInput.instance.consumed.logicRef,
-                    actionTreeRoot,
-                    true,
-                    true
-                );
-
-                // Check created resource
-                _processResourceLogic(
-                    action.logicVerifierInputs.lookup(cm),
-                    complianceVerifierInput.instance.created.logicRef,
-                    actionTreeRoot,
-                    false,
-                    true
-                );
-
-                // Process state checks
-                newRoot = _processState({
-                    nf: nf,
-                    cm: cm,
-                    tags: tags,
-                    root: complianceVerifierInput.instance.consumed.commitmentTreeRoot,
-                    global: true
-                });
-
-                tags[resCounter++] = nf;
-                tags[resCounter++] = cm;
-
-                // Compute transaction delta
-                transactionDelta = _addUnitDelta({
-                    transactionDelta: transactionDelta,
-                    unitDelta: [
-                        uint256(complianceVerifierInput.instance.unitDeltaX),
-                        uint256(complianceVerifierInput.instance.unitDeltaY)
-                    ]
-                });
-            }
-        }
-
-        _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
-
-        if (newRoot != 0) {
-            // Store the latest root
-            _storeRoot(newRoot);
-        }
-
-        emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
+        _processTransaction(transaction, true);
     }
     // slither-disable-end reentrancy-no-eth
 
     /// @inheritdoc IProtocolAdapter
     function verify(Transaction calldata transaction) external view override {
-        _verify(transaction);
+        _processTransaction(transaction, false);
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -232,7 +146,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice An internal function to verify a transaction.
     /// @param transaction The transaction to verify.
-    function _verify(Transaction calldata transaction) internal view {
+    /// @param global Test whether t
+    function _processTransaction(Transaction calldata transaction, bool global) internal {
+        bytes32 newRoot = 0;
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
         uint256 nActions = transaction.actions.length;
@@ -260,21 +176,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 revert ResourceCountMismatch({expected: nResources, actual: nCUs});
             }
 
-            // Compute the action tree root
-            bytes32 actionTreeRoot;
-            {
-                bytes32[] memory actionTreeTags = new bytes32[](nResources);
-
-                // Prepare the action tree tags
-                for (uint256 j = 0; j < nCUs; ++j) {
-                    Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-
-                    actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
-                    actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
-                }
-
-                actionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
-            }
+            bytes32 actionTreeRoot = _computeActionTreeRoot(action, nResources, nCUs);
 
             for (uint256 j = 0; j < nCUs; ++j) {
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
@@ -282,65 +184,37 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
                 bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
-                // Check the compliance unit
-                {
-                    // Check that the root exists.
-                    _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
-
-                    // Check that the nullifier does not already exist in the transaction.
-                    tags.checkNullifierNonExistence(nf);
-
-                    // Check that the nullifier does not exists in the nullifier set.
-                    _checkNullifierNonExistence(nf);
-
-                    // Verify the compliance proof
-                    _verifyComplianceProof(complianceVerifierInput);
-
-                    tags[resCounter++] = nf;
-                    tags[resCounter++] = cm;
-                }
+                _verifyComplianceProof(complianceVerifierInput);
 
                 // Check consumed resource
-                {
-                    Logic.VerifierInput calldata consumedInput = action.logicVerifierInputs.lookup(nf);
-
-                    // Check logic ref consistency
-                    if (complianceVerifierInput.instance.consumed.logicRef != consumedInput.verifyingKey) {
-                        revert LogicRefMismatch({
-                            expected: consumedInput.verifyingKey,
-                            actual: complianceVerifierInput.instance.consumed.logicRef
-                        });
-                    }
-
-                    // Check the external call payload if present
-                    if (consumedInput.appData.externalPayload.length != 0) {
-                        //  _verifyForwarderCall(consumedInput, true);
-                    }
-
-                    // Check the logic proof
-                    //   _verifyLogicProof({input: consumedInput, root: actionTreeRoot, consumed: true});
-                }
+                _processResourceLogic(
+                    action.logicVerifierInputs.lookup(nf),
+                    complianceVerifierInput.instance.consumed.logicRef,
+                    actionTreeRoot,
+                    true,
+                    global
+                );
 
                 // Check created resource
-                {
-                    Logic.VerifierInput calldata createdInput = action.logicVerifierInputs.lookup(cm);
+                _processResourceLogic(
+                    action.logicVerifierInputs.lookup(cm),
+                    complianceVerifierInput.instance.created.logicRef,
+                    actionTreeRoot,
+                    false,
+                    global
+                );
 
-                    // Check logic ref consistency
-                    if (complianceVerifierInput.instance.created.logicRef != createdInput.verifyingKey) {
-                        revert LogicRefMismatch({
-                            expected: createdInput.verifyingKey,
-                            actual: complianceVerifierInput.instance.created.logicRef
-                        });
-                    }
+                // Process state checks
+                newRoot = _processState({
+                    nf: nf,
+                    cm: cm,
+                    tags: tags,
+                    root: complianceVerifierInput.instance.consumed.commitmentTreeRoot,
+                    global: global
+                });
 
-                    // Check the external call payload if present
-                    if (createdInput.appData.externalPayload.length != 0) {
-                        //      _verifyForwarderCall(createdInput, false);
-                    }
-
-                    // Check the logic proof
-                    _verifyLogicProof({input: createdInput, root: actionTreeRoot, consumed: false});
-                }
+                tags[resCounter++] = nf;
+                tags[resCounter++] = cm;
 
                 // Compute transaction delta
                 transactionDelta = _addUnitDelta({
@@ -353,11 +227,15 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             }
         }
 
-        // Check whether the transaction is empty
-        if (nActions != 0) {
-            // Check the delta proof
+        _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
-            _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
+        if (newRoot != 0) {
+            // Store the latest root
+            _storeRoot(newRoot);
+        }
+
+        if (global) {
+            emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
         }
     }
 
@@ -417,7 +295,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice Verifies the forwarder calls of a given action.
     function _verifyForwarderCall(Logic.ExpirableBlob[] calldata payload, bytes32 tag, bytes32 kind, bool consumed)
-        internal
+        internal pure
     {
         // The plaintext should be stored at the head of resource payload and be decodable
         Resource memory resource = abi.decode(payload[0].blob, (Resource));
