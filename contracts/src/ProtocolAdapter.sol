@@ -113,9 +113,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                 _verifyComplianceProof(complianceVerifierInput);
 
-                tags[resCounter++] = nf;
-                tags[resCounter++] = cm;
-
                 // Check consumed resource
                 _processResourceLogic(
                     action.logicVerifierInputs.lookup(nf),
@@ -132,8 +129,17 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     false
                 );
 
-                // Process global checks and update global state
-                newRoot = _processState(nf, cm, complianceVerifierInput.instance.consumed.commitmentTreeRoot);
+                // Process state checks
+                newRoot = _processState({
+                    nf: nf,
+                    cm: cm,
+                    tags: tags,
+                    root: complianceVerifierInput.instance.consumed.commitmentTreeRoot,
+                    global: true
+                });
+
+                tags[resCounter++] = nf;
+                tags[resCounter++] = cm;
 
                 // Compute transaction delta
                 transactionDelta = _addUnitDelta({
@@ -188,10 +194,20 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         emit ForwarderCallExecuted({untrustedForwarder: call.untrustedForwarder, input: call.input, output: call.output});
     }
 
-    function _processState(bytes32 nf, bytes32 cm, bytes32 root) internal returns (bytes32 newRoot) {
+    function _processState(bytes32 nf, bytes32 cm, bytes32[] memory tags, bytes32 root, bool global)
+        internal
+        returns (bytes32 newRoot)
+    {
         _checkRootPreExistence(root);
-        _addNullifier(nf);
-        newRoot = _addCommitment(cm);
+
+        if (global) {
+            _addNullifier(nf);
+            newRoot = _addCommitment(cm);
+        } else {
+            // Check that the nullifier does not already exist in the transaction.
+            tags.checkNullifierNonExistence(nf);
+            newRoot = root;
+        }
     }
 
     function _computeActionTreeRoot(Action calldata action, uint256 nResources, uint256 nCUs)
