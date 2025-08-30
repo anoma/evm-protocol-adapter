@@ -114,9 +114,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice An internal function to verify a transaction.
     /// @param transaction The transaction to verify.
-    /// @param global Test whether the processing is for execution or validation of the transaction
+    /// @param execute Test whether the processing is for execution or validation of the transaction
     /// in the latter case the function is read-only
-    function _processTransaction(Transaction calldata transaction, bool global) internal {
+    function _processTransaction(Transaction calldata transaction, bool execute) internal {
         bytes32 newRoot = 0;
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
@@ -162,7 +162,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     cm: cm,
                     tags: tags,
                     root: complianceVerifierInput.instance.consumed.commitmentTreeRoot,
-                    global: global
+                    execute: execute
                 });
 
                 // Verify the proof against a hardcoded compliance circuit
@@ -175,7 +175,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     logicRef: complianceVerifierInput.instance.consumed.logicRef,
                     actionTreeRoot: actionTreeRoot,
                     consumed: true,
-                    global: global
+                    execute: execute
                 });
 
                 // Check created resources as well
@@ -184,7 +184,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     logicRef: complianceVerifierInput.instance.created.logicRef,
                     actionTreeRoot: actionTreeRoot,
                     consumed: false,
-                    global: global
+                    execute: execute
                 });
 
                 tags[resCounter++] = nf;
@@ -205,7 +205,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
         // If the transaction is being executed, store the root and emit the corresponding event
-        if (global) {
+        if (execute) {
             _storeRoot(newRoot);
             emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
         }
@@ -218,15 +218,15 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param cm The commitment of a compliance unit
     /// @param tags The tags of the previous resources in the transaction
     /// @param root The current commitment tree root
-    /// @param global Flag indicating whether the function is global or local
+    /// @param execute Flag indicating whether the function is read-only or not
     /// @return newRoot The root after potentially adding the commitment in the compliance unit
-    function _processState(bytes32 nf, bytes32 cm, bytes32[] memory tags, bytes32 root, bool global)
+    function _processState(bytes32 nf, bytes32 cm, bytes32[] memory tags, bytes32 root, bool execute)
         internal
         returns (bytes32 newRoot)
     {
         // Check root in the compliance unit is an actually existing root
         _checkRootPreExistence(root);
-        if (global) {
+        if (execute) {
             // Nullifier addition reverts if it was present in the set before
             _addNullifier(nf);
             newRoot = _addCommitment(cm);
@@ -246,13 +246,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param logicRef The logic ref approved by compliance proof
     /// @param actionTreeRoot The root of the tree containing all action tags for the instance
     /// @param consumed Flag for indicating whether the resource is consumed
-    /// @param global Flag for indicating whether any forwarder calls will be performed
+    /// @param execute Flag for indicating whether any forwarder calls will be performed
     function _processResourceLogic(
         Logic.VerifierInput calldata input,
         bytes32 logicRef,
         bytes32 actionTreeRoot,
         bool consumed,
-        bool global
+        bool execute
     ) internal {
         if (logicRef != input.verifyingKey) {
             revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
@@ -261,7 +261,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // The PA checks whether a call is to be made by looking inside
         // the externalPayload and trying to process the first entry
         if (input.appData.externalPayload.length != 0) {
-            _processForwarderCall(input, consumed, global);
+            _processForwarderCall(input, consumed, execute);
         }
         _verifyLogicProof({input: input, root: actionTreeRoot, consumed: consumed});
     }
@@ -269,15 +269,15 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @notice Function for verifying and executing forwarder calls
     /// @param input The logic verifier input of a resource making the call
     /// @param consumed A flag indicating whether the resource is consumed or not
-    /// @param global A flag signaling whether the function is read only or not
-    function _processForwarderCall(Logic.VerifierInput calldata input, bool consumed, bool global) internal {
+    /// @param execute A flag signaling whether the function is read only or not
+    function _processForwarderCall(Logic.VerifierInput calldata input, bool consumed, bool execute) internal {
         // The PA expects the forwarder calldata to be present at the head of the external payload
         ForwarderCalldata memory call = abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
         // slither-disable-next-line calls-loop
         bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
         /// Verify whether the resource can make the call
         _verifyForwarderCall(input.appData.resourcePayload, input.tag, fetchedKind, consumed);
-        if (global) {
+        if (execute) {
             /// If the function is called in `execute`, perform the calls
             _executeForwarderCall(call);
         }
