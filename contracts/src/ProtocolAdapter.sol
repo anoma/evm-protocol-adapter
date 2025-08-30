@@ -114,7 +114,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice An internal function to verify a transaction.
     /// @param transaction The transaction to verify.
-    /// @param global Test whether t
+    /// @param global Test whether the processing is for execution or validation of the transaction
+    /// in the latter case the function is read-only
     function _processTransaction(Transaction calldata transaction, bool global) internal {
         bytes32 newRoot = 0;
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
@@ -144,7 +145,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 revert ResourceCountMismatch({expected: nResources, actual: nCUs});
             }
 
-            // Computer the root of the tree containing all tags of the action
+            // Compute the root of the tree containing all tags of the action
             bytes32 actionTreeRoot = _computeActionTreeRoot(action, nCUs);
 
             for (uint256 j = 0; j < nCUs; ++j) {
