@@ -170,7 +170,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                 // Check consumed resource logic, verifier key correspondence,
                 // as well as possible external calls
-                _processResourceLogic({
+                _processResourceLogicContext({
                     input: action.logicVerifierInputs.lookup(nf),
                     logicRef: complianceVerifierInput.instance.consumed.logicRef,
                     actionTreeRoot: actionTreeRoot,
@@ -178,8 +178,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     execute: execute
                 });
 
-                // Check created resources as well
-                _processResourceLogic({
+                // Check the related info for the created resource as well
+                _processResourceLogicContext({
                     input: action.logicVerifierInputs.lookup(cm),
                     logicRef: complianceVerifierInput.instance.created.logicRef,
                     actionTreeRoot: actionTreeRoot,
@@ -247,13 +247,14 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param actionTreeRoot The root of the tree containing all action tags for the instance
     /// @param consumed Flag for indicating whether the resource is consumed
     /// @param execute Flag for indicating whether any forwarder calls will be performed
-    function _processResourceLogic(
+    function _processResourceLogicContext(
         Logic.VerifierInput calldata input,
         bytes32 logicRef,
         bytes32 actionTreeRoot,
         bool consumed,
         bool execute
     ) internal {
+        // Check verifier key correspondence
         if (logicRef != input.verifyingKey) {
             revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
         }
@@ -263,6 +264,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         if (input.appData.externalPayload.length != 0) {
             _processForwarderCall(input, consumed, execute);
         }
+
+        // Verify the logic proof againts the provided verifying key
         _verifyLogicProof({input: input, root: actionTreeRoot, consumed: consumed});
     }
 
