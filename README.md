@@ -177,6 +177,12 @@ Change the directory to the `bindings` folder with `cd bindings` and run
 
 ### Usage
 
+Before running tests that require RISC Zero and BONSAI, make sure to set your BONSAI_API_KEY:
+
+```sh
+export BONSAI_API_KEY="your_api_key_here"
+```
+
 Print a test transaction with
 
 ```sh
