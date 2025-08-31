@@ -88,7 +88,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         } else {
             revert SelectorInvalid(selector);
         }
-        output = "";
+        output = abi.encode(true);
     }
 
     /// @notice Forwards emergency calls.
