@@ -15,11 +15,6 @@ import {EmergencyMigratableForwarderBase} from "./EmergencyMigratableForwarderBa
 contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     using SafeERC20 for IERC20;
 
-    enum TransferFromApproval {
-        ERC20,
-        Permit2
-    }
-
     /// @notice The canonical Uniswap Permit2 contract deployed at the same address on all supported chains
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
     IPermit2 internal immutable _PERMIT2;
@@ -59,54 +54,31 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
         if (selector == IERC20.transferFrom.selector) {
             address to = address(this);
+            address from = address(0);
+            uint256 value = 0;
+            ISignatureTransfer.PermitTransferFrom memory permit;
+            bytes memory signature;
 
-            TransferFromApproval approvalType = TransferFromApproval(uint8(input[63]));
+            ( /* selector */ , from, value, permit, signature) =
+                abi.decode(input, (bytes4, address, uint256, ISignatureTransfer.PermitTransferFrom, bytes));
 
-            if (approvalType == TransferFromApproval.ERC20) {
-                address from = address(0);
-                uint256 value = 0;
-
-                ( /* selector */ , /* approvalType */, from, value) =
-                    abi.decode(input, (bytes4, ERC20Forwarder.TransferFromApproval, address, uint256));
-
-                // slither-disable-next-line arbitrary-send-erc20
-                IERC20(_ERC20).safeTransferFrom({from: from, to: to, value: value});
-            } else if (approvalType == TransferFromApproval.Permit2) {
-                ISignatureTransfer.PermitTransferFrom memory permit;
-                address from = address(0);
-                uint256 value = 0;
-                bytes memory signature;
-
-                ( /* selector */ , /* approvalType */, from, value, permit, signature) = abi.decode(
-                    input,
-                    (
-                        bytes4,
-                        ERC20Forwarder.TransferFromApproval,
-                        address,
-                        uint256,
-                        ISignatureTransfer.PermitTransferFrom,
-                        bytes
-                    )
-                );
-
-                // NOTE: The following checks could be conducted on the carrier resource logic.
-                {
-                    if (permit.permitted.token != _ERC20) {
-                        revert Permit2TokenMismatch({expected: _ERC20, actual: permit.permitted.token});
-                    }
-
-                    if (permit.permitted.amount != value) {
-                        revert Permit2AmountMismatch({expected: permit.permitted.amount, actual: value});
-                    }
+            // NOTE: The following checks could be conducted on the carrier resource logic.
+            {
+                if (permit.permitted.token != _ERC20) {
+                    revert Permit2TokenMismatch({expected: _ERC20, actual: permit.permitted.token});
                 }
 
-                _PERMIT2.permitTransferFrom({
-                    permit: permit,
-                    transferDetails: ISignatureTransfer.SignatureTransferDetails({to: to, requestedAmount: value}),
-                    owner: from,
-                    signature: signature
-                });
+                if (permit.permitted.amount != value) {
+                    revert Permit2AmountMismatch({expected: permit.permitted.amount, actual: value});
+                }
             }
+
+            _PERMIT2.permitTransferFrom({
+                permit: permit,
+                transferDetails: ISignatureTransfer.SignatureTransferDetails({to: to, requestedAmount: value}),
+                owner: from,
+                signature: signature
+            });
         } else if (selector == IERC20.transfer.selector) {
             address to = address(0);
             uint256 value = 0;
