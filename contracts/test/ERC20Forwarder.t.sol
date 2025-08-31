@@ -26,6 +26,7 @@ contract MyToken is ERC20 {
 
 contract ERC20ForwarderTest is Test {
     uint256 internal constant _ALICE_PRIVATE_KEY = 0xA11CE;
+    bytes internal constant _EXPECTED_OUTPUT = abi.encode(true);
 
     address internal _pa;
     address internal _alice;
@@ -77,7 +78,7 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_pa);
         bytes memory output = _fwd.forwardCall(input);
 
-        assertEq(keccak256(output), keccak256(""));
+        assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
         assertEq(_erc20.balanceOf(_alice), startBalanceAlice - value);
         assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder + value);
     }
