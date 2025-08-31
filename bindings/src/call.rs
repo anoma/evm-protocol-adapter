@@ -128,17 +128,6 @@ mod tests {
 
     #[tokio::test]
     #[ignore = "This test requires updatng the protocol adapter address in .env"]
-    async fn call_verify() {
-        let empty_tx = ProtocolAdapter::Transaction {
-            actions: vec![],
-            deltaProof: vec![].into(),
-        };
-        let result = protocol_adapter().verify(empty_tx).call().await;
-        assert!(result.is_ok());
-    }
-
-    #[tokio::test]
-    #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn call_execute() {
         let empty_tx = ProtocolAdapter::Transaction {
             actions: vec![],

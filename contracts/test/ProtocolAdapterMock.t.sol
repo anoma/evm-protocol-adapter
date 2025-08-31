@@ -11,10 +11,8 @@ import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ComputableComponents} from "../src/libs/ComputableComponents.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
 import {RiscZeroUtils} from "../src/libs/RiscZeroUtils.sol";
-import {TagLookup} from "../src/libs/TagLookup.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Compliance} from "../src/proving/Compliance.sol";
 import {Logic} from "../src/proving/Logic.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {ForwarderCalldata, Transaction, Resource} from "../src/Types.sol";
@@ -260,7 +258,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_verify_reverts_on_pre_existing_nullifier() public {
+    function test_execute_reverts_on_pre_existing_nullifier() public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 1});
 
         (Transaction memory tx1, bytes32 updatedNonce) =
@@ -277,52 +275,10 @@ contract ProtocolAdapterMockTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, preExistingNf), address(_mockPa)
         );
-        _mockPa.verify(tx2);
+        _mockPa.execute(tx2);
     }
 
-    function test_verify_reverts_on_duplicated_nullifier() public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 2});
-
-        (Transaction memory txn,) =
-            _mockVerifier.transaction({nonce: 0, configs: configs, commitmentTreeDepth: _TEST_COMMITMENT_TREE_DEPTH});
-
-        Compliance.VerifierInput memory cu0 = txn.actions[0].complianceVerifierInputs[0];
-        Compliance.VerifierInput memory cu1 = txn.actions[0].complianceVerifierInputs[1];
-
-        // Put the nullifier of cu0 into cu1.
-        bytes32 duplicatedNf = cu0.instance.consumed.nullifier;
-        txn.actions[0].complianceVerifierInputs[1].instance.consumed.nullifier = duplicatedNf;
-
-        // Recompute the action tree root
-        bytes32 actionTreeRoot;
-        {
-            bytes32[] memory actionTreeTags = new bytes32[](4);
-            actionTreeTags[0] = duplicatedNf;
-            actionTreeTags[1] = cu0.instance.created.commitment;
-            actionTreeTags[2] = duplicatedNf;
-            actionTreeTags[3] = cu1.instance.created.commitment;
-
-            actionTreeRoot = actionTreeTags.computeRoot(_TEST_ACTION_TAG_TREE_DEPTH);
-        }
-
-        // Recompute the logic proofs
-        {
-            txn.actions[0].logicVerifierInputs[0].proof = _mockVerifier.mockProve({
-                imageId: cu0.instance.consumed.logicRef,
-                journalDigest: txn.actions[0].logicVerifierInputs[0].toJournalDigest({root: actionTreeRoot, consumed: true})
-            }).seal;
-
-            txn.actions[0].logicVerifierInputs[1].proof = _mockVerifier.mockProve({
-                imageId: cu0.instance.created.logicRef,
-                journalDigest: txn.actions[0].logicVerifierInputs[1].toJournalDigest({root: actionTreeRoot, consumed: false})
-            }).seal;
-        }
-
-        vm.expectRevert(abi.encodeWithSelector(TagLookup.NullifierDuplicated.selector, duplicatedNf), address(_mockPa));
-        _mockPa.verify(txn);
-    }
-
-    function test_verify_reverts_on_incorrect_commitment_computation() public {
+    function test_execute_reverts_on_incorrect_commitment_computation() public {
         bytes32 nonce = 0;
         bytes32 logicRef = bytes32(uint256(123));
         ForwarderExample fwd =
@@ -392,10 +348,10 @@ contract ProtocolAdapterMockTest is Test {
                 txn.actions[0].complianceVerifierInputs[0].instance.created.commitment
             )
         );
-        _mockPa.verify(txn);
+        _mockPa.execute(txn);
     }
 
-    function test_verify_reverts_on_incorrect_nullifier_computation_resource() public {
+    function test_execute_reverts_on_incorrect_nullifier_computation_resource() public {
         bytes32 nonce = 0;
         bytes32 logicRef = bytes32(uint256(123));
         ForwarderExample fwd =
@@ -470,10 +426,10 @@ contract ProtocolAdapterMockTest is Test {
                 txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
             )
         );
-        _mockPa.verify(txn);
+        _mockPa.execute(txn);
     }
 
-    function test_verify_reverts_on_incorrect_nullifier_computation_nonce() public {
+    function test_execute_reverts_on_incorrect_nullifier_computation_nonce() public {
         bytes32 nonce = 0;
         bytes32 logicRef = bytes32(uint256(123));
         ForwarderExample fwd =
@@ -544,6 +500,6 @@ contract ProtocolAdapterMockTest is Test {
                 txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
             )
         );
-        _mockPa.verify(txn);
+        _mockPa.execute(txn);
     }
 }

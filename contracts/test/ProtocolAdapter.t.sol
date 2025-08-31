@@ -40,14 +40,6 @@ contract ProtocolAdapterTest is Test {
         });
     }
 
-    function test_verify_reverts_on_vulnerable_risc_zero_verifier() public {
-        vm.prank(_emergencyStop.owner());
-        _emergencyStop.estop();
-
-        vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
-        _pa.verify(TransactionExample.transaction());
-    }
-
     function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {
         vm.prank(_emergencyStop.owner());
         _emergencyStop.estop();
@@ -58,10 +50,6 @@ contract ProtocolAdapterTest is Test {
 
     function test_execute() public {
         _pa.execute(TransactionExample.transaction());
-    }
-
-    function test_verify() public {
-        _pa.verify(TransactionExample.transaction());
     }
 
     // solhint-disable-next-line no-empty-blocks
