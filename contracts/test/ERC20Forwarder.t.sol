@@ -102,9 +102,7 @@ contract ERC20ForwarderTest is Test {
         bytes memory signature =
             _getPermitTransferSignature({permit: permit, privateKey: _ALICE_PRIVATE_KEY, spender: address(_fwd)});
 
-        input = abi.encode(
-            _erc20.transferFrom.selector, ERC20Forwarder.TransferFromApproval.Permit2, from, value, permit, signature
-        );
+        input = abi.encode(_erc20.transferFrom.selector, from, value, permit, signature);
     }
 
     function _getPermitTransferSignature(
