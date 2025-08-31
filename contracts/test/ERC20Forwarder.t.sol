@@ -27,14 +27,7 @@ contract MyToken is ERC20 {
 contract ERC20ForwarderTest is Test {
     uint256 internal constant _ALICE_PRIVATE_KEY = 0xA11CE;
 
-    address internal constant _BOB = address(uint160(2));
-
-    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(type(uint256).max);
-
-    RiscZeroVerifierRouter internal _router;
-
     address internal _pa;
-
     address internal _alice;
     IPermit2 internal _permit2;
     ERC20Forwarder internal _fwd;
@@ -50,7 +43,7 @@ contract ERC20ForwarderTest is Test {
         _permit2 = new DeployPermit2().run();
 
         // Deploy RISC Zero contracts
-        (_router,,) = new DeployRiscZeroContracts().run();
+        (RiscZeroVerifierRouter _router,,) = new DeployRiscZeroContracts().run();
 
         // Deploy the protocol adapter
         _pa = address(
