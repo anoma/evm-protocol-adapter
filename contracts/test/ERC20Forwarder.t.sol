@@ -75,50 +75,42 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
 
-        uint256 amount = 1 * 10 ** _erc20.decimals();
+        uint256 value = 1 * 10 ** _erc20.decimals();
 
         uint256 startBalanceAlice = _erc20.balanceOf(_alice);
         uint256 startBalanceForwarder = _erc20.balanceOf(address(_fwd));
 
-        bytes memory input = _defaultInput({amount: amount});
+        bytes memory input = _defaultInput({value: value});
         vm.prank(_pa);
         bytes memory output = _fwd.forwardCall(input);
 
         assertEq(keccak256(output), keccak256(""));
-        assertEq(_erc20.balanceOf(_alice), startBalanceAlice - amount);
-        assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder + amount);
+        assertEq(_erc20.balanceOf(_alice), startBalanceAlice - value);
+        assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder + value);
     }
 
     function test_forwardCall_reverts_if_permit2_was_not_approved() public {
-        bytes memory input = _defaultInput({amount: 1 * 10 ** _erc20.decimals()});
+        bytes memory input = _defaultInput({value: 1 * 10 ** _erc20.decimals()});
         vm.prank(_pa);
 
         vm.expectRevert("TRANSFER_FROM_FAILED", address(_erc20));
         _fwd.forwardCall(input);
     }
 
-    function _defaultInput(uint256 amount) internal view returns (bytes memory input) {
+    function _defaultInput(uint256 value) internal view returns (bytes memory input) {
+        address from = _alice;
+
         ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
-            permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: amount}),
+            permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: value}),
             nonce: 0,
             deadline: Time.timestamp() + 5 minutes
         });
 
-        bytes memory sig =
+        bytes memory signature =
             _getPermitTransferSignature({permit: permit, privateKey: _ALICE_PRIVATE_KEY, spender: address(_fwd)});
 
-        ISignatureTransfer.SignatureTransferDetails memory transferDetails =
-            ISignatureTransfer.SignatureTransferDetails({to: address(_fwd), requestedAmount: amount});
-
-        address owner = _alice;
-
         input = abi.encode(
-            _erc20.transferFrom.selector,
-            ERC20Forwarder.TransferFromApproval.Permit2,
-            permit,
-            transferDetails,
-            owner,
-            sig
+            _erc20.transferFrom.selector, ERC20Forwarder.TransferFromApproval.Permit2, from, value, permit, signature
         );
     }
 
