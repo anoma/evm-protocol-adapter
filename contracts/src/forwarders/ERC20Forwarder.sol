@@ -58,31 +58,33 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         bytes4 selector = bytes4(input[:4]);
 
         if (selector == IERC20.transferFrom.selector) {
-            address from = address(0);
+            address to = address(this);
 
             TransferFromApproval approvalType = TransferFromApproval(uint8(input[63]));
 
             if (approvalType == TransferFromApproval.ERC20) {
-                uint256 amount = 0;
+                address from = address(0);
+                uint256 value = 0;
 
-                ( /* selector */ , /* approvalType */, from, amount) =
+                ( /* selector */ , /* approvalType */, from, value) =
                     abi.decode(input, (bytes4, ERC20Forwarder.TransferFromApproval, address, uint256));
 
                 // slither-disable-next-line arbitrary-send-erc20
-                IERC20(_ERC20).safeTransferFrom({from: from, to: address(this), value: amount});
+                IERC20(_ERC20).safeTransferFrom({from: from, to: to, value: value});
             } else if (approvalType == TransferFromApproval.Permit2) {
                 ISignatureTransfer.PermitTransferFrom memory permit;
-                ISignatureTransfer.SignatureTransferDetails memory transferDetails;
-                bytes memory sig;
+                address from = address(0);
+                uint256 value = 0;
+                bytes memory signature;
 
-                ( /* selector */ , /* approvalType */, permit, transferDetails, from, sig) = abi.decode(
+                ( /* selector */ , /* approvalType */, from, value, permit, signature) = abi.decode(
                     input,
                     (
                         bytes4,
                         ERC20Forwarder.TransferFromApproval,
-                        ISignatureTransfer.PermitTransferFrom,
-                        ISignatureTransfer.SignatureTransferDetails,
                         address,
+                        uint256,
+                        ISignatureTransfer.PermitTransferFrom,
                         bytes
                     )
                 );
@@ -93,27 +95,23 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                         revert Permit2TokenMismatch({expected: _ERC20, actual: permit.permitted.token});
                     }
 
-                    if (permit.permitted.amount != transferDetails.requestedAmount) {
-                        revert Permit2AmountMismatch({
-                            expected: permit.permitted.amount,
-                            actual: transferDetails.requestedAmount
-                        });
-                    }
-
-                    if (transferDetails.to != address(this)) {
-                        revert Permit2ToMismatch({expected: address(this), actual: transferDetails.to});
+                    if (permit.permitted.amount != value) {
+                        revert Permit2AmountMismatch({expected: permit.permitted.amount, actual: value});
                     }
                 }
 
                 _PERMIT2.permitTransferFrom({
                     permit: permit,
-                    transferDetails: transferDetails,
+                    transferDetails: ISignatureTransfer.SignatureTransferDetails({to: to, requestedAmount: value}),
                     owner: from,
-                    signature: sig
+                    signature: signature
                 });
             }
         } else if (selector == IERC20.transfer.selector) {
-            ( /* selector */ , address to, uint256 value) = abi.decode(input, (bytes4, address, uint256));
+            address to = address(0);
+            uint256 value = 0;
+
+            ( /* selector */ , to, value) = abi.decode(input, (bytes4, address, uint256));
             IERC20(_ERC20).safeTransfer({to: to, value: value});
         } else {
             revert SelectorInvalid(selector);
