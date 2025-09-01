@@ -4,9 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-arm = { git = "https://github.com/anoma/arm-risc0", branch = "xuyang/simplify_features", default-features = true ,features = [
-    "groth16_prover",
-}
+arm = { git = "https://github.com/anoma/arm-risc0", branch = "xuyang/simplify_features", default-features = true, features = ["groth16_prover"] }
 alloy = { version = "1.0.23", features = ["full"] }
 tokio = "1.44"
 serde = { version = "1.0.197", default-features = false }
