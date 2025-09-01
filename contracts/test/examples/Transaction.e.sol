@@ -10,41 +10,25 @@ import {Transaction, Action} from "../../src/Types.sol";
 library TransactionExample {
     using MerkleTree for bytes32[];
 
-    bytes32 internal constant _CONSUMED_NULLIFIER = 0x2fe6775e82ad71cd3f0531ebe9f85b9d00ad7bc21e8ac5f5c6fd1a68b4dfba2b;
-    bytes32 internal constant _CREATED_COMMITMENT = 0x193e55bfc8d65a9efd4471c0287c69c8918e7d9331901a01ee2841533ca1f719;
-    bytes32 internal constant _CONSUMED_LOGIC_REF = 0xf8047dc2cf6cbe45137a588a3f019814218e7d7199b1b86a57b51c310e04fae9;
+    bytes32 internal constant _CONSUMED_NULLIFIER = 0xaf54af132b0e1c0df591d3b8096ba5a686c0b69447885a29fbf97627cee1a8e3;
+    bytes32 internal constant _CREATED_COMMITMENT = 0x4734b9228c0a75aea9ba88b7a48be25ce99a38bc8fab4fde34a87159aa63e3de;
+    bytes32 internal constant _CONSUMED_LOGIC_REF = 0x39060282dd7b47c5dcc824f1f52b5f832f5943d1a4b269de95d9e2c84c82222a;
     bytes32 internal constant _CREATED_LOGIC_REF = _CONSUMED_LOGIC_REF;
 
     bytes internal constant _CONSUMED_LOGIC_PROOF =
-        hex"bb001d4407a197561e75ff04be754784dd72c3bb032746ff6c60294708e9e16d6abd451d2b95b12955aa302ad11819e7e77ef4a2a013f4b3d66817b63af158bee50ae34803bddc43fbf30151ea56a7c68dbeccb98e1e09fd624af2b58c785953f9536c4e01c798fd6fd373e29e29170003ced169509e80d3d1a097b11c1495e9967379041a34fb79721bd2549bfbbdda742fa1fd5ffc7076e949fccd729f767a7c32dfad1f7f1eb14dfd537eaba372d3b81e3c3430b7ff9073ac69bbe9bf730458ed30ec240c0897034eb24cc64312048e78b796873e9974df828cc63c61eb513c0de1d204b7bb5a3632107b3f5ccc17d358a59b6f9518c704800163a63aab2d31958311";
+        hex"bb001d4401e4c7dbb62425ca9936ba7cd1d7a0198af4165453d36960e58e4ff53b4dcff3120cade1809eaa4086099ce96dcc0998e9a771e1fe390e092b0f7dce1b08299507b16e184618b0477f8da82bc5c7822e958b2010ba7fb68ae76429c010a7e5d8027d681262e56258ab85a44d4d12dfc81c3cac41b4fd4d4ee7237e1486006678199d2e853108a100ac13a248a8c1dc6c7bb324178da176029bd61c12eda74bf71277ca0b3bb55bd804786e85c8253d47ba8dd6bea2efc9f0accd8e1a757996a22db3aac247731ba72fe6b441acb3a200a2bf76c4054c4943a5016963df0ca3382b8ed7d3dbb5dac9fd349123fe32952247ab237c5e57cb6a25cbeb0750036c77";
 
     bytes internal constant _CREATED_LOGIC_PROOF =
-        hex"bb001d4413222060708b223191bbe0c578a2b28fc9f4b982b5788c58aaff238863acbda524182c1c33cbe89df260f2e8dc4694cb39d2c8dac0aefa047a4ab8ed96e381dd26faf7ec9e0de4d242ee5f611f5f8ea7cd3d480a07419cb10d33988c9d76845f00114cc6c2d0a1efa8037b873d9123f9523d080c4540de1f947bc8efa13aead9169bcbc91b74fb1c2ef5d58a2bdea1d12917e410826bd16a70c7e0949d8f3cc3190250fc7202f1402a17974e1eef5ed75704fb18511bb30f60b27538082a226b090002c42b32b9e206cad780f8dd00bb22a6ff98297ca03a5c020e4cac3e94672a1ba8e2b96c5819d6fec6705846c75af84fcb5f790f1c4340094567b8d9d1b8";
+        hex"bb001d441c91cef0d36b5b5f442a8905cc8198093827bc6c6299e25897d2450135c0d7091c87200b3a229b8815381d39cea9bf692c55dad8c0e54541216083b5f3d2bc9919eb94164f1c033367e26d4a40e402d15263bd1f802063a8c41492e10b123b25301ecce7f47ec58c83b51418036c7bca1b95cad299e004a9d001ed10200274f308018275d1373a5ff649485fe534dc7b76ddd894cfe770fe4d1920684ad214ac0e2c9bd42fb9d17fa6d44dd78cb9aa99499b785463915397c7d4f523a1fbdd0c0e3ff43e27bb53395c31fb7c54cc83b24ee0c96df90cbae3e52dc767d01d28bd0dfb5ba2e63b3b9b2ea7c11a434fd4fc458d194d6a64a5e2f813ad72bb9f8cab";
 
     bytes internal constant _COMPLIANCE_PROOF =
-        hex"bb001d44152a1d6fd8f45d1c979342581b7953614b228b43218a5c8559b0f4415b836f392fe183f44bd4b3488d3fe36c0f2c6de21bf11fe18c3403adf2d4a33e7b7a0bc50028b0681cb33df7b915d6bea43654f85cc42839accff571f27799d9b04641461057137e2297539f9bf791bd0f9a9c35a0e0b1a6f99bd3ec41d563a091d2d40d0178aa6fad1be69f3360a61d8f1ae6690bfb234b90bc6485985bc98eb04f33cd01f6c852998de57eaf57a369f4106164ffcbb550d41dffa8a2d75f1efa9ddd230def4d79a3d63170e0c68f52ba1593a32ce264a61a43f97f4304dedd8aea304609241a2c93a7447a309694603afcc4160531e0c9d3c2fe3630a25cf6aa55f1c3";
+        hex"bb001d440009074463c09e180438eeeff09b2784731b52cfb38c92a363225a38c5c885d51b1a50051019e848166ee7ba17402bd303a44b2a24ccc5f3271326fb4a81ee0112e99c3a7c051760210c6f4c97f8d128eb7992f524665203d70445e6deb79e9a28262cd253e2f43590e27ac321bd710ff3da8b60b555e6f3bcf3563b857675b52b74c4bd28b315bf9db72c5658687e2d5e9112f7d046e1362fa92e69d43232fb0fa4a090740d72ffbe22c58edd1557fa7db2d5bf617af9281f9450d6e9dc86680322e3b3a0fd511146f5702c77e3e47d6d7d5d8578cbfad95395593566409ae5006c89486ec76307ae7d9154560e7d86963c05c3322b83e55eca9c8c44f06067";
 
     bytes32 internal constant _UNIT_DELTA_X = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798;
     bytes32 internal constant _UNIT_DELTA_Y = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8;
 
     bytes internal constant _DELTA_PROOF =
-        hex"84573c4cb7358f0251e661ac747756df1ade611cb00d76e17bf292952c0de69451f047436136cc0ada65d69bff88e872f5d147f4c5548c18b244822d7a758eeb1b";
-
-    function ciphertext() internal pure returns (bytes memory cipher) {
-        cipher = hex"3f0000007f000000bf000000ff000000";
-    }
-
-    function expirableBlobs() internal pure returns (Logic.ExpirableBlob[] memory blobs) {
-        blobs = new Logic.ExpirableBlob[](2);
-        blobs[0] = Logic.ExpirableBlob({
-            blob: hex"1f0000003f0000005f0000007f000000",
-            deletionCriterion: Logic.DeletionCriterion.Immediately
-        });
-        blobs[1] = Logic.ExpirableBlob({
-            blob: hex"9f000000bf000000df000000ff000000",
-            deletionCriterion: Logic.DeletionCriterion.Never
-        });
-    }
+        hex"b6ac6c3dd9976f792533ebbc82fb0145cf538b8eb63b332a9778bd7859c41a045ea31562bea4ca203ba19b1f05c870e5b20fe42852cd317bac3769c645b071241c";
 
     function complianceInstance() internal pure returns (Compliance.Instance memory instance) {
         instance = Compliance.Instance({
@@ -64,15 +48,45 @@ library TransactionExample {
     }
 
     function logicVerifierInput(bool isConsumed) internal pure returns (Logic.VerifierInput memory input) {
+        Logic.AppData memory appData = Logic.AppData({
+            resourcePayload: new Logic.ExpirableBlob[](2),
+            discoveryPayload: new Logic.ExpirableBlob[](1),
+            externalPayload: new Logic.ExpirableBlob[](0),
+            applicationPayload: new Logic.ExpirableBlob[](1)
+        });
+
+        if (isConsumed) {
+            appData.resourcePayload[0] = Logic.ExpirableBlob({
+                blob: hex"39060282dd7b47c5dcc824f1f52b5f832f5943d1a4b269de95d9e2c84c82222a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000066687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f29250000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001",
+                deletionCriterion: Logic.DeletionCriterion.Never
+            });
+            appData.resourcePayload[1] = Logic.ExpirableBlob({
+                blob: hex"0000000000000000000000000000000000000000000000000000000000000000",
+                deletionCriterion: Logic.DeletionCriterion.Never
+            });
+        } else {
+            appData.resourcePayload[0] = Logic.ExpirableBlob({
+                blob: hex"39060282dd7b47c5dcc824f1f52b5f832f5943d1a4b269de95d9e2c84c82222a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000066687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925af54af132b0e1c0df591d3b8096ba5a686c0b69447885a29fbf97627cee1a8e3000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001",
+                deletionCriterion: Logic.DeletionCriterion.Never
+            });
+            appData.resourcePayload[1] = Logic.ExpirableBlob({
+                blob: hex"0000000000000000000000000000000000000000000000000000000000000000",
+                deletionCriterion: Logic.DeletionCriterion.Never
+            });
+        }
+
+        appData.discoveryPayload[0] = Logic.ExpirableBlob({
+            blob: hex"1100000000000000ce33ae4b7da7279a657bb29076a094d43e0000000000000000000000000100000000000000000000",
+            deletionCriterion: Logic.DeletionCriterion.Never
+        });
+
+        appData.applicationPayload[0] =
+            Logic.ExpirableBlob({blob: hex"0001020304050607", deletionCriterion: Logic.DeletionCriterion.Never});
+
         input = Logic.VerifierInput({
             tag: isConsumed ? _CONSUMED_NULLIFIER : _CREATED_COMMITMENT,
             verifyingKey: isConsumed ? _CONSUMED_LOGIC_REF : _CREATED_LOGIC_REF,
-            appData: Logic.AppData({
-                discoveryPayload: new Logic.ExpirableBlob[](0),
-                resourcePayload: new Logic.ExpirableBlob[](0),
-                externalPayload: new Logic.ExpirableBlob[](0),
-                applicationPayload: new Logic.ExpirableBlob[](0)
-            }),
+            appData: appData,
             proof: isConsumed ? _CONSUMED_LOGIC_PROOF : _CREATED_LOGIC_PROOF
         });
     }
