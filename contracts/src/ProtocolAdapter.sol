@@ -125,6 +125,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
                     // Check consumed resource logic, verifier key correspondence,
                     // as well as possible external calls
+
+                    // slither-disable-next-line reentrancy-benign
                     _processResourceLogicContext({
                         input: action.logicVerifierInputs.lookup(nf),
                         logicRef: complianceVerifierInput.instance.consumed.logicRef,
@@ -133,6 +135,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     });
 
                     // Check the related info for the created resource as well
+                    // slither-disable-next-line reentrancy-benign
                     _processResourceLogicContext({
                         input: action.logicVerifierInputs.lookup(cm),
                         logicRef: complianceVerifierInput.instance.created.logicRef,
@@ -167,6 +170,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
         }
     }
+    // slither-disable-end reentrancy-no-eth
 
     /// @inheritdoc IProtocolAdapter
     function isEmergencyStopped() public view override returns (bool isStopped) {

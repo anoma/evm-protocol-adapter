@@ -15,7 +15,7 @@ contract NullifierSetTest is Test {
     }
 
     function test_addNullifier_adds_nullifier() public {
-        _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
+        assertEq(_nfSet.contains(_EXAMPLE_NF), false);
         _nfSet.addNullifier(_EXAMPLE_NF);
     }
 
@@ -26,15 +26,6 @@ contract NullifierSetTest is Test {
             abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _EXAMPLE_NF), address(_nfSet)
         );
         _nfSet.addNullifier(_EXAMPLE_NF);
-    }
-
-    function test_checkNullifierNonExistence_reverts_on_existent_nullifier() public {
-        _nfSet.addNullifier(_EXAMPLE_NF);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _EXAMPLE_NF), address(_nfSet)
-        );
-        _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
     }
 
     function test_length_returns_the_length() public {
@@ -63,10 +54,6 @@ contract NullifierSetTest is Test {
     function test_contains_returns_true_if_the_nullifier_is_contained() public {
         _nfSet.addNullifier(_EXAMPLE_NF);
         assertEq(_nfSet.contains(_EXAMPLE_NF), true);
-    }
-
-    function test_checkNullifierNonExistence_passes_on_non_existent_nullifier() public view {
-        _nfSet.checkNullifierNonExistence(_EXAMPLE_NF);
     }
 
     function test_contains_returns_false_if_the_nullifier_is_not_contained() public view {

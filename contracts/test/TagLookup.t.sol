@@ -19,15 +19,6 @@ contract TagLookupTest is Test {
         _tags[3] = bytes32(uint256(3)); // Cm 1
     }
 
-    function test_checkNullifierNonExistence_reverts_if_the_nullifier_exists() public {
-        vm.expectRevert(abi.encodeWithSelector(TagLookup.NullifierDuplicated.selector, _tags[0]), address(this));
-        _tags.checkNullifierNonExistence(_tags[0]);
-    }
-
-    function test_checkNullifierNonExistence_passes_if_the_nullifier_does_not_exist() public view {
-        _tags.checkNullifierNonExistence(_tags[1]);
-    }
-
     function test_isNullifierContained_returns_true_for_existent_nullifier() public view {
         assertEq(_tags.isNullifierContained({nullifier: _tags[0]}), true);
         assertEq(_tags.isNullifierContained({nullifier: _tags[2]}), true);
