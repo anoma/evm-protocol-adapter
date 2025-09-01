@@ -96,12 +96,8 @@ contract ProtocolAdapterMockTest is Test {
 
             carrierTag = createdResource.commitment();
 
-            ForwarderCalldata memory call = ForwarderCalldata({
-                untrustedForwarder: address(fwd),
-                carrierTag: carrierTag,
-                input: INPUT,
-                output: EXPECTED_OUTPUT
-            });
+            ForwarderCalldata memory call =
+                ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
 
             Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
             externalBlobs[0] =
@@ -156,12 +152,8 @@ contract ProtocolAdapterMockTest is Test {
 
             carrierTag = consumedResource.nullifier({nullifierKey: 0});
 
-            ForwarderCalldata memory call = ForwarderCalldata({
-                untrustedForwarder: address(fwd),
-                carrierTag: carrierTag,
-                input: INPUT,
-                output: EXPECTED_OUTPUT
-            });
+            ForwarderCalldata memory call =
+                ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
 
             Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
             externalBlobs[0] =
@@ -317,12 +309,8 @@ contract ProtocolAdapterMockTest is Test {
         Resource memory consumedResource =
             TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1});
 
-        ForwarderCalldata memory call = ForwarderCalldata({
-            untrustedForwarder: address(fwd),
-            carrierTag: consumedResource.nullifier({nullifierKey: 0}),
-            input: INPUT,
-            output: EXPECTED_OUTPUT
-        });
+        ForwarderCalldata memory call =
+            ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
 
         Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
         externalBlobs[0] =
@@ -394,12 +382,8 @@ contract ProtocolAdapterMockTest is Test {
         Resource memory consumedResource =
             TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1});
 
-        ForwarderCalldata memory call = ForwarderCalldata({
-            untrustedForwarder: address(fwd),
-            carrierTag: consumedResource.nullifier({nullifierKey: 0}),
-            input: INPUT,
-            output: EXPECTED_OUTPUT
-        });
+        ForwarderCalldata memory call =
+            ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
 
         Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
         externalBlobs[0] =
@@ -477,12 +461,8 @@ contract ProtocolAdapterMockTest is Test {
         Resource memory consumedResource =
             TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1});
 
-        ForwarderCalldata memory call = ForwarderCalldata({
-            untrustedForwarder: address(fwd),
-            carrierTag: consumedResource.nullifier({nullifierKey: 0}),
-            input: INPUT,
-            output: EXPECTED_OUTPUT
-        });
+        ForwarderCalldata memory call =
+            ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
 
         Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
         externalBlobs[0] =

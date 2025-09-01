@@ -45,12 +45,10 @@ struct Action {
 /// and the anticipated output data.
 
 /// @param untrustedForwarder The forwarder contract forwarding the call.
-/// @param carrierTag The tag of the carrier resource.
 /// @param input The input data for the forwarded call that might or might not include the `bytes4` function selector.
 /// @param output The anticipated output data from the forwarded call.
 struct ForwarderCalldata {
     address untrustedForwarder;
-    bytes32 carrierTag;
     bytes input;
     bytes output;
 }

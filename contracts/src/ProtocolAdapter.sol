@@ -52,9 +52,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     error CalldataCarrierCommitmentMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierNullifierMismatch(bytes32 expected, bytes32 actual);
 
-    error CalldataTagCommitmentMismatch(bytes32 expected, bytes32 actual);
-    error CalldataTagNullifierMismatch(bytes32 expected, bytes32 actual);
-
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
     /// @param commitmentTreeDepth The depth of the commitment tree of the commitment accumulator.
@@ -93,7 +90,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 if (input.appData.externalPayload.length != 0) {
                     ForwarderCalldata memory call =
                         abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
-                    _executeForwarderCall(call);
+                    _executeForwarderCall({carrierTag: input.tag, call: call});
                 }
             }
 
@@ -133,11 +130,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     }
 
     /// @notice Executes a call to a forwarder contracts.
+    /// @param carrierTag The tag of the carrier resource.
     /// @param call The calldata to conduct the forwarder call.
-    function _executeForwarderCall(ForwarderCalldata memory call) internal {
+    function _executeForwarderCall(bytes32 carrierTag, ForwarderCalldata memory call) internal {
         // slither-disable-next-line calls-loop
         bytes memory output =
-            IForwarder(call.untrustedForwarder).forwardCall({input: call.input, carrierTag: call.carrierTag});
+            IForwarder(call.untrustedForwarder).forwardCall({carrierTag: carrierTag, input: call.input});
 
         if (keccak256(output) != keccak256(call.output)) {
             revert ForwarderCallOutputMismatch({expected: call.output, actual: output});
@@ -145,7 +143,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
         // solhint-disable-next-line max-line-length
         emit ForwarderCallExecuted({
-            carrierTag: call.carrierTag,
+            carrierTag: carrierTag,
             untrustedForwarder: call.untrustedForwarder,
             input: call.input,
             output: call.output
@@ -330,22 +328,11 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             if (resource.commitment() != input.tag) {
                 revert CalldataCarrierCommitmentMismatch({actual: input.tag, expected: resource.commitment()});
             }
-
-            if (resource.commitment() != call.carrierTag) {
-                revert CalldataTagCommitmentMismatch({actual: call.carrierTag, expected: resource.commitment()});
-            }
         } else {
             // If consumed, we expect the nullifier key to be present in the resource payload as well
             if (resource.nullifier(bytes32(input.appData.resourcePayload[1].blob)) != input.tag) {
                 revert CalldataCarrierNullifierMismatch({
                     actual: input.tag,
-                    expected: resource.nullifier(bytes32(input.appData.resourcePayload[1].blob))
-                });
-            }
-
-            if (resource.nullifier(bytes32(input.appData.resourcePayload[1].blob)) != input.tag) {
-                revert CalldataTagNullifierMismatch({
-                    actual: call.carrierTag,
                     expected: resource.nullifier(bytes32(input.appData.resourcePayload[1].blob))
                 });
             }
