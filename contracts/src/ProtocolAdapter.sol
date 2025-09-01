@@ -252,15 +252,11 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         _executeForwarderCall(call);
     }
 
-    /// @notice Given an action, computes the root of a tree containing all of its tags
-    /// @param action The action whose root we compute
-    /// @param nCUs The number of compliance units in the action
-    /// @return actionTreeRoot The root of the corresponding tree
-    function _computeActionTreeRoot(Action calldata action, uint256 nCUs)
-        internal
-        view
-        returns (bytes32 actionTreeRoot)
-    {
+    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
+    /// @param action The action whose root we compute.
+    /// @param nCUs The number of compliance units in the action.
+    /// @return root The root of the corresponding tree.
+    function _computeActionTreeRoot(Action calldata action, uint256 nCUs) internal view returns (bytes32 root) {
         bytes32[] memory actionTreeTags = new bytes32[](nCUs * 2);
 
         // The order in which the tags are added to the tree are provided by the compliance units
@@ -274,7 +270,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         actionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
     }
 
-    /// @notice An internal function verifying a RISC0 compliance proof.
+    /// @notice Verifies a RISC0 compliance proof.
     /// @param input The verifier input of the compliance proof.
     /// @dev This function is virtual to allow for it to be overridden, e.g., to use mock proofs with a mock verifier.
     function _verifyComplianceProof(Compliance.VerifierInput calldata input) internal view virtual {
@@ -286,7 +282,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         });
     }
 
-    /// @notice An internal function verifying a RISC0 logic proof.
+    /// @notice Verifies a RISC0 logic proof.
     /// @param input The verifier input of the logic proof.
     /// @param root The root of the action tree containing all tags of an action.
     /// @param consumed Bool indicating whether the tag is a commitment or a nullifier.
@@ -300,7 +296,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         });
     }
 
-    /// @notice An internal function verifying a delta proof.
+    /// @notice Verifies a delta proof.
     /// @param proof The delta proof.
     /// @param transactionDelta The transaction delta.
     /// @param tags The tags being part of the transaction in the order of appearance in the compliance units.
