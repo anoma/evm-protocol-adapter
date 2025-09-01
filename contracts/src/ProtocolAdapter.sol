@@ -75,100 +75,93 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant {
-        {
-            bytes32 newRoot = 0;
-            uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
+        bytes32 newRoot = 0;
+        uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
-            uint256 nActions = transaction.actions.length;
+        uint256 nActions = transaction.actions.length;
 
-            // Calculate the total number of resources.
-            uint256 resCounter = 0;
-            for (uint256 i = 0; i < nActions; ++i) {
-                resCounter += transaction.actions[i].logicVerifierInputs.length;
-            }
-
-            // Allocate the array.
-            bytes32[] memory tags = new bytes32[](resCounter);
-
-            // Reset the resource counter.
-            resCounter = 0;
-
-            for (uint256 i = 0; i < nActions; ++i) {
-                Action calldata action = transaction.actions[i];
-
-                uint256 nCUs = action.complianceVerifierInputs.length;
-                uint256 nResources = action.logicVerifierInputs.length;
-
-                // Check that the resource counts in the action and compliance units match
-                if (nResources != nCUs * 2) {
-                    revert ResourceCountMismatch({expected: nResources, actual: nCUs});
-                }
-
-                // Compute the root of the tree containing all tags of the action
-                bytes32 actionTreeRoot = _computeActionTreeRoot(action, nCUs);
-
-                for (uint256 j = 0; j < nCUs; ++j) {
-                    Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-
-                    bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
-                    bytes32 cm = complianceVerifierInput.instance.created.commitment;
-
-                    // Process the tags and provided root against global state
-                    newRoot = _processState({
-                        nf: nf,
-                        cm: cm,
-                        root: complianceVerifierInput.instance.consumed.commitmentTreeRoot
-                    });
-
-                    // Verify the proof against a hardcoded compliance circuit
-                    _verifyComplianceProof(complianceVerifierInput);
-
-                    // Check consumed resource logic, verifier key correspondence,
-                    // as well as possible external calls
-
-                    // slither-disable-next-line reentrancy-benign
-                    _processResourceLogicContext({
-                        input: action.logicVerifierInputs.lookup(nf),
-                        logicRef: complianceVerifierInput.instance.consumed.logicRef,
-                        actionTreeRoot: actionTreeRoot,
-                        consumed: true
-                    });
-
-                    // Check the related info for the created resource as well
-                    // slither-disable-next-line reentrancy-benign
-                    _processResourceLogicContext({
-                        input: action.logicVerifierInputs.lookup(cm),
-                        logicRef: complianceVerifierInput.instance.created.logicRef,
-                        actionTreeRoot: actionTreeRoot,
-                        consumed: false
-                    });
-
-                    tags[resCounter++] = nf;
-                    tags[resCounter++] = cm;
-
-                    // Compute transaction delta
-                    transactionDelta = _addUnitDelta({
-                        transactionDelta: transactionDelta,
-                        unitDelta: [
-                            uint256(complianceVerifierInput.instance.unitDeltaX),
-                            uint256(complianceVerifierInput.instance.unitDeltaY)
-                        ]
-                    });
-                }
-            }
-
-            // Check if the transaction induced a state change and the state root has changed
-            if (newRoot != bytes32(0)) {
-                // Check the delta proof
-                _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
-
-                // Store the final root
-                _storeRoot(newRoot);
-            }
-
-            // Emit the event containing the transaction and new root
-            emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
+        // Calculate the total number of resources.
+        uint256 resCounter = 0;
+        for (uint256 i = 0; i < nActions; ++i) {
+            resCounter += transaction.actions[i].logicVerifierInputs.length;
         }
+
+        // Allocate the array.
+        bytes32[] memory tags = new bytes32[](resCounter);
+
+        // Reset the resource counter.
+        resCounter = 0;
+
+        for (uint256 i = 0; i < nActions; ++i) {
+            Action calldata action = transaction.actions[i];
+
+            uint256 nCUs = action.complianceVerifierInputs.length;
+            uint256 nResources = action.logicVerifierInputs.length;
+
+            // Check that the resource counts in the action and compliance units match
+            if (nResources != nCUs * 2) {
+                revert ResourceCountMismatch({expected: nResources, actual: nCUs});
+            }
+
+            // Compute the root of the tree containing all tags of the action
+            bytes32 actionTreeRoot = _computeActionTreeRoot(action, nCUs);
+
+            for (uint256 j = 0; j < nCUs; ++j) {
+                Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
+
+                bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
+                bytes32 cm = complianceVerifierInput.instance.created.commitment;
+
+                // Process the tags and provided root against global state
+                newRoot =
+                    _processState({nf: nf, cm: cm, root: complianceVerifierInput.instance.consumed.commitmentTreeRoot});
+
+                // Verify the proof against a hardcoded compliance circuit
+                _verifyComplianceProof(complianceVerifierInput);
+
+                // Check the consumed resource
+                // slither-disable-next-line reentrancy-benign
+                _processResourceLogicContext({
+                    input: action.logicVerifierInputs.lookup(nf),
+                    logicRef: complianceVerifierInput.instance.consumed.logicRef,
+                    actionTreeRoot: actionTreeRoot,
+                    consumed: true
+                });
+
+                // Check the created resource
+                // slither-disable-next-line reentrancy-benign
+                _processResourceLogicContext({
+                    input: action.logicVerifierInputs.lookup(cm),
+                    logicRef: complianceVerifierInput.instance.created.logicRef,
+                    actionTreeRoot: actionTreeRoot,
+                    consumed: false
+                });
+
+                tags[resCounter++] = nf;
+                tags[resCounter++] = cm;
+
+                // Compute transaction delta
+                transactionDelta = _addUnitDelta({
+                    transactionDelta: transactionDelta,
+                    unitDelta: [
+                        uint256(complianceVerifierInput.instance.unitDeltaX),
+                        uint256(complianceVerifierInput.instance.unitDeltaY)
+                    ]
+                });
+            }
+        }
+
+        // Check if the transaction induced a state change and the state root has changed
+        if (newRoot != bytes32(0)) {
+            // Check the delta proof
+            _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
+
+            // Store the final root
+            _storeRoot(newRoot);
+        }
+
+        // Emit the event containing the transaction and new root
+        emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
     }
     // slither-disable-end reentrancy-no-eth
 
@@ -212,43 +205,48 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         newRoot = _addCommitment(cm);
     }
 
-    /// @notice Function for processing resource logics and related checks
-    /// @param input The logic verifier input for processing
-    /// @param logicRef The logic ref approved by compliance proof
-    /// @param actionTreeRoot The root of the tree containing all action tags for the instance
-    /// @param consumed Flag for indicating whether the resource is consumed
+    /// @notice Processes a resource by
+    ///  * checking the verifying key correspondence,
+    ///  * checking the resource logic proof, and
+    ///  * processing forward calls.
+    /// @param input The logic verifier input for processing.
+    /// @param logicRef The logic ref approved by compliance proof.
+    /// @param actionTreeRoot The root of the tree containing all action tags for the instance.
+    /// @param consumed Flag for indicating whether the resource is consumed.
     function _processResourceLogicContext(
         Logic.VerifierInput calldata input,
         bytes32 logicRef,
         bytes32 actionTreeRoot,
         bool consumed
     ) internal {
-        // Check verifier key correspondence
+        // Check verifying key correspondence
         if (logicRef != input.verifyingKey) {
             revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
         }
+
+        // Check the logic proof
+        _verifyLogicProof({input: input, root: actionTreeRoot, consumed: consumed});
 
         // The PA checks whether a call is to be made by looking inside
         // the externalPayload and trying to process the first entry
         if (input.appData.externalPayload.length != 0) {
             _processForwarderCall(input, consumed);
         }
-
-        // Verify the logic proof againts the provided verifying key
-        _verifyLogicProof({input: input, root: actionTreeRoot, consumed: consumed});
     }
 
-    /// @notice Function for verifying and executing forwarder calls
-    /// @param input The logic verifier input of a resource making the call
-    /// @param consumed A flag indicating whether the resource is consumed or not
+    /// @notice Processes a forwarder call by verifying and executing forwarder call.
+    /// @param input The logic verifier input of a resource making the call.
+    /// @param consumed A flag indicating whether the resource is consumed or not.
     function _processForwarderCall(Logic.VerifierInput calldata input, bool consumed) internal {
-        // The PA expects the forwarder calldata to be present at the head of the external payload
+        // NOTE: The PA expects the forwarder calldata to be present at the head of the external payload.
+        // Only the first externalPayload will be verified and executed. // TODO Revisit this design decision.
         ForwarderCalldata memory call = abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
+
         // slither-disable-next-line calls-loop
         bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
-        /// Verify whether the resource can make the call
+
         _verifyForwarderCall(input.appData.resourcePayload, input.tag, fetchedKind, consumed);
-        /// Perform the calls
+
         _executeForwarderCall(call);
     }
 
@@ -267,7 +265,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
         }
 
-        actionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
+        root = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
     }
 
     /// @notice Verifies a RISC0 compliance proof.
