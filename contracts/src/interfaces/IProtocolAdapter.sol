@@ -25,10 +25,6 @@ interface IProtocolAdapter {
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 
-    /// @notice Verifies a transaction by checking the delta, resource logic, and compliance proofs.
-    /// @param transaction The transaction to verify.
-    function verify(Transaction calldata transaction) external view;
-
     /// @notice Returns the RISC Zero verifier selector associated with the protocol adapter.
     /// @return verifierSelector The RISC Zero verifier selector.
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);

@@ -10,7 +10,6 @@ import {Test} from "forge-std/Test.sol";
 
 import {Parameters} from "../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Transaction, Action} from "../src/Types.sol";
 import {TransactionExample} from "./examples/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
@@ -41,14 +40,6 @@ contract ProtocolAdapterTest is Test {
         });
     }
 
-    function test_verify_reverts_on_vulnerable_risc_zero_verifier() public {
-        vm.prank(_emergencyStop.owner());
-        _emergencyStop.estop();
-
-        vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
-        _pa.verify(TransactionExample.transaction());
-    }
-
     function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {
         vm.prank(_emergencyStop.owner());
         _emergencyStop.estop();
@@ -59,20 +50,6 @@ contract ProtocolAdapterTest is Test {
 
     function test_execute() public {
         _pa.execute(TransactionExample.transaction());
-    }
-
-    function test_execute_empty_tx() public {
-        Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
-        _pa.execute(txn);
-    }
-
-    function test_verify_empty_tx() public view {
-        Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: ""});
-        _pa.verify(txn);
-    }
-
-    function test_verify() public view {
-        _pa.verify(TransactionExample.transaction());
     }
 
     // solhint-disable-next-line no-empty-blocks

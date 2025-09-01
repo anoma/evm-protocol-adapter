@@ -41,12 +41,4 @@ contract NullifierSet is INullifierSet {
             revert PreExistingNullifier(nullifier);
         }
     }
-
-    /// @notice Checks if a nullifier does not exists already and reverts otherwise.
-    /// @param nullifier The nullifier to check existence for.
-    function _checkNullifierNonExistence(bytes32 nullifier) internal view {
-        if (_nullifierSet.contains(nullifier)) {
-            revert PreExistingNullifier(nullifier);
-        }
-    }
 }

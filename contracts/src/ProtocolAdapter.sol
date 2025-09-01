@@ -44,7 +44,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error ResourceCountMismatch(uint256 expected, uint256 actual);
-    error RootMismatch(bytes32 expected, bytes32 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
     error RiscZeroVerifierStopped();
 
@@ -75,77 +74,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant {
-        _verify(transaction);
-
         bytes32 newRoot = 0;
-
-        uint256 nActions = transaction.actions.length;
-        for (uint256 i = 0; i < nActions; ++i) {
-            Action calldata action = transaction.actions[i];
-
-            uint256 nResources = action.logicVerifierInputs.length;
-            for (uint256 j = 0; j < nResources; ++j) {
-                Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
-
-                if (input.appData.externalPayload.length != 0) {
-                    ForwarderCalldata memory call =
-                        abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
-                    _executeForwarderCall(call);
-                }
-            }
-
-            uint256 nCUs = action.complianceVerifierInputs.length;
-            for (uint256 k = 0; k < nCUs; ++k) {
-                Compliance.Instance calldata instance = action.complianceVerifierInputs[k].instance;
-                _addNullifier(instance.consumed.nullifier);
-                newRoot = _addCommitment(instance.created.commitment);
-            }
-        }
-
-        if (newRoot != 0) {
-            // Store the latest root
-            _storeRoot(newRoot);
-        }
-
-        // slither-disable-next-line reentrancy-benign
-        emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
-    }
-    // slither-disable-end reentrancy-no-eth
-
-    /// @inheritdoc IProtocolAdapter
-    function verify(Transaction calldata transaction) external view override {
-        _verify(transaction);
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function isEmergencyStopped() public view override returns (bool isStopped) {
-        isStopped = RiscZeroVerifierEmergencyStop(
-            address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))
-        ).paused();
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function getRiscZeroVerifierSelector() public pure virtual override returns (bytes4 verifierSelector) {
-        verifierSelector = 0xbb001d44;
-    }
-
-    /// @notice Executes a call to a forwarder contracts.
-    /// @param call The calldata to conduct the forwarder call.
-    function _executeForwarderCall(ForwarderCalldata memory call) internal {
-        // slither-disable-next-line calls-loop
-        bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
-
-        if (keccak256(output) != keccak256(call.output)) {
-            revert ForwarderCallOutputMismatch({expected: call.output, actual: output});
-        }
-
-        // solhint-disable-next-line max-line-length
-        emit ForwarderCallExecuted({untrustedForwarder: call.untrustedForwarder, input: call.input, output: call.output});
-    }
-
-    /// @notice An internal function to verify a transaction.
-    /// @param transaction The transaction to verify.
-    function _verify(Transaction calldata transaction) internal view {
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
         uint256 nActions = transaction.actions.length;
@@ -174,20 +103,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             }
 
             // Compute the action tree root
-            bytes32 actionTreeRoot;
-            {
-                bytes32[] memory actionTreeTags = new bytes32[](nResources);
-
-                // Prepare the action tree tags
-                for (uint256 j = 0; j < nCUs; ++j) {
-                    Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-
-                    actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
-                    actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
-                }
-
-                actionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
-            }
+            bytes32 actionTreeRoot = _computeActionTreeRoot(action, nCUs);
 
             for (uint256 j = 0; j < nCUs; ++j) {
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
@@ -195,65 +111,34 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
                 bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
-                // Check the compliance unit
-                {
-                    // Check that the root exists.
-                    _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
+                // Process the tags and provided root against global state
+                newRoot =
+                    _processState({nf: nf, cm: cm, root: complianceVerifierInput.instance.consumed.commitmentTreeRoot});
 
-                    // Check that the nullifier does not already exist in the transaction.
-                    tags.checkNullifierNonExistence(nf);
+                // Verify the proof against a hardcoded compliance circuit
+                _verifyComplianceProof(complianceVerifierInput);
 
-                    // Check that the nullifier does not exists in the nullifier set.
-                    _checkNullifierNonExistence(nf);
+                // Check the consumed resource
+                // slither-disable-next-line reentrancy-benign
+                _processResourceLogicContext({
+                    input: action.logicVerifierInputs.lookup(nf),
+                    logicRef: complianceVerifierInput.instance.consumed.logicRef,
+                    actionTreeRoot: actionTreeRoot,
+                    consumed: true
+                });
 
-                    // Verify the compliance proof
-                    _verifyComplianceProof(complianceVerifierInput);
+                // Check the created resource
+                // slither-disable-next-line reentrancy-benign
+                _processResourceLogicContext({
+                    input: action.logicVerifierInputs.lookup(cm),
+                    logicRef: complianceVerifierInput.instance.created.logicRef,
+                    actionTreeRoot: actionTreeRoot,
+                    consumed: false
+                });
 
-                    tags[resCounter++] = nf;
-                    tags[resCounter++] = cm;
-                }
-
-                // Check consumed resource
-                {
-                    Logic.VerifierInput calldata consumedInput = action.logicVerifierInputs.lookup(nf);
-
-                    // Check logic ref consistency
-                    if (complianceVerifierInput.instance.consumed.logicRef != consumedInput.verifyingKey) {
-                        revert LogicRefMismatch({
-                            expected: consumedInput.verifyingKey,
-                            actual: complianceVerifierInput.instance.consumed.logicRef
-                        });
-                    }
-
-                    // Check the external call payload if present
-                    if (consumedInput.appData.externalPayload.length != 0) {
-                        _verifyForwarderCall(consumedInput, true);
-                    }
-
-                    // Check the logic proof
-                    _verifyLogicProof({input: consumedInput, root: actionTreeRoot, consumed: true});
-                }
-
-                // Check created resource
-                {
-                    Logic.VerifierInput calldata createdInput = action.logicVerifierInputs.lookup(cm);
-
-                    // Check logic ref consistency
-                    if (complianceVerifierInput.instance.created.logicRef != createdInput.verifyingKey) {
-                        revert LogicRefMismatch({
-                            expected: createdInput.verifyingKey,
-                            actual: complianceVerifierInput.instance.created.logicRef
-                        });
-                    }
-
-                    // Check the external call payload if present
-                    if (createdInput.appData.externalPayload.length != 0) {
-                        _verifyForwarderCall(createdInput, false);
-                    }
-
-                    // Check the logic proof
-                    _verifyLogicProof({input: createdInput, root: actionTreeRoot, consumed: false});
-                }
+                // Populate the tags
+                tags[resCounter++] = nf;
+                tags[resCounter++] = cm;
 
                 // Compute transaction delta
                 transactionDelta = _addUnitDelta({
@@ -266,15 +151,124 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             }
         }
 
-        // Check whether the transaction is empty
-        if (nActions != 0) {
+        // Check if the transaction induced a state change and the state root has changed
+        if (newRoot != bytes32(0)) {
             // Check the delta proof
-
             _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
+
+            // Store the final root
+            _storeRoot(newRoot);
+        }
+
+        // Emit the event containing the transaction and new root
+        emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
+    }
+    // slither-disable-end reentrancy-no-eth
+
+    /// @inheritdoc IProtocolAdapter
+    function isEmergencyStopped() public view override returns (bool isStopped) {
+        isStopped = RiscZeroVerifierEmergencyStop(
+            address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))
+        ).paused();
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function getRiscZeroVerifierSelector() public pure virtual override returns (bytes4 verifierSelector) {
+        verifierSelector = 0xbb001d44;
+    }
+
+    /// @notice Executes a call to a forwarder contracts.
+    /// @param call The calldata to conduct the forwarder call.
+    function _executeForwarderCall(ForwarderCalldata memory call) internal {
+        // slither-disable-next-line calls-loop
+        bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
+
+        if (keccak256(output) != keccak256(call.output)) {
+            revert ForwarderCallOutputMismatch({expected: call.output, actual: output});
+        }
+
+        // solhint-disable-next-line max-line-length
+        emit ForwarderCallExecuted({untrustedForwarder: call.untrustedForwarder, input: call.input, output: call.output});
+    }
+
+    /// @notice The function processing the state checks and updates
+    /// @param nf The nullifier of a compliance unit
+    /// @param cm The commitment of a compliance unit
+    /// @param root The current commitment tree root
+    /// @return newRoot The root after potentially adding the commitment in the compliance unit
+    function _processState(bytes32 nf, bytes32 cm, bytes32 root) internal returns (bytes32 newRoot) {
+        // Check root in the compliance unit is an actually existing root
+        _checkRootPreExistence(root);
+        // Nullifier addition reverts if it was present in the set before
+        _addNullifier(nf);
+        // Compute the root after adding the commitment
+        newRoot = _addCommitment(cm);
+    }
+
+    /// @notice Processes a resource by
+    ///  * checking the verifying key correspondence,
+    ///  * checking the resource logic proof, and
+    ///  * processing forward calls.
+    /// @param input The logic verifier input for processing.
+    /// @param logicRef The logic ref approved by compliance proof.
+    /// @param actionTreeRoot The root of the tree containing all action tags for the instance.
+    /// @param consumed Flag for indicating whether the resource is consumed.
+    function _processResourceLogicContext(
+        Logic.VerifierInput calldata input,
+        bytes32 logicRef,
+        bytes32 actionTreeRoot,
+        bool consumed
+    ) internal {
+        // Check verifying key correspondence
+        if (logicRef != input.verifyingKey) {
+            revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
+        }
+
+        // Check the logic proof
+        _verifyLogicProof({input: input, root: actionTreeRoot, consumed: consumed});
+
+        // The PA checks whether a call is to be made by looking inside
+        // the externalPayload and trying to process the first entry
+        if (input.appData.externalPayload.length != 0) {
+            _processForwarderCall(input, consumed);
         }
     }
 
-    /// @notice An internal function verifying a RISC0 compliance proof.
+    /// @notice Processes a forwarder call by verifying and executing forwarder call.
+    /// @param input The logic verifier input of a resource making the call.
+    /// @param consumed A flag indicating whether the resource is consumed or not.
+    function _processForwarderCall(Logic.VerifierInput calldata input, bool consumed) internal {
+        // NOTE: The PA expects the forwarder calldata to be present at the head of the external payload.
+        // Only the first externalPayload will be verified and executed. // TODO Revisit this design decision.
+        ForwarderCalldata memory call = abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
+
+        // slither-disable-next-line calls-loop
+        bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
+
+        _verifyForwarderCall(input.appData.resourcePayload, input.tag, fetchedKind, consumed);
+
+        _executeForwarderCall(call);
+    }
+
+    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
+    /// @param action The action whose root we compute.
+    /// @param nCUs The number of compliance units in the action.
+    /// @return root The root of the corresponding tree.
+    function _computeActionTreeRoot(Action calldata action, uint256 nCUs) internal view returns (bytes32 root) {
+        bytes32[] memory actionTreeTags = new bytes32[](nCUs * 2);
+
+        // The order in which the tags are added to the tree are provided by the compliance units
+        for (uint256 j = 0; j < nCUs; ++j) {
+            Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
+
+            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
+            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
+        }
+
+        root = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
+    }
+
+    /// @notice Verifies a RISC0 compliance proof.
     /// @param input The verifier input of the compliance proof.
     /// @dev This function is virtual to allow for it to be overridden, e.g., to use mock proofs with a mock verifier.
     function _verifyComplianceProof(Compliance.VerifierInput calldata input) internal view virtual {
@@ -286,7 +280,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         });
     }
 
-    /// @notice An internal function verifying a RISC0 logic proof.
+    /// @notice Verifies a RISC0 logic proof.
     /// @param input The verifier input of the logic proof.
     /// @param root The root of the action tree containing all tags of an action.
     /// @param consumed Bool indicating whether the tag is a commitment or a nullifier.
@@ -300,40 +294,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         });
     }
 
-    /// @notice Verifies the forwarder calls of a given action.
-    /// @param input The input to verify the forwarder calls for.
-    /// @param consumed The bool indicating whether the tag is commitment of nullifier
-    function _verifyForwarderCall(Logic.VerifierInput calldata input, bool consumed) internal view {
-        // The PA expects the forwarder calldata to be present at the head of the external payload
-        ForwarderCalldata memory call = abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
-        // The plaintext should be stored at the head of resource payload and be decodable
-        Resource memory resource = abi.decode(input.appData.resourcePayload[0].blob, (Resource));
-        // slither-disable-next-line calls-loop
-        bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
-
-        // Check kind correspondence
-        if (resource.kind() != fetchedKind) {
-            revert CalldataCarrierKindMismatch({expected: fetchedKind, actual: resource.kind()});
-        }
-
-        // Check tag correspondence
-        if (!consumed) {
-            // If created, compute the commitment of a resource and check correspondence to tag
-            if (resource.commitment() != input.tag) {
-                revert CalldataCarrierCommitmentMismatch({actual: input.tag, expected: resource.commitment()});
-            }
-        } else if (
-            // If consumed, we expect the nullifier key to be present in the resource payload as well
-            resource.nullifier(bytes32(input.appData.resourcePayload[1].blob)) != input.tag
-        ) {
-            revert CalldataCarrierNullifierMismatch({
-                actual: input.tag,
-                expected: resource.nullifier(bytes32(input.appData.resourcePayload[1].blob))
-            });
-        }
-    }
-
-    /// @notice An internal function verifying a delta proof.
+    /// @notice Verifies a delta proof.
     /// @param proof The delta proof.
     /// @param transactionDelta The transaction delta.
     /// @param tags The tags being part of the transaction in the order of appearance in the compliance units.
@@ -344,6 +305,40 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         virtual
     {
         Delta.verify({proof: proof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
+    }
+
+    /// @notice Verifies the forwarder calls of a given action.
+    /// @param payload The payload of the resource making the call.
+    /// @param tag The tag of the resource making the call.
+    /// @param kind The kind requested by the forwarder contract.
+    /// @param consumed The flag indicating whether the resource is created or consumed
+    function _verifyForwarderCall(Logic.ExpirableBlob[] calldata payload, bytes32 tag, bytes32 kind, bool consumed)
+        internal
+        pure
+    {
+        // The plaintext should be stored at the head of resource payload and be decodable
+        Resource memory resource = abi.decode(payload[0].blob, (Resource));
+
+        // Check kind correspondence
+        if (resource.kind() != kind) {
+            revert CalldataCarrierKindMismatch({expected: kind, actual: resource.kind()});
+        }
+
+        // Check tag correspondence
+        if (!consumed) {
+            // If created, compute the commitment of a resource and check correspondence to tag
+            if (resource.commitment() != tag) {
+                revert CalldataCarrierCommitmentMismatch({actual: tag, expected: resource.commitment()});
+            }
+        } else if (
+            // If consumed, we expect the nullifier key to be present in the resource payload as well
+            resource.nullifier(bytes32(payload[1].blob)) != tag
+        ) {
+            revert CalldataCarrierNullifierMismatch({
+                actual: tag,
+                expected: resource.nullifier(bytes32(payload[1].blob))
+            });
+        }
     }
 
     /// @notice An internal function adding a unit delta to the transactionDelta.
