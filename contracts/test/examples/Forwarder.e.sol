@@ -11,8 +11,7 @@ contract ForwarderExample is ForwarderBase {
 
     address public immutable TARGET;
 
-    event CallForwarded(bytes input, bytes output);
-    event EmergencyCallForwarded(bytes input, bytes output);
+    event CallForwarded(bytes32 carrierTag, bytes input, bytes output);
 
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef)
         ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
@@ -20,9 +19,12 @@ contract ForwarderExample is ForwarderBase {
         TARGET = address(new ForwarderTargetExample());
     }
 
-    function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
+    function _forwardCall(bytes32 carrierTag, bytes calldata input) internal override returns (bytes memory output) {
+        {
+            carrierTag;
+        }
         output = TARGET.functionCall(input);
 
-        emit CallForwarded({input: input, output: output});
+        emit CallForwarded({carrierTag: carrierTag, input: input, output: output});
     }
 }

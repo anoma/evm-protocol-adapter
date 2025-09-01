@@ -52,6 +52,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     error CalldataCarrierCommitmentMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierNullifierMismatch(bytes32 expected, bytes32 actual);
 
+    error CalldataTagCommitmentMismatch(bytes32 expected, bytes32 actual);
+    error CalldataTagNullifierMismatch(bytes32 expected, bytes32 actual);
+
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
     /// @param commitmentTreeDepth The depth of the commitment tree of the commitment accumulator.
@@ -133,14 +136,20 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param call The calldata to conduct the forwarder call.
     function _executeForwarderCall(ForwarderCalldata memory call) internal {
         // slither-disable-next-line calls-loop
-        bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
+        bytes memory output =
+            IForwarder(call.untrustedForwarder).forwardCall({input: call.input, carrierTag: call.carrierTag});
 
         if (keccak256(output) != keccak256(call.output)) {
             revert ForwarderCallOutputMismatch({expected: call.output, actual: output});
         }
 
         // solhint-disable-next-line max-line-length
-        emit ForwarderCallExecuted({untrustedForwarder: call.untrustedForwarder, input: call.input, output: call.output});
+        emit ForwarderCallExecuted({
+            carrierTag: call.carrierTag,
+            untrustedForwarder: call.untrustedForwarder,
+            input: call.input,
+            output: call.output
+        });
     }
 
     /// @notice An internal function to verify a transaction.
@@ -321,14 +330,25 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             if (resource.commitment() != input.tag) {
                 revert CalldataCarrierCommitmentMismatch({actual: input.tag, expected: resource.commitment()});
             }
-        } else if (
+
+            if (resource.commitment() != call.carrierTag) {
+                revert CalldataTagCommitmentMismatch({actual: call.carrierTag, expected: resource.commitment()});
+            }
+        } else {
             // If consumed, we expect the nullifier key to be present in the resource payload as well
-            resource.nullifier(bytes32(input.appData.resourcePayload[1].blob)) != input.tag
-        ) {
-            revert CalldataCarrierNullifierMismatch({
-                actual: input.tag,
-                expected: resource.nullifier(bytes32(input.appData.resourcePayload[1].blob))
-            });
+            if (resource.nullifier(bytes32(input.appData.resourcePayload[1].blob)) != input.tag) {
+                revert CalldataCarrierNullifierMismatch({
+                    actual: input.tag,
+                    expected: resource.nullifier(bytes32(input.appData.resourcePayload[1].blob))
+                });
+            }
+
+            if (resource.nullifier(bytes32(input.appData.resourcePayload[1].blob)) != input.tag) {
+                revert CalldataTagNullifierMismatch({
+                    actual: call.carrierTag,
+                    expected: resource.nullifier(bytes32(input.appData.resourcePayload[1].blob))
+                });
+            }
         }
     }
 

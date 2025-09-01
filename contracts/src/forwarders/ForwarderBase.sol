@@ -35,10 +35,10 @@ abstract contract ForwarderBase is IForwarder {
     }
 
     /// @inheritdoc IForwarder
-    function forwardCall(bytes calldata input) external returns (bytes memory output) {
+    function forwardCall(bytes32 carrierTag, bytes calldata input) external returns (bytes memory output) {
         _checkCaller(address(_PROTOCOL_ADAPTER));
 
-        output = _forwardCall(input);
+        output = _forwardCall({carrierTag: carrierTag, input: input});
     }
 
     /// @inheritdoc IForwarder
@@ -47,9 +47,10 @@ abstract contract ForwarderBase is IForwarder {
     }
 
     /// @notice Forwards calls.
+    /// @param carrierTag The tag of the carrier resource.
     /// @param input The `bytes` encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
-    function _forwardCall(bytes calldata input) internal virtual returns (bytes memory output);
+    function _forwardCall(bytes32 carrierTag, bytes calldata input) internal virtual returns (bytes memory output);
 
     /// @notice Checks that an expected caller is calling the function and reverts otherwise.
     /// @param expected The expected caller.

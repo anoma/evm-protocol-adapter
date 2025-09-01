@@ -12,8 +12,8 @@ contract EmergencyMigratableForwarderExample is EmergencyMigratableForwarderBase
 
     address public immutable TARGET;
 
-    event CallForwarded(bytes input, bytes output);
-    event EmergencyCallForwarded(bytes input, bytes output);
+    event CallForwarded(bytes32 carrierTag, bytes input, bytes output);
+    event EmergencyCallForwarded(bytes32 carrierTag, bytes input, bytes output);
 
     constructor(address protocolAdapter, address emergencyCommittee, bytes32 calldataCarrierLogicRef)
         EmergencyMigratableForwarderBase(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee)
@@ -21,15 +21,19 @@ contract EmergencyMigratableForwarderExample is EmergencyMigratableForwarderBase
         TARGET = address(new ForwarderTargetExample());
     }
 
-    function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
+    function _forwardCall(bytes32 carrierTag, bytes calldata input) internal override returns (bytes memory output) {
         output = TARGET.functionCall(input);
 
-        emit CallForwarded({input: input, output: output});
+        emit CallForwarded({carrierTag: carrierTag, input: input, output: output});
     }
 
-    function _forwardEmergencyCall(bytes calldata input) internal override returns (bytes memory output) {
+    function _forwardEmergencyCall(bytes32 carrierTag, bytes calldata input)
+        internal
+        override
+        returns (bytes memory output)
+    {
         output = TARGET.functionCall(input);
 
-        emit EmergencyCallForwarded({input: input, output: output});
+        emit EmergencyCallForwarded({carrierTag: carrierTag, input: input, output: output});
     }
 }

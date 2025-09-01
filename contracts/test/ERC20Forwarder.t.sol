@@ -28,6 +28,8 @@ contract ERC20ForwarderTest is Test {
     uint256 internal constant _ALICE_PRIVATE_KEY = 0xA11CE;
     bytes internal constant _EXPECTED_OUTPUT = abi.encode(true);
 
+    bytes32 internal constant _DEFAULT_CARRIER_TAG = bytes32(type(uint256).max);
+
     address internal _pa;
     address internal _alice;
     IPermit2 internal _permit2;
@@ -76,7 +78,7 @@ contract ERC20ForwarderTest is Test {
 
         bytes memory input = _defaultInput({value: value});
         vm.prank(_pa);
-        bytes memory output = _fwd.forwardCall(input);
+        bytes memory output = _fwd.forwardCall({carrierTag: _DEFAULT_CARRIER_TAG, input: input});
 
         assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
         assertEq(_erc20.balanceOf(_alice), startBalanceAlice - value);
@@ -88,7 +90,7 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_pa);
 
         vm.expectRevert("TRANSFER_FROM_FAILED", address(_erc20));
-        _fwd.forwardCall(input);
+        _fwd.forwardCall({carrierTag: _DEFAULT_CARRIER_TAG, input: input});
     }
 
     function _defaultInput(uint256 value) internal view returns (bytes memory input) {
@@ -100,38 +102,53 @@ contract ERC20ForwarderTest is Test {
             deadline: Time.timestamp() + 5 minutes
         });
 
-        bytes memory signature =
-            _getPermitTransferSignature({permit: permit, privateKey: _ALICE_PRIVATE_KEY, spender: address(_fwd)});
+        bytes memory signature = _getPermitWitnessTransferSignature({
+            permit: permit,
+            privateKey: _ALICE_PRIVATE_KEY,
+            spender: address(_fwd),
+            carrierTag: _DEFAULT_CARRIER_TAG
+        });
 
         input = abi.encode(_erc20.transferFrom.selector, from, value, permit, signature);
     }
 
-    function _getPermitTransferSignature(
+    function _getPermitWitnessTransferSignature(
         ISignatureTransfer.PermitTransferFrom memory permit,
         address spender,
-        uint256 privateKey
+        uint256 privateKey,
+        bytes32 carrierTag
     ) internal view returns (bytes memory signature) {
-        bytes32 digest = _computePermitTransferFromDigest({permit: permit, spender: spender});
+        bytes32 digest =
+            _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: carrierTag});
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
-        signature = bytes.concat(r, s, bytes1(v));
+        return abi.encodePacked(r, s, v);
     }
 
-    function _computePermitTransferFromDigest(ISignatureTransfer.PermitTransferFrom memory permit, address spender)
-        internal
-        view
-        returns (bytes32 digest)
-    {
-        bytes32 tokenPermissionsHash = keccak256(
-            abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted.token, permit.permitted.amount)
-        );
+    function _computePermitWitnessTransferFromDigest(
+        ISignatureTransfer.PermitTransferFrom memory permit,
+        address spender,
+        bytes32 witness
+    ) internal view returns (bytes32 digest) {
+        // The type string for the witness (bytes32)
+        string memory witnessTypeString = "bytes32 witness";
 
+        // Compute the PermitHash struct hash with witness
         bytes32 structHash = keccak256(
             abi.encode(
-                PermitHash._PERMIT_TRANSFER_FROM_TYPEHASH, tokenPermissionsHash, spender, permit.nonce, permit.deadline
+                keccak256(abi.encodePacked(PermitHash._PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB, witnessTypeString)),
+                keccak256(
+                    abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted.token, permit.permitted.amount)
+                ),
+                spender,
+                permit.nonce,
+                permit.deadline,
+                witness // witness
             )
         );
 
-        digest = keccak256(abi.encodePacked("\x19\x01", _permit2.DOMAIN_SEPARATOR(), structHash));
+        // Compute the EIP-712 digest
+        bytes32 domainSeparator = _permit2.DOMAIN_SEPARATOR();
+        digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
     }
 }

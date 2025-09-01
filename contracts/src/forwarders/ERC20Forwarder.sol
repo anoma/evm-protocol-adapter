@@ -47,9 +47,10 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     }
 
     /// @notice Forwards calls.
+    /// @param carrierTag The tag of the carrier resource.
     /// @param input The `bytes` encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
-    function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
+    function _forwardCall(bytes32 carrierTag, bytes calldata input) internal override returns (bytes memory output) {
         bytes4 selector = bytes4(input[:4]);
 
         if (selector == IERC20.transferFrom.selector) {
@@ -73,10 +74,12 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                 }
             }
 
-            _PERMIT2.permitTransferFrom({
+            _PERMIT2.permitWitnessTransferFrom({
                 permit: permit,
                 transferDetails: ISignatureTransfer.SignatureTransferDetails({to: to, requestedAmount: value}),
                 owner: from,
+                witness: carrierTag,
+                witnessTypeString: "bytes32 witness",
                 signature: signature
             });
         } else if (selector == IERC20.transfer.selector) {
@@ -92,9 +95,14 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     }
 
     /// @notice Forwards emergency calls.
+    /// @param carrierTag The tag of the carrier resource.
     /// @param input The `bytes`  encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
-    function _forwardEmergencyCall(bytes calldata input) internal override returns (bytes memory output) {
-        output = _forwardCall(input);
+    function _forwardEmergencyCall(bytes32 carrierTag, bytes calldata input)
+        internal
+        override
+        returns (bytes memory output)
+    {
+        output = _forwardCall({carrierTag: carrierTag, input: input});
     }
 }

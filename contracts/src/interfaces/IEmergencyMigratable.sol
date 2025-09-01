@@ -7,9 +7,10 @@ pragma solidity ^0.8.30;
 interface IEmergencyMigratable {
     /// @notice Forwards an external call to read or write EVM state. This function can only be called by the address
     /// set by emergency committee if the RISC Zero emergency stop is active.
-    /// @param input The `bytes` encoded calldata (including the `bytes4` function selector).
+    /// @param carrierTag The tag of the carrier resource.
+    /// @param input The `bytes` encoded calldata.
     /// @return output The `bytes` encoded output of the call.
-    function forwardEmergencyCall(bytes memory input) external returns (bytes memory output);
+    function forwardEmergencyCall(bytes32 carrierTag, bytes memory input) external returns (bytes memory output);
 
     /// @notice Sets the emergency caller. This function can only be called by the address
     /// set by emergency committee if the RISC Zero emergency stop is active.

@@ -68,14 +68,8 @@ contract ProtocolAdapterMockTest is Test {
         bytes32 labelRef = sha256(abi.encode(address(fwd)));
 
         Transaction memory txn;
+        bytes32 carrierTag;
         {
-            ForwarderCalldata memory call =
-                ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
-
-            Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
-            externalBlobs[0] =
-                Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
-
             bytes memory zero = new bytes(32);
 
             Logic.AppData memory consumedAppData = Logic.AppData({
@@ -92,6 +86,27 @@ contract ProtocolAdapterMockTest is Test {
                 appData: consumedAppData
             });
 
+            //
+            Resource memory createdResource = TxGen.mockResource({
+                nonce: bytes32(uint256(nonce) + 1),
+                logicRef: logicRef,
+                labelRef: labelRef,
+                quantity: 1
+            });
+
+            carrierTag = createdResource.commitment();
+
+            ForwarderCalldata memory call = ForwarderCalldata({
+                untrustedForwarder: address(fwd),
+                carrierTag: carrierTag,
+                input: INPUT,
+                output: EXPECTED_OUTPUT
+            });
+
+            Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
+            externalBlobs[0] =
+                Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
+
             Logic.AppData memory createdAppData = Logic.AppData({
                 discoveryPayload: new Logic.ExpirableBlob[](0),
                 resourcePayload: new Logic.ExpirableBlob[](1),
@@ -106,15 +121,7 @@ contract ProtocolAdapterMockTest is Test {
             createdAppData.resourcePayload = resourceBlobs;
 
             TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
-            created[0] = TxGen.ResourceAndAppData({
-                resource: TxGen.mockResource({
-                    nonce: bytes32(uint256(nonce) + 1),
-                    logicRef: logicRef,
-                    labelRef: labelRef,
-                    quantity: 1
-                }),
-                appData: createdAppData
-            });
+            created[0] = TxGen.ResourceAndAppData({resource: createdResource, appData: createdAppData});
 
             created[0].appData.resourcePayload[0].blob = abi.encode(created[0].resource);
 
@@ -125,6 +132,7 @@ contract ProtocolAdapterMockTest is Test {
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
+            carrierTag: carrierTag,
             untrustedForwarder: address(fwd),
             input: INPUT,
             output: EXPECTED_OUTPUT
@@ -141,9 +149,19 @@ contract ProtocolAdapterMockTest is Test {
         bytes32 labelRef = sha256(abi.encode(address(fwd)));
 
         Transaction memory txn;
+        bytes32 carrierTag;
         {
-            ForwarderCalldata memory call =
-                ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
+            Resource memory consumedResource =
+                TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1});
+
+            carrierTag = consumedResource.nullifier({nullifierKey: 0});
+
+            ForwarderCalldata memory call = ForwarderCalldata({
+                untrustedForwarder: address(fwd),
+                carrierTag: carrierTag,
+                input: INPUT,
+                output: EXPECTED_OUTPUT
+            });
 
             Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
             externalBlobs[0] =
@@ -167,10 +185,7 @@ contract ProtocolAdapterMockTest is Test {
             consumedAppData.externalPayload = externalBlobs;
             consumedAppData.resourcePayload = resourceBlobs;
 
-            consumed[0] = TxGen.ResourceAndAppData({
-                resource: TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
-                appData: consumedAppData
-            });
+            consumed[0] = TxGen.ResourceAndAppData({resource: consumedResource, appData: consumedAppData});
             consumed[0].appData.resourcePayload[0].blob = abi.encode(consumed[0].resource);
 
             Logic.AppData memory createdAppData = Logic.AppData({
@@ -198,6 +213,7 @@ contract ProtocolAdapterMockTest is Test {
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
+            carrierTag: carrierTag,
             untrustedForwarder: address(fwd),
             input: INPUT,
             output: EXPECTED_OUTPUT
@@ -298,8 +314,15 @@ contract ProtocolAdapterMockTest is Test {
 
         bytes32 labelRef = sha256(abi.encode(address(fwd)));
 
-        ForwarderCalldata memory call =
-            ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
+        Resource memory consumedResource =
+            TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1});
+
+        ForwarderCalldata memory call = ForwarderCalldata({
+            untrustedForwarder: address(fwd),
+            carrierTag: consumedResource.nullifier({nullifierKey: 0}),
+            input: INPUT,
+            output: EXPECTED_OUTPUT
+        });
 
         Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
         externalBlobs[0] =
@@ -316,10 +339,7 @@ contract ProtocolAdapterMockTest is Test {
 
         TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
 
-        consumed[0] = TxGen.ResourceAndAppData({
-            resource: TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
-            appData: consumedAppData
-        });
+        consumed[0] = TxGen.ResourceAndAppData({resource: consumedResource, appData: consumedAppData});
 
         Logic.AppData memory createdAppData = Logic.AppData({
             discoveryPayload: new Logic.ExpirableBlob[](0),
@@ -371,8 +391,15 @@ contract ProtocolAdapterMockTest is Test {
 
         bytes32 labelRef = sha256(abi.encode(address(fwd)));
 
-        ForwarderCalldata memory call =
-            ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
+        Resource memory consumedResource =
+            TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1});
+
+        ForwarderCalldata memory call = ForwarderCalldata({
+            untrustedForwarder: address(fwd),
+            carrierTag: consumedResource.nullifier({nullifierKey: 0}),
+            input: INPUT,
+            output: EXPECTED_OUTPUT
+        });
 
         Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
         externalBlobs[0] =
@@ -396,10 +423,8 @@ contract ProtocolAdapterMockTest is Test {
         consumedAppData.externalPayload = externalBlobs;
         consumedAppData.resourcePayload = resourceBlobs;
 
-        consumed[0] = TxGen.ResourceAndAppData({
-            resource: TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
-            appData: consumedAppData
-        });
+        consumed[0] = TxGen.ResourceAndAppData({resource: consumedResource, appData: consumedAppData});
+
         Resource memory fakeConsumed = TxGen.mockResource({
             nonce: bytes32(uint256(nonce) + 1),
             logicRef: logicRef,
@@ -449,8 +474,15 @@ contract ProtocolAdapterMockTest is Test {
 
         bytes32 labelRef = sha256(abi.encode(address(fwd)));
 
-        ForwarderCalldata memory call =
-            ForwarderCalldata({untrustedForwarder: address(fwd), input: INPUT, output: EXPECTED_OUTPUT});
+        Resource memory consumedResource =
+            TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1});
+
+        ForwarderCalldata memory call = ForwarderCalldata({
+            untrustedForwarder: address(fwd),
+            carrierTag: consumedResource.nullifier({nullifierKey: 0}),
+            input: INPUT,
+            output: EXPECTED_OUTPUT
+        });
 
         Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
         externalBlobs[0] =
@@ -474,10 +506,7 @@ contract ProtocolAdapterMockTest is Test {
         consumedAppData.externalPayload = externalBlobs;
         consumedAppData.resourcePayload = resourceBlobs;
 
-        consumed[0] = TxGen.ResourceAndAppData({
-            resource: TxGen.mockResource({nonce: nonce, logicRef: logicRef, labelRef: labelRef, quantity: 1}),
-            appData: consumedAppData
-        });
+        consumed[0] = TxGen.ResourceAndAppData({resource: consumedResource, appData: consumedAppData});
         consumed[0].appData.resourcePayload[0].blob = abi.encode(consumed[0].resource);
         // Encode a wrong nullifier key
         bytes memory nkey = hex"3f0000007f000000bf000000ff000000";
