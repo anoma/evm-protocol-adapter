@@ -44,7 +44,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error ResourceCountMismatch(uint256 expected, uint256 actual);
-    error RootMismatch(bytes32 expected, bytes32 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
     error RiscZeroVerifierStopped();
 
