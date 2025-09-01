@@ -102,7 +102,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 revert ResourceCountMismatch({expected: nResources, actual: nCUs});
             }
 
-            // Compute the root of the tree containing all tags of the action
+            // Compute the action tree root
             bytes32 actionTreeRoot = _computeActionTreeRoot(action, nCUs);
 
             for (uint256 j = 0; j < nCUs; ++j) {
