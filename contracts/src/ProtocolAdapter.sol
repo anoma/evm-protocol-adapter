@@ -256,24 +256,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         });
     }
 
-    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
-    /// @param action The action whose root we compute.
-    /// @param nCUs The number of compliance units in the action.
-    /// @return root The root of the corresponding tree.
-    function _computeActionTreeRoot(Action calldata action, uint256 nCUs) internal pure returns (bytes32 root) {
-        bytes32[] memory actionTreeTags = new bytes32[](nCUs * 2);
-
-        // The order in which the tags are added to the tree are provided by the compliance units
-        for (uint256 j = 0; j < nCUs; ++j) {
-            Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-
-            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
-            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
-        }
-
-        root = actionTreeTags.computeRoot();
-    }
-
     /// @notice Verifies a RISC0 logic proof.
     /// @param input The verifier input of the logic proof.
     /// @param root The root of the action tree containing all tags of an action.
@@ -333,6 +315,24 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 expected: resource.nullifier(bytes32(payload[1].blob))
             });
         }
+    }
+
+    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
+    /// @param action The action whose root we compute.
+    /// @param nCUs The number of compliance units in the action.
+    /// @return root The root of the corresponding tree.
+    function _computeActionTreeRoot(Action calldata action, uint256 nCUs) internal pure returns (bytes32 root) {
+        bytes32[] memory actionTreeTags = new bytes32[](nCUs * 2);
+
+        // The order in which the tags are added to the tree are provided by the compliance units
+        for (uint256 j = 0; j < nCUs; ++j) {
+            Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
+
+            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
+            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
+        }
+
+        root = actionTreeTags.computeRoot();
     }
 
     /// @notice An internal function adding a unit delta to the transactionDelta.

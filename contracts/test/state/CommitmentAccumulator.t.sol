@@ -115,18 +115,6 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         }
     }
 
-    function test_should_produce_an_invalid_root_for_a_non_existent_leaf_in_the_empty_tree() public view {
-        bytes32 root = _cmAcc.initialRoot();
-
-        bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
-        bytes32 invalidRoot = nonExistentCommitment;
-
-        bytes32 computedRoot =
-            MerkleTree.processProof({siblings: new bytes32[](0), directionBits: 0, leaf: nonExistentCommitment});
-        assertNotEq(computedRoot, root);
-        assertEq(computedRoot, invalidRoot);
-    }
-
     function test_should_produce_an_invalid_root_for_a_non_existent_leaf() public {
         bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
 
@@ -178,15 +166,6 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
             abi.encodeWithSelector(CommitmentAccumulator.NonExistingRoot.selector, nonExistingRoot), address(_cmAcc)
         );
         _cmAcc.verifyMerkleProof({root: nonExistingRoot, commitment: 0, path: new bytes32[](0), directionBits: 0});
-    }
-
-    function test_verifyMerkleProof_verifies_the_empty_tree_with_depth_zero() public view {
-        _cmAcc.verifyMerkleProof({
-            root: _cmAcc.latestRoot(),
-            commitment: SHA256.EMPTY_HASH,
-            path: new bytes32[](0),
-            directionBits: 0
-        });
     }
 
     function test_verifyMerkleProof_reverts_on_non_existent_commitment() public {
@@ -244,5 +223,26 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
             abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, invalidRoot), address(_cmAcc)
         );
         _cmAcc.verifyMerkleProof({root: newRoot, commitment: commitment, path: wrongPath, directionBits: 0});
+    }
+
+    function test_should_produce_an_invalid_root_for_a_non_existent_leaf_in_the_empty_tree() public view {
+        bytes32 root = _cmAcc.initialRoot();
+
+        bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
+        bytes32 invalidRoot = nonExistentCommitment;
+
+        bytes32 computedRoot =
+            MerkleTree.processProof({siblings: new bytes32[](0), directionBits: 0, leaf: nonExistentCommitment});
+        assertNotEq(computedRoot, root);
+        assertEq(computedRoot, invalidRoot);
+    }
+
+    function test_verifyMerkleProof_verifies_the_empty_tree_with_depth_zero() public view {
+        _cmAcc.verifyMerkleProof({
+            root: _cmAcc.latestRoot(),
+            commitment: SHA256.EMPTY_HASH,
+            path: new bytes32[](0),
+            directionBits: 0
+        });
     }
 }

@@ -160,6 +160,9 @@ library MerkleTree {
         count = self._nextLeafIndex;
     }
 
+    /// @notice Calculates the capacity of the tree.
+    /// @param self The tree data structure.
+    /// @return treeCapacity The computed tree capacity.
     function capacity(Tree storage self) internal view returns (uint256 treeCapacity) {
         treeCapacity = 1 << depth(self);
     }
@@ -245,7 +248,7 @@ library MerkleTree {
 
     /// @notice Computes the minimal required tree depth for a number of leaves.
     /// @param leavesCount The number of leaves.
-    /// @param treeDepth The minimal required tree depth.
+    /// @return treeDepth The minimal required tree depth.
     function computeMinimalTreeDepth(uint256 leavesCount) internal pure returns (uint8 treeDepth) {
         uint256 treeCapacity = 1;
         treeDepth = 0;
