@@ -136,6 +136,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     consumed: false
                 });
 
+                // Populate the tags
                 tags[resCounter++] = nf;
                 tags[resCounter++] = cm;
 
