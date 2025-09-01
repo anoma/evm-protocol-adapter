@@ -154,15 +154,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 }
             }
 
-            // Check that the transaction is balanced
-            if (nActions != 0) {
+            // Check if the transaction induced a state change and the state root has changed
+            if (newRoot != bytes32(0)) {
                 // Check the delta proof
                 _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
-                if (newRoot != bytes32(0)) {
-                    // Store the final root
-                    _storeRoot(newRoot);
-                }
+                // Store the final root
+                _storeRoot(newRoot);
             }
 
             // Emit the event containing the transaction and new root
