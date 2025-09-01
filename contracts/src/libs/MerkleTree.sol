@@ -243,7 +243,7 @@ library MerkleTree {
     /// @return root The computed root.
     /// @dev This method should only be used for trees with low depth.
     function computeRoot(bytes32[] memory leaves) internal pure returns (bytes32 root) {
-        root = MerkleTree.computeRoot(leaves, computeMinimalTreeDepth(leaves.length));
+        root = MerkleTree.computeRoot({leaves: leaves, treeDepth: computeMinimalTreeDepth(leaves.length)});
     }
 
     /// @notice Computes the minimal required tree depth for a number of leaves.

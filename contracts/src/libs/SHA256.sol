@@ -8,7 +8,7 @@ pragma solidity ^0.8.30;
 library SHA256 {
     /// @notice The hash representing the empty leaf that is not expected to be part of the tree.
     /// @dev Obtained from `sha256("EMPTY")` (`0xcc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06`).
-    bytes32 public constant EMPTY_HASH = bytes32(type(uint256).max);
+    bytes32 public constant EMPTY_HASH = 0xcc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06;
 
     /// @notice Hashes a single `bytes32` value.
     /// @param a The value to hash.
