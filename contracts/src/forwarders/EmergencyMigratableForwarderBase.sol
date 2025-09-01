@@ -38,7 +38,10 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
     }
 
     /// @inheritdoc IEmergencyMigratable
-    function forwardEmergencyCall(bytes32 carrierTag, bytes calldata input) external returns (bytes memory output) {
+    function forwardEmergencyCall(bytes32 actionTreeRoot, bytes calldata input)
+        external
+        returns (bytes memory output)
+    {
         if (_emergencyCaller == address(0)) {
             revert EmergencyCallerNotSet();
         }
@@ -47,7 +50,7 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
 
         _checkEmergencyStopped();
 
-        output = _forwardEmergencyCall({carrierTag: carrierTag, input: input});
+        output = _forwardEmergencyCall({actionTreeRoot: actionTreeRoot, input: input});
     }
 
     /// @inheritdoc IEmergencyMigratable
@@ -73,10 +76,10 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
     }
 
     /// @notice Forwards emergency calls.
-    /// @param carrierTag The tag of the carrier resource.
+    /// @param actionTreeRoot The tag of the carrier resource.
     /// @param input The `bytes`  encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
-    function _forwardEmergencyCall(bytes32 carrierTag, bytes calldata input)
+    function _forwardEmergencyCall(bytes32 actionTreeRoot, bytes calldata input)
         internal
         virtual
         returns (bytes memory output);

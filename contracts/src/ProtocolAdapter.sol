@@ -84,21 +84,29 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             Action calldata action = transaction.actions[i];
 
             uint256 nResources = action.logicVerifierInputs.length;
+
+            bytes32[] memory actionTreeTags = new bytes32[](nResources);
+
+            uint256 nCUs = action.complianceVerifierInputs.length;
+            for (uint256 j = 0; j < nCUs; ++j) {
+                Compliance.Instance calldata instance = action.complianceVerifierInputs[j].instance;
+                _addNullifier(instance.consumed.nullifier);
+                newRoot = _addCommitment(instance.created.commitment);
+
+                actionTreeTags[2 * j] = instance.consumed.nullifier;
+                actionTreeTags[(2 * j) + 1] = instance.created.commitment;
+            }
+
+            bytes32 actionTreeRoot = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
+
             for (uint256 j = 0; j < nResources; ++j) {
                 Logic.VerifierInput calldata input = action.logicVerifierInputs[j];
 
                 if (input.appData.externalPayload.length != 0) {
                     ForwarderCalldata memory call =
                         abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
-                    _executeForwarderCall({carrierTag: input.tag, call: call});
+                    _executeForwarderCall({actionTreeRoot: actionTreeRoot, call: call});
                 }
-            }
-
-            uint256 nCUs = action.complianceVerifierInputs.length;
-            for (uint256 k = 0; k < nCUs; ++k) {
-                Compliance.Instance calldata instance = action.complianceVerifierInputs[k].instance;
-                _addNullifier(instance.consumed.nullifier);
-                newRoot = _addCommitment(instance.created.commitment);
             }
         }
 
@@ -130,12 +138,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     }
 
     /// @notice Executes a call to a forwarder contracts.
-    /// @param carrierTag The tag of the carrier resource.
+    /// @param actionTreeRoot The tag of the carrier resource.
     /// @param call The calldata to conduct the forwarder call.
-    function _executeForwarderCall(bytes32 carrierTag, ForwarderCalldata memory call) internal {
+    function _executeForwarderCall(bytes32 actionTreeRoot, ForwarderCalldata memory call) internal {
         // slither-disable-next-line calls-loop
         bytes memory output =
-            IForwarder(call.untrustedForwarder).forwardCall({carrierTag: carrierTag, input: call.input});
+            IForwarder(call.untrustedForwarder).forwardCall({actionTreeRoot: actionTreeRoot, input: call.input});
 
         if (keccak256(output) != keccak256(call.output)) {
             revert ForwarderCallOutputMismatch({expected: call.output, actual: output});
@@ -143,7 +151,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
         // solhint-disable-next-line max-line-length
         emit ForwarderCallExecuted({
-            carrierTag: carrierTag,
+            actionTreeRoot: actionTreeRoot,
             untrustedForwarder: call.untrustedForwarder,
             input: call.input,
             output: call.output

@@ -78,7 +78,7 @@ contract ERC20ForwarderTest is Test {
 
         bytes memory input = _defaultInput({value: value});
         vm.prank(_pa);
-        bytes memory output = _fwd.forwardCall({carrierTag: _DEFAULT_CARRIER_TAG, input: input});
+        bytes memory output = _fwd.forwardCall({actionTreeRoot: _DEFAULT_CARRIER_TAG, input: input});
 
         assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
         assertEq(_erc20.balanceOf(_alice), startBalanceAlice - value);
@@ -90,7 +90,7 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_pa);
 
         vm.expectRevert("TRANSFER_FROM_FAILED", address(_erc20));
-        _fwd.forwardCall({carrierTag: _DEFAULT_CARRIER_TAG, input: input});
+        _fwd.forwardCall({actionTreeRoot: _DEFAULT_CARRIER_TAG, input: input});
     }
 
     function _defaultInput(uint256 value) internal view returns (bytes memory input) {
@@ -106,7 +106,7 @@ contract ERC20ForwarderTest is Test {
             permit: permit,
             privateKey: _ALICE_PRIVATE_KEY,
             spender: address(_fwd),
-            carrierTag: _DEFAULT_CARRIER_TAG
+            actionTreeRoot: _DEFAULT_CARRIER_TAG
         });
 
         input = abi.encode(_erc20.transferFrom.selector, from, value, permit, signature);
@@ -116,10 +116,10 @@ contract ERC20ForwarderTest is Test {
         ISignatureTransfer.PermitTransferFrom memory permit,
         address spender,
         uint256 privateKey,
-        bytes32 carrierTag
+        bytes32 actionTreeRoot
     ) internal view returns (bytes memory signature) {
         bytes32 digest =
-            _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: carrierTag});
+            _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: actionTreeRoot});
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         return abi.encodePacked(r, s, v);
