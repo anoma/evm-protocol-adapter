@@ -7,7 +7,6 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test, console} from "forge-std/Test.sol";
 
-import {Parameters} from "../../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {Transaction} from "../../src/Types.sol";
 
@@ -37,11 +36,7 @@ contract Benchmark is BenchmarkData {
         {
             (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
 
-            _pa = new ProtocolAdapter({
-                riscZeroVerifierRouter: _router,
-                commitmentTreeDepth: Parameters.COMMITMENT_TREE_DEPTH,
-                actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
-            });
+            _pa = new ProtocolAdapter({riscZeroVerifierRouter: _router});
         }
     }
 

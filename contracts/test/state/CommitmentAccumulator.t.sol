@@ -10,8 +10,6 @@ import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
 import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
 import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulator.m.sol";
 
-bytes32 constant INITIAL_COMMITMENT_TREE_ROOT = 0x7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3;
-
 contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
     using MerkleTree for bytes32[];
 
@@ -19,21 +17,21 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
 
     constructor() {
         _setupMockTree();
-        _cmAcc = new CommitmentAccumulatorMock(_TREE_DEPTH);
+        _cmAcc = new CommitmentAccumulatorMock();
     }
 
-    function test_the_initial_root_for_depth_32_should_be_as_expected() public {
-        assertEq(new CommitmentAccumulator(32).latestRoot(), INITIAL_COMMITMENT_TREE_ROOT);
+    function test_the_initial_root_is_the_empty_leaf_hash() public {
+        assertEq(new CommitmentAccumulator().latestRoot(), SHA256.EMPTY_HASH);
     }
 
-    function test_latestRoot_should_return_correct_roots() public {
+    function test_latestRoot_returns_correct_roots() public {
         bytes32 initialRoot = _cmAcc.latestRoot();
 
         assertEq(initialRoot, _roots[0]);
         assertEq(initialRoot, _cmAcc.initialRoot());
 
         for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            assertEq(_cmAcc.addCommitment(_leaves[i + 1][i]), _roots[i + 1]);
+            assertEq(_cmAcc.addCommitment(_a[i + 1][i]), _roots[i + 1]);
         }
     }
 
@@ -43,25 +41,26 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         _cmAcc.merkleProof(emptyLeafHash);
     }
 
-    function test_merkleProof_should_return_correct_siblings_and_direction_bits() public {
+    function test_merkleProof_should_return_correct_direction_bits() public {
         for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            _cmAcc.addCommitment(_leaves[i + 1][i]);
+            _cmAcc.addCommitment(_a[i + 1][i]);
+
+            uint256 cap = _cmAcc.capacity();
 
             for (uint256 j = 0; j < i + 1; ++j) {
-                (bytes32[] memory path, uint256 directionBits) = _cmAcc.merkleProof(_leaves[i + 1][j]);
+                (, uint256 directionBits) = _cmAcc.merkleProof(_a[i + 1][j]);
 
-                assertEq(path, _siblings[i + 1][j]);
-                assertEq(directionBits, _directionBits[j]);
+                assertEq(directionBits, _directionBits[cap][j]);
             }
         }
     }
 
     function test_findCommitmentIndex_should_return_correct_indices() public {
         for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            _cmAcc.addCommitment(_leaves[i + 1][i]);
+            _cmAcc.addCommitment(_a[i + 1][i]);
 
             for (uint256 j = 0; j <= i; ++j) {
-                assertEq(j, _cmAcc.findCommitmentIndex(_leaves[i + 1][j]));
+                assertEq(j, _cmAcc.findCommitmentIndex(_a[i + 1][j]));
             }
         }
     }
@@ -77,7 +76,7 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         uint256 newCount = 0;
 
         for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            _cmAcc.addCommitment(_leaves[i + 1][i]);
+            _cmAcc.addCommitment(_a[i + 1][i]);
             newCount = _cmAcc.commitmentCount();
 
             assertEq(newCount, ++prevCount);
@@ -119,52 +118,28 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
     function test_should_produce_an_invalid_root_for_a_non_existent_leaf() public {
         bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
 
-        // Test empty tree
-        bytes32 root = _cmAcc.initialRoot();
-        bytes32 invalidRoot = SHA256.hash(SHA256.hash(nonExistentCommitment, _siblings[0][0][0]), _siblings[0][0][1]);
-
-        bytes32 computedRoot = MerkleTree.processProof({
-            siblings: _siblings[0][0],
-            directionBits: _directionBits[0],
-            leaf: nonExistentCommitment
-        });
-        assertNotEq(computedRoot, root);
-        assertEq(computedRoot, invalidRoot);
-
-        // Populated tree
         for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            root = _cmAcc.addCommitment(_leaves[i + 1][i]);
+            bytes32 root = _cmAcc.addCommitment(_a[i + 1][i]);
 
             for (uint256 j = 0; j <= i; ++j) {
-                // Depth 0
-                invalidRoot = MerkleTree.isLeftSibling(_directionBits[j], 0)
-                    ? SHA256.hash(_siblings[i + 1][j][0], nonExistentCommitment)
-                    : SHA256.hash(nonExistentCommitment, _siblings[i + 1][j][0]);
-
-                // Depth 1
-                invalidRoot = MerkleTree.isLeftSibling(_directionBits[j], 1)
-                    ? SHA256.hash(_siblings[i + 1][j][1], invalidRoot)
-                    : SHA256.hash(invalidRoot, _siblings[i + 1][j][1]);
-
-                computedRoot = MerkleTree.processProof({
+                bytes32 computedRoot = MerkleTree.processProof({
                     siblings: _siblings[i + 1][j],
-                    directionBits: _directionBits[j],
+                    directionBits: _directionBits[_cmAcc.capacity()][j],
                     leaf: nonExistentCommitment
                 });
 
                 assertNotEq(computedRoot, root);
-                assertEq(computedRoot, invalidRoot);
             }
         }
     }
 
     function test_merkleProof_returns_proofs_that_match_the_latest_root() public {
         for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            bytes32 latestRoot = _cmAcc.addCommitment(_leaves[_N_ROOTS - 1][i]);
+            bytes32 latestRoot = _cmAcc.addCommitment(_a[_N_ROOTS - 1][i]);
 
             // Check that all leaves of the current tree result in proofs reproducing the latest root.
             for (uint256 j = 0; j <= i; ++j) {
-                bytes32 cm = _leaves[_N_ROOTS - 1][i];
+                bytes32 cm = _a[_N_ROOTS - 1][i];
 
                 (bytes32[] memory siblings, uint256 directionBits) = _cmAcc.merkleProof(cm);
                 bytes32 computedRoot = MerkleTree.processProof(siblings, directionBits, cm);
@@ -190,29 +165,33 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         vm.expectRevert(
             abi.encodeWithSelector(CommitmentAccumulator.NonExistingRoot.selector, nonExistingRoot), address(_cmAcc)
         );
-        _cmAcc.verifyMerkleProof({
-            root: nonExistingRoot,
-            commitment: 0,
-            path: new bytes32[](_TREE_DEPTH),
-            directionBits: 0
-        });
+        _cmAcc.verifyMerkleProof({root: nonExistingRoot, commitment: 0, path: new bytes32[](0), directionBits: 0});
     }
 
     function test_verifyMerkleProof_reverts_on_non_existent_commitment() public {
-        bytes32 latestRoot = _cmAcc.latestRoot();
-        assertEq(latestRoot, _roots[0]);
+        /*
+          (1)
+           R   
+         /  \  
+        1   []
+        */
 
-        bytes32 nonExistingCommitment = _leaves[1][0];
-        bytes32 nonExistingRoot = _roots[1];
-        bytes32[] memory siblingsCorrespondingToNonExistingRoot = _siblings[1][0];
-        uint256 directionBitsCorrespondingToNonExistingRoot = _directionBits[0];
+        bytes32 commitment = bytes32(uint256(1));
+        bytes32 newRoot = _cmAcc.addCommitment(commitment);
+        _cmAcc.storeRoot(newRoot);
+
+        bytes32 nonExistingCommitment = bytes32(uint256(2));
+        bytes32 nonExistingRoot = SHA256.hash(commitment, nonExistingCommitment);
+        bytes32[] memory siblingsCorrespondingToNonExistingRoot = new bytes32[](1);
+        siblingsCorrespondingToNonExistingRoot[0] = commitment;
+        uint256 directionBitsCorrespondingToNonExistingRoot = 0;
 
         vm.expectRevert(
-            abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, latestRoot, nonExistingRoot),
+            abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, nonExistingRoot),
             address(_cmAcc)
         );
         _cmAcc.verifyMerkleProof({
-            root: latestRoot,
+            root: newRoot,
             commitment: nonExistingCommitment,
             path: siblingsCorrespondingToNonExistingRoot,
             directionBits: directionBitsCorrespondingToNonExistingRoot
@@ -224,7 +203,7 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         bytes32[] memory wrongPath = new bytes32[](3);
 
         vm.expectRevert(
-            abi.encodeWithSelector(CommitmentAccumulator.InvalidPathLength.selector, _TREE_DEPTH, wrongPath.length),
+            abi.encodeWithSelector(CommitmentAccumulator.InvalidPathLength.selector, _cmAcc.depth(), wrongPath.length),
             address(_cmAcc)
         );
         _cmAcc.verifyMerkleProof({root: 0, commitment: 0, path: wrongPath, directionBits: 0});
@@ -235,7 +214,7 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         bytes32 newRoot = _cmAcc.addCommitment(commitment);
         _cmAcc.storeRoot(newRoot);
 
-        bytes32[] memory wrongPath = new bytes32[](_TREE_DEPTH);
+        bytes32[] memory wrongPath = new bytes32[](_cmAcc.depth());
 
         // Compute the expected, invalid root.
         bytes32 invalidRoot = wrongPath.processProof({directionBits: 0, leaf: commitment});
@@ -244,5 +223,26 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
             abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, invalidRoot), address(_cmAcc)
         );
         _cmAcc.verifyMerkleProof({root: newRoot, commitment: commitment, path: wrongPath, directionBits: 0});
+    }
+
+    function test_should_produce_an_invalid_root_for_a_non_existent_leaf_in_the_empty_tree() public view {
+        bytes32 root = _cmAcc.initialRoot();
+
+        bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
+        bytes32 invalidRoot = nonExistentCommitment;
+
+        bytes32 computedRoot =
+            MerkleTree.processProof({siblings: new bytes32[](0), directionBits: 0, leaf: nonExistentCommitment});
+        assertNotEq(computedRoot, root);
+        assertEq(computedRoot, invalidRoot);
+    }
+
+    function test_verifyMerkleProof_verifies_the_empty_tree_with_depth_zero() public view {
+        _cmAcc.verifyMerkleProof({
+            root: _cmAcc.latestRoot(),
+            commitment: SHA256.EMPTY_HASH,
+            path: new bytes32[](0),
+            directionBits: 0
+        });
     }
 }

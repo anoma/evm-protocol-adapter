@@ -15,13 +15,7 @@ contract ProtocolAdapterMock is ProtocolAdapter {
     using RiscZeroUtils for Compliance.Instance;
     using Delta for bytes32[];
 
-    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, uint8 commitmentTreeDepth, uint8 actionTagTreeDepth)
-        ProtocolAdapter(riscZeroVerifierRouter, commitmentTreeDepth, actionTagTreeDepth)
-    {}
-
-    function actionTreeDepth() external view returns (uint8 depth) {
-        depth = _ACTION_TAG_TREE_DEPTH;
-    }
+    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter) ProtocolAdapter(riscZeroVerifierRouter) {}
 
     function getRiscZeroVerifierSelector() public pure override returns (bytes4 verifierSelector) {
         verifierSelector = _MOCK_VERIFIER_SELECTOR;

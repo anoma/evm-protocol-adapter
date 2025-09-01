@@ -4,9 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "ea01737898bb24df57cef61d1c16222a16904076", package = "arm", features = [
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "549635568c155bfc99d9bfe47563ea22cc7a6ce6", package = "arm", features = [
     "groth16_prover",
+    "bonsai",
 ] }
+
 dotenv = "0.15"
 alloy = { version = "1.0.23", features = ["full"] }
 tokio = "1.44"

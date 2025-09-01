@@ -36,7 +36,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     using Delta for uint256[2];
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
-    uint8 internal immutable _ACTION_TAG_TREE_DEPTH;
 
     uint256 internal _txCount;
 
@@ -53,13 +52,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
-    /// @param commitmentTreeDepth The depth of the commitment tree of the commitment accumulator.
-    /// @param actionTagTreeDepth The depth of the tag tree of each action.
-    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, uint8 commitmentTreeDepth, uint8 actionTagTreeDepth)
-        CommitmentAccumulator(commitmentTreeDepth)
-    {
+    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter) CommitmentAccumulator() {
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
-        _ACTION_TAG_TREE_DEPTH = actionTagTreeDepth;
 
         if (address(riscZeroVerifierRouter) == address(0)) {
             revert ZeroNotAllowed();
@@ -250,24 +244,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         _executeForwarderCall(call);
     }
 
-    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
-    /// @param action The action whose root we compute.
-    /// @param nCUs The number of compliance units in the action.
-    /// @return root The root of the corresponding tree.
-    function _computeActionTreeRoot(Action calldata action, uint256 nCUs) internal view returns (bytes32 root) {
-        bytes32[] memory actionTreeTags = new bytes32[](nCUs * 2);
-
-        // The order in which the tags are added to the tree are provided by the compliance units
-        for (uint256 j = 0; j < nCUs; ++j) {
-            Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-
-            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
-            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
-        }
-
-        root = actionTreeTags.computeRoot(_ACTION_TAG_TREE_DEPTH);
-    }
-
     /// @notice Verifies a RISC0 compliance proof.
     /// @param input The verifier input of the compliance proof.
     /// @dev This function is virtual to allow for it to be overridden, e.g., to use mock proofs with a mock verifier.
@@ -339,6 +315,24 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 expected: resource.nullifier(bytes32(payload[1].blob))
             });
         }
+    }
+
+    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
+    /// @param action The action whose root we compute.
+    /// @param nCUs The number of compliance units in the action.
+    /// @return root The root of the corresponding tree.
+    function _computeActionTreeRoot(Action calldata action, uint256 nCUs) internal pure returns (bytes32 root) {
+        bytes32[] memory actionTreeTags = new bytes32[](nCUs * 2);
+
+        // The order in which the tags are added to the tree are provided by the compliance units
+        for (uint256 j = 0; j < nCUs; ++j) {
+            Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
+
+            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
+            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
+        }
+
+        root = actionTreeTags.computeRoot();
     }
 
     /// @notice An internal function adding a unit delta to the transactionDelta.

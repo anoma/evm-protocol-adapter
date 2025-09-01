@@ -20,28 +20,17 @@ library MerkleTree {
         bytes32[] _zeros;
     }
 
-    /// @notice Thrown if the tree capacity is reached.
-    error TreeCapacityExceeded();
-
     /// @notice Thrown if the leaf index does not exist.
     error NonExistentLeafIndex(uint256 index);
 
-    /// @notice Sets up the tree with a capacity (i.e. number of leaves) of `2**treeDepth`
-    /// and computes the initial root of the empty tree.
+    /// @notice Sets up the tree with an initial capacity (i.e. number of leaves) of 1
+    /// and returns the initial root of the empty tree.
     /// @param self The tree data structure.
-    /// @param treeDepth The tree depth [0, 255].
     /// @return initialRoot The initial root of the empty tree.
-    function setup(Tree storage self, uint8 treeDepth) internal returns (bytes32 initialRoot) {
-        Arrays.unsafeSetLength(self._zeros, treeDepth);
+    function setup(Tree storage self) internal returns (bytes32 initialRoot) {
+        initialRoot = SHA256.EMPTY_HASH;
 
-        bytes32 currentZero = SHA256.EMPTY_HASH;
-
-        for (uint256 i = 0; i < treeDepth; ++i) {
-            Arrays.unsafeAccess(self._zeros, i).value = currentZero;
-            currentZero = SHA256.hash(currentZero, currentZero);
-        }
-
-        initialRoot = currentZero;
+        self._zeros.push(SHA256.EMPTY_HASH);
 
         self._nextLeafIndex = 0;
     }
@@ -58,32 +47,52 @@ library MerkleTree {
         // Get the next leaf index and increment it after assignment.
         index = self._nextLeafIndex++;
 
-        // Check if the tree is already full.
-        if (index + 1 > 1 << treeDepth) revert TreeCapacityExceeded();
-
-        // Rebuild the branch from leaf to root.
-        uint256 currentIndex = index;
         bytes32 currentLevelHash = leaf;
-        for (uint256 i = 0; i < treeDepth; ++i) {
-            // Store the current node hash at depth `i`.
-            self._nodes[i][currentIndex] = currentLevelHash;
 
-            // Compute the next level hash for depth `i+1`.
-            // Check whether the `currentIndex` node is the left or right child of its parent.
-            if (isLeftChild(currentIndex)) {
-                // Compute the `currentLevelHash` using the right sibling.
-                // Because we fill the tree from left to right,
-                // the right child is empty and we must use the depth `i` zero hash.
-                currentLevelHash = SHA256.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, i).value);
-            } else {
-                // Compute the `currentLevelHash` using the left sibling.
-                // Because we fill the tree from left to right,
-                // the left child is the previous node at depth `i`.
-                currentLevelHash = SHA256.hash(self._nodes[i][currentIndex - 1], currentLevelHash);
+        if (treeDepth == 0) {
+            self._nodes[0][0] = currentLevelHash;
+        } else {
+            uint256 currentIndex = index;
+
+            // Rebuild the branch from leaf to root.
+            for (uint256 i = 0; i < treeDepth; ++i) {
+                // Store the current node hash at depth `i`.
+                self._nodes[i][currentIndex] = currentLevelHash;
+
+                // Compute the next level hash for depth `i+1`.
+                // Check whether the `currentIndex` node is the left or right child of its parent.
+                if (isLeftChild(currentIndex)) {
+                    // Compute the `currentLevelHash` using the right sibling.
+                    // Because we fill the tree from left to right,
+                    // the right child is empty and we must use the depth `i` zero hash.
+                    currentLevelHash = SHA256.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, i).value);
+                } else {
+                    // Compute the `currentLevelHash` using the left sibling.
+                    // Because we fill the tree from left to right,
+                    // the left child is the previous node at depth `i`.
+                    currentLevelHash = SHA256.hash(self._nodes[i][currentIndex - 1], currentLevelHash);
+                }
+
+                currentIndex >>= 1;
             }
-
-            currentIndex >>= 1;
         }
+
+        // Expand the tree if the capacity is reached.
+        if (self._nextLeafIndex == capacity(self)) {
+            // Store the current hash in the current level at index 0.
+            self._nodes[treeDepth][0] = currentLevelHash;
+
+            // Compute the new current level hash of the expanded tree.
+            bytes32 currentZero = Arrays.unsafeAccess(self._zeros, treeDepth).value;
+
+            // Compute the new current level hash.
+            currentLevelHash = SHA256.hash(currentLevelHash, currentZero);
+
+            // Compute the next zero for the next level.
+            bytes32 nextZero = SHA256.hash(currentZero, currentZero);
+            self._zeros.push(nextZero);
+        }
+
         newRoot = currentLevelHash;
     }
 
@@ -141,21 +150,28 @@ library MerkleTree {
     /// @param self The tree data structure.
     /// @return treeDepth The depth of the tree.
     function depth(Tree storage self) internal view returns (uint256 treeDepth) {
-        treeDepth = self._zeros.length;
+        treeDepth = self._zeros.length - 1;
     }
 
-    /// @notice Returns the number of leafs that have been added to the tree.
+    /// @notice Returns the number of leaves that have been added to the tree.
     /// @param self The tree data structure.
     /// @return count The number of leaves in the tree.
     function leafCount(Tree storage self) internal view returns (uint256 count) {
         count = self._nextLeafIndex;
     }
 
+    /// @notice Calculates the capacity of the tree.
+    /// @param self The tree data structure.
+    /// @return treeCapacity The computed tree capacity.
+    function capacity(Tree storage self) internal view returns (uint256 treeCapacity) {
+        treeCapacity = 1 << depth(self);
+    }
+
     /// @notice Checks whether a node is the left or right child according to its index.
     /// @param index The index to check.
     /// @return isLeft Whether this node is the left or right child.
     function isLeftChild(uint256 index) internal pure returns (bool isLeft) {
-        isLeft = index & 1 == 0;
+        isLeft = (index & 1) == 0;
     }
 
     /// @notice Processes a Merkle proof consisting of siblings and direction bits and returns the resulting root.
@@ -193,15 +209,15 @@ library MerkleTree {
 
     /// @notice Computes the root of a Merkle tree.
     /// @param leaves The leaves of the tree.
-    /// @param treeDepth The tree depth.
+    /// @param treeDepth The depth of the tree.
     /// @return root The computed root.
     /// @dev This method should only be used for trees with low depth.
-    function computeRoot(bytes32[] memory leaves, uint256 treeDepth) internal pure returns (bytes32 root) {
-        uint256 totalLeafs = 1 << treeDepth; // 2^treeDepth
+    function computeRoot(bytes32[] memory leaves, uint8 treeDepth) internal pure returns (bytes32 root) {
+        uint256 treeCapacity = 1 << treeDepth; // 2^treeDepth
 
         // Create array of full leaf set with padding if necessary
-        bytes32[] memory nodes = new bytes32[](totalLeafs);
-        for (uint256 i = 0; i < totalLeafs; ++i) {
+        bytes32[] memory nodes = new bytes32[](treeCapacity);
+        for (uint256 i = 0; i < treeCapacity; ++i) {
             if (i < leaves.length) {
                 nodes[i] = leaves[i];
             } else {
@@ -210,15 +226,38 @@ library MerkleTree {
         }
 
         // Build the tree upward
-        uint256 currentSize = totalLeafs;
-        while (currentSize > 1) {
-            currentSize /= 2;
+        uint256 currentLevelCapacity = treeCapacity;
+        while (currentLevelCapacity > 1) {
+            currentLevelCapacity /= 2;
 
-            for (uint256 i = 0; i < currentSize; ++i) {
-                nodes[i] = sha256(abi.encodePacked(nodes[2 * i], nodes[2 * i + 1]));
+            for (uint256 i = 0; i < currentLevelCapacity; ++i) {
+                nodes[i] = SHA256.hash(nodes[2 * i], nodes[2 * i + 1]);
             }
         }
 
         root = nodes[0];
+    }
+
+    /// @notice Computes the root of a Merkle tree using the minimal tree depth to fit all leaves.
+    /// @param leaves The leaves of the tree.
+    /// @return root The computed root.
+    /// @dev This method should only be used for trees with low depth.
+    function computeRoot(bytes32[] memory leaves) internal pure returns (bytes32 root) {
+        root = MerkleTree.computeRoot({leaves: leaves, treeDepth: computeMinimalTreeDepth(leaves.length)});
+    }
+
+    /// @notice Computes the minimal required tree depth for a number of leaves.
+    /// @param leavesCount The number of leaves.
+    /// @return treeDepth The minimal required tree depth.
+    function computeMinimalTreeDepth(uint256 leavesCount) internal pure returns (uint8 treeDepth) {
+        uint256 treeCapacity = 1;
+        treeDepth = 0;
+
+        while (treeCapacity < leavesCount) {
+            treeCapacity *= 2;
+            ++treeDepth;
+        }
+
+        return treeDepth;
     }
 }

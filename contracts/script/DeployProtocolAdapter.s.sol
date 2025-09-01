@@ -25,9 +25,7 @@ contract DeployProtocolAdapter is Script {
         vm.startBroadcast();
         protocolAdapter = address(
             new ProtocolAdapter{salt: sha256("ProtocolAdapterDraft")}({
-                riscZeroVerifierRouter: _routers[_networks[block.chainid]],
-                commitmentTreeDepth: 32,
-                actionTagTreeDepth: 4
+                riscZeroVerifierRouter: _routers[_networks[block.chainid]]
             })
         );
         vm.stopBroadcast();

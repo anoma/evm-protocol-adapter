@@ -10,7 +10,7 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using MerkleTree for MerkleTree.Tree;
 
-    constructor(uint8 treeDepth) CommitmentAccumulator(treeDepth) {}
+    constructor() CommitmentAccumulator() {}
 
     function addCommitment(bytes32 commitment) external returns (bytes32 newRoot) {
         newRoot = _addCommitment(commitment);
@@ -30,6 +30,14 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
 
     function initialRoot() external view returns (bytes32 hash) {
         hash = _roots.at(0);
+    }
+
+    function capacity() external view returns (uint256 treeCapacity) {
+        treeCapacity = _merkleTree.capacity();
+    }
+
+    function depth() external view returns (uint256 treeDepth) {
+        treeDepth = _merkleTree.depth();
     }
 
     function emptyLeafHash() external view returns (bytes32 hash) {
