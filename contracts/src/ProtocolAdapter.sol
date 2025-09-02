@@ -245,7 +245,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // slither-disable-next-line calls-loop
         bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
 
-        _verifyForwarderCall(input.appData.resourcePayload, input.tag, fetchedKind, consumed);
+        _verifyForwarderCall(input.appData.resourcePayload[0], input.tag, fetchedKind, consumed);
 
         _executeForwarderCall(call);
     }
@@ -312,31 +312,31 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param tag The tag of the resource making the call.
     /// @param kind The kind requested by the forwarder contract.
     /// @param consumed The flag indicating whether the resource is created or consumed
-    function _verifyForwarderCall(Logic.ExpirableBlob[] calldata payload, bytes32 tag, bytes32 kind, bool consumed)
+    function _verifyForwarderCall(Logic.ExpirableBlob calldata payload, bytes32 tag, bytes32 kind, bool consumed)
         internal
         pure
     {
-        // The plaintext should be stored at the head of resource payload and be decodable
-        Resource memory resource = abi.decode(payload[0].blob, (Resource));
+        Resource memory resource;
+
+        // Check tag correspondence
+        if (consumed) {
+            bytes32 nullifierKey;
+            (resource, nullifierKey) = abi.decode(payload.blob, (Resource, bytes32));
+
+            if (resource.nullifier(nullifierKey) != tag) {
+                revert CalldataCarrierNullifierMismatch({actual: resource.nullifier(nullifierKey), expected: tag});
+            }
+        } else {
+            (resource) = abi.decode(payload.blob, (Resource));
+
+            if (resource.commitment() != tag) {
+                revert CalldataCarrierCommitmentMismatch({actual: resource.commitment(), expected: tag});
+            }
+        }
 
         // Check kind correspondence
         if (resource.kind() != kind) {
             revert CalldataCarrierKindMismatch({expected: kind, actual: resource.kind()});
-        }
-
-        // Check tag correspondence
-        if (!consumed) {
-            // If created, compute the commitment of a resource and check correspondence to tag
-            bytes32 cm = resource.commitment();
-            if (cm != tag) {
-                revert CalldataCarrierCommitmentMismatch({actual: tag, expected: cm});
-            }
-        } else {
-            // If consumed, we expect the nullifier key to be present in the resource payload as well
-            bytes32 nf = resource.nullifier({nullifierKey: bytes32(payload[1].blob)});
-            if (nf != tag) {
-                revert CalldataCarrierNullifierMismatch({actual: tag, expected: nf});
-            }
         }
     }
 
