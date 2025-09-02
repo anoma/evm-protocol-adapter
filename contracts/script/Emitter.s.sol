@@ -11,10 +11,10 @@ contract EmitterDeployAndEmit is Script {
 
         emitterAddress = address(emitter);
 
-        emitter.emitEvents("cipher1", "resource1", "tag1");
-        emitter.emitEvents("cipher2", "resource2", "tag2");
-        emitter.emitEvents("cipher3", "resource3", "tag3");
-        emitter.emitEvents("cipher4", "resource4", "tag4");
+        emitter.seedTransactionExecutedEvent("tag1", "cipher1");
+        emitter.seedTransactionExecutedEvent("tag2", "cipher2");
+        emitter.seedTransactionExecutedEvent("tag3", "cipher3");
+        emitter.seedTransactionExecutedEvent("tag4", "cipher4");
 
         vm.stopBroadcast();
     }
