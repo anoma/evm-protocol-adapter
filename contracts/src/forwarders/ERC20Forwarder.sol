@@ -57,10 +57,11 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             address from = address(0);
             uint256 value = 0;
             ISignatureTransfer.PermitTransferFrom memory permit;
+            bytes32 witness;
             bytes memory signature;
 
-            ( /* selector */ , from, value, permit, signature) =
-                abi.decode(input, (bytes4, address, uint256, ISignatureTransfer.PermitTransferFrom, bytes));
+            ( /* selector */ , from, value, permit, witness, signature) =
+                abi.decode(input, (bytes4, address, uint256, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
 
             // NOTE: The following checks could be conducted on the carrier resource logic.
             {
@@ -73,10 +74,12 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                 }
             }
 
-            _PERMIT2.permitTransferFrom({
+            _PERMIT2.permitWitnessTransferFrom({
                 permit: permit,
                 transferDetails: ISignatureTransfer.SignatureTransferDetails({to: to, requestedAmount: value}),
                 owner: from,
+                witness: witness,
+                witnessTypeString: "bytes32 witness",
                 signature: signature
             });
         } else if (selector == IERC20.transfer.selector) {
