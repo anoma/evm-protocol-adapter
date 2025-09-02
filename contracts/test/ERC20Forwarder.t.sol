@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {IERC20Errors} from "@openzeppelin-contracts/interfaces/draft-IERC6093.sol";
 import {ERC20} from "@openzeppelin-contracts/token/ERC20/ERC20.sol";
 import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
 
 import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
-import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Test} from "forge-std/Test.sol";
@@ -70,7 +70,57 @@ contract ERC20ForwarderTest is Test {
         );
     }
 
-    function test_forwardCall_pulls_ERC20_tokens_from_user_via_permitWitnessTransferFrom() public {
+    function test_forwardCall_Transfer_call_sends_funds_to_the_user() public {
+        _erc20.mint({to: _fwd, value: _TRANSFER_AMOUNT});
+        uint256 startBalanceAlice = _erc20.balanceOf(_alice);
+        uint256 startBalanceForwarder = _erc20.balanceOf(_fwd);
+
+        bytes memory input = ERC20Forwarder(_fwd).encodeTransfer({to: _alice, value: _TRANSFER_AMOUNT});
+
+        vm.prank(_pa);
+        bytes memory output = ERC20Forwarder(_fwd).forwardCall(input);
+
+        assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
+        assertEq(_erc20.balanceOf(_alice), startBalanceAlice + _TRANSFER_AMOUNT);
+        assertEq(_erc20.balanceOf(_fwd), startBalanceForwarder - _TRANSFER_AMOUNT);
+    }
+
+    function test_forwardCall_TransferFrom_call_pulls_funds_from_user() public {
+        _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
+        uint256 startBalanceAlice = _erc20.balanceOf(_alice);
+        uint256 startBalanceForwarder = _erc20.balanceOf(_fwd);
+
+        vm.prank(_alice);
+        _erc20.approve(_fwd, type(uint256).max);
+
+        bytes memory input = ERC20Forwarder(_fwd).encodeTransferFrom({from: _alice, value: _TRANSFER_AMOUNT});
+
+        vm.prank(_pa);
+        bytes memory output = ERC20Forwarder(_fwd).forwardCall(input);
+
+        assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
+        assertEq(_erc20.balanceOf(_alice), startBalanceAlice - _TRANSFER_AMOUNT);
+        assertEq(_erc20.balanceOf(_fwd), startBalanceForwarder + _TRANSFER_AMOUNT);
+    }
+
+    function test_forwardCall_TransferFrom_call_reverts_if_user_did_not_approve_the_forwarder() public {
+        _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
+
+        bytes memory input = ERC20Forwarder(_fwd).encodeTransferFrom({from: _alice, value: _TRANSFER_AMOUNT});
+
+        uint256 allowance = _erc20.allowance({owner: _alice, spender: _fwd});
+
+        vm.prank(_pa);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC20Errors.ERC20InsufficientAllowance.selector, address(_fwd), allowance, _TRANSFER_AMOUNT
+            ),
+            address(_erc20)
+        );
+        ERC20Forwarder(_fwd).forwardCall(input);
+    }
+
+    function test_forwardCall_PermitTransferFrom_call_pulls_funds_from_user() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
         uint256 startBalanceAlice = _erc20.balanceOf(_alice);
         uint256 startBalanceForwarder = _erc20.balanceOf(_fwd);
@@ -87,7 +137,7 @@ contract ERC20ForwarderTest is Test {
         assertEq(_erc20.balanceOf(_fwd), startBalanceForwarder + _TRANSFER_AMOUNT);
     }
 
-    function test_forwardCall_reverts_if_permit2_was_not_approved() public {
+    function test_forwardCall_PermitTransferFrom_call_reverts_if_user_did_not_approve_permit2() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
         bytes memory input = _permit2ExampleInput({value: _TRANSFER_AMOUNT});
         vm.prank(_pa);
@@ -96,79 +146,40 @@ contract ERC20ForwarderTest is Test {
         ERC20Forwarder(_fwd).forwardCall(input);
     }
 
-    function test_forwardCall_sends_ERC20_tokens_to_user_via_transfer() public {
-        _erc20.mint({to: _fwd, value: _TRANSFER_AMOUNT});
-        uint256 startBalanceAlice = _erc20.balanceOf(_alice);
-        uint256 startBalanceForwarder = _erc20.balanceOf(_fwd);
-
-        bytes4 selector = ERC20.transfer.selector;
-        address to = _alice;
-        uint256 value = _TRANSFER_AMOUNT;
-        bytes memory input = abi.encode(selector, to, value);
-
-        vm.prank(_pa);
-        bytes memory output = ERC20Forwarder(_fwd).forwardCall(input);
-
-        assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
-        assertEq(_erc20.balanceOf(_alice), startBalanceAlice + value);
-        assertEq(_erc20.balanceOf(_fwd), startBalanceForwarder - value);
-    }
-
     function _permit2ExampleInput(uint256 value) internal view returns (bytes memory input) {
-        address from = _alice;
-
         ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
             permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: value}),
             nonce: 0,
             deadline: Time.timestamp() + 5 minutes
         });
 
-        bytes memory signature = _getPermitWitnessTransferSignature({
+        input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
+            from: _alice,
+            value: _TRANSFER_AMOUNT,
             permit: permit,
-            privateKey: _ALICE_PRIVATE_KEY,
-            spender: _fwd,
-            witness: _ACTION_TREE_ROOT
+            witness: _ACTION_TREE_ROOT,
+            signature: _createPermitWitnessTransferFromSignature({
+                permit: permit,
+                privateKey: _ALICE_PRIVATE_KEY,
+                spender: _fwd,
+                witness: _ACTION_TREE_ROOT
+            })
         });
-
-        input = abi.encode(_erc20.transferFrom.selector, from, value, permit, _ACTION_TREE_ROOT, signature);
     }
 
-    function _getPermitWitnessTransferSignature(
+    function _createPermitWitnessTransferFromSignature(
         ISignatureTransfer.PermitTransferFrom memory permit,
         address spender,
         uint256 privateKey,
         bytes32 witness
     ) internal view returns (bytes memory signature) {
-        bytes32 digest = _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: witness});
+        bytes32 digest = ERC20Forwarder(_fwd).computePermitWitnessTransferFromDigest({
+            permit: permit,
+            spender: spender,
+            witness: witness
+        });
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         return abi.encodePacked(r, s, v);
-    }
-
-    function _computePermitWitnessTransferFromDigest(
-        ISignatureTransfer.PermitTransferFrom memory permit,
-        address spender,
-        bytes32 witness
-    ) internal view returns (bytes32 digest) {
-        // The type string for the witness (bytes32)
-        string memory witnessTypeString = "bytes32 witness";
-
-        // Compute the PermitHash struct hash with witness
-        bytes32 structHash = keccak256(
-            abi.encode(
-                keccak256(abi.encodePacked(PermitHash._PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB, witnessTypeString)),
-                keccak256(
-                    abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted.token, permit.permitted.amount)
-                ),
-                spender,
-                permit.nonce,
-                permit.deadline,
-                witness
-            )
-        );
-
-        // Compute the EIP-712 digest
-        bytes32 domainSeparator = _permit2.DOMAIN_SEPARATOR();
-        digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
     }
 }

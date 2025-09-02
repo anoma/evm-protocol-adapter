@@ -3,31 +3,24 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
-import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
-import {Permit2Lib} from "@permit2/src/libraries/Permit2Lib.sol";
+import {ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 
 import {EmergencyMigratableForwarderBase} from "./EmergencyMigratableForwarderBase.sol";
+
+import {ERC20ForwarderInput} from "./ERC20ForwarderInput.sol";
 
 /// @title ERC20Forwarder
 /// @author Anoma Foundation, 2025
 /// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources.
 /// @custom:security-contact security@anoma.foundation
-contract ERC20Forwarder is EmergencyMigratableForwarderBase {
+contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput {
     using SafeERC20 for IERC20;
 
-    /// @notice The canonical Uniswap Permit2 contract deployed at the same address on all supported chains
-    /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
-    IPermit2 internal immutable _PERMIT2;
-
     /// @notice The ERC-20 token contract address to forward calls to.
-    address internal immutable _ERC20;
+    IERC20 internal immutable _ERC20;
 
-    error SelectorInvalid(bytes4 selector);
-    error ERC20PermitSpenderMismatch(address expected, address actual);
-    error Permit2ToMismatch(address expected, address actual);
     error Permit2TokenMismatch(address expected, address actual);
     error Permit2AmountMismatch(uint256 expected, uint256 actual);
-    error Permit2OwnerMismatch(address expected, address actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
@@ -41,55 +34,56 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         if (erc20 == address(0)) {
             revert ZeroNotAllowed();
         }
-        _ERC20 = erc20;
-
-        _PERMIT2 = IPermit2(address(Permit2Lib.PERMIT2));
+        _ERC20 = IERC20(erc20);
     }
 
     /// @notice Forwards calls.
     /// @param input The `bytes` encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
     function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
-        bytes4 selector = bytes4(input[:4]);
+        CallType callType = CallType(uint8(input[31]));
 
-        if (selector == IERC20.transferFrom.selector) {
-            address to = address(this);
-            address from = address(0);
-            uint256 value = 0;
-            ISignatureTransfer.PermitTransferFrom memory permit;
-            bytes32 witness;
-            bytes memory signature;
+        if (callType == CallType.Transfer) {
+            (address to, uint256 value) = decodeTransfer(input);
 
-            ( /* selector */ , from, value, permit, witness, signature) =
-                abi.decode(input, (bytes4, address, uint256, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
+            _ERC20.safeTransfer({to: to, value: value});
+        } else if (callType == CallType.TransferFrom) {
+            (address from, uint256 value) = decodeTransferFrom(input);
 
-            // NOTE: The following checks could be conducted on the carrier resource logic.
-            {
-                if (permit.permitted.token != _ERC20) {
-                    revert Permit2TokenMismatch({expected: _ERC20, actual: permit.permitted.token});
-                }
-
-                if (permit.permitted.amount != value) {
-                    revert Permit2AmountMismatch({expected: permit.permitted.amount, actual: value});
-                }
-            }
+            // slither-disable-next-line arbitrary-send-erc20
+            _ERC20.safeTransferFrom({from: from, to: address(this), value: value});
+        } else if (callType == CallType.PermitWitnessTransferFrom) {
+            (
+                address from,
+                uint256 value,
+                ISignatureTransfer.PermitTransferFrom memory permit,
+                bytes32 witness,
+                bytes memory signature
+            ) = decodePermitWitnessTransferFrom(input);
 
             _PERMIT2.permitWitnessTransferFrom({
                 permit: permit,
-                transferDetails: ISignatureTransfer.SignatureTransferDetails({to: to, requestedAmount: value}),
+                // solhint-disable-next-line max-line-length
+                transferDetails: ISignatureTransfer.SignatureTransferDetails({to: address(this), requestedAmount: value}),
                 owner: from,
                 witness: witness,
                 witnessTypeString: "bytes32 witness",
                 signature: signature
             });
-        } else if (selector == IERC20.transfer.selector) {
-            address to = address(0);
-            uint256 value = 0;
 
-            ( /* selector */ , to, value) = abi.decode(input, (bytes4, address, uint256));
-            IERC20(_ERC20).safeTransfer({to: to, value: value});
+            // NOTE: The following checks could be conducted on the carrier resource logic.
+            /*{
+                //TODO! remove?
+                if (permit.permitted.token != address(_ERC20)) {
+                    revert Permit2TokenMismatch({expected: address(_ERC20), actual: permit.permitted.token});
+                }
+
+                if (permit.permitted.amount != value) {
+                    revert Permit2AmountMismatch({expected: permit.permitted.amount, actual: value});
+                }
+            }*/
         } else {
-            revert SelectorInvalid(selector);
+            revert CallTypeInvalid();
         }
         output = abi.encode(true);
     }
