@@ -251,26 +251,7 @@ contract ProtocolAdapterMockTest is Test {
         externalBlobs[0] =
             Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
 
-        bytes memory zero = new bytes(32);
-
-        Logic.AppData memory consumedAppData = Logic.AppData({
-            discoveryPayload: new Logic.ExpirableBlob[](0),
-            resourcePayload: new Logic.ExpirableBlob[](0),
-            externalPayload: new Logic.ExpirableBlob[](0),
-            applicationPayload: new Logic.ExpirableBlob[](0)
-        });
-
-        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
-
-        consumed[0] = TxGen.ResourceAndAppData({
-            resource: TxGen.mockResource({
-                nonce: bytes32(nonce),
-                logicRef: _CARRIER_LOGIC_REF,
-                labelRef: _carrierLabelRef,
-                quantity: 1
-            }),
-            appData: consumedAppData
-        });
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: nonce});
 
         Logic.AppData memory createdAppData = Logic.AppData({
             discoveryPayload: new Logic.ExpirableBlob[](0),
@@ -280,7 +261,7 @@ contract ProtocolAdapterMockTest is Test {
         });
 
         Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](1);
-        resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
+        resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: ""});
 
         createdAppData.externalPayload = externalBlobs;
         createdAppData.resourcePayload = resourceBlobs;
@@ -328,8 +309,6 @@ contract ProtocolAdapterMockTest is Test {
         externalBlobs[0] =
             Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
 
-        bytes memory zero = new bytes(32);
-
         Logic.AppData memory consumedAppData = Logic.AppData({
             discoveryPayload: new Logic.ExpirableBlob[](0),
             resourcePayload: new Logic.ExpirableBlob[](2),
@@ -340,8 +319,8 @@ contract ProtocolAdapterMockTest is Test {
         TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
 
         Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](2);
-        resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
-        resourceBlobs[1] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
+        resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: ""});
+        resourceBlobs[1] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: ""});
 
         consumedAppData.externalPayload = externalBlobs;
         consumedAppData.resourcePayload = resourceBlobs;
@@ -390,8 +369,6 @@ contract ProtocolAdapterMockTest is Test {
         externalBlobs[0] =
             Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
 
-        bytes memory zero = new bytes(32);
-
         Logic.AppData memory consumedAppData = Logic.AppData({
             discoveryPayload: new Logic.ExpirableBlob[](0),
             resourcePayload: new Logic.ExpirableBlob[](2),
@@ -402,8 +379,8 @@ contract ProtocolAdapterMockTest is Test {
         TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
 
         Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](2);
-        resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
-        resourceBlobs[1] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: zero});
+        resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: ""});
+        resourceBlobs[1] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: ""});
 
         consumedAppData.externalPayload = externalBlobs;
         consumedAppData.resourcePayload = resourceBlobs;
@@ -441,11 +418,11 @@ contract ProtocolAdapterMockTest is Test {
     function _exampleResourceAndEmptyAppData(uint256 nonce)
         private
         view
-        returns (TxGen.ResourceAndAppData[] memory created)
+        returns (TxGen.ResourceAndAppData[] memory data)
     {
-        created = new TxGen.ResourceAndAppData[](1);
+        data = new TxGen.ResourceAndAppData[](1);
 
-        created[0] = TxGen.ResourceAndAppData({
+        data[0] = TxGen.ResourceAndAppData({
             resource: TxGen.mockResource({
                 nonce: bytes32(nonce),
                 logicRef: _CARRIER_LOGIC_REF,
