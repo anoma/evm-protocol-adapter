@@ -173,8 +173,6 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_reverts_on_incorrect_commitment_computation() public {
-        uint256 nonce = 0;
-
         ForwarderCalldata memory call =
             ForwarderCalldata({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT});
 
@@ -182,39 +180,20 @@ contract ProtocolAdapterMockTest is Test {
         externalBlobs[0] =
             Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
 
-        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: nonce});
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, isConsumed: false});
 
-        Logic.AppData memory createdAppData = Logic.AppData({
-            discoveryPayload: new Logic.ExpirableBlob[](0),
-            resourcePayload: new Logic.ExpirableBlob[](1),
-            externalPayload: new Logic.ExpirableBlob[](1),
-            applicationPayload: new Logic.ExpirableBlob[](0)
-        });
-
-        Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](1);
-        resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: ""});
-
-        createdAppData.externalPayload = externalBlobs;
-        createdAppData.resourcePayload = resourceBlobs;
-
-        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
-        created[0] = TxGen.ResourceAndAppData({
-            resource: TxGen.mockResource({
-                nonce: bytes32(nonce + 1),
-                logicRef: _CARRIER_LOGIC_REF,
-                labelRef: _carrierLabelRef,
-                quantity: 1
-            }),
-            appData: createdAppData
-        });
-
-        Resource memory fakeCreated = TxGen.mockResource({
-            nonce: bytes32(nonce),
+        // Alter the resource blob so that it results in a different commitment.
+        Resource memory alteredResource = TxGen.mockResource({
+            nonce: bytes32(uint256(created[0].resource.nonce) + 1),
             logicRef: _CARRIER_LOGIC_REF,
             labelRef: _carrierLabelRef,
             quantity: 1
         });
-        created[0].appData.resourcePayload[0].blob = abi.encode(fakeCreated);
+        assertNotEq(alteredResource.commitment(), created[0].resource.commitment());
+
+        // Put the resource in the blob
+        created[0].appData.resourcePayload[0].blob = abi.encode(alteredResource);
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -223,7 +202,7 @@ contract ProtocolAdapterMockTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 ProtocolAdapter.CalldataCarrierCommitmentMismatch.selector,
-                fakeCreated.commitment(),
+                alteredResource.commitment(),
                 txn.actions[0].complianceVerifierInputs[0].instance.created.commitment
             )
         );
@@ -231,50 +210,20 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_reverts_on_incorrect_nullifier_computation_resource() public {
-        uint256 nonce = 0;
+        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 1, isConsumed: true});
 
-        ForwarderCalldata memory call =
-            ForwarderCalldata({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT});
-
-        Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
-        externalBlobs[0] =
-            Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: abi.encode(call)});
-
-        Logic.AppData memory consumedAppData = Logic.AppData({
-            discoveryPayload: new Logic.ExpirableBlob[](0),
-            resourcePayload: new Logic.ExpirableBlob[](2),
-            externalPayload: new Logic.ExpirableBlob[](1),
-            applicationPayload: new Logic.ExpirableBlob[](0)
-        });
-
-        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
-
-        Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](2);
-        resourceBlobs[0] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: ""});
-        resourceBlobs[1] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: ""});
-
-        consumedAppData.externalPayload = externalBlobs;
-        consumedAppData.resourcePayload = resourceBlobs;
-
-        consumed[0] = TxGen.ResourceAndAppData({
-            resource: TxGen.mockResource({
-                nonce: bytes32(nonce),
-                logicRef: _CARRIER_LOGIC_REF,
-                labelRef: _carrierLabelRef,
-                quantity: 1
-            }),
-            appData: consumedAppData
-        });
-        Resource memory fakeConsumed = TxGen.mockResource({
-            nonce: bytes32(nonce + 1), // Pick a different nonce
+        // Alter the resource blob so that it results in a different commitment.
+        Resource memory alteredResource = TxGen.mockResource({
+            nonce: bytes32(uint256(consumed[0].resource.nonce) + 1),
             logicRef: _CARRIER_LOGIC_REF,
             labelRef: _carrierLabelRef,
             quantity: 1
         });
-        // Encode a wrong resource
-        consumed[0].appData.resourcePayload[0].blob = abi.encode(fakeConsumed);
+        assertNotEq(alteredResource.nullifier({nullifierKey: 0}), consumed[0].resource.nullifier({nullifierKey: 0}));
 
-        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: nonce + 1});
+        // Put the resource in the blob
+        consumed[0].appData.resourcePayload[0].blob = abi.encode(alteredResource);
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -283,7 +232,7 @@ contract ProtocolAdapterMockTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 ProtocolAdapter.CalldataCarrierNullifierMismatch.selector,
-                fakeConsumed.nullifier(0),
+                alteredResource.nullifier({nullifierKey: 0}),
                 txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
             )
         );
