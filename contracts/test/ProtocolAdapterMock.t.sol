@@ -208,7 +208,7 @@ contract ProtocolAdapterMockTest is Test {
 
         assertNotEq(created[0].resource.nullifier({nullifierKey: 0}), consumed[0].resource.nullifier({nullifierKey: 0}));
 
-        // Alter the resource blob so that it results in a different commitment.
+        // Alter the resource so that it results in a different nullifier.
         consumed[0].appData.resourcePayload[0].blob = abi.encode(created[0].resource);
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
@@ -229,7 +229,7 @@ contract ProtocolAdapterMockTest is Test {
         TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, isConsumed: true});
         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
 
-        // Alter the nullifier key blob so that it results in a different commitment.
+        // Alter the nullifier key blob so that it results in a different nullifier.
         bytes32 originalNullifierKey = abi.decode(consumed[0].appData.resourcePayload[1].blob, (bytes32));
         bytes32 alteredNullifierKey = keccak256(abi.encode(originalNullifierKey));
         assertNotEq(originalNullifierKey, alteredNullifierKey);
