@@ -202,7 +202,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_reverts_on_incorrect_nullifier_computation_resource() public {
+    function test_execute_reverts_on_incorrect_nullifier_computation_because_of_wrong_resource() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, isConsumed: true});
         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
 
@@ -225,7 +225,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_reverts_on_incorrect_nullifier_computation_nonce() public {
+    function test_execute_reverts_on_incorrect_nullifier_computation_because_of_wrong_nullifierKey() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, isConsumed: true});
         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
 
