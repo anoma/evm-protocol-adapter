@@ -73,42 +73,8 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource() public {
-        uint256 nonce = 0;
-
-        Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
-        externalBlobs[0] = Logic.ExpirableBlob({
-            deletionCriterion: Logic.DeletionCriterion.Never,
-            blob: abi.encode(ForwarderCalldata({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT}))
-        });
-
-        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: nonce});
-
-        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
-        {
-            created[0] = TxGen.ResourceAndAppData({
-                resource: TxGen.mockResource({
-                    nonce: bytes32(uint256(nonce) + 1),
-                    logicRef: _CARRIER_LOGIC_REF,
-                    labelRef: _carrierLabelRef,
-                    quantity: 1
-                }),
-                appData: Logic.AppData({
-                    discoveryPayload: new Logic.ExpirableBlob[](0),
-                    resourcePayload: new Logic.ExpirableBlob[](1),
-                    externalPayload: new Logic.ExpirableBlob[](1),
-                    applicationPayload: new Logic.ExpirableBlob[](0)
-                })
-            });
-
-            Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](1);
-            resourceBlobs[0] = Logic.ExpirableBlob({
-                deletionCriterion: Logic.DeletionCriterion.Never,
-                blob: abi.encode(created[0].resource)
-            });
-
-            created[0].appData.resourcePayload = resourceBlobs;
-            created[0].appData.externalPayload = externalBlobs;
-        }
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, isConsumed: false});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -123,43 +89,8 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
-        uint256 nonce = 0;
-
-        Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
-        externalBlobs[0] = Logic.ExpirableBlob({
-            deletionCriterion: Logic.DeletionCriterion.Never,
-            blob: abi.encode(ForwarderCalldata({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT}))
-        });
-
-        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
-        {
-            consumed[0] = TxGen.ResourceAndAppData({
-                resource: TxGen.mockResource({
-                    nonce: bytes32(nonce),
-                    logicRef: _CARRIER_LOGIC_REF,
-                    labelRef: _carrierLabelRef,
-                    quantity: 1
-                }),
-                appData: Logic.AppData({
-                    discoveryPayload: new Logic.ExpirableBlob[](0),
-                    resourcePayload: new Logic.ExpirableBlob[](2),
-                    externalPayload: new Logic.ExpirableBlob[](1),
-                    applicationPayload: new Logic.ExpirableBlob[](0)
-                })
-            });
-
-            Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](2);
-            resourceBlobs[0] = Logic.ExpirableBlob({
-                deletionCriterion: Logic.DeletionCriterion.Never,
-                blob: abi.encode(consumed[0].resource)
-            });
-            resourceBlobs[1] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: ""});
-
-            consumed[0].appData.resourcePayload = resourceBlobs;
-            consumed[0].appData.externalPayload = externalBlobs;
-        }
-
-        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: nonce + 1});
+        TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, isConsumed: true});
+        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -436,5 +367,80 @@ contract ProtocolAdapterMockTest is Test {
                 applicationPayload: new Logic.ExpirableBlob[](0)
             })
         });
+    }
+
+    function _exampleCarrierResourceAndAppData(uint256 nonce, bool isConsumed)
+        private
+        view
+        returns (TxGen.ResourceAndAppData[] memory data)
+    {
+        data = new TxGen.ResourceAndAppData[](1);
+
+        if (isConsumed) {
+            data[0] = TxGen.ResourceAndAppData({
+                resource: TxGen.mockResource({
+                    nonce: bytes32(nonce),
+                    logicRef: _CARRIER_LOGIC_REF,
+                    labelRef: _carrierLabelRef,
+                    quantity: 1
+                }),
+                appData: Logic.AppData({
+                    discoveryPayload: new Logic.ExpirableBlob[](0),
+                    resourcePayload: new Logic.ExpirableBlob[](2),
+                    externalPayload: new Logic.ExpirableBlob[](1),
+                    applicationPayload: new Logic.ExpirableBlob[](0)
+                })
+            });
+
+            Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](2);
+            resourceBlobs[0] = Logic.ExpirableBlob({
+                deletionCriterion: Logic.DeletionCriterion.Never,
+                blob: abi.encode(data[0].resource)
+            });
+            resourceBlobs[1] = Logic.ExpirableBlob({deletionCriterion: Logic.DeletionCriterion.Never, blob: ""});
+
+            data[0].appData.resourcePayload = resourceBlobs;
+
+            Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
+            externalBlobs[0] = Logic.ExpirableBlob({
+                deletionCriterion: Logic.DeletionCriterion.Never,
+                blob: abi.encode(
+                    ForwarderCalldata({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT})
+                )
+            });
+            data[0].appData.externalPayload = externalBlobs;
+        } else {
+            data[0] = TxGen.ResourceAndAppData({
+                resource: TxGen.mockResource({
+                    nonce: bytes32(nonce),
+                    logicRef: _CARRIER_LOGIC_REF,
+                    labelRef: _carrierLabelRef,
+                    quantity: 1
+                }),
+                appData: Logic.AppData({
+                    discoveryPayload: new Logic.ExpirableBlob[](0),
+                    resourcePayload: new Logic.ExpirableBlob[](1),
+                    externalPayload: new Logic.ExpirableBlob[](1),
+                    applicationPayload: new Logic.ExpirableBlob[](0)
+                })
+            });
+
+            Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](1);
+            resourceBlobs[0] = Logic.ExpirableBlob({
+                deletionCriterion: Logic.DeletionCriterion.Never,
+                blob: abi.encode(data[0].resource)
+            });
+
+            data[0].appData.resourcePayload = resourceBlobs;
+
+            Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
+            externalBlobs[0] = Logic.ExpirableBlob({
+                deletionCriterion: Logic.DeletionCriterion.Never,
+                blob: abi.encode(
+                    ForwarderCalldata({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT})
+                )
+            });
+            data[0].appData.externalPayload = externalBlobs;
+        }
     }
 }
