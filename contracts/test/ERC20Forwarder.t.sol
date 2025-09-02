@@ -96,6 +96,24 @@ contract ERC20ForwarderTest is Test {
         ERC20Forwarder(_fwd).forwardCall(input);
     }
 
+    function test_forwardCall_sends_ERC20_tokens_to_user_via_transfer() public {
+        _erc20.mint({to: _fwd, value: _TRANSFER_AMOUNT});
+        uint256 startBalanceAlice = _erc20.balanceOf(_alice);
+        uint256 startBalanceForwarder = _erc20.balanceOf(_fwd);
+
+        bytes4 selector = ERC20.transfer.selector;
+        address to = _alice;
+        uint256 value = _TRANSFER_AMOUNT;
+        bytes memory input = abi.encode(selector, to, value);
+
+        vm.prank(_pa);
+        bytes memory output = ERC20Forwarder(_fwd).forwardCall(input);
+
+        assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
+        assertEq(_erc20.balanceOf(_alice), startBalanceAlice + value);
+        assertEq(_erc20.balanceOf(_fwd), startBalanceForwarder - value);
+    }
+
     function _permit2ExampleInput(uint256 value) internal view returns (bytes memory input) {
         address from = _alice;
 
