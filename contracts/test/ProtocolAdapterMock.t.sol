@@ -172,7 +172,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(tx2);
     }
 
-    function test_execute_reverts_on_incorrect_commitment_computation() public {
+    function test_execute_reverts_on_incorrect_commitment_computation_because_of_wrong_resource() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, isConsumed: false});
 
