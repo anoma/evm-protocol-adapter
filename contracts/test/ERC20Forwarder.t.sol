@@ -19,21 +19,24 @@ import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract MyToken is ERC20 {
-    constructor(address recipient) ERC20("MyToken", "MTK") {
-        _mint(recipient, 10 * 10 ** decimals());
+    constructor(address recipient) ERC20("MyToken", "MTK") {}
+
+    function mint(address to, uint256 value) external {
+        _mint(to, value);
     }
 }
 
 contract ERC20ForwarderTest is Test {
     uint256 internal constant _ALICE_PRIVATE_KEY = 0xA11CE;
+    uint256 internal constant _TRANSFER_AMOUNT = 1 * 10 ** 18;
     bytes internal constant _EXPECTED_OUTPUT = abi.encode(true);
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(type(uint256).max);
 
     address internal _pa;
     address internal _alice;
+    address internal _fwd;
     IPermit2 internal _permit2;
-    ERC20Forwarder internal _fwd;
-    ERC20 internal _erc20;
+    MyToken internal _erc20;
 
     function setUp() public {
         _alice = vm.addr(_ALICE_PRIVATE_KEY);
@@ -57,42 +60,43 @@ contract ERC20ForwarderTest is Test {
         );
 
         // Deploy the ERC20 forwarder
-        _fwd = new ERC20Forwarder({
-            protocolAdapter: _pa,
-            emergencyCommittee: address(uint160(1)),
-            calldataCarrierLogicRef: bytes32(type(uint256).max),
-            erc20: address(_erc20)
-        });
+        _fwd = address(
+            new ERC20Forwarder({
+                protocolAdapter: _pa,
+                emergencyCommittee: address(uint160(1)),
+                calldataCarrierLogicRef: bytes32(type(uint256).max),
+                erc20: address(_erc20)
+            })
+        );
     }
 
-    function test_forwardCall_pulls_ERC20_tokens_via_transferFrom_and_permit2() public {
-        // Approve Permit2
+    function test_forwardCall_pulls_ERC20_tokens_from_user_via_permitWitnessTransferFrom() public {
+        _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
+        uint256 startBalanceAlice = _erc20.balanceOf(_alice);
+        uint256 startBalanceForwarder = _erc20.balanceOf(_fwd);
+
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
 
-        uint256 value = 1 * 10 ** _erc20.decimals();
-
-        uint256 startBalanceAlice = _erc20.balanceOf(_alice);
-        uint256 startBalanceForwarder = _erc20.balanceOf(address(_fwd));
-
-        bytes memory input = _defaultInput({value: value});
+        bytes memory input = _permit2ExampleInput({value: _TRANSFER_AMOUNT});
         vm.prank(_pa);
-        bytes memory output = _fwd.forwardCall(input);
+        bytes memory output = ERC20Forwarder(_fwd).forwardCall(input);
 
         assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
-        assertEq(_erc20.balanceOf(_alice), startBalanceAlice - value);
-        assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder + value);
+        assertEq(_erc20.balanceOf(_alice), startBalanceAlice - _TRANSFER_AMOUNT);
+        assertEq(_erc20.balanceOf(_fwd), startBalanceForwarder + _TRANSFER_AMOUNT);
     }
 
     function test_forwardCall_reverts_if_permit2_was_not_approved() public {
-        bytes memory input = _defaultInput({value: 1 * 10 ** _erc20.decimals()});
+        _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
+        bytes memory input = _permit2ExampleInput({value: _TRANSFER_AMOUNT});
         vm.prank(_pa);
 
         vm.expectRevert("TRANSFER_FROM_FAILED", address(_erc20));
-        _fwd.forwardCall(input);
+        ERC20Forwarder(_fwd).forwardCall(input);
     }
 
-    function _defaultInput(uint256 value) internal view returns (bytes memory input) {
+    function _permit2ExampleInput(uint256 value) internal view returns (bytes memory input) {
         address from = _alice;
 
         ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
@@ -104,8 +108,8 @@ contract ERC20ForwarderTest is Test {
         bytes memory signature = _getPermitWitnessTransferSignature({
             permit: permit,
             privateKey: _ALICE_PRIVATE_KEY,
-            spender: address(_fwd),
-            actionTreeRoot: _ACTION_TREE_ROOT
+            spender: _fwd,
+            witness: _ACTION_TREE_ROOT
         });
 
         input = abi.encode(_erc20.transferFrom.selector, from, value, permit, _ACTION_TREE_ROOT, signature);
@@ -115,10 +119,9 @@ contract ERC20ForwarderTest is Test {
         ISignatureTransfer.PermitTransferFrom memory permit,
         address spender,
         uint256 privateKey,
-        bytes32 actionTreeRoot
+        bytes32 witness
     ) internal view returns (bytes memory signature) {
-        bytes32 digest =
-            _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: actionTreeRoot});
+        bytes32 digest = _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: witness});
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         return abi.encodePacked(r, s, v);
