@@ -319,7 +319,7 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_reverts_on_incorrect_nullifier_computation_resource() public {
-        bytes32 nonce = 0;
+        uint256 nonce = 0;
 
         ForwarderCalldata memory call =
             ForwarderCalldata({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT});
@@ -348,7 +348,7 @@ contract ProtocolAdapterMockTest is Test {
 
         consumed[0] = TxGen.ResourceAndAppData({
             resource: TxGen.mockResource({
-                nonce: nonce,
+                nonce: bytes32(nonce),
                 logicRef: _CARRIER_LOGIC_REF,
                 labelRef: _carrierLabelRef,
                 quantity: 1
@@ -356,7 +356,7 @@ contract ProtocolAdapterMockTest is Test {
             appData: consumedAppData
         });
         Resource memory fakeConsumed = TxGen.mockResource({
-            nonce: bytes32(uint256(nonce) + 1),
+            nonce: bytes32(nonce + 1), // Pick a different nonce
             logicRef: _CARRIER_LOGIC_REF,
             labelRef: _carrierLabelRef,
             quantity: 1
@@ -364,23 +364,7 @@ contract ProtocolAdapterMockTest is Test {
         // Encode a wrong resource
         consumed[0].appData.resourcePayload[0].blob = abi.encode(fakeConsumed);
 
-        Logic.AppData memory createdAppData = Logic.AppData({
-            discoveryPayload: new Logic.ExpirableBlob[](0),
-            resourcePayload: new Logic.ExpirableBlob[](0),
-            externalPayload: new Logic.ExpirableBlob[](0),
-            applicationPayload: new Logic.ExpirableBlob[](0)
-        });
-
-        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
-        created[0] = TxGen.ResourceAndAppData({
-            resource: TxGen.mockResource({
-                nonce: bytes32(uint256(nonce) + 1),
-                logicRef: _CARRIER_LOGIC_REF,
-                labelRef: _carrierLabelRef,
-                quantity: 1
-            }),
-            appData: createdAppData
-        });
+        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: nonce + 1});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
