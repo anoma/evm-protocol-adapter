@@ -19,7 +19,7 @@ import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract MyToken is ERC20 {
-    constructor(address recipient) ERC20("MyToken", "MTK") {}
+    constructor() ERC20("MyToken", "MTK") {}
 
     function mint(address to, uint256 value) external {
         _mint(to, value);
@@ -42,7 +42,7 @@ contract ERC20ForwarderTest is Test {
         _alice = vm.addr(_ALICE_PRIVATE_KEY);
 
         // Deploy token and mint for alice
-        _erc20 = new MyToken({recipient: _alice});
+        _erc20 = new MyToken();
 
         // Deploy Permit2 to the canonical address.
         _permit2 = new DeployPermit2().run();
