@@ -19,9 +19,14 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
     /// @notice The ERC-20 token contract address to forward calls to.
     IERC20 internal immutable _ERC20;
 
-    event Wrapped(address from, uint256 value);
-    event Unwrapped(address to, uint256 value);
+    /// @notice Emitted when ERC20 tokens get wrapped.
+    /// @param from The address from which tokens were withdrawn.
+    /// @param value The token amount being deposited into the ERC20 forwarder contract.
     event Wrapped(address indexed from, uint256 value);
+
+    /// @notice Emitted when ERC20 tokens get unwrapped.
+    /// @param to The address to which tokens were deposited.
+    /// @param value The token amount being withdrawn from the ERC20 forwarder contract.
     event Unwrapped(address indexed to, uint256 value);
 
     error TokenMismatch(address expected, address actual);
