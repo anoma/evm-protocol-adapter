@@ -100,8 +100,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
                 signature: signature
             });
         } else {
-            // This branch should never be reached because the call will already panic on attempting to decode a
-            // non-existing enum value greater than `type(Calltype).max`.
+            // This branch will never be reached. This is because the call will already panic when attempting to decode
+            // a non-existing `Calltype` enum value greater than `type(Calltype).max = 2`.
             revert CallTypeInvalid();
         }
 
