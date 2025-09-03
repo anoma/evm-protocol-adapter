@@ -64,7 +64,7 @@ contract ERC20ForwarderInput {
     /// @return callType The call type.
     /// @return to The address receiving the tokens.
     /// @return value The value to send.
-    function decodeTransfer(bytes memory input) public pure returns (CallType callType, address to, uint256 value) {
+    function decodeTransfer(bytes calldata input) public pure returns (CallType callType, address to, uint256 value) {
         (callType, to, value) = abi.decode(input, (CallType, address, uint256));
     }
 
@@ -82,7 +82,7 @@ contract ERC20ForwarderInput {
     /// @return callType The call type.
     /// @return from The address to withdraw the tokens from.
     /// @return value The value to send.
-    function decodeTransferFrom(bytes memory input)
+    function decodeTransferFrom(bytes calldata input)
         public
         pure
         returns (CallType callType, address from, uint256 value)
@@ -115,7 +115,7 @@ contract ERC20ForwarderInput {
     /// @return permit The permit data constituted by the token address, token amount, nonce, and deadline.
     /// @return witness The witness information.
     /// @return signature The signature over the `PermitWitnessTransferFrom` message.
-    function decodePermitWitnessTransferFrom(bytes memory input)
+    function decodePermitWitnessTransferFrom(bytes calldata input)
         public
         pure
         returns (
