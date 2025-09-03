@@ -61,15 +61,11 @@ contract ERC20ForwarderInput {
 
     /// @notice Decodes the input for the ERC-20 transfer call.
     /// @param input The encoded input.
+    /// @return callType The call type.
     /// @return to The address receiving the tokens.
     /// @return value The value to send.
-    function decodeTransfer(bytes memory input) public pure returns (address to, uint256 value) {
-        CallType callType;
+    function decodeTransfer(bytes memory input) public pure returns (CallType callType, address to, uint256 value) {
         (callType, to, value) = abi.decode(input, (CallType, address, uint256));
-
-        if (callType != CallType.Transfer) {
-            revert CallTypeInvalid();
-        }
     }
 
     /// @notice Encodes the input for the ERC-20 `transferFrom` call.
@@ -81,16 +77,17 @@ contract ERC20ForwarderInput {
     }
 
     /// @notice Decodes the input for the ERC-20 `transferFrom` call.
+
     /// @param input The encoded input.
+    /// @return callType The call type.
     /// @return from The address to withdraw the tokens from.
     /// @return value The value to send.
-    function decodeTransferFrom(bytes memory input) public pure returns (address from, uint256 value) {
-        CallType callType;
+    function decodeTransferFrom(bytes memory input)
+        public
+        pure
+        returns (CallType callType, address from, uint256 value)
+    {
         (callType, from, value) = abi.decode(input, (CallType, address, uint256));
-
-        if (callType != CallType.TransferFrom) {
-            revert CallTypeInvalid();
-        }
     }
 
     /// @notice Encodes the input for the Permit2 `permitWitnessTransferFrom` call.
@@ -112,6 +109,7 @@ contract ERC20ForwarderInput {
 
     /// @notice Decodes the input for the Permit2 `permitWitnessTransferFrom` call.
     /// @param input The encoded input.
+    /// @return callType The call type.
     /// @return from The address to withdraw the tokens from.
     /// @return value The value to send.
     /// @return permit The permit data constituted by the token address, token amount, nonce, and deadline.
@@ -121,6 +119,7 @@ contract ERC20ForwarderInput {
         public
         pure
         returns (
+            CallType callType,
             address from,
             uint256 value,
             ISignatureTransfer.PermitTransferFrom memory permit,
@@ -128,13 +127,8 @@ contract ERC20ForwarderInput {
             bytes memory signature
         )
     {
-        CallType callType;
         (callType, from, value, permit, witness, signature) =
             abi.decode(input, (CallType, address, uint256, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
-
-        if (callType != CallType.PermitWitnessTransferFrom) {
-            revert CallTypeInvalid();
-        }
     }
 }
 // solhint-enable comprehensive-interface
