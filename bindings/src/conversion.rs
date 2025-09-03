@@ -83,6 +83,7 @@ impl From<LogicVerifierInputs> for Logic::VerifierInput {
 
 impl From<ComplianceInstance> for Compliance::Instance {
     fn from(instance: ComplianceInstance) -> Self {
+        println!("{:?}", instance.clone());
         Self {
             consumed: Compliance::ConsumedRefs {
                 nullifier: B256::from_slice(words_to_bytes(&instance.consumed_nullifier)),

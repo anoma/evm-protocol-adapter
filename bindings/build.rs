@@ -2,6 +2,11 @@ use std::process::Command;
 
 // Example custom build script.
 fn main() {
+    // Debug: Print the PATH
+    if let Ok(path) = std::env::var("PATH") {
+        println!("cargo:warning=PATH: {}", path);
+    }
+
     // make sure forge is available
     if Command::new("forge").arg("--version").output().is_err() {
         println!("cargo:warning=forge not found, skipping contract compilation");
