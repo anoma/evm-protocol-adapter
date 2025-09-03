@@ -19,6 +19,9 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
     /// @notice The ERC-20 token contract address to forward calls to.
     IERC20 internal immutable _ERC20;
 
+    event Wrapped(address from, uint256 value);
+    event Unwrapped(address to, uint256 value);
+
     error TokenMismatch(address expected, address actual);
     error ValueMismatch(uint256 expected, uint256 actual);
 
@@ -46,9 +49,13 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
         if (callType == CallType.Transfer) {
             (address to, uint256 value) = decodeTransfer(input);
 
+            emit Unwrapped({to: to, value: value});
+
             _ERC20.safeTransfer({to: to, value: value});
         } else if (callType == CallType.TransferFrom) {
             (address from, uint256 value) = decodeTransferFrom(input);
+
+            emit Wrapped({from: from, value: value});
 
             // slither-disable-next-line arbitrary-send-erc20
             _ERC20.safeTransferFrom({from: from, to: address(this), value: value});
@@ -73,6 +80,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
                     revert ValueMismatch({expected: value, actual: permit.permitted.amount});
                 }
             }
+
+            emit Wrapped({from: from, value: value});
 
             _PERMIT2.permitWitnessTransferFrom({
                 permit: permit,
