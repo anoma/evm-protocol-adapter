@@ -21,6 +21,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
 
     event Wrapped(address from, uint256 value);
     event Unwrapped(address to, uint256 value);
+    event Wrapped(address indexed from, uint256 value);
+    event Unwrapped(address indexed to, uint256 value);
 
     error TokenMismatch(address expected, address actual);
     error ValueMismatch(uint256 expected, uint256 actual);
