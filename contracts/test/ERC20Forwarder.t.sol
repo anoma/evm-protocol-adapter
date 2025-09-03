@@ -169,23 +169,18 @@ contract ERC20ForwarderTest is Test {
     function test_forwardCall_PermitTransferFrom_call_reverts_if_user_did_not_approve_permit2() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
 
-        bytes memory input;
-        {
-            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
-
-            input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
-                from: _alice,
-                value: _TRANSFER_AMOUNT,
-                permit: permit,
-                witness: _ACTION_TREE_ROOT,
-                signature: _createPermitWitnessTransferFromSignature({
-                    permit: permit,
-                    privateKey: _ALICE_PRIVATE_KEY,
-                    spender: _fwd,
-                    witness: _ACTION_TREE_ROOT
-                })
-            });
-        }
+        bytes memory input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
+            from: _alice,
+            value: _TRANSFER_AMOUNT,
+            permit: _defaultPermit,
+            witness: _ACTION_TREE_ROOT,
+            signature: _createPermitWitnessTransferFromSignature({
+                permit: _defaultPermit,
+                privateKey: _ALICE_PRIVATE_KEY,
+                spender: _fwd,
+                witness: _ACTION_TREE_ROOT
+            })
+        });
 
         vm.prank(_pa);
         vm.expectRevert("TRANSFER_FROM_FAILED", address(_erc20));
