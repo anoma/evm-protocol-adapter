@@ -19,8 +19,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
     /// @notice The ERC-20 token contract address to forward calls to.
     IERC20 internal immutable _ERC20;
 
-    error Permit2TokenMismatch(address expected, address actual);
-    error Permit2AmountMismatch(uint256 expected, uint256 actual);
+    error TokenMismatch(address expected, address actual);
+    error ValueMismatch(uint256 expected, uint256 actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
@@ -61,6 +61,19 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
                 bytes memory signature
             ) = decodePermitWitnessTransferFrom(input);
 
+            // NOTE: The following checks could be conducted on the carrier resource logic.
+            {
+                // Check that the permitted token address matches the ERC20 token this contract is forwarding calls to.
+                if (permit.permitted.token != address(_ERC20)) {
+                    revert TokenMismatch({expected: address(_ERC20), actual: permit.permitted.token});
+                }
+
+                // Check that the permitted and transferred amounts are exactly the same.
+                if (permit.permitted.amount != value) {
+                    revert ValueMismatch({expected: value, actual: permit.permitted.amount});
+                }
+            }
+
             _PERMIT2.permitWitnessTransferFrom({
                 permit: permit,
                 // solhint-disable-next-line max-line-length
@@ -70,18 +83,6 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
                 witnessTypeString: "bytes32 witness",
                 signature: signature
             });
-
-            // NOTE: The following checks could be conducted on the carrier resource logic.
-            /*{
-                //TODO! remove?
-                if (permit.permitted.token != address(_ERC20)) {
-                    revert Permit2TokenMismatch({expected: address(_ERC20), actual: permit.permitted.token});
-                }
-
-                if (permit.permitted.amount != value) {
-                    revert Permit2AmountMismatch({expected: permit.permitted.amount, actual: value});
-                }
-            }*/
         } else {
             revert CallTypeInvalid();
         }

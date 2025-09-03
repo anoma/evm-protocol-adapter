@@ -137,6 +137,71 @@ contract ERC20ForwarderTest is Test {
         assertEq(_erc20.balanceOf(_fwd), startBalanceForwarder + _TRANSFER_AMOUNT);
     }
 
+    function test_forwardCall_PermitWitnessTransferFrom_call_reverts_on_wrong_token() public {
+        MyToken wrongERC20 = new MyToken();
+
+        wrongERC20.mint({to: _alice, value: _TRANSFER_AMOUNT});
+        vm.prank(_alice);
+        wrongERC20.approve(address(_permit2), type(uint256).max);
+
+        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({token: address(wrongERC20), amount: _TRANSFER_AMOUNT}),
+            nonce: 0,
+            deadline: Time.timestamp() + 5 minutes
+        });
+
+        bytes memory input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
+            from: _alice,
+            value: _TRANSFER_AMOUNT,
+            permit: permit,
+            witness: _ACTION_TREE_ROOT,
+            signature: _createPermitWitnessTransferFromSignature({
+                permit: permit,
+                privateKey: _ALICE_PRIVATE_KEY,
+                spender: _fwd,
+                witness: _ACTION_TREE_ROOT
+            })
+        });
+
+        vm.prank(_pa);
+        vm.expectRevert(abi.encodeWithSelector(ERC20Forwarder.TokenMismatch.selector, _erc20, wrongERC20), _fwd);
+        ERC20Forwarder(_fwd).forwardCall(input);
+    }
+
+    function test_forwardCall_PermitWitnessTransferFrom_call_reverts_if_the_permitted_amount_does_not_match() public {
+        _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
+        vm.prank(_alice);
+        _erc20.approve(address(_permit2), type(uint256).max);
+
+        uint256 permittedAmount = _TRANSFER_AMOUNT - 1;
+
+        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: permittedAmount}),
+            nonce: 0,
+            deadline: Time.timestamp() + 5 minutes
+        });
+
+        bytes memory input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
+            from: _alice,
+            value: _TRANSFER_AMOUNT,
+            permit: permit,
+            witness: _ACTION_TREE_ROOT,
+            signature: _createPermitWitnessTransferFromSignature({
+                permit: permit,
+                privateKey: _ALICE_PRIVATE_KEY,
+                spender: _fwd,
+                witness: _ACTION_TREE_ROOT
+            })
+        });
+
+        vm.prank(_pa);
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC20Forwarder.ValueMismatch.selector, permittedAmount, _TRANSFER_AMOUNT),
+            address(_fwd)
+        );
+        ERC20Forwarder(_fwd).forwardCall(input);
+    }
+
     function test_forwardCall_PermitTransferFrom_call_reverts_if_user_did_not_approve_permit2() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
         bytes memory input = _permit2ExampleInput({value: _TRANSFER_AMOUNT});
