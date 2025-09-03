@@ -4,15 +4,14 @@ pragma solidity ^0.8.30;
 import {IERC20Errors} from "@openzeppelin-contracts/interfaces/draft-IERC6093.sol";
 import {ERC20} from "@openzeppelin-contracts/token/ERC20/ERC20.sol";
 import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
-
 import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {Test, stdError} from "forge-std/Test.sol";
 
 import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
+import {ERC20ForwarderInput} from "../src/forwarders/ERC20ForwarderInput.sol";
 import {Parameters} from "../src/libs/Parameters.sol";
-
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
@@ -81,6 +80,17 @@ contract ERC20ForwarderTest is Test {
             nonce: 0,
             deadline: Time.timestamp() + 5 minutes
         });
+    }
+
+    function testFuzz_enum_panics(uint8 v) public {
+        uint8 callTypeEnumLength = uint8(type(ERC20ForwarderInput.CallType).max) + 1;
+
+        if (v < callTypeEnumLength) {
+            ERC20ForwarderInput.CallType(v);
+        } else {
+            vm.expectRevert(stdError.enumConversionError);
+            ERC20ForwarderInput.CallType(v);
+        }
     }
 
     function test_forwardCall_Transfer_call_sends_funds_to_the_user() public {
