@@ -245,7 +245,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // slither-disable-next-line calls-loop
         bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
 
-        _verifyForwarderCall(input.appData.resourcePayload[0], input.tag, fetchedKind, consumed);
+        _verifyForwarderCall({
+            carrierBlob: input.appData.resourcePayload[0].blob,
+            tag: input.tag,
+            kind: fetchedKind,
+            consumed: consumed
+        });
 
         _executeForwarderCall(call);
     }
@@ -308,26 +313,23 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     }
 
     /// @notice Verifies the forwarder calls of a given action.
-    /// @param payload The payload of the resource making the call.
+    /// @param carrierBlob The carrier resource blob
     /// @param tag The tag of the resource making the call.
     /// @param kind The kind requested by the forwarder contract.
     /// @param consumed The flag indicating whether the resource is created or consumed
-    function _verifyForwarderCall(Logic.ExpirableBlob calldata payload, bytes32 tag, bytes32 kind, bool consumed)
-        internal
-        pure
-    {
+    function _verifyForwarderCall(bytes calldata carrierBlob, bytes32 tag, bytes32 kind, bool consumed) internal pure {
         Resource memory resource;
 
         // Check tag correspondence
         if (consumed) {
             bytes32 nullifierKey;
-            (resource, nullifierKey) = abi.decode(payload.blob, (Resource, bytes32));
+            (resource, nullifierKey) = abi.decode(carrierBlob, (Resource, bytes32));
 
             if (resource.nullifier(nullifierKey) != tag) {
                 revert CalldataCarrierNullifierMismatch({actual: resource.nullifier(nullifierKey), expected: tag});
             }
         } else {
-            (resource) = abi.decode(payload.blob, (Resource));
+            (resource) = abi.decode(carrierBlob, (Resource));
 
             if (resource.commitment() != tag) {
                 revert CalldataCarrierCommitmentMismatch({actual: resource.commitment(), expected: tag});
