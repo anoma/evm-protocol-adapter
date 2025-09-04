@@ -54,13 +54,21 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
         CallType callType = CallType(uint8(input[31]));
 
         if (callType == CallType.Transfer) {
-            ( /* CallType */ , address to, uint256 value) = decodeTransfer(input);
+            (
+                , // CallType
+                address to,
+                uint256 value
+            ) = decodeTransfer(input);
 
             emit Unwrapped({to: to, value: value});
 
             _ERC20.safeTransfer({to: to, value: value});
         } else if (callType == CallType.TransferFrom) {
-            ( /* CallType */ , address from, uint256 value) = decodeTransferFrom(input);
+            (
+                , // CallType
+                address from,
+                uint256 value
+            ) = decodeTransferFrom(input);
 
             emit Wrapped({from: from, value: value});
 
@@ -68,8 +76,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
             _ERC20.safeTransferFrom({from: from, to: address(this), value: value});
         } else if (callType == CallType.PermitWitnessTransferFrom) {
             (
-                /* CallType */
-                ,
+                , // CallType
                 address from,
                 uint256 value,
                 ISignatureTransfer.PermitTransferFrom memory permit,
