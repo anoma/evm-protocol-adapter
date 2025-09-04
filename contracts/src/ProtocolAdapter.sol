@@ -327,17 +327,16 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // Check tag correspondence
         if (!consumed) {
             // If created, compute the commitment of a resource and check correspondence to tag
-            if (resource.commitment() != tag) {
-                revert CalldataCarrierCommitmentMismatch({actual: tag, expected: resource.commitment()});
+            bytes32 cm = resource.commitment();
+            if (cm != tag) {
+                revert CalldataCarrierCommitmentMismatch({actual: tag, expected: cm});
             }
-        } else if (
+        } else {
             // If consumed, we expect the nullifier key to be present in the resource payload as well
-            resource.nullifier(bytes32(payload[1].blob)) != tag
-        ) {
-            revert CalldataCarrierNullifierMismatch({
-                actual: tag,
-                expected: resource.nullifier(bytes32(payload[1].blob))
-            });
+            bytes32 nf = resource.nullifier({nullifierKey: bytes32(payload[1].blob)});
+            if (nf != tag) {
+                revert CalldataCarrierNullifierMismatch({actual: tag, expected: nf});
+            }
         }
     }
 
