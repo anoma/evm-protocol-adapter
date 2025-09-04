@@ -9,14 +9,14 @@ For more information on the EVM protocol adapter, find the related
 
 <div align="left">
   <a href="https://www.youtube.com/watch?v=rKFZsOw360U">
-     <img src=".assets/Youtube_preview.png" 
+     <img src=".assets/Youtube_preview.png"
        alt="The EVM Protocol Adapter: Bringing Intent-Centric Apps to Ethereum - Anoma Research Day"
        border=1,
        style="width:67%;">
   </a>
 </div>
 
-> [!WARNING]  
+> [!WARNING]
 > This repo features a prototype and is work in progress. Do NOT use in
 > production.
 
