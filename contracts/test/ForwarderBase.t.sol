@@ -7,7 +7,6 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 import {Test} from "forge-std/Test.sol";
 
 import {ForwarderBase} from "../src/forwarders/ForwarderBase.sol";
-import {ComputableComponents} from "../src/libs/ComputableComponents.sol";
 import {Parameters} from "../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
@@ -50,12 +49,26 @@ contract ForwarderBaseTest is Test {
     function test_forwardCall_reverts_if_the_pa_is_not_the_caller() public {
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(abi.encodeWithSelector(ForwarderBase.UnauthorizedCaller.selector, _pa, _UNAUTHORIZED_CALLER));
-        _fwd.forwardCall({input: INPUT});
+        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
+    }
+
+    function test_forwardCall_reverts_if_the_logic_ref_mismatches() public {
+        bytes32 wrongLogicRef = bytes32(uint256(123));
+
+        assertNotEq(wrongLogicRef, _CALLDATA_CARRIER_LOGIC_REF);
+
+        vm.prank(_pa);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ForwarderBase.UnauthorizedLogicRef.selector, _CALLDATA_CARRIER_LOGIC_REF, wrongLogicRef
+            )
+        );
+        _fwd.forwardCall({logicRef: wrongLogicRef, input: INPUT});
     }
 
     function test_forwardCall_forwards_calls_if_the_pa_is_the_caller() public {
         vm.prank(_pa);
-        bytes memory output = _fwd.forwardCall({input: INPUT});
+        bytes memory output = _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
         assertEq(keccak256(output), keccak256(EXPECTED_OUTPUT));
     }
 
@@ -64,7 +77,7 @@ contract ForwarderBaseTest is Test {
 
         vm.expectEmit(address(_fwd));
         emit ForwarderExample.CallForwarded(INPUT, EXPECTED_OUTPUT);
-        _fwd.forwardCall({input: INPUT});
+        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
     }
 
     function test_forwardCall_calls_the_function_in_the_target_contract() public {
@@ -72,15 +85,7 @@ contract ForwarderBaseTest is Test {
 
         vm.expectEmit(address(_tgt));
         emit ForwarderTargetExample.CallReceived(INPUT_VALUE, OUTPUT_VALUE);
-        _fwd.forwardCall({input: INPUT});
-    }
-
-    function test_calldataCarrierResourceKind_returns_the_expected_kind() public view {
-        bytes32 expectedKind = ComputableComponents.kind({
-            logicRef: _CALLDATA_CARRIER_LOGIC_REF,
-            labelRef: sha256(abi.encode(address(_fwd)))
-        });
-        assertEq(_fwd.calldataCarrierResourceKind(), expectedKind);
+        _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
     }
 
     function _stopProtocolAdapter() internal {

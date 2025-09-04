@@ -67,7 +67,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
             // slither-disable-next-line arbitrary-send-erc20
             _ERC20.safeTransferFrom({from: from, to: address(this), value: value});
         } else if (callType == CallType.PermitWitnessTransferFrom) {
-            ( /* CallType */
+            (
+                /* CallType */
                 ,
                 address from,
                 uint256 value,
