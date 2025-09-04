@@ -19,8 +19,8 @@ contract DeployERC20Wrapper is Script {
         new ERC20Forwarder{salt: sha256("ERC20ForwarderExample")}({
             protocolAdapter: address(_PROTOCOL_ADAPTER),
             emergencyCommittee: _EMERGENCY_COMMITTEE,
-            erc20: _ERC20,
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
+            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF,
+            erc20: _ERC20
         });
         vm.stopBroadcast();
     }

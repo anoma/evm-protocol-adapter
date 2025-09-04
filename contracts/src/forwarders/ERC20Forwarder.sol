@@ -1,19 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Address} from "@openzeppelin-contracts/utils/Address.sol";
+import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
+import {ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 
 import {EmergencyMigratableForwarderBase} from "./EmergencyMigratableForwarderBase.sol";
+
+import {ERC20ForwarderInput} from "./ERC20ForwarderInput.sol";
 
 /// @title ERC20Forwarder
 /// @author Anoma Foundation, 2025
 /// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources.
 /// @custom:security-contact security@anoma.foundation
-contract ERC20Forwarder is EmergencyMigratableForwarderBase {
-    using Address for address;
+contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput {
+    using SafeERC20 for IERC20;
 
     /// @notice The ERC-20 token contract address to forward calls to.
-    address internal immutable _ERC20_CONTRACT;
+    IERC20 internal immutable _ERC20;
+
+    /// @notice Emitted when ERC20 tokens get wrapped.
+    /// @param from The address from which tokens were withdrawn.
+    /// @param value The token amount being deposited into the ERC20 forwarder contract.
+    event Wrapped(address indexed from, uint256 value); // solhint-disable-line gas-indexed-events
+
+    /// @notice Emitted when ERC20 tokens get unwrapped.
+    /// @param to The address to which tokens were deposited.
+    /// @param value The token amount being withdrawn from the ERC20 forwarder contract.
+    event Unwrapped(address indexed to, uint256 value); // solhint-disable-line gas-indexed-events
+
+    error TokenMismatch(address expected, address actual);
+    error ValueMismatch(uint256 expected, uint256 actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
@@ -27,20 +44,75 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         if (erc20 == address(0)) {
             revert ZeroNotAllowed();
         }
-        _ERC20_CONTRACT = erc20;
+        _ERC20 = IERC20(erc20);
     }
 
     /// @notice Forwards calls.
     /// @param input The `bytes` encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
     function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
-        output = _ERC20_CONTRACT.functionCall(input);
+        CallType callType = CallType(uint8(input[31]));
+
+        if (callType == CallType.Transfer) {
+            ( /* CallType */ , address to, uint256 value) = decodeTransfer(input);
+
+            emit Unwrapped({to: to, value: value});
+
+            _ERC20.safeTransfer({to: to, value: value});
+        } else if (callType == CallType.TransferFrom) {
+            ( /* CallType */ , address from, uint256 value) = decodeTransferFrom(input);
+
+            emit Wrapped({from: from, value: value});
+
+            // slither-disable-next-line arbitrary-send-erc20
+            _ERC20.safeTransferFrom({from: from, to: address(this), value: value});
+        } else if (callType == CallType.PermitWitnessTransferFrom) {
+            ( /* CallType */
+                ,
+                address from,
+                uint256 value,
+                ISignatureTransfer.PermitTransferFrom memory permit,
+                bytes32 witness,
+                bytes memory signature
+            ) = decodePermitWitnessTransferFrom(input);
+
+            // NOTE: The following checks could be conducted on the carrier resource logic.
+            {
+                // Check that the permitted token address matches the ERC20 token this contract is forwarding calls to.
+                if (permit.permitted.token != address(_ERC20)) {
+                    revert TokenMismatch({expected: address(_ERC20), actual: permit.permitted.token});
+                }
+
+                // Check that the permitted and transferred amounts are exactly the same.
+                if (permit.permitted.amount != value) {
+                    revert ValueMismatch({expected: value, actual: permit.permitted.amount});
+                }
+            }
+
+            emit Wrapped({from: from, value: value});
+
+            _PERMIT2.permitWitnessTransferFrom({
+                permit: permit,
+                // solhint-disable-next-line max-line-length
+                transferDetails: ISignatureTransfer.SignatureTransferDetails({to: address(this), requestedAmount: value}),
+                owner: from,
+                witness: witness,
+                witnessTypeString: "bytes32 witness",
+                signature: signature
+            });
+        } else {
+            // This branch will never be reached. This is because the call will already panic when attempting to decode
+            // a non-existing `Calltype` enum value greater than `type(Calltype).max = 2`.
+            revert CallTypeInvalid();
+        }
+
+        output = abi.encode(true);
     }
 
     /// @notice Forwards emergency calls.
     /// @param input The `bytes`  encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
     function _forwardEmergencyCall(bytes calldata input) internal override returns (bytes memory output) {
-        output = _ERC20_CONTRACT.functionCall(input);
+        output = _forwardCall(input);
     }
 }
