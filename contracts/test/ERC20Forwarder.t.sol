@@ -31,6 +31,8 @@ contract ERC20ForwarderTest is Test {
     bytes internal constant _EXPECTED_OUTPUT = abi.encode(true);
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(type(uint256).max);
 
+    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(type(uint256).max);
+
     address internal _pa;
     address internal _alice;
     address internal _fwd;
@@ -101,7 +103,7 @@ contract ERC20ForwarderTest is Test {
         bytes memory input = ERC20Forwarder(_fwd).encodeTransfer({to: _alice, value: _TRANSFER_AMOUNT});
 
         vm.prank(_pa);
-        bytes memory output = ERC20Forwarder(_fwd).forwardCall(input);
+        bytes memory output = ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
 
         assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
         assertEq(_erc20.balanceOf(_alice), startBalanceAlice + _TRANSFER_AMOUNT);
@@ -115,7 +117,7 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_pa);
         vm.expectEmit(address(_fwd));
         emit ERC20Forwarder.Unwrapped({to: _alice, value: _TRANSFER_AMOUNT});
-        ERC20Forwarder(_fwd).forwardCall(input);
+        ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
     function test_forwardCall_TransferFrom_call_reverts_if_user_did_not_approve_the_forwarder() public {
@@ -132,7 +134,7 @@ contract ERC20ForwarderTest is Test {
             ),
             address(_erc20)
         );
-        ERC20Forwarder(_fwd).forwardCall(input);
+        ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
     function test_forwardCall_TransferFrom_call_pulls_funds_from_user() public {
@@ -146,7 +148,7 @@ contract ERC20ForwarderTest is Test {
         bytes memory input = ERC20Forwarder(_fwd).encodeTransferFrom({from: _alice, value: _TRANSFER_AMOUNT});
 
         vm.prank(_pa);
-        bytes memory output = ERC20Forwarder(_fwd).forwardCall(input);
+        bytes memory output = ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
 
         assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
         assertEq(_erc20.balanceOf(_alice), startBalanceAlice - _TRANSFER_AMOUNT);
@@ -163,7 +165,7 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_pa);
         vm.expectEmit(address(_fwd));
         emit ERC20Forwarder.Wrapped({from: _alice, value: _TRANSFER_AMOUNT});
-        ERC20Forwarder(_fwd).forwardCall(input);
+        ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
     function test_forwardCall_PermitTransferFrom_call_reverts_if_user_did_not_approve_permit2() public {
@@ -184,7 +186,7 @@ contract ERC20ForwarderTest is Test {
 
         vm.prank(_pa);
         vm.expectRevert("TRANSFER_FROM_FAILED", address(_erc20));
-        ERC20Forwarder(_fwd).forwardCall(input);
+        ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
     function test_forwardCall_PermitTransferFrom_call_reverts_if_the_signature_expired() public {
@@ -210,7 +212,7 @@ contract ERC20ForwarderTest is Test {
 
         vm.prank(_pa);
         vm.expectRevert(abi.encodeWithSelector(SignatureExpired.selector, _defaultPermit.deadline), address(_permit2));
-        ERC20Forwarder(_fwd).forwardCall(input);
+        ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
     function test_forwardCall_PermitTransferFrom_call_reverts_if_the_signature_was_already_used() public {
@@ -233,11 +235,11 @@ contract ERC20ForwarderTest is Test {
 
         // Use the signature.
         vm.startPrank(_pa);
-        ERC20Forwarder(_fwd).forwardCall(input);
+        ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
 
         // Reuse the signature.
         vm.expectRevert(abi.encodeWithSelector(InvalidNonce.selector), address(_permit2));
-        ERC20Forwarder(_fwd).forwardCall(input);
+        ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
     function test_forwardCall_PermitWitnessTransferFrom_call_reverts_if_the_permitted_token_is_incorrect() public {
@@ -265,7 +267,7 @@ contract ERC20ForwarderTest is Test {
 
         vm.prank(_pa);
         vm.expectRevert(abi.encodeWithSelector(ERC20Forwarder.TokenMismatch.selector, _erc20, wrongERC20), _fwd);
-        ERC20Forwarder(_fwd).forwardCall(input);
+        ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
     function test_forwardCall_PermitWitnessTransferFrom_call_reverts_if_the_permitted_and_transfer_amount_mismatch()
@@ -296,7 +298,7 @@ contract ERC20ForwarderTest is Test {
             abi.encodeWithSelector(ERC20Forwarder.ValueMismatch.selector, _TRANSFER_AMOUNT, permit.permitted.amount),
             address(_fwd)
         );
-        ERC20Forwarder(_fwd).forwardCall(input);
+        ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
     function test_forwardCall_PermitTransferFrom_call_pulls_funds_from_user() public {
@@ -321,7 +323,7 @@ contract ERC20ForwarderTest is Test {
         });
 
         vm.prank(_pa);
-        bytes memory output = ERC20Forwarder(_fwd).forwardCall(input);
+        bytes memory output = ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
 
         assertEq(keccak256(output), keccak256(_EXPECTED_OUTPUT));
         assertEq(_erc20.balanceOf(_alice), startBalanceAlice - _TRANSFER_AMOUNT);
@@ -350,7 +352,7 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_pa);
         vm.expectEmit(address(_fwd));
         emit ERC20Forwarder.Wrapped({from: _alice, value: _TRANSFER_AMOUNT});
-        ERC20Forwarder(_fwd).forwardCall(input);
+        ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
     function _createPermitWitnessTransferFromSignature(

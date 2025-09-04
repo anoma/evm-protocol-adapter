@@ -190,7 +190,7 @@ contract ProtocolAdapterMockTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapter.CalldataCarrierCommitmentMismatch.selector,
+                ProtocolAdapter.CalldataCarrierTagMismatch.selector,
                 txn.actions[0].complianceVerifierInputs[0].instance.created.commitment,
                 alteredResource.commitment()
             )
@@ -217,7 +217,7 @@ contract ProtocolAdapterMockTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapter.CalldataCarrierNullifierMismatch.selector,
+                ProtocolAdapter.CalldataCarrierTagMismatch.selector,
                 txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier,
                 alteredResource.nullifier({nullifierKey: originalNullifierKey})
             )
@@ -244,7 +244,7 @@ contract ProtocolAdapterMockTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapter.CalldataCarrierNullifierMismatch.selector,
+                ProtocolAdapter.CalldataCarrierTagMismatch.selector,
                 txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier,
                 consumed[0].resource.nullifier(alteredNullifierKey)
             )

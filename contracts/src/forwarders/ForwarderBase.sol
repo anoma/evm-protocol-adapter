@@ -2,8 +2,6 @@
 pragma solidity ^0.8.30;
 
 import {IForwarder} from "../interfaces/IForwarder.sol";
-import {ComputableComponents} from "../libs/ComputableComponents.sol";
-import {ProtocolAdapter} from "../ProtocolAdapter.sol";
 
 /// @title ForwarderBase
 /// @author Anoma Foundation, 2025
@@ -11,39 +9,35 @@ import {ProtocolAdapter} from "../ProtocolAdapter.sol";
 /// @custom:security-contact security@anoma.foundation
 abstract contract ForwarderBase is IForwarder {
     /// @notice The protocol adapter contract that can forward calls.
-    ProtocolAdapter internal immutable _PROTOCOL_ADAPTER;
+    address internal immutable _PROTOCOL_ADAPTER;
 
-    /// @notice The the calldata carrier resource kind.
-    bytes32 internal immutable _CALLDATA_CARRIER_RESOURCE_KIND;
+    /// @notice The the calldata carrier resource logic reference.
+    bytes32 internal immutable _CALLDATA_CARRIER_LOGIC_REF;
 
     error ZeroNotAllowed();
     error UnauthorizedCaller(address expected, address actual);
+    error UnauthorizedLogicRef(bytes32 expected, bytes32 actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
-
     /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef) {
         if (protocolAdapter == address(0) || calldataCarrierLogicRef == bytes32(0)) {
             revert ZeroNotAllowed();
         }
 
-        _PROTOCOL_ADAPTER = ProtocolAdapter(protocolAdapter);
+        _PROTOCOL_ADAPTER = protocolAdapter;
 
-        _CALLDATA_CARRIER_RESOURCE_KIND =
-            ComputableComponents.kind({logicRef: calldataCarrierLogicRef, labelRef: sha256(abi.encode(address(this)))});
+        _CALLDATA_CARRIER_LOGIC_REF = calldataCarrierLogicRef;
     }
 
     /// @inheritdoc IForwarder
-    function forwardCall(bytes calldata input) external returns (bytes memory output) {
-        _checkCaller(address(_PROTOCOL_ADAPTER));
+    function forwardCall(bytes32 logicRef, bytes calldata input) external returns (bytes memory output) {
+        _checkCaller(_PROTOCOL_ADAPTER);
+
+        _checkLogicRef(logicRef);
 
         output = _forwardCall(input);
-    }
-
-    /// @inheritdoc IForwarder
-    function calldataCarrierResourceKind() external view returns (bytes32 kind) {
-        kind = _CALLDATA_CARRIER_RESOURCE_KIND;
     }
 
     /// @notice Forwards calls.
@@ -56,6 +50,14 @@ abstract contract ForwarderBase is IForwarder {
     function _checkCaller(address expected) internal view {
         if (msg.sender != expected) {
             revert UnauthorizedCaller({expected: expected, actual: msg.sender});
+        }
+    }
+
+    /// @notice Checks that an forward call is triggered by the expected resource logic.
+    /// @param logicRef The logic reference to check.
+    function _checkLogicRef(bytes32 logicRef) internal view {
+        if (_CALLDATA_CARRIER_LOGIC_REF != logicRef) {
+            revert UnauthorizedLogicRef({expected: _CALLDATA_CARRIER_LOGIC_REF, actual: logicRef});
         }
     }
 }

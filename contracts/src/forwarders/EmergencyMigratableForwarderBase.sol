@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {IEmergencyMigratable} from "../interfaces/IEmergencyMigratable.sol";
 
+import {ProtocolAdapter} from "../ProtocolAdapter.sol";
 import {ForwarderBase} from "./ForwarderBase.sol";
 
 /// @title EmergencyMigratableForwarderBase
@@ -38,7 +39,7 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
     }
 
     /// @inheritdoc IEmergencyMigratable
-    function forwardEmergencyCall(bytes calldata input) external returns (bytes memory output) {
+    function forwardEmergencyCall(bytes32 logicRef, bytes calldata input) external returns (bytes memory output) {
         if (_emergencyCaller == address(0)) {
             revert EmergencyCallerNotSet();
         }
@@ -46,6 +47,8 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
         _checkCaller(_emergencyCaller);
 
         _checkEmergencyStopped();
+
+        _checkLogicRef(logicRef);
 
         output = _forwardEmergencyCall(input);
     }
@@ -79,7 +82,7 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
 
     /// @notice Checks that the protocol adapter has been emergency stopped.
     function _checkEmergencyStopped() internal view {
-        if (!_PROTOCOL_ADAPTER.isEmergencyStopped()) {
+        if (!ProtocolAdapter(_PROTOCOL_ADAPTER).isEmergencyStopped()) {
             revert ProtocolAdapterNotStopped();
         }
     }

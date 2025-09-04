@@ -48,8 +48,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     error RiscZeroVerifierStopped();
 
     error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierCommitmentMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierNullifierMismatch(bytes32 expected, bytes32 actual);
+    error CalldataCarrierTagMismatch(bytes32 expected, bytes32 actual);
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
@@ -178,10 +177,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     }
 
     /// @notice Executes a call to a forwarder contracts.
+    /// @param carrierLogicRef The logic reference of the carrier resource.
     /// @param call The calldata to conduct the forwarder call.
-    function _executeForwarderCall(ForwarderCalldata memory call) internal {
+    function _executeForwarderCall(bytes32 carrierLogicRef, ForwarderCalldata memory call) internal {
         // slither-disable-next-line calls-loop
-        bytes memory output = IForwarder(call.untrustedForwarder).forwardCall(call.input);
+        bytes memory output =
+            IForwarder(call.untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: call.input});
 
         if (keccak256(output) != keccak256(call.output)) {
             revert ForwarderCallOutputMismatch({expected: call.output, actual: output});
@@ -242,17 +243,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // Only the first externalPayload will be verified and executed. // TODO Revisit this design decision.
         ForwarderCalldata memory call = abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
 
-        // slither-disable-next-line calls-loop
-        bytes32 fetchedKind = IForwarder(call.untrustedForwarder).calldataCarrierResourceKind();
-
         _verifyForwarderCall({
             carrierBlob: input.appData.resourcePayload[0].blob,
-            tag: input.tag,
-            kind: fetchedKind,
+            expectedTag: input.tag,
             consumed: consumed
         });
 
-        _executeForwarderCall(call);
+        _executeForwarderCall({carrierLogicRef: input.verifyingKey, call: call});
     }
 
     /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
@@ -314,31 +311,26 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice Verifies the forwarder calls of a given action.
     /// @param carrierBlob The carrier resource blob
-    /// @param tag The tag of the resource making the call.
-    /// @param kind The kind requested by the forwarder contract.
+    /// @param expectedTag The tag of the resource making the call.
     /// @param consumed The flag indicating whether the resource is created or consumed
-    function _verifyForwarderCall(bytes calldata carrierBlob, bytes32 tag, bytes32 kind, bool consumed) internal pure {
-        Resource memory resource;
+    function _verifyForwarderCall(bytes calldata carrierBlob, bytes32 expectedTag, bool consumed) internal pure {
+        bytes32 decodedTag;
 
-        // Check tag correspondence
         if (consumed) {
+            Resource memory resource;
             bytes32 nullifierKey;
             (resource, nullifierKey) = abi.decode(carrierBlob, (Resource, bytes32));
 
-            if (resource.nullifier(nullifierKey) != tag) {
-                revert CalldataCarrierNullifierMismatch({actual: resource.nullifier(nullifierKey), expected: tag});
-            }
+            decodedTag = resource.nullifier(nullifierKey);
         } else {
-            (resource) = abi.decode(carrierBlob, (Resource));
+            (Resource memory resource) = abi.decode(carrierBlob, (Resource));
 
-            if (resource.commitment() != tag) {
-                revert CalldataCarrierCommitmentMismatch({actual: resource.commitment(), expected: tag});
-            }
+            decodedTag = resource.commitment();
         }
 
-        // Check kind correspondence
-        if (resource.kind() != kind) {
-            revert CalldataCarrierKindMismatch({expected: kind, actual: resource.kind()});
+        // Check tag correspondence
+        if (decodedTag != expectedTag) {
+            revert CalldataCarrierTagMismatch({actual: decodedTag, expected: expectedTag});
         }
     }
 
