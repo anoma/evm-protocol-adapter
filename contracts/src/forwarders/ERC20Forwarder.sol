@@ -16,18 +16,17 @@ import {ERC20ForwarderInput} from "./ERC20ForwarderInput.sol";
 contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput {
     using SafeERC20 for IERC20;
 
-    /// @notice The ERC-20 token contract address to forward calls to.
-    IERC20 internal immutable _ERC20;
-
     /// @notice Emitted when ERC20 tokens get wrapped.
+    /// @param token The ERC20 token address.
     /// @param from The address from which tokens were withdrawn.
     /// @param value The token amount being deposited into the ERC20 forwarder contract.
-    event Wrapped(address indexed from, uint256 value); // solhint-disable-line gas-indexed-events
+    event Wrapped(IERC20 indexed token, address indexed from, uint256 value); // solhint-disable-line gas-indexed-events
 
     /// @notice Emitted when ERC20 tokens get unwrapped.
+    /// @param token The ERC20 token address.
     /// @param to The address to which tokens were deposited.
     /// @param value The token amount being withdrawn from the ERC20 forwarder contract.
-    event Unwrapped(address indexed to, uint256 value); // solhint-disable-line gas-indexed-events
+    event Unwrapped(IERC20 indexed token, address indexed to, uint256 value); // solhint-disable-line gas-indexed-events
 
     error TokenMismatch(address expected, address actual);
     error ValueMismatch(uint256 expected, uint256 actual);
@@ -37,15 +36,9 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
     /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     /// @param emergencyCommittee The emergency committee address that is allowed to set the emergency caller if the
     /// RISC Zero verifier has been stopped.
-    /// @param erc20 The ERC-20 token contract to forward calls to.
-    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef, address emergencyCommittee, address erc20)
+    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef, address emergencyCommittee)
         EmergencyMigratableForwarderBase(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee)
-    {
-        if (erc20 == address(0)) {
-            revert ZeroNotAllowed();
-        }
-        _ERC20 = IERC20(erc20);
-    }
+    {}
 
     /// @notice Forwards calls.
     /// @param input The `bytes` encoded input of the call.
@@ -56,27 +49,30 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
         if (callType == CallType.Transfer) {
             (
                 , // CallType
+                IERC20 token,
                 address to,
                 uint256 value
             ) = decodeTransfer(input);
 
-            emit Unwrapped({to: to, value: value});
+            emit Unwrapped({token: token, to: to, value: value});
 
-            _ERC20.safeTransfer({to: to, value: value});
+            token.safeTransfer({to: to, value: value});
         } else if (callType == CallType.TransferFrom) {
             (
                 , // CallType
+                IERC20 token,
                 address from,
                 uint256 value
             ) = decodeTransferFrom(input);
 
-            emit Wrapped({from: from, value: value});
+            emit Wrapped({token: token, from: from, value: value});
 
             // slither-disable-next-line arbitrary-send-erc20
-            _ERC20.safeTransferFrom({from: from, to: address(this), value: value});
+            token.safeTransferFrom({from: from, to: address(this), value: value});
         } else if (callType == CallType.PermitWitnessTransferFrom) {
             (
                 , // CallType
+                IERC20 token,
                 address from,
                 uint256 value,
                 ISignatureTransfer.PermitTransferFrom memory permit,
@@ -87,8 +83,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
             // NOTE: The following checks could be conducted on the carrier resource logic.
             {
                 // Check that the permitted token address matches the ERC20 token this contract is forwarding calls to.
-                if (permit.permitted.token != address(_ERC20)) {
-                    revert TokenMismatch({expected: address(_ERC20), actual: permit.permitted.token});
+                if (permit.permitted.token != address(token)) {
+                    revert TokenMismatch({expected: address(token), actual: permit.permitted.token});
                 }
 
                 // Check that the permitted and transferred amounts are exactly the same.
@@ -97,7 +93,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase, ERC20ForwarderInput
                 }
             }
 
-            emit Wrapped({from: from, value: value});
+            emit Wrapped({token: token, from: from, value: value});
 
             _PERMIT2.permitWitnessTransferFrom({
                 permit: permit,
