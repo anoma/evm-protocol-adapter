@@ -65,8 +65,7 @@ contract ERC20ForwarderTest is Test {
             new ERC20Forwarder({
                 protocolAdapter: _pa,
                 emergencyCommittee: address(uint160(1)),
-                calldataCarrierLogicRef: bytes32(type(uint256).max),
-                erc20: address(_erc20)
+                calldataCarrierLogicRef: bytes32(type(uint256).max)
             })
         );
 
@@ -93,7 +92,7 @@ contract ERC20ForwarderTest is Test {
         uint256 startBalanceAlice = _erc20.balanceOf(_alice);
         uint256 startBalanceForwarder = _erc20.balanceOf(_fwd);
 
-        bytes memory input = ERC20Forwarder(_fwd).encodeTransfer({to: _alice, value: _TRANSFER_AMOUNT});
+        bytes memory input = ERC20Forwarder(_fwd).encodeTransfer({token: _erc20, to: _alice, value: _TRANSFER_AMOUNT});
 
         vm.prank(_pa);
         bytes memory output = ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
@@ -105,18 +104,19 @@ contract ERC20ForwarderTest is Test {
 
     function test_forwardCall_Transfer_call_emits_the_Unwrapped_event() public {
         _erc20.mint({to: _fwd, value: _TRANSFER_AMOUNT});
-        bytes memory input = ERC20Forwarder(_fwd).encodeTransfer({to: _alice, value: _TRANSFER_AMOUNT});
+        bytes memory input = ERC20Forwarder(_fwd).encodeTransfer({token: _erc20, to: _alice, value: _TRANSFER_AMOUNT});
 
         vm.prank(_pa);
         vm.expectEmit(address(_fwd));
-        emit ERC20Forwarder.Unwrapped({to: _alice, value: _TRANSFER_AMOUNT});
+        emit ERC20Forwarder.Unwrapped({token: _erc20, to: _alice, value: _TRANSFER_AMOUNT});
         ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
     function test_forwardCall_TransferFrom_call_reverts_if_user_did_not_approve_the_forwarder() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
 
-        bytes memory input = ERC20Forwarder(_fwd).encodeTransferFrom({from: _alice, value: _TRANSFER_AMOUNT});
+        bytes memory input =
+            ERC20Forwarder(_fwd).encodeTransferFrom({token: _erc20, from: _alice, value: _TRANSFER_AMOUNT});
 
         uint256 allowance = _erc20.allowance({owner: _alice, spender: _fwd});
 
@@ -138,7 +138,8 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_alice);
         _erc20.approve(_fwd, type(uint256).max);
 
-        bytes memory input = ERC20Forwarder(_fwd).encodeTransferFrom({from: _alice, value: _TRANSFER_AMOUNT});
+        bytes memory input =
+            ERC20Forwarder(_fwd).encodeTransferFrom({token: _erc20, from: _alice, value: _TRANSFER_AMOUNT});
 
         vm.prank(_pa);
         bytes memory output = ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
@@ -153,11 +154,12 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_alice);
         _erc20.approve(_fwd, type(uint256).max);
 
-        bytes memory input = ERC20Forwarder(_fwd).encodeTransferFrom({from: _alice, value: _TRANSFER_AMOUNT});
+        bytes memory input =
+            ERC20Forwarder(_fwd).encodeTransferFrom({token: _erc20, from: _alice, value: _TRANSFER_AMOUNT});
 
         vm.prank(_pa);
         vm.expectEmit(address(_fwd));
-        emit ERC20Forwarder.Wrapped({from: _alice, value: _TRANSFER_AMOUNT});
+        emit ERC20Forwarder.Wrapped({token: _erc20, from: _alice, value: _TRANSFER_AMOUNT});
         ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
@@ -165,6 +167,7 @@ contract ERC20ForwarderTest is Test {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
 
         bytes memory input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
+            token: _erc20,
             from: _alice,
             value: _TRANSFER_AMOUNT,
             permit: _defaultPermit,
@@ -188,6 +191,7 @@ contract ERC20ForwarderTest is Test {
         _erc20.approve(address(_permit2), type(uint256).max);
 
         bytes memory input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
+            token: _erc20,
             from: _alice,
             value: _TRANSFER_AMOUNT,
             permit: _defaultPermit,
@@ -214,6 +218,7 @@ contract ERC20ForwarderTest is Test {
         _erc20.approve(address(_permit2), type(uint256).max);
 
         bytes memory input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
+            token: _erc20,
             from: _alice,
             value: _TRANSFER_AMOUNT,
             permit: _defaultPermit,
@@ -246,6 +251,7 @@ contract ERC20ForwarderTest is Test {
         permit.permitted.token = address(wrongERC20);
 
         bytes memory input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
+            token: _erc20,
             from: _alice,
             value: _TRANSFER_AMOUNT,
             permit: permit,
@@ -274,6 +280,7 @@ contract ERC20ForwarderTest is Test {
         permit.permitted.amount = _TRANSFER_AMOUNT - 1;
 
         bytes memory input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
+            token: _erc20,
             from: _alice,
             value: _TRANSFER_AMOUNT,
             permit: permit,
@@ -303,6 +310,7 @@ contract ERC20ForwarderTest is Test {
         _erc20.approve(address(_permit2), type(uint256).max);
 
         bytes memory input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
+            token: _erc20,
             from: _alice,
             value: _TRANSFER_AMOUNT,
             permit: _defaultPermit,
@@ -330,6 +338,7 @@ contract ERC20ForwarderTest is Test {
         _erc20.approve(address(_permit2), type(uint256).max);
 
         bytes memory input = ERC20Forwarder(_fwd).encodePermitWitnessTransferFrom({
+            token: _erc20,
             from: _alice,
             value: _TRANSFER_AMOUNT,
             permit: _defaultPermit,
@@ -344,7 +353,7 @@ contract ERC20ForwarderTest is Test {
 
         vm.prank(_pa);
         vm.expectEmit(address(_fwd));
-        emit ERC20Forwarder.Wrapped({from: _alice, value: _TRANSFER_AMOUNT});
+        emit ERC20Forwarder.Wrapped({token: _erc20, from: _alice, value: _TRANSFER_AMOUNT});
         ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
