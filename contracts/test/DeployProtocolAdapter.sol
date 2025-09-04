@@ -1,15 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 import {DeployProtocolAdapter} from "../script/DeployProtocolAdapter.s.sol";
 
 contract DeployProtocolAdapterTest is Test {
-    function test_DeployProtocolAdapter() public {
-        DeployProtocolAdapter deployScript = new DeployProtocolAdapter();
+    function test_DeployProtocolAdapter_deploys_on_sepolia() public {
+        vm.selectFork(vm.createFork("sepolia"));
+        new DeployProtocolAdapter().run();
+    }
 
-        vm.expectRevert(); // TODO! Remove this when the RISC Zero version has been updated.
-        deployScript.run();
+    function test_DeployProtocolAdapter_deploys_on_arbitrum_sepolia() public {
+        vm.selectFork(vm.createFork("arbitrum-sepolia"));
+        new DeployProtocolAdapter().run();
+    }
+
+    function test_DeployProtocolAdapter_deploys_on_base_sepolia() public {
+        vm.selectFork(vm.createFork("base-sepolia"));
+        new DeployProtocolAdapter().run();
     }
 }
