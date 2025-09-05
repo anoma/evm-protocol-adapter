@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
-import {Permit2Lib} from "@permit2/src/libraries/Permit2Lib.sol";
-import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
+import {ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 
 // solhint-disable comprehensive-interface
 /// @title ERC20ForwarderInput

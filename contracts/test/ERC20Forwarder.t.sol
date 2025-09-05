@@ -2,13 +2,13 @@
 pragma solidity ^0.8.30;
 
 import {IERC20Errors} from "@openzeppelin-contracts/interfaces/draft-IERC6093.sol";
-import {ERC20, IERC20} from "@openzeppelin-contracts/token/ERC20/ERC20.sol";
+import {ERC20} from "@openzeppelin-contracts/token/ERC20/ERC20.sol";
 import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
 import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {Test, stdError, console} from "forge-std/Test.sol";
+import {Test, stdError} from "forge-std/Test.sol";
 
 import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
 import {ERC20ForwarderInput} from "../src/forwarders/ERC20ForwarderInput.sol";

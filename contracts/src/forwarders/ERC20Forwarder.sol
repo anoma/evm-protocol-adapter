@@ -22,20 +22,19 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
     IPermit2 internal constant _PERMIT2 = IPermit2(address(Permit2Lib.PERMIT2));
 
-    error CallTypeInvalid();
-
     /// @notice Emitted when ERC20 tokens get wrapped.
     /// @param token The ERC20 token address.
     /// @param from The address from which tokens were withdrawn.
     /// @param value The token amount being deposited into the ERC20 forwarder contract.
-    event Wrapped(address indexed token, address indexed from, uint256 value); // solhint-disable-line gas-indexed-events
+    event Wrapped(address indexed token, address indexed from, uint256 value);
 
     /// @notice Emitted when ERC20 tokens get unwrapped.
     /// @param token The ERC20 token address.
     /// @param to The address to which tokens were deposited.
     /// @param value The token amount being withdrawn from the ERC20 forwarder contract.
-    event Unwrapped(address indexed token, address indexed to, uint256 value); // solhint-disable-line gas-indexed-events
+    event Unwrapped(address indexed token, address indexed to, uint256 value);
 
+    error CallTypeInvalid();
     error TypeOverflow(uint256 limit, uint256 actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
@@ -54,6 +53,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         ERC20ForwarderInput.CallType callType = ERC20ForwarderInput.CallType(uint8(input[31]));
 
         if (callType == ERC20ForwarderInput.CallType.Transfer) {
+            // slither-disable-next-line unused-return
             (
                 , // CallType
                 address token,
@@ -65,6 +65,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
             IERC20(token).safeTransfer({to: to, value: value});
         } else if (callType == ERC20ForwarderInput.CallType.TransferFrom) {
+            // slither-disable-next-line unused-return
             (
                 , // CallType
                 address token,
@@ -77,6 +78,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             // slither-disable-next-line arbitrary-send-erc20
             IERC20(token).safeTransferFrom({from: from, to: address(this), value: value});
         } else if (callType == ERC20ForwarderInput.CallType.PermitWitnessTransferFrom) {
+            // slither-disable-next-line unused-return
             (
                 , // CallType
                 address from,
