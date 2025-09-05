@@ -8,7 +8,7 @@ contract Emitter {
     uint256 internal _txCount;
     
     function seedTransactionExecutedEvent(string calldata tag, string calldata ciphertext) external {            
-        emit IProtocolAdapter.TransactionExecuted({id: _txCount++, transaction: TransactionExample.transaction(), newRoot: 0});
+        emit IProtocolAdapter.TransactionExecuted({id: _txCount++, transaction: TransactionExample.transaction(), newRoot: TransactionExample.treeRoot()});
         
     }
 }
