@@ -39,6 +39,17 @@ jobs:
       - name: Run Solhint in `src`
         run: bunx --bun solhint --config .solhint.json 'src/**/*.sol'
         working-directory: ./contracts
+        id: solhint-src
+
+      - name: Run Solhint in `test` dir
+        run: bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
+        working-directory: ./contracts
+        id: solhint-test
+
+      - name: Run Solhint in `script` dir
+        run: bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
+        working-directory: ./contracts
+        id: solhint-script
 
       - name: Run Forge build
         run: forge build --sizes --ast
