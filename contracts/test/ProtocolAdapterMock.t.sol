@@ -88,6 +88,45 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(_mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH));
     }
 
+    function test_execute_emits_the_ForwarderCallExecuted_second_event_on_created_carrier_resource() public {
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, isConsumed: false});
+
+        Logic.ExpirableBlob memory extCall = created[0].appData.externalPayload[0];
+
+        created[0].appData = Logic.AppData({
+            discoveryPayload: new Logic.ExpirableBlob[](0),
+            resourcePayload: created[0].appData.resourcePayload,
+            externalPayload: new Logic.ExpirableBlob[](2),
+            applicationPayload: new Logic.ExpirableBlob[](0)
+        });
+
+        created[0].appData.externalPayload[0] = extCall;
+
+        address fwd2 = address(
+            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
+        );
+
+        assertNotEq(_fwd, fwd2);
+
+        // Put the new address into as the second call to be made
+        created[0].appData.externalPayload[1] = Logic.ExpirableBlob({
+            deletionCriterion: Logic.DeletionCriterion.Never,
+            blob: abi.encode(ForwarderCalldata({untrustedForwarder: address(fwd2), input: INPUT, output: EXPECTED_OUTPUT}))
+        });
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(fwd2),
+            input: INPUT,
+            output: EXPECTED_OUTPUT
+        });
+        _mockPa.execute(_mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH));
+    }
+
     function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, isConsumed: true});
         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
