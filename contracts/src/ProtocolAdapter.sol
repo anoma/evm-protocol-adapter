@@ -20,7 +20,7 @@ import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 
 import {NullifierSet} from "./state/NullifierSet.sol";
 
-import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
+import {Action, Resource, Transaction} from "./Types.sol";
 
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -178,18 +178,21 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice Executes a call to a forwarder contracts.
     /// @param carrierLogicRef The logic reference of the carrier resource.
-    /// @param call The calldata to conduct the forwarder call.
-    function _executeForwarderCall(bytes32 carrierLogicRef, ForwarderCalldata memory call) internal {
-        // slither-disable-next-line calls-loop
-        bytes memory output =
-            IForwarder(call.untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: call.input});
+    /// @param callBlob The blob containing the call instruction.
+    function _executeForwarderCall(bytes32 carrierLogicRef, bytes memory callBlob) internal {
+        (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
+            abi.decode(callBlob, (address, bytes, bytes));
 
-        if (keccak256(output) != keccak256(call.output)) {
-            revert ForwarderCallOutputMismatch({expected: call.output, actual: output});
+        // slither-disable-next-line calls-loop
+        bytes memory actualOutput =
+            IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
+
+        if (keccak256(actualOutput) != keccak256(expectedOutput)) {
+            revert ForwarderCallOutputMismatch({expected: expectedOutput, actual: actualOutput});
         }
 
         // solhint-disable-next-line max-line-length
-        emit ForwarderCallExecuted({untrustedForwarder: call.untrustedForwarder, input: call.input, output: call.output});
+        emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
     }
 
     /// @notice The function processing the state checks and updates
@@ -236,20 +239,22 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     }
 
     /// @notice Processes a forwarder call by verifying and executing forwarder call.
-    /// @param input The logic verifier input of a resource making the call.
+    /// @param verifierInput The logic verifier input of a resource making the call.
     /// @param consumed A flag indicating whether the resource is consumed or not.
-    function _processForwarderCall(Logic.VerifierInput calldata input, bool consumed) internal {
-        // NOTE: The PA expects the forwarder calldata to be present at the head of the external payload.
-        // Only the first externalPayload will be verified and executed. // TODO Revisit this design decision.
-        ForwarderCalldata memory call = abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
-
+    function _processForwarderCall(Logic.VerifierInput calldata verifierInput, bool consumed) internal {
         _verifyForwarderCall({
-            carrierBlob: input.appData.resourcePayload[0].blob,
-            expectedTag: input.tag,
+            carrierBlob: verifierInput.appData.resourcePayload[0].blob,
+            expectedTag: verifierInput.tag,
             consumed: consumed
         });
 
-        _executeForwarderCall({carrierLogicRef: input.verifyingKey, call: call});
+        uint256 nCalls = verifierInput.appData.externalPayload.length;
+        for (uint256 i = 0; i < nCalls; ++i) {
+            _executeForwarderCall({
+                carrierLogicRef: verifierInput.verifyingKey,
+                callBlob: verifierInput.appData.externalPayload[i].blob
+            });
+        }
     }
 
     /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.

@@ -15,7 +15,7 @@ import {RiscZeroUtils} from "../src/libs/RiscZeroUtils.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Logic} from "../src/proving/Logic.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
-import {ForwarderCalldata, Transaction, Resource} from "../src/Types.sol";
+import {Transaction, Resource} from "../src/Types.sol";
 
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
 import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
@@ -317,7 +317,7 @@ contract ProtocolAdapterMockTest is Test {
         Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
         externalBlobs[0] = Logic.ExpirableBlob({
             deletionCriterion: Logic.DeletionCriterion.Never,
-            blob: abi.encode(ForwarderCalldata({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT}))
+            blob: abi.encode(address(_fwd), INPUT, EXPECTED_OUTPUT)
         });
         data[0].appData.externalPayload = externalBlobs;
     }
