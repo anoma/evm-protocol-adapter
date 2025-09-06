@@ -49,6 +49,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
     error CalldataCarrierTagMismatch(bytes32 expected, bytes32 actual);
+    /// @notice Thrown when a forwarder call is expected but the resource payload is empty.
+    error CalldataCarrierMissing();
+
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
@@ -239,8 +242,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param input The logic verifier input of a resource making the call.
     /// @param consumed A flag indicating whether the resource is consumed or not.
     function _processForwarderCalls(Logic.VerifierInput calldata input, bool consumed) internal {
+        if (input.appData.resourcePayload.length == 0) {
+            revert CalldataCarrierMissing();
+        }
+    
         _verifyForwarderCalls({
             carrierBlob: input.appData.resourcePayload[0].blob,
+
             expectedTag: input.tag,
             consumed: consumed
         });
