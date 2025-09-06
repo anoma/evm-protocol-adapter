@@ -88,7 +88,24 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(_mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH));
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_second_event_on_created_carrier_resource() public {
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
+        TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, isConsumed: true});
+        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(_fwd),
+            input: INPUT,
+            output: EXPECTED_OUTPUT
+        });
+
+        _mockPa.execute(_mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH));
+    }
+
+    function test_execute_emits_all_ForwarderCallExecuted_events() public {
         address fwd2 = address(
             new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
         );
@@ -122,23 +139,6 @@ contract ProtocolAdapterMockTest is Test {
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
             untrustedForwarder: address(fwd2),
-            input: INPUT,
-            output: EXPECTED_OUTPUT
-        });
-
-        _mockPa.execute(_mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH));
-    }
-
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
-        TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, isConsumed: true});
-        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
-
-        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
-        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-
-        vm.expectEmit(address(_mockPa));
-        emit IProtocolAdapter.ForwarderCallExecuted({
-            untrustedForwarder: address(_fwd),
             input: INPUT,
             output: EXPECTED_OUTPUT
         });
