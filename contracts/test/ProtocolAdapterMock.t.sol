@@ -114,10 +114,18 @@ contract ProtocolAdapterMockTest is Test {
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(_fwd),
+            input: INPUT,
+            output: EXPECTED_OUTPUT
+        });
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ForwarderCallExecuted({
             untrustedForwarder: address(fwd2),
             input: INPUT,
             output: EXPECTED_OUTPUT
         });
+
         _mockPa.execute(_mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH));
     }
 
