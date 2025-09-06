@@ -231,25 +231,26 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // The PA checks whether a call is to be made by looking inside
         // the externalPayload and trying to process the first entry
         if (input.appData.externalPayload.length != 0) {
-            _processForwarderCall(input, consumed);
+            _processForwarderCalls(input, consumed);
         }
     }
 
-    /// @notice Processes a forwarder call by verifying and executing forwarder call.
+    /// @notice Processes forwarder calls by verifying and executing them.
     /// @param input The logic verifier input of a resource making the call.
     /// @param consumed A flag indicating whether the resource is consumed or not.
-    function _processForwarderCall(Logic.VerifierInput calldata input, bool consumed) internal {
-        // NOTE: The PA expects the forwarder calldata to be present at the head of the external payload.
-        // Only the first externalPayload will be verified and executed. // TODO Revisit this design decision.
-        ForwarderCalldata memory call = abi.decode(input.appData.externalPayload[0].blob, (ForwarderCalldata));
-
-        _verifyForwarderCall({
+    function _processForwarderCalls(Logic.VerifierInput calldata input, bool consumed) internal {
+        _verifyForwarderCalls({
             carrierBlob: input.appData.resourcePayload[0].blob,
             expectedTag: input.tag,
             consumed: consumed
         });
 
-        _executeForwarderCall({carrierLogicRef: input.verifyingKey, call: call});
+        uint256 nCalls = input.appData.externalPayload.length;
+        for (uint256 i = 0; i < nCalls; ++i) {
+            ForwarderCalldata memory call = abi.decode(input.appData.externalPayload[i].blob, (ForwarderCalldata));
+
+            _executeForwarderCall({carrierLogicRef: input.verifyingKey, call: call});
+        }
     }
 
     /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
@@ -313,7 +314,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param carrierBlob The carrier resource blob
     /// @param expectedTag The tag of the resource making the call.
     /// @param consumed The flag indicating whether the resource is created or consumed
-    function _verifyForwarderCall(bytes calldata carrierBlob, bytes32 expectedTag, bool consumed) internal pure {
+    function _verifyForwarderCalls(bytes calldata carrierBlob, bytes32 expectedTag, bool consumed) internal pure {
         bytes32 decodedTag;
 
         if (consumed) {

@@ -40,6 +40,7 @@ contract ProtocolAdapterMockTest is Test {
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapterMock internal _mockPa;
     address internal _fwd;
+    address[] internal _fwdList;
 
     bytes32 internal _carrierLabelRef;
 
@@ -51,6 +52,9 @@ contract ProtocolAdapterMockTest is Test {
         _fwd = address(
             new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
         );
+
+        _fwdList = new address[](1);
+        _fwdList[0] = _fwd;
 
         _carrierLabelRef = sha256(abi.encode(_fwd));
     }
@@ -74,7 +78,8 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, isConsumed: false});
+        TxGen.ResourceAndAppData[] memory created =
+            _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList, isConsumed: false});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -89,7 +94,8 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
-        TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, isConsumed: true});
+        TxGen.ResourceAndAppData[] memory consumed =
+            _exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList, isConsumed: true});
         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
@@ -101,6 +107,41 @@ contract ProtocolAdapterMockTest is Test {
             input: INPUT,
             output: EXPECTED_OUTPUT
         });
+
+        _mockPa.execute(_mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH));
+    }
+
+    function test_execute_emits_all_ForwarderCallExecuted_events() public {
+        address fwd2 = address(
+            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
+        );
+        assertNotEq(_fwd, fwd2);
+
+        address[] memory fwdList = new address[](2);
+        fwdList[0] = _fwd;
+        fwdList[1] = fwd2;
+
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created =
+            _exampleCarrierResourceAndAppData({nonce: 1, fwdList: fwdList, isConsumed: false});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(_fwd),
+            input: INPUT,
+            output: EXPECTED_OUTPUT
+        });
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(fwd2),
+            input: INPUT,
+            output: EXPECTED_OUTPUT
+        });
+
         _mockPa.execute(_mockVerifier.transaction(resourceLists, _TEST_COMMITMENT_TREE_DEPTH));
     }
 
@@ -174,7 +215,8 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_execute_reverts_on_incorrect_commitment_computation_because_of_wrong_resource() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, isConsumed: false});
+        TxGen.ResourceAndAppData[] memory created =
+            _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList, isConsumed: false});
 
         // Alter the resource blob so that it results in a different commitment.
         (Resource memory originalResource) = abi.decode(created[0].appData.resourcePayload[0].blob, (Resource));
@@ -199,7 +241,8 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_reverts_on_incorrect_nullifier_computation_because_of_wrong_resource() public {
-        TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, isConsumed: true});
+        TxGen.ResourceAndAppData[] memory consumed =
+            _exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList, isConsumed: true});
         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
 
         // Alter the nullifier key blob so that it results in a different commitment.
@@ -226,7 +269,8 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_reverts_on_incorrect_nullifier_computation_because_of_wrong_nullifierKey() public {
-        TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, isConsumed: true});
+        TxGen.ResourceAndAppData[] memory consumed =
+            _exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList, isConsumed: true});
         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
 
         // Alter the nullifier key blob so that it results in a different nullifier.
@@ -275,12 +319,13 @@ contract ProtocolAdapterMockTest is Test {
         });
     }
 
-    function _exampleCarrierResourceAndAppData(uint256 nonce, bool isConsumed)
+    function _exampleCarrierResourceAndAppData(uint256 nonce, address[] memory fwdList, bool isConsumed)
         private
         view
         returns (TxGen.ResourceAndAppData[] memory data)
     {
         data = new TxGen.ResourceAndAppData[](1);
+        uint256 nCalls = fwdList.length;
 
         data[0] = TxGen.ResourceAndAppData({
             resource: TxGen.mockResource({
@@ -292,7 +337,7 @@ contract ProtocolAdapterMockTest is Test {
             appData: Logic.AppData({
                 discoveryPayload: new Logic.ExpirableBlob[](0),
                 resourcePayload: new Logic.ExpirableBlob[](1),
-                externalPayload: new Logic.ExpirableBlob[](1),
+                externalPayload: new Logic.ExpirableBlob[](nCalls),
                 applicationPayload: new Logic.ExpirableBlob[](0)
             })
         });
@@ -314,11 +359,15 @@ contract ProtocolAdapterMockTest is Test {
 
         data[0].appData.resourcePayload = resourceBlobs;
 
-        Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](1);
-        externalBlobs[0] = Logic.ExpirableBlob({
-            deletionCriterion: Logic.DeletionCriterion.Never,
-            blob: abi.encode(ForwarderCalldata({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT}))
-        });
+        Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](nCalls);
+        for (uint256 i = 0; i < nCalls; ++i) {
+            externalBlobs[i] = Logic.ExpirableBlob({
+                deletionCriterion: Logic.DeletionCriterion.Never,
+                blob: abi.encode(
+                    ForwarderCalldata({untrustedForwarder: address(fwdList[i]), input: INPUT, output: EXPECTED_OUTPUT})
+                )
+            });
+        }
         data[0].appData.externalPayload = externalBlobs;
     }
 }
