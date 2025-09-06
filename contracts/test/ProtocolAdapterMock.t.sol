@@ -99,15 +99,8 @@ contract ProtocolAdapterMockTest is Test {
         {
             Logic.ExpirableBlob memory extCall = created[0].appData.externalPayload[0];
 
-            created[0].appData = Logic.AppData({
-                discoveryPayload: new Logic.ExpirableBlob[](0),
-                resourcePayload: created[0].appData.resourcePayload,
-                externalPayload: new Logic.ExpirableBlob[](2),
-                applicationPayload: new Logic.ExpirableBlob[](0)
-            });
+            created[0].appData.externalPayload = new Logic.ExpirableBlob[](2);
             created[0].appData.externalPayload[0] = extCall;
-
-            // Put the new address into as the second call to be made
             created[0].appData.externalPayload[1] = Logic.ExpirableBlob({
                 deletionCriterion: Logic.DeletionCriterion.Never,
                 blob: abi.encode(
