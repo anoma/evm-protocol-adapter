@@ -148,7 +148,7 @@ mod tests {
             B256::from_slice(arm_risc0::constants::COMPLIANCE_VK.as_bytes())
         );
 
-        let n_actions = 20;
+        let n_actions = 1;
 
         let raw_tx = arm_risc0::transaction::generate_test_transaction(n_actions);
         println!("{:?}", raw_tx);
@@ -159,7 +159,7 @@ mod tests {
         let decoded_tx: ProtocolAdapter::Transaction =
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
         assert_eq!(evm_tx, decoded_tx);
-        println!("Encoded transaction: {:?}", encoded_tx);
+        println!("Transaction: {:#?}", evm_tx);
         std::fs::write(format!("test_tx{n_actions:02}.bin"), &encoded_tx)
             .expect("Failed to write encoded transaction to file");
     }

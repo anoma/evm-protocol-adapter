@@ -3,7 +3,6 @@ pragma solidity ^0.8.30;
 
 import {EmergencyMigratableForwarderBase} from "../src/forwarders/EmergencyMigratableForwarderBase.sol";
 import {ForwarderBase} from "../src/forwarders/ForwarderBase.sol";
-import {Parameters} from "../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 import {EmergencyMigratableForwarderExample} from "./examples/EmergencyMigratableForwarder.e.sol";
@@ -24,13 +23,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
         _riscZeroAdmin = _emergencyStop.owner();
 
-        _pa = address(
-            new ProtocolAdapter({
-                riscZeroVerifierRouter: _router,
-                commitmentTreeDepth: Parameters.COMMITMENT_TREE_DEPTH,
-                actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
-            })
-        );
+        _pa = address(new ProtocolAdapter(_router));
 
         _emrgFwd = new EmergencyMigratableForwarderExample({
             protocolAdapter: _pa,
