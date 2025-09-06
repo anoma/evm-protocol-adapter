@@ -7,7 +7,6 @@ use alloy::providers::fillers::{
 };
 use alloy::providers::{Identity, ProviderBuilder, RootProvider};
 use alloy::signers::local::PrivateKeySigner;
-use dotenv::dotenv;
 use std::env;
 
 type DefaultProvider = FillProvider<
@@ -22,8 +21,6 @@ type DefaultProvider = FillProvider<
 >;
 
 pub fn protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<DefaultProvider> {
-    dotenv().ok();
-
     let protocol_adapter = env::var("PROTOCOL_ADAPTER_ADDRESS_SEPOLIA")
         .expect("Couldn't read PROTOCOL_ADAPTER_ADDRESS_SEPOLIA")
         .parse::<Address>()
@@ -33,8 +30,6 @@ pub fn protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<DefaultPro
 }
 
 pub fn provider() -> DefaultProvider {
-    dotenv().ok();
-
     let signer = env::var("PRIVATE_KEY")
         .expect("Couldn't read PRIVATE_KEY")
         .parse::<PrivateKeySigner>()
