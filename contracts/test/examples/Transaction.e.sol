@@ -2,54 +2,39 @@
 pragma solidity ^0.8.30;
 
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
 import {Compliance} from "../../src/proving/Compliance.sol";
 import {Logic} from "../../src/proving/Logic.sol";
 import {Transaction, Action} from "../../src/Types.sol";
 
-import {INITIAL_COMMITMENT_TREE_ROOT} from "../state/CommitmentAccumulator.t.sol";
-
 library TransactionExample {
-    bytes32 internal constant _CONSUMED_NULLIFIER = 0x2fe6775e82ad71cd3f0531ebe9f85b9d00ad7bc21e8ac5f5c6fd1a68b4dfba2b;
-    bytes32 internal constant _CREATED_COMMITMENT = 0x193e55bfc8d65a9efd4471c0287c69c8918e7d9331901a01ee2841533ca1f719;
-    bytes32 internal constant _CONSUMED_LOGIC_REF = 0xf8047dc2cf6cbe45137a588a3f019814218e7d7199b1b86a57b51c310e04fae9;
+    using MerkleTree for bytes32[];
+
+    bytes32 internal constant _CONSUMED_NULLIFIER = 0xaf54af132b0e1c0df591d3b8096ba5a686c0b69447885a29fbf97627cee1a8e3;
+    bytes32 internal constant _CREATED_COMMITMENT = 0x4734b9228c0a75aea9ba88b7a48be25ce99a38bc8fab4fde34a87159aa63e3de;
+    bytes32 internal constant _CONSUMED_LOGIC_REF = 0x39060282dd7b47c5dcc824f1f52b5f832f5943d1a4b269de95d9e2c84c82222a;
     bytes32 internal constant _CREATED_LOGIC_REF = _CONSUMED_LOGIC_REF;
 
     bytes internal constant _CONSUMED_LOGIC_PROOF =
-        hex"bb001d4407a197561e75ff04be754784dd72c3bb032746ff6c60294708e9e16d6abd451d2b95b12955aa302ad11819e7e77ef4a2a013f4b3d66817b63af158bee50ae34803bddc43fbf30151ea56a7c68dbeccb98e1e09fd624af2b58c785953f9536c4e01c798fd6fd373e29e29170003ced169509e80d3d1a097b11c1495e9967379041a34fb79721bd2549bfbbdda742fa1fd5ffc7076e949fccd729f767a7c32dfad1f7f1eb14dfd537eaba372d3b81e3c3430b7ff9073ac69bbe9bf730458ed30ec240c0897034eb24cc64312048e78b796873e9974df828cc63c61eb513c0de1d204b7bb5a3632107b3f5ccc17d358a59b6f9518c704800163a63aab2d31958311";
+        hex"bb001d440f32bbb51b691e66c8506dd0a4069e2bdd41fda114663ee055c5f4054affaca00357df371425264bd2050f1d0311466a0a9449be154c3e883931f5bcb32f951015a91aafe833cbaaff057903eedcc546d920606c189e166c12bc9318ad305b2a0b4516893c47b54b242052456f6dfdbd1bb6f2c496eab7f237ccbabb5947cfe0282e5353aa0073cd58d3f95117a4a8ebfbf56619f2af9bf9b0593e14e4de7bcc18ab857afd5722fab21aadd5a7fcb915dc59c1597d00410a9db4c31d5c7d6e181355bb76c8461098defae929d677f0a3796a336771aff93af40fd59a1d4c86e610eeb1ced5fd652421753358641e18055c10d276186a1f5d19de016d344d434f";
 
     bytes internal constant _CREATED_LOGIC_PROOF =
-        hex"bb001d4413222060708b223191bbe0c578a2b28fc9f4b982b5788c58aaff238863acbda524182c1c33cbe89df260f2e8dc4694cb39d2c8dac0aefa047a4ab8ed96e381dd26faf7ec9e0de4d242ee5f611f5f8ea7cd3d480a07419cb10d33988c9d76845f00114cc6c2d0a1efa8037b873d9123f9523d080c4540de1f947bc8efa13aead9169bcbc91b74fb1c2ef5d58a2bdea1d12917e410826bd16a70c7e0949d8f3cc3190250fc7202f1402a17974e1eef5ed75704fb18511bb30f60b27538082a226b090002c42b32b9e206cad780f8dd00bb22a6ff98297ca03a5c020e4cac3e94672a1ba8e2b96c5819d6fec6705846c75af84fcb5f790f1c4340094567b8d9d1b8";
+        hex"bb001d4419d369bc06df6499e031cbfec62c4a399eaac517365acf9cc12043535ae1758428579fe81312bfb4f0a494bac4ea2da7d4cc441335e01b0fd70b7c4ba4111c570367922bdf403e6c043906aa83f4dd0db236370568682b9eecf27e826926c4c6265438b197ca1e975f09760aaf7c87cbd0620f9ceb15c7c6a494fe8c0f5536e30d63cee4768de6ff7082786dd09608477f73376967759236f348bfc6e117aba301c80e317397bfb9434659a88cfc0c6f68bd4bcd0c3571c01742fdd0a90553bb2ad0a7ee2816d5b019a050b5013eadb96f9c528d19c52a142e8b06563a1b412d26b10dc649a2cdfd3f63998380cbc8ea380ca097d106afcca43803e1ff3a8c58";
 
     bytes internal constant _COMPLIANCE_PROOF =
-        hex"bb001d44152a1d6fd8f45d1c979342581b7953614b228b43218a5c8559b0f4415b836f392fe183f44bd4b3488d3fe36c0f2c6de21bf11fe18c3403adf2d4a33e7b7a0bc50028b0681cb33df7b915d6bea43654f85cc42839accff571f27799d9b04641461057137e2297539f9bf791bd0f9a9c35a0e0b1a6f99bd3ec41d563a091d2d40d0178aa6fad1be69f3360a61d8f1ae6690bfb234b90bc6485985bc98eb04f33cd01f6c852998de57eaf57a369f4106164ffcbb550d41dffa8a2d75f1efa9ddd230def4d79a3d63170e0c68f52ba1593a32ce264a61a43f97f4304dedd8aea304609241a2c93a7447a309694603afcc4160531e0c9d3c2fe3630a25cf6aa55f1c3";
+        hex"bb001d4424b4b81e464462be15a20ac473af4e2d752a730f82b8be3f37401314c097272b2946ac565bdc85345dbf4064f5d3bad795938748fceb9ec546d2df0580396ef51d93d7eb02b0086f6c153bf1cbc5e193bf1fa5724879815be149eb2fd5ca86d821f642c5f0e37e5ec398fa9193341ee554aef7f9f2888ddcb409e4b9a78951cc1ab229c5bb7fdefe8f92260d9f93117b43df60997f749d94b84e1dfda0d20bd227c3d70c2fb450bcf4525cd9a550ce1c71b60f359d6e525dc58b217bf319ca4f259707c62ab73f78a7ac49fdcf178bdd749a2b3b427459def37e772307b425610abf6ceb48531a5c51c0df981955ff23a72f80a617f4eb02d8b530427fad51f1";
 
     bytes32 internal constant _UNIT_DELTA_X = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798;
     bytes32 internal constant _UNIT_DELTA_Y = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8;
 
     bytes internal constant _DELTA_PROOF =
-        hex"84573c4cb7358f0251e661ac747756df1ade611cb00d76e17bf292952c0de69451f047436136cc0ada65d69bff88e872f5d147f4c5548c18b244822d7a758eeb1b";
-
-    function ciphertext() internal pure returns (bytes memory cipher) {
-        cipher = hex"3f0000007f000000bf000000ff000000";
-    }
-
-    function expirableBlobs() internal pure returns (Logic.ExpirableBlob[] memory blobs) {
-        blobs = new Logic.ExpirableBlob[](2);
-        blobs[0] = Logic.ExpirableBlob({
-            blob: hex"1f0000003f0000005f0000007f000000",
-            deletionCriterion: Logic.DeletionCriterion.Immediately
-        });
-        blobs[1] = Logic.ExpirableBlob({
-            blob: hex"9f000000bf000000df000000ff000000",
-            deletionCriterion: Logic.DeletionCriterion.Never
-        });
-    }
+        hex"b6ac6c3dd9976f792533ebbc82fb0145cf538b8eb63b332a9778bd7859c41a045ea31562bea4ca203ba19b1f05c870e5b20fe42852cd317bac3769c645b071241c";
 
     function complianceInstance() internal pure returns (Compliance.Instance memory instance) {
         instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
                 nullifier: _CONSUMED_NULLIFIER,
-                commitmentTreeRoot: INITIAL_COMMITMENT_TREE_ROOT,
+                commitmentTreeRoot: SHA256.EMPTY_HASH,
                 logicRef: _CONSUMED_LOGIC_REF
             }),
             created: Compliance.CreatedRefs({commitment: _CREATED_COMMITMENT, logicRef: _CREATED_LOGIC_REF}),
@@ -63,15 +48,45 @@ library TransactionExample {
     }
 
     function logicVerifierInput(bool isConsumed) internal pure returns (Logic.VerifierInput memory input) {
+        Logic.AppData memory appData = Logic.AppData({
+            resourcePayload: new Logic.ExpirableBlob[](2),
+            discoveryPayload: new Logic.ExpirableBlob[](1),
+            externalPayload: new Logic.ExpirableBlob[](0),
+            applicationPayload: new Logic.ExpirableBlob[](1)
+        });
+
+        if (isConsumed) {
+            appData.resourcePayload[0] = Logic.ExpirableBlob({
+                blob: hex"39060282dd7b47c5dcc824f1f52b5f832f5943d1a4b269de95d9e2c84c82222a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000066687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f29250000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001",
+                deletionCriterion: Logic.DeletionCriterion.Never
+            });
+            appData.resourcePayload[1] = Logic.ExpirableBlob({
+                blob: hex"0000000000000000000000000000000000000000000000000000000000000000",
+                deletionCriterion: Logic.DeletionCriterion.Never
+            });
+        } else {
+            appData.resourcePayload[0] = Logic.ExpirableBlob({
+                blob: hex"39060282dd7b47c5dcc824f1f52b5f832f5943d1a4b269de95d9e2c84c82222a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000066687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925af54af132b0e1c0df591d3b8096ba5a686c0b69447885a29fbf97627cee1a8e3000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001",
+                deletionCriterion: Logic.DeletionCriterion.Never
+            });
+            appData.resourcePayload[1] = Logic.ExpirableBlob({
+                blob: hex"0000000000000000000000000000000000000000000000000000000000000000",
+                deletionCriterion: Logic.DeletionCriterion.Never
+            });
+        }
+
+        appData.discoveryPayload[0] = Logic.ExpirableBlob({
+            blob: hex"1100000000000000ce33ae4b7da7279a657bb29076a094d43e0000000000000000000000000100000000000000000000",
+            deletionCriterion: Logic.DeletionCriterion.Never
+        });
+
+        appData.applicationPayload[0] =
+            Logic.ExpirableBlob({blob: hex"0001020304050607", deletionCriterion: Logic.DeletionCriterion.Never});
+
         input = Logic.VerifierInput({
             tag: isConsumed ? _CONSUMED_NULLIFIER : _CREATED_COMMITMENT,
             verifyingKey: isConsumed ? _CONSUMED_LOGIC_REF : _CREATED_LOGIC_REF,
-            appData: Logic.AppData({
-                discoveryPayload: new Logic.ExpirableBlob[](0),
-                resourcePayload: new Logic.ExpirableBlob[](0),
-                externalPayload: new Logic.ExpirableBlob[](0),
-                applicationPayload: new Logic.ExpirableBlob[](0)
-            }),
+            appData: appData,
             proof: isConsumed ? _CONSUMED_LOGIC_PROOF : _CREATED_LOGIC_PROOF
         });
     }
@@ -96,6 +111,6 @@ library TransactionExample {
         leaves[0] = _CONSUMED_NULLIFIER;
         leaves[1] = _CREATED_COMMITMENT;
 
-        root = MerkleTree.computeRoot(leaves, 4);
+        root = leaves.computeRoot();
     }
 }

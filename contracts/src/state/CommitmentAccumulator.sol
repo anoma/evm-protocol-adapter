@@ -37,10 +37,9 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     error InvalidRoot(bytes32 expected, bytes32 actual);
     error InvalidPathLength(uint256 expected, uint256 actual);
 
-    /// @notice Initializes the commitment accumulator by setting up a Merkle tree with the provided tree depth.
-    /// @param treeDepth The depth of the Merkle tree to set up.
-    constructor(uint8 treeDepth) {
-        bytes32 initialRoot = _merkleTree.setup(treeDepth);
+    /// @notice Initializes the commitment accumulator by setting up a Merkle tree.
+    constructor() {
+        bytes32 initialRoot = _merkleTree.setup();
 
         if (!_roots.add(initialRoot)) revert PreExistingRoot(initialRoot);
     }
@@ -108,7 +107,9 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         }
 
         // Check root existence.
-        if (!_roots.contains(root)) revert NonExistingRoot(root);
+        if (!_roots.contains(root)) {
+            revert NonExistingRoot(root);
+        }
 
         // Check that the commitment leaf and path reproduce the root.
         bytes32 computedRoot = path.processProof(directionBits, commitment);
