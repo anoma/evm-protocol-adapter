@@ -10,9 +10,8 @@ import {ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 /// @custom:security-contact security@anoma.foundation
 library ERC20ForwarderInput {
     enum CallType {
-        Transfer,
-        TransferFrom,
-        PermitWitnessTransferFrom
+        Unwrap,
+        Wrap
     }
 
     /// @notice Encodes the input for the ERC-20 transfer call.
@@ -20,8 +19,8 @@ library ERC20ForwarderInput {
     /// @param to The address receiving the tokens.
     /// @param value The value to send.
     /// @return input The encoded input.
-    function encodeTransfer(address token, address to, uint128 value) public pure returns (bytes memory input) {
-        input = abi.encode(CallType.Transfer, token, to, value);
+    function encodeUnwrap(address token, address to, uint128 value) public pure returns (bytes memory input) {
+        input = abi.encode(CallType.Unwrap, token, to, value);
     }
 
     /// @notice Decodes the input for the ERC-20 transfer call.
@@ -31,36 +30,12 @@ library ERC20ForwarderInput {
     /// @return to The address receiving the tokens.
     /// @return value The value to send. Note that value is limited to `uint128` to fit the in the
     /// `Resource.quantity` field.
-    function decodeTransfer(bytes calldata input)
+    function decodeUnwrap(bytes calldata input)
         public
         pure
         returns (CallType callType, address token, address to, uint128 value)
     {
         (callType, token, to, value) = abi.decode(input, (CallType, address, address, uint128));
-    }
-
-    /// @notice Encodes the input for the ERC-20 `transferFrom` call.
-    /// @param token The ERC-20 token.
-    /// @param from The address to withdraw the tokens from.
-    /// @param value The value to send.
-    /// @return input The encoded input.
-    function encodeTransferFrom(address token, address from, uint256 value) public pure returns (bytes memory input) {
-        input = abi.encode(CallType.TransferFrom, token, from, value);
-    }
-
-    /// @notice Decodes the input for the ERC-20 `transferFrom` call.
-
-    /// @param input The encoded input.
-    /// @return callType The call type.
-    /// @return token The ERC-20 token.
-    /// @return from The address to withdraw the tokens from.
-    /// @return value The value to send.
-    function decodeTransferFrom(bytes calldata input)
-        public
-        pure
-        returns (CallType callType, address token, address from, uint128 value)
-    {
-        (callType, token, from, value) = abi.decode(input, (CallType, address, address, uint128));
     }
 
     /// @notice Encodes the input for the Permit2 `permitWitnessTransferFrom` call.
@@ -69,13 +44,13 @@ library ERC20ForwarderInput {
     /// @param witness The witness information.
     /// @param signature The signature over the `PermitWitnessTransferFrom` message.
     /// @return input The encoded input.
-    function encodePermitWitnessTransferFrom(
+    function encodeWrap(
         address from,
         ISignatureTransfer.PermitTransferFrom memory permit,
         bytes32 witness,
         bytes memory signature
     ) public pure returns (bytes memory input) {
-        input = abi.encode(CallType.PermitWitnessTransferFrom, from, permit, witness, signature);
+        input = abi.encode(CallType.Wrap, from, permit, witness, signature);
     }
 
     /// @notice Decodes the input for the Permit2 `permitWitnessTransferFrom` call.
@@ -85,7 +60,7 @@ library ERC20ForwarderInput {
     /// @return permit The permit data constituted by the token address, token amount, nonce, and deadline.
     /// @return witness The witness information.
     /// @return signature The signature over the `PermitWitnessTransferFrom` message.
-    function decodePermitWitnessTransferFrom(bytes calldata input)
+    function decodeWrap(bytes calldata input)
         public
         pure
         returns (

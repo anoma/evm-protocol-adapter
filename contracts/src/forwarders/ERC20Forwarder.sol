@@ -54,32 +54,19 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
         ERC20ForwarderInput.CallType callType = ERC20ForwarderInput.CallType(uint8(input[31]));
 
-        if (callType == ERC20ForwarderInput.CallType.Transfer) {
+        if (callType == ERC20ForwarderInput.CallType.Unwrap) {
             // slither-disable-next-line unused-return
             (
                 , // CallType
                 address token,
                 address to,
                 uint256 value
-            ) = input.decodeTransfer();
+            ) = input.decodeUnwrap();
 
             emit Unwrapped({token: token, to: to, value: value});
 
             IERC20(token).safeTransfer({to: to, value: value});
-        } else if (callType == ERC20ForwarderInput.CallType.TransferFrom) {
-            // slither-disable-next-line unused-return
-            (
-                , // CallType
-                address token,
-                address from,
-                uint256 value
-            ) = input.decodeTransferFrom();
-
-            emit Wrapped({token: token, from: from, value: value});
-
-            // slither-disable-next-line arbitrary-send-erc20
-            IERC20(token).safeTransferFrom({from: from, to: address(this), value: value});
-        } else if (callType == ERC20ForwarderInput.CallType.PermitWitnessTransferFrom) {
+        } else if (callType == ERC20ForwarderInput.CallType.Wrap) {
             // slither-disable-next-line unused-return
             (
                 , // CallType
@@ -87,7 +74,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                 ISignatureTransfer.PermitTransferFrom memory permit,
                 bytes32 witness,
                 bytes memory signature
-            ) = input.decodePermitWitnessTransferFrom();
+            ) = input.decodeWrap();
 
             if (permit.permitted.amount > type(uint128).max) {
                 revert TypeOverflow({limit: type(uint128).max, actual: permit.permitted.amount});
