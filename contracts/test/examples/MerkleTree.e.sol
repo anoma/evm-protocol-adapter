@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {console} from "forge-std/Test.sol";
+
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
 
@@ -22,18 +24,18 @@ contract MerkleTreeExample {
     bytes32[_N_ROOTS] internal _roots;
 
     function _setupMockTree() internal {
+
         /*
-        (0)       (1)            (2)            (3)                   (4)                        (5)        
-        []        B0             C0             C0'                   D0                         D0'        
-                 /  \           /  \           /  \                  /  \                       /  \        
-            -> A0    [] ->    B0'  []   ->   B0'  B1  ->           /     \        ->          /     \        
-                             / \   / \      / \   / \            /        \                 /        \     
-                            A0 A1 [] []    A0 A1 A2 []         C0'         []             C0'         C1    
-                                                              /  \        /  \           /  \        /  \   
-                                                            B0'  B1'    []   []        B0'  B1'    B2   []  
-                                                           / \   / \   / \   / \      / \   / \   / \   / \ 
-                                                          A0 A1 A2 A3 [] [] [] []    A0 A1 A2 A3 A4 [] [] []
-        */
+          (0)      (1)       (2)      (3)                   (4)                      (5)
+          []  ->    A0   ->  B0   ->    C0          ->     C0'       ->             D0
+                            /  \       /  \               /  \                     /  \
+                           A0  A1     B0   B1            B0   B1'                /     \
+                                     / \   / \          / \   / \             C0'       C1
+                                   A0  A1 A2  []       A0 A1  A2 A3           /\        / \
+                                                                            B0 B1'     B2  []
+                                                                           /\  / \     /\   /\
+                                                                         A0 A1 A2 A3  A4 [][] []
+         */
 
         // State 0
         {
@@ -47,33 +49,30 @@ contract MerkleTreeExample {
             _siblings[0] = new bytes32[][](0);
 
             _roots[0] = _a[0].computeRoot();
+
+            console.logString("State0 done");
         }
 
         // State 1
         {
-            _a[1] = new bytes32[](2);
+            _a[1] = new bytes32[](1);
             _a[1][0] = bytes32(uint256(1));
-            _a[1][1] = SHA256.EMPTY_HASH;
 
             _b[1] = _calculateNextLevel(_a[1]);
 
             _c[1] = _calculateNextLevel(_b[1]);
 
+            _siblings[1] = new bytes32[][](0);
             _roots[1] = _a[1].computeRoot();
 
-            _siblings[1] = new bytes32[][](1);
-
-            _siblings[1][0] = new bytes32[](1);
-            _siblings[1][0][0] = _a[1][1];
+             console.logString("State1 done");
         }
 
         // State 2
         {
-            _a[2] = new bytes32[](4);
+            _a[2] = new bytes32[](2);
             _a[2][0] = _a[1][0];
-            _a[2][1] = bytes32(uint256(2));
-            _a[2][2] = SHA256.EMPTY_HASH;
-            _a[2][3] = SHA256.EMPTY_HASH;
+            _a[2][1] = bytes32(uint(2));
 
             _b[2] = _calculateNextLevel(_a[2]);
 
@@ -81,18 +80,15 @@ contract MerkleTreeExample {
 
             _roots[2] = _a[2].computeRoot();
 
-            _siblings[2] = new bytes32[][](2);
+            _siblings[2] = new bytes32[][](1);
 
-            _siblings[2][0] = new bytes32[](2);
-            _siblings[2][0][0] = _a[2][1];
-            _siblings[2][0][1] = _b[2][1];
-
-            _siblings[2][1] = new bytes32[](2);
-            _siblings[2][1][0] = _a[2][0];
-            _siblings[2][1][1] = _b[2][1];
+            _siblings[2][0] = new bytes32[](1);
+            _siblings[2][0][0]= _a[2][1];
+             console.logString("State2 done");
         }
 
         // State 3
+
         {
             _a[3] = new bytes32[](4);
             _a[3][0] = _a[2][0];
@@ -104,11 +100,11 @@ contract MerkleTreeExample {
 
             _c[3] = _calculateNextLevel(_b[3]);
 
-            _roots[3] = MerkleTree.computeRoot(_a[3]);
+            _roots[3] = _a[3].computeRoot();
 
             _siblings[3] = new bytes32[][](3);
 
-            _siblings[3][0] = new bytes32[](3);
+            _siblings[3][0] = new bytes32[](2);
             _siblings[3][0][0] = _a[3][1];
             _siblings[3][0][1] = _b[3][1];
 
@@ -119,22 +115,17 @@ contract MerkleTreeExample {
             _siblings[3][2] = new bytes32[](2);
             _siblings[3][2][0] = _a[3][3];
             _siblings[3][2][1] = _b[3][0];
+
+             console.logString("State3 done");
         }
 
         // State 4
         {
-            _a[4] = new bytes32[](8);
+            _a[4] = new bytes32[](4);
             _a[4][0] = _a[3][0];
             _a[4][1] = _a[3][1];
             _a[4][2] = _a[3][2];
             _a[4][3] = bytes32(uint256(4));
-            _a[4][4] = SHA256.EMPTY_HASH;
-
-            _a[4][5] = SHA256.EMPTY_HASH;
-
-            _a[4][6] = SHA256.EMPTY_HASH;
-
-            _a[4][7] = SHA256.EMPTY_HASH;
 
             _b[4] = _calculateNextLevel(_a[4]);
 
@@ -144,25 +135,23 @@ contract MerkleTreeExample {
 
             _siblings[4] = new bytes32[][](4);
 
-            _siblings[4][0] = new bytes32[](3);
+            _siblings[4][0] = new bytes32[](2);
             _siblings[4][0][0] = _a[4][1];
             _siblings[4][0][1] = _b[4][1];
-            _siblings[4][0][2] = _c[4][1];
 
-            _siblings[4][1] = new bytes32[](3);
+            _siblings[4][1] = new bytes32[](2);
             _siblings[4][1][0] = _a[4][0];
             _siblings[4][1][1] = _b[4][1];
-            _siblings[4][1][2] = _c[4][1];
 
-            _siblings[4][2] = new bytes32[](3);
+            _siblings[4][2] = new bytes32[](2);
             _siblings[4][2][0] = _a[4][3];
             _siblings[4][2][1] = _b[4][0];
-            _siblings[4][2][2] = _c[4][1];
 
-            _siblings[4][3] = new bytes32[](3);
+            _siblings[4][3] = new bytes32[](2);
             _siblings[4][3][0] = _a[4][2];
             _siblings[4][3][1] = _b[4][0];
-            _siblings[4][3][2] = _c[4][1];
+
+             console.logString("State4 done");
         }
 
         // State 5
@@ -174,9 +163,7 @@ contract MerkleTreeExample {
             _a[5][3] = _a[4][3];
             _a[5][4] = bytes32(uint256(5));
             _a[5][5] = SHA256.EMPTY_HASH;
-
             _a[5][6] = SHA256.EMPTY_HASH;
-
             _a[5][7] = SHA256.EMPTY_HASH;
 
             _b[5] = _calculateNextLevel(_a[5]);

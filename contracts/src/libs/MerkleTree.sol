@@ -15,8 +15,8 @@ import {SHA256} from "../libs/SHA256.sol";
 /// @custom:security-contact security@anoma.foundation
 library MerkleTree {
     struct Tree {
-        uint256 _nextLeafIndex;
-        mapping(uint256 level => mapping(uint256 index => bytes32 node)) _nodes;
+        uint256 _leafCount;
+        mapping(uint256 level => bytes32 node) _parents;
         bytes32[] _zeros;
     }
 
@@ -32,139 +32,69 @@ library MerkleTree {
 
         self._zeros.push(SHA256.EMPTY_HASH);
 
-        self._nextLeafIndex = 0;
+        self._leafCount = 0;
     }
 
     /// @notice Pushes a leaf to the tree.
     /// @param self The tree data structure.
     /// @param leaf The leaf to add.
     /// @return index The index of the leaf.
-    /// @return newRoot The new root of the tree.
-    function push(Tree storage self, bytes32 leaf) internal returns (uint256 index, bytes32 newRoot) {
-        // Cache the tree depth read.
-        uint256 treeDepth = depth(self);
-
-        // Get the next leaf index and increment it after assignment.
-        index = self._nextLeafIndex++;
-
-        bytes32 currentLevelHash = leaf;
-
-        if (treeDepth == 0) {
-            self._nodes[0][0] = currentLevelHash;
-        } else {
-            uint256 currentIndex = index;
-
-            // Rebuild the branch from leaf to root.
-            for (uint256 i = 0; i < treeDepth; ++i) {
-                // Store the current node hash at depth `i`.
-                self._nodes[i][currentIndex] = currentLevelHash;
-
-                // Compute the next level hash for depth `i+1`.
-                // Check whether the `currentIndex` node is the left or right child of its parent.
-                if (isLeftChild(currentIndex)) {
-                    // Compute the `currentLevelHash` using the right sibling.
-                    // Because we fill the tree from left to right,
-                    // the right child is empty and we must use the depth `i` zero hash.
-                    currentLevelHash = SHA256.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, i).value);
-                } else {
-                    // Compute the `currentLevelHash` using the left sibling.
-                    // Because we fill the tree from left to right,
-                    // the left child is the previous node at depth `i`.
-                    currentLevelHash = SHA256.hash(self._nodes[i][currentIndex - 1], currentLevelHash);
-                }
-
-                currentIndex >>= 1;
-            }
-        }
-
-        // Expand the tree if the capacity is reached.
-        if (self._nextLeafIndex == capacity(self)) {
-            // Store the current hash in the current level at index 0.
-            self._nodes[treeDepth][0] = currentLevelHash;
-
-            // Compute the new current level hash of the expanded tree.
-            bytes32 currentZero = Arrays.unsafeAccess(self._zeros, treeDepth).value;
-
-            // Compute the new current level hash.
-            currentLevelHash = SHA256.hash(currentLevelHash, currentZero);
-
+    /// @return accumulatorNode The new root of the tree.
+    function push(Tree storage self, bytes32 leaf) internal returns (uint256 index, bytes32 accumulatorNode) {
+        // If the capacity of the current Merkle tree is exhausted, then expand it
+        if (self._leafCount != 0 && (self._leafCount & (self._leafCount - 1)) == 0) {
             // Compute the next zero for the next level.
+            bytes32 currentZero = Arrays.unsafeAccess(self._zeros, self._zeros.length - 1).value;
             bytes32 nextZero = SHA256.hash(currentZero, currentZero);
             self._zeros.push(nextZero);
         }
-
-        newRoot = currentLevelHash;
-    }
-
-    /// @notice Computes a Merkle proof consisting of the sibling at each depth and the associated direction bit
-    /// indicating whether the sibling is left (0) or right (1) at the respective depth.
-    /// @param self The tree data structure.
-    /// @param index The index of the leaf.
-    /// @return siblings The siblings of the leaf to proof inclusion for.
-    /// @return directionBits The direction bits indicating whether the siblings are left of right.
-    function merkleProof(Tree storage self, uint256 index)
-        internal
-        view
-        returns (bytes32[] memory siblings, uint256 directionBits)
-    {
-        uint256 treeDepth = depth(self);
-
-        // Check whether the index exists or not.
-        if (index + 1 > self._nextLeafIndex) revert NonExistentLeafIndex(index);
-
-        siblings = new bytes32[](treeDepth);
-        uint256 currentIndex = index;
-        bytes32 currentSibling;
-
-        // Iterate over the different tree levels starting at the bottom at the leaf level.
-        for (uint256 i = 0; i < treeDepth; ++i) {
-            // Check if the current node the left or right child of its parent.
-            if (isLeftChild(currentIndex)) {
-                // Sibling is right.
-                currentSibling = self._nodes[i][currentIndex + 1];
-
-                // Set the direction bit at position `i` to 1.
-                directionBits |= (1 << i);
-            } else {
-                // Sibling is left.
-                currentSibling = self._nodes[i][currentIndex - 1];
-
-                // Leave the direction bit at position `i` as 0.
-            }
-
-            // Check if the sibling is an empty subtree.
-            if (currentSibling == bytes32(0)) {
-                // The subtree node doesn't exist, so we store the zero hash instead.
-                siblings[i] = Arrays.unsafeAccess(self._zeros, i).value;
-            } else {
-                // The subtree node exists, so we store it.
-                siblings[i] = currentSibling;
-            }
-
-            // Shift the number one bit to the right to drop the last binary digit.
-            currentIndex >>= 1;
+        uint256 treeHeight = 0;
+        bytes32 replacementNode = leaf;
+        // Propagate a hash update up the Merkle tree until there's space
+        for (; self._parents[treeHeight] != 0; treeHeight++) {
+            // Compute the replacement of the parent node
+            replacementNode = SHA256.hash(self._parents[treeHeight], replacementNode);
+            // Delete the current level as it's now completed
+            delete self._parents[treeHeight];
         }
+        accumulatorNode = replacementNode;
+        // Record where we are going to insert the new node
+        uint256 insertTreeHeight = treeHeight;
+        // Now let's compute the new root hash starting from the replacement node
+        uint256 zerosLength = self._zeros.length;
+        for (; treeHeight < zerosLength - 1; treeHeight++) {
+            if (self._parents[treeHeight] == 0) {
+                // If no partial tree at current level, then right-pad the accumulator
+                accumulatorNode = SHA256.hash(accumulatorNode, self._zeros[treeHeight]);
+            } else {
+                // If there's a partial tree, then combine it with the accumulator
+                accumulatorNode = SHA256.hash(self._parents[treeHeight], accumulatorNode);
+            }
+        }
+        // Finish off the propagation with a final assignment
+        self._parents[insertTreeHeight] = replacementNode;
+        index = self._leafCount++;
     }
 
     /// @notice Returns the tree depth.
     /// @param self The tree data structure.
-    /// @return treeDepth The depth of the tree.
-    function depth(Tree storage self) internal view returns (uint256 treeDepth) {
-        treeDepth = self._zeros.length - 1;
+    /// @return treeHeight The depth of the tree.
+    function height(Tree storage self) internal view returns (uint256 treeHeight) {
+        treeHeight = self._zeros.length - 1;
     }
 
     /// @notice Returns the number of leaves that have been added to the tree.
     /// @param self The tree data structure.
     /// @return count The number of leaves in the tree.
     function leafCount(Tree storage self) internal view returns (uint256 count) {
-        count = self._nextLeafIndex;
+        count = self._leafCount;
     }
 
     /// @notice Calculates the capacity of the tree.
     /// @param self The tree data structure.
     /// @return treeCapacity The computed tree capacity.
     function capacity(Tree storage self) internal view returns (uint256 treeCapacity) {
-        treeCapacity = 1 << depth(self);
+        treeCapacity = 1 << height(self);
     }
 
     /// @notice Checks whether a node is the left or right child according to its index.

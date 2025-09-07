@@ -36,20 +36,12 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
         treeCapacity = _merkleTree.capacity();
     }
 
-    function depth() external view returns (uint256 treeDepth) {
-        treeDepth = _merkleTree.depth();
+    function height() external view returns (uint256 treeHeight) {
+        treeHeight = _merkleTree.height();
     }
 
     function emptyLeafHash() external view returns (bytes32 hash) {
         hash = _merkleTreeZero(0);
-    }
-
-    function findCommitmentIndex(bytes32 commitment) external view returns (uint256 index) {
-        index = _findCommitmentIndex(commitment);
-    }
-
-    function commitmentAtIndex(uint256 index) external view returns (bytes32 commitment) {
-        commitment = _commitmentAtIndex(index);
     }
 
     function _merkleTreeZero(uint256 level) internal view returns (bytes32 zeroHash) {
