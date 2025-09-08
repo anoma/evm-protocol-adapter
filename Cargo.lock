@@ -1217,8 +1217,8 @@ dependencies = [
 
 [[package]]
 name = "arm"
-version = "0.4.0"
-source = "git+https://github.com/anoma/arm-risc0.git?branch=m1dnight%2Fencoders-decoders-new-structs#7e998ae3e07da2d129dc079158af819c74e91e6f"
+version = "0.5.0"
+source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.5.0#4d41751ef5bdf1b6d9260496b686071e3f6a236e"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",
@@ -2287,7 +2287,7 @@ dependencies = [
 
 [[package]]
 name = "evm_protocol_adapter_bindings"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "alloy",
  "alloy-sol-types",
