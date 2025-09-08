@@ -51,7 +51,7 @@ library MerkleTree {
         uint256 height = 0;
         bytes32 replacementNode = leaf;
         // Propagate a hash update up the Merkle tree until there's space
-        for (; self._parents[height] != 0; height++) {
+        for (; self._leafCount & (1 << height) != 0; height++) {
             // Compute the replacement of the parent node
             replacementNode = SHA256.hash(self._parents[height], replacementNode);
             // Delete the current level as it's now completed
@@ -62,7 +62,7 @@ library MerkleTree {
         uint256 insertHeight = height;
         // Now let's compute the new root hash starting from the replacement node
         for (; height < self._zeros.length - 1; height++) {
-            if (self._parents[height] == 0) {
+            if (self._leafCount & (1 << height) == 0) {
                 // If no partial tree at current level, then right-pad the accumulator
                 accumulatorNode = SHA256.hash(accumulatorNode, self._zeros[height]);
             } else {
