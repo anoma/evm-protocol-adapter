@@ -57,6 +57,10 @@ library MerkleTree {
             // Delete the current level as it's now completed
             delete self._parents[height];
         }
+        // Zeros cannot be inserted into the Merkle tree because they are also used as sentinel values
+        if (replacementNode == 0) {
+            revert();
+        }
         accumulatorNode = replacementNode;
         // Record where we are going to insert the new node
         uint256 insertHeight = height;
