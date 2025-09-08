@@ -22,6 +22,8 @@ import {NullifierSet} from "./state/NullifierSet.sol";
 
 import {Action, ForwarderCalldata, Resource, Transaction} from "./Types.sol";
 
+string constant PROTOCOL_ADAPTER_VERSION = "1.0.0-beta";
+
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
 /// @notice The protocol adapter contract verifying and executing resource machine transactions.
@@ -163,6 +165,11 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         isStopped = RiscZeroVerifierEmergencyStop(
             address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))
         ).paused();
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function getProtocolAdapterVersion() public pure virtual override returns (string memory version) {
+        version = PROTOCOL_ADAPTER_VERSION;
     }
 
     /// @inheritdoc IProtocolAdapter
