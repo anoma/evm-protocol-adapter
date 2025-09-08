@@ -275,7 +275,7 @@ contract ERC20ForwarderTest is Test {
         uint256 privateKey,
         bytes32 witness
     ) internal view returns (bytes memory signature) {
-        bytes32 digest = _computeWrapDigest({permit: permit, spender: spender, witness: witness});
+        bytes32 digest = _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: witness});
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         return abi.encodePacked(r, s, v);
@@ -286,11 +286,11 @@ contract ERC20ForwarderTest is Test {
     /// @param spender The address being allowed to execute the `permitWitnessTransferFrom` call.
     /// @param witness The witness information.
     /// @return digest The digest.
-    function _computeWrapDigest(ISignatureTransfer.PermitTransferFrom memory permit, address spender, bytes32 witness)
-        internal
-        view
-        returns (bytes32 digest)
-    {
+    function _computePermitWitnessTransferFromDigest(
+        ISignatureTransfer.PermitTransferFrom memory permit,
+        address spender,
+        bytes32 witness
+    ) internal view returns (bytes32 digest) {
         string memory witnessTypeString = "bytes32 witness";
 
         bytes32 structHash = keccak256(
