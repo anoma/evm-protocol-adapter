@@ -2238,7 +2238,7 @@ dependencies = [
 
 [[package]]
 name = "evm_protocol_adapter_bindings"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "alloy",
  "alloy-sol-types",
