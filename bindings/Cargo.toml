@@ -1,10 +1,10 @@
 [package]
 name = "evm_protocol_adapter_bindings"
-version = "0.1.0"
+version = "1.0.0-beta"
 edition = "2024"
 
 [dependencies]
-arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "f4dc2668fda3fcbeaa2a7a69dde169e5eb7e01f3", package = "arm", features = [
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "4b16d95629a6ddd3a6c0477a5c2c05c899a6b3a5", package = "arm", features = [
     "groth16_prover",
     "bonsai"
 ] }

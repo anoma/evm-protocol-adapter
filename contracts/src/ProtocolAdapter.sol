@@ -174,7 +174,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @inheritdoc IProtocolAdapter
     function getRiscZeroVerifierSelector() public pure virtual override returns (bytes4 verifierSelector) {
-        verifierSelector = 0xbb001d44;
+        verifierSelector = 0x73c457ba;
     }
 
     /// @notice Executes a call to a forwarder contracts.
