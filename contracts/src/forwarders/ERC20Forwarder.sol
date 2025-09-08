@@ -22,6 +22,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
     IPermit2 internal constant _PERMIT2 = IPermit2(address(Permit2Lib.PERMIT2));
 
+    // solhint-disable gas-indexed-events
     /// @notice Emitted when ERC20 tokens get wrapped.
     /// @param token The ERC20 token address.
     /// @param from The address from which tokens were withdrawn.
@@ -33,6 +34,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param to The address to which tokens were deposited.
     /// @param value The token amount being withdrawn from the ERC20 forwarder contract.
     event Unwrapped(address indexed token, address indexed to, uint256 value);
+    // solhint-enable gas-indexed-events
 
     error CallTypeInvalid();
     error TypeOverflow(uint256 limit, uint256 actual);
