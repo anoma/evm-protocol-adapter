@@ -133,7 +133,6 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 mod tests {
     use super::*;
     use crate::conversion::ProtocolAdapter;
-    use dotenv::dotenv;
     use std::env;
 
     #[test]
