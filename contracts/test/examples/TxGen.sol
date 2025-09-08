@@ -15,6 +15,7 @@ import {Logic} from "../../src/proving/Logic.sol";
 import {Transaction, Action, Resource} from "../../src/Types.sol";
 
 library TxGen {
+    using MerkleTree for bytes32[];
     using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.VerifierInput;
@@ -96,8 +97,7 @@ library TxGen {
     function createAction(
         RiscZeroMockVerifier mockVerifier,
         ResourceAndAppData[] memory consumed,
-        ResourceAndAppData[] memory created,
-        uint8 commitmentTreeDepth
+        ResourceAndAppData[] memory created
     ) internal view returns (Action memory action) {
         if (consumed.length != created.length) {
             revert ConsumedCreatedCountMismatch({nConsumed: consumed.length, nCreated: created.length});
@@ -115,7 +115,7 @@ library TxGen {
             actionTreeTags[index + 1] = created[i].resource.commitment();
         }
 
-        bytes32 actionTreeRoot = MerkleTree.computeRoot(actionTreeTags, 4);
+        bytes32 actionTreeRoot = actionTreeTags.computeRoot();
 
         for (uint256 i = 0; i < nCUs; ++i) {
             uint256 index = i * 2;
@@ -138,7 +138,7 @@ library TxGen {
 
             complianceVerifierInputs[i] = complianceVerifierInput({
                 mockVerifier: mockVerifier,
-                commitmentTreeRoot: initialRoot(commitmentTreeDepth),
+                commitmentTreeRoot: initialRoot(),
                 consumed: consumed[i].resource,
                 created: created[i].resource
             });
@@ -146,12 +146,11 @@ library TxGen {
         action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
     }
 
-    function createDefaultAction(
-        RiscZeroMockVerifier mockVerifier,
-        bytes32 nonce,
-        uint256 nCUs,
-        uint8 commitmentTreeDepth
-    ) internal view returns (Action memory action, bytes32 updatedNonce) {
+    function createDefaultAction(RiscZeroMockVerifier mockVerifier, bytes32 nonce, uint256 nCUs)
+        internal
+        view
+        returns (Action memory action, bytes32 updatedNonce)
+    {
         updatedNonce = nonce;
 
         ResourceAndAppData[] memory consumed = new ResourceAndAppData[](nCUs);
@@ -190,19 +189,14 @@ library TxGen {
             updatedNonce = bytes32(uint256(updatedNonce) + 1);
         }
 
-        action = createAction({
-            mockVerifier: mockVerifier,
-            consumed: consumed,
-            created: created,
-            commitmentTreeDepth: commitmentTreeDepth
-        });
+        action = createAction({mockVerifier: mockVerifier, consumed: consumed, created: created});
     }
 
-    function transaction(
-        RiscZeroMockVerifier mockVerifier,
-        ResourceLists[] memory actionResources,
-        uint8 commitmentTreeDepth
-    ) internal view returns (Transaction memory txn) {
+    function transaction(RiscZeroMockVerifier mockVerifier, ResourceLists[] memory actionResources)
+        internal
+        view
+        returns (Transaction memory txn)
+    {
         Action[] memory actions = new Action[](actionResources.length);
 
         for (uint256 i = 0; i < actionResources.length; ++i) {
@@ -215,30 +209,24 @@ library TxGen {
             actions[i] = createAction({
                 mockVerifier: mockVerifier,
                 consumed: actionResources[i].consumed,
-                created: actionResources[i].created,
-                commitmentTreeDepth: commitmentTreeDepth
+                created: actionResources[i].created
             });
         }
 
         txn = Transaction({actions: actions, deltaProof: abi.encodePacked(collectTags(actions))});
     }
 
-    function transaction(
-        RiscZeroMockVerifier mockVerifier,
-        bytes32 nonce,
-        ActionConfig[] memory configs,
-        uint8 commitmentTreeDepth
-    ) internal view returns (Transaction memory txn, bytes32 updatedNonce) {
+    function transaction(RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
+        internal
+        view
+        returns (Transaction memory txn, bytes32 updatedNonce)
+    {
         updatedNonce = nonce;
 
         Action[] memory actions = new Action[](configs.length);
         for (uint256 i = 0; i < configs.length; ++i) {
-            (actions[i], updatedNonce) = createDefaultAction({
-                mockVerifier: mockVerifier,
-                nonce: updatedNonce,
-                nCUs: configs[i].nCUs,
-                commitmentTreeDepth: commitmentTreeDepth
-            });
+            (actions[i], updatedNonce) =
+                createDefaultAction({mockVerifier: mockVerifier, nonce: updatedNonce, nCUs: configs[i].nCUs});
         }
 
         txn = Transaction({actions: actions, deltaProof: abi.encodePacked(collectTags(actions))});
@@ -306,13 +294,7 @@ library TxGen {
         });
     }
 
-    function initialRoot(uint8 treeDepth) internal pure returns (bytes32 root) {
-        bytes32 currentZero = SHA256.EMPTY_HASH;
-
-        for (uint256 i = 0; i < treeDepth; ++i) {
-            currentZero = SHA256.hash(currentZero, currentZero);
-        }
-
-        root = currentZero;
+    function initialRoot() internal pure returns (bytes32 root) {
+        root = SHA256.EMPTY_HASH;
     }
 }

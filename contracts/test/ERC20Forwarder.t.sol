@@ -11,7 +11,6 @@ import {Test, stdError} from "forge-std/Test.sol";
 
 import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
 import {ERC20ForwarderInput} from "../src/forwarders/ERC20ForwarderInput.sol";
-import {Parameters} from "../src/libs/Parameters.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
@@ -59,13 +58,7 @@ contract ERC20ForwarderTest is Test {
         (RiscZeroVerifierRouter _router,,) = new DeployRiscZeroContracts().run();
 
         // Deploy the protocol adapter
-        _pa = address(
-            new ProtocolAdapter({
-                riscZeroVerifierRouter: _router,
-                commitmentTreeDepth: Parameters.COMMITMENT_TREE_DEPTH,
-                actionTagTreeDepth: Parameters.ACTION_TAG_TREE_DEPTH
-            })
-        );
+        _pa = address(new ProtocolAdapter({riscZeroVerifierRouter: _router}));
 
         // Deploy the ERC20 forwarder
         _fwd = address(
