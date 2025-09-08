@@ -121,7 +121,7 @@ contract ERC20ForwarderTest is Test {
             from: _alice,
             permit: _defaultPermit,
             witness: _ACTION_TREE_ROOT,
-            signature: _createWrapSignature({
+            signature: _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
@@ -143,7 +143,7 @@ contract ERC20ForwarderTest is Test {
             from: _alice,
             permit: _defaultPermit,
             witness: _ACTION_TREE_ROOT,
-            signature: _createWrapSignature({
+            signature: _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
@@ -168,7 +168,7 @@ contract ERC20ForwarderTest is Test {
             from: _alice,
             permit: _defaultPermit,
             witness: _ACTION_TREE_ROOT,
-            signature: _createWrapSignature({
+            signature: _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
@@ -202,7 +202,7 @@ contract ERC20ForwarderTest is Test {
             from: _alice,
             permit: permit,
             witness: _ACTION_TREE_ROOT,
-            signature: _createWrapSignature({
+            signature: _createPermitWitnessTransferFromSignature({
                 permit: permit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
@@ -229,7 +229,7 @@ contract ERC20ForwarderTest is Test {
             from: _alice,
             permit: _defaultPermit,
             witness: _ACTION_TREE_ROOT,
-            signature: _createWrapSignature({
+            signature: _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
@@ -255,7 +255,7 @@ contract ERC20ForwarderTest is Test {
             from: _alice,
             permit: _defaultPermit,
             witness: _ACTION_TREE_ROOT,
-            signature: _createWrapSignature({
+            signature: _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
@@ -269,7 +269,7 @@ contract ERC20ForwarderTest is Test {
         ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
-    function _createWrapSignature(
+    function _createPermitWitnessTransferFromSignature(
         ISignatureTransfer.PermitTransferFrom memory permit,
         address spender,
         uint256 privateKey,
