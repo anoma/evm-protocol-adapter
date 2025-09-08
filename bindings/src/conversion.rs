@@ -133,13 +133,11 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 mod tests {
     use super::*;
     use crate::conversion::ProtocolAdapter;
-    use dotenv::dotenv;
     use std::env;
 
     #[test]
     #[ignore]
     fn print_tx() {
-        dotenv().ok();
         env::var("BONSAI_API_KEY").expect("Couldn't read BONSAI_API_KEY");
         env::var("BONSAI_API_URL").expect("Couldn't read BONSAI_API_URL");
 
