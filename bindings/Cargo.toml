@@ -4,10 +4,7 @@ version = "1.0.0-beta"
 edition = "2024"
 
 [dependencies]
-arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "4b16d95629a6ddd3a6c0477a5c2c05c899a6b3a5", package = "arm", features = [
-    "groth16_prover",
-    "bonsai"
-] }
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", branch = "m1dnight/encoders-decoders-new-structs", package = "arm", features = ["transaction"]}
 
 dotenv = "0.15"
 alloy = { version = "1.0.23", features = ["full"] }
@@ -16,3 +13,6 @@ serde = { version = "1.0.197", default-features = false }
 
 [dev-dependencies]
 alloy-sol-types = "1.0.23"
+
+[features]
+dev = ["arm_risc0/groth16_prover", "arm_risc0/bonsai"]
