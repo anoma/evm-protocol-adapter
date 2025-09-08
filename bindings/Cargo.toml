@@ -15,4 +15,5 @@ serde = { version = "1.0.197", default-features = false }
 alloy-sol-types = "1.0.23"
 
 [features]
-dev = ["arm_risc0/groth16_prover", "arm_risc0/bonsai"]
+# These features are enabled to generate test transactions and is not required for using the library.
+arm_risc0_dev = ["arm_risc0/groth16_prover", "arm_risc0/bonsai"]
