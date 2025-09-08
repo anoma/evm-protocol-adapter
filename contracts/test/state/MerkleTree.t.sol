@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {Test} from "forge-std/Test.sol";
 
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
 import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
 
 contract MerkleTreeTest is Test, MerkleTreeExample {
@@ -16,23 +17,41 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         _setupMockTree();
     }
 
-    function setUp() public {
-        _merkleTree.setup(_TREE_DEPTH);
-    }
+    function test_push_expands_the_tree_depth_if_the_capacity_is_reached() public {
+        assertEq(_merkleTree.setup(), _roots[0]);
+        assertEq(_merkleTree.leafCount(), 0);
+        assertEq(_merkleTree.depth(), 0);
 
-    function test_push_reverts_on_exceeded_tree_capacity() public {
-        for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            _merkleTree.push(_leaves[4][i]);
-        }
-        assertEq(_merkleTree.leafCount(), _TREE_DEPTH ** 2);
+        _merkleTree.push(_a[7][0]);
+        assertEq(_merkleTree.leafCount(), 1);
+        assertEq(_merkleTree.depth(), 1);
 
-        bytes32 newLeaf = sha256("NEW LEAF");
+        _merkleTree.push(_a[7][1]);
+        assertEq(_merkleTree.leafCount(), 2);
+        assertEq(_merkleTree.depth(), 2);
 
-        vm.expectRevert(MerkleTree.TreeCapacityExceeded.selector);
-        _merkleTree.push(newLeaf);
+        _merkleTree.push(_a[7][2]);
+        assertEq(_merkleTree.leafCount(), 3);
+        assertEq(_merkleTree.depth(), 2);
+
+        _merkleTree.push(_a[7][3]);
+        assertEq(_merkleTree.leafCount(), 4);
+        assertEq(_merkleTree.depth(), 3);
+
+        _merkleTree.push(_a[7][4]);
+        assertEq(_merkleTree.leafCount(), 5);
+        assertEq(_merkleTree.depth(), 3);
+
+        _merkleTree.push(_a[7][5]);
+        assertEq(_merkleTree.leafCount(), 6);
+        assertEq(_merkleTree.depth(), 3);
+
+        _merkleTree.push(_a[7][6]);
+        assertEq(_merkleTree.leafCount(), 7);
+        assertEq(_merkleTree.depth(), 3);
     }
 
     function test_setup_returns_the_expected_initial_root() public {
-        assertEq(_merkleTree.setup(_TREE_DEPTH), _roots[0]);
+        assertEq(_merkleTree.setup(), SHA256.EMPTY_HASH);
     }
 }
