@@ -5,7 +5,7 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Script} from "forge-std/Script.sol";
 
-import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {ProtocolAdapter, PROTOCOL_ADAPTER_VERSION} from "../src/ProtocolAdapter.sol";
 
 contract DeployProtocolAdapter is Script {
     mapping(uint256 chainId => string network) internal _networks;
@@ -23,8 +23,9 @@ contract DeployProtocolAdapter is Script {
 
     function run() public returns (address protocolAdapter) {
         vm.startBroadcast();
+
         protocolAdapter = address(
-            new ProtocolAdapter{salt: sha256("ProtocolAdapterDraft")}({
+            new ProtocolAdapter{salt: sha256(bytes(string.concat("ProtocolAdapter", " ", PROTOCOL_ADAPTER_VERSION)))}({
                 riscZeroVerifierRouter: _routers[_networks[block.chainid]]
             })
         );
