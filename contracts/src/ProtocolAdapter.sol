@@ -235,20 +235,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // The PA checks whether a call is to be made by looking inside
         // the externalPayload and trying to process the first entry
         if (input.appData.externalPayload.length != 0) {
-            _processForwarderCalls(input, consumed);
+            _processForwarderCalls(input);
         }
     }
 
     /// @notice Processes forwarder calls by verifying and executing them.
     /// @param verifierInput The logic verifier input of a resource making the call.
-    /// @param consumed A flag indicating whether the resource is consumed or not.
-    function _processForwarderCalls(Logic.VerifierInput calldata verifierInput, bool consumed) internal {
-        _verifyForwarderCalls({
-            carrierBlob: verifierInput.appData.resourcePayload[0].blob,
-            expectedTag: verifierInput.tag,
-            consumed: consumed
-        });
-
+    function _processForwarderCalls(Logic.VerifierInput calldata verifierInput) internal {
         uint256 nCalls = verifierInput.appData.externalPayload.length;
         for (uint256 i = 0; i < nCalls; ++i) {
             _executeForwarderCall({
@@ -295,31 +288,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         virtual
     {
         Delta.verify({proof: proof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
-    }
-
-    /// @notice Verifies the forwarder calls of a given action.
-    /// @param carrierBlob The carrier resource blob
-    /// @param expectedTag The tag of the resource making the call.
-    /// @param consumed The flag indicating whether the resource is created or consumed
-    function _verifyForwarderCalls(bytes calldata carrierBlob, bytes32 expectedTag, bool consumed) internal pure {
-        bytes32 decodedTag;
-
-        if (consumed) {
-            Resource memory resource;
-            bytes32 nullifierKey;
-            (resource, nullifierKey) = abi.decode(carrierBlob, (Resource, bytes32));
-
-            decodedTag = resource.nullifier(nullifierKey);
-        } else {
-            (Resource memory resource) = abi.decode(carrierBlob, (Resource));
-
-            decodedTag = resource.commitment();
-        }
-
-        // Check tag correspondence
-        if (decodedTag != expectedTag) {
-            revert CalldataCarrierTagMismatch({actual: decodedTag, expected: expectedTag});
-        }
     }
 
     /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
