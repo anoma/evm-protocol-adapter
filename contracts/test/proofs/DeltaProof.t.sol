@@ -44,22 +44,53 @@ contract DeltaProofTest is Test {
         uint256 quantity = canonize_quantity(deltaInputs.quantity);
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
-        vm.assume(preDelta != 0);
-        // Derive address and public key from transaction delta
-        VmSafe.Wallet memory valueWallet = vm.createWallet(preDelta);
-        // Extract the transaction delta from the wallet
-        instance[0] = valueWallet.publicKeyX;
-        instance[1] = valueWallet.publicKeyY;
+        if (preDelta != 0) {
+            // Derive address and public key from transaction delta
+            VmSafe.Wallet memory valueWallet = vm.createWallet(preDelta);
+            // Extract the transaction delta from the wallet
+            instance[0] = valueWallet.publicKeyX;
+            instance[1] = valueWallet.publicKeyY;
+        } else {
+            instance[0] = 0;
+            instance[1] = 0;
+        }
+    }
+
+    function generateDeltaProof(bytes32 verifyingKey) public returns (bytes memory proof) {
+        // secp256k1 base point
+        uint256 GX = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
+        uint256 GY = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
+        // Order of secp256k1 base point
+        uint256 N =  0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
+        uint256 r = GX % N;
+        assertNotEq(r, 0);
+        uint256 s = uint256(verifyingKey) % N;
+        assertNotEq(s, 0);
+        // Compute the recovery ID
+        uint8 v = uint8(GY & 1);
+        if (s > N/2) {
+            v = v ^ 1;
+        }
+        if (s > N/2) {
+            v = 1 - v;
+            s = N - s;
+        }
+        v += 27;
+        // Finally compute the transaction delta proof
+        proof = abi.encodePacked(r, s, v);
     }
 
     function generateDeltaProof(DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
-        vm.assume(deltaInputs.rcv != 0);
-        // Compute the components of the transaction delta proof
-        VmSafe.Wallet memory randomWallet = vm.createWallet(deltaInputs.rcv);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(randomWallet, deltaInputs.verifyingKey);
-        // Finally compute the transaction delta proof
-        proof = abi.encodePacked(r, s, v);
+        if (deltaInputs.rcv != 0) {
+            // Compute the components of the transaction delta proof
+            VmSafe.Wallet memory randomWallet = vm.createWallet(deltaInputs.rcv);
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(randomWallet, deltaInputs.verifyingKey);
+            // Finally compute the transaction delta proof
+            proof = abi.encodePacked(r, s, v);
+        } else {
+            proof = generateDeltaProof(deltaInputs.verifyingKey);
+        }
     }
 
     /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
