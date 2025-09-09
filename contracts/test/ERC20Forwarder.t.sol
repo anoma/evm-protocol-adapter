@@ -13,6 +13,8 @@ import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
 import {ERC20ForwarderInput} from "../src/forwarders/ERC20ForwarderInput.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
+import {RiscZeroUtils} from "../src/libs/RiscZeroUtils.sol";
+
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
@@ -58,7 +60,7 @@ contract ERC20ForwarderTest is Test {
         (RiscZeroVerifierRouter _router,,) = new DeployRiscZeroContracts().run();
 
         // Deploy the protocol adapter
-        _pa = address(new ProtocolAdapter({riscZeroVerifierRouter: _router}));
+        _pa = address(new ProtocolAdapter({riscZeroVerifierRouter: _router, riscZeroSelector: RiscZeroUtils._SELECTOR}));
 
         // Deploy the ERC20 forwarder
         _fwd = address(

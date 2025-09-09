@@ -10,6 +10,8 @@ import {Test, console} from "forge-std/Test.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {Transaction} from "../../src/Types.sol";
 
+import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
+
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
 contract BenchmarkData is Test {
@@ -36,7 +38,7 @@ contract Benchmark is BenchmarkData {
         {
             (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
 
-            _pa = new ProtocolAdapter({riscZeroVerifierRouter: _router});
+            _pa = new ProtocolAdapter({riscZeroVerifierRouter: _router, riscZeroSelector: RiscZeroUtils._SELECTOR});
         }
     }
 
