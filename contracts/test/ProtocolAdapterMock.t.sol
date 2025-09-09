@@ -78,6 +78,7 @@ contract ProtocolAdapterMockTest is Test {
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = _mockVerifier.transaction(resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -85,7 +86,7 @@ contract ProtocolAdapterMockTest is Test {
             input: INPUT,
             output: EXPECTED_OUTPUT
         });
-        _mockPa.execute(_mockVerifier.transaction(resourceLists));
+        _mockPa.execute(txn);
     }
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
@@ -95,6 +96,7 @@ contract ProtocolAdapterMockTest is Test {
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = _mockVerifier.transaction(resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -103,7 +105,7 @@ contract ProtocolAdapterMockTest is Test {
             output: EXPECTED_OUTPUT
         });
 
-        _mockPa.execute(_mockVerifier.transaction(resourceLists));
+        _mockPa.execute(txn);
     }
 
     function test_execute_emits_all_ForwarderCallExecuted_events() public {
@@ -122,6 +124,7 @@ contract ProtocolAdapterMockTest is Test {
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = _mockVerifier.transaction(resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -137,7 +140,7 @@ contract ProtocolAdapterMockTest is Test {
             output: EXPECTED_OUTPUT
         });
 
-        _mockPa.execute(_mockVerifier.transaction(resourceLists));
+        _mockPa.execute(txn);
     }
 
     function test_execute_1_txn_with_1_action_and_0_cus() public {

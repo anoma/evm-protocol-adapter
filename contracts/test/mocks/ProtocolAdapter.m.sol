@@ -40,29 +40,4 @@ contract ProtocolAdapterMock is ProtocolAdapter {
             journalDigest: RiscZeroUtils.toJournalDigest(input, tree, consumed)
         });
     }
-
-    function _verifyDeltaProof(bytes calldata proof, uint256[2] memory transactionDelta, bytes32[] memory tags)
-        internal
-        pure
-        override
-    {
-        if (transactionDelta[0] != transactionDelta[1]) {
-            revert Delta.DeltaMismatch({expected: address(0), actual: address(0)});
-        }
-
-        if (keccak256(proof) != tags.computeVerifyingKey()) {
-            revert Delta.DeltaMismatch({expected: address(type(uint160).max), actual: address(type(uint160).max)});
-        }
-    }
-
-    function _addUnitDelta(uint256[2] memory transactionDelta, uint256[2] memory unitDelta)
-        internal
-        pure
-        override
-        returns (uint256[2] memory sum)
-    {
-        unchecked {
-            sum = [transactionDelta[0] + unitDelta[0], transactionDelta[1] + unitDelta[1]];
-        }
-    }
 }

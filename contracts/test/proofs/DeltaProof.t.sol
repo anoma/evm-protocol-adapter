@@ -30,7 +30,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Convert a int256 exponent to an equivalent uin256 assuming an order of SECP256K1_ORDER
-    function canonize_quantity(int256 quantity) public returns (uint256 quantityu) {
+    function canonize_quantity(int256 quantity) public pure returns (uint256 quantityu) {
         // If positive, leave the number unchanged
         quantityu = quantity >= 0 ? uint256(quantity) : (SECP256K1_ORDER - 1 - (uint256(-(quantity + 1)) % SECP256K1_ORDER));
     }
