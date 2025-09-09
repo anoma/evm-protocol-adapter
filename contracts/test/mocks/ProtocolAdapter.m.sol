@@ -20,24 +20,4 @@ contract ProtocolAdapterMock is ProtocolAdapter {
     function getRiscZeroVerifierSelector() public pure override returns (bytes4 verifierSelector) {
         verifierSelector = _MOCK_VERIFIER_SELECTOR;
     }
-
-    function _verifyComplianceProof(Compliance.VerifierInput calldata input) internal view override {
-        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-            seal: input.proof,
-            imageId: Compliance._VERIFYING_KEY,
-            journalDigest: input.instance.toJournalDigest()
-        });
-    }
-
-    function _verifyLogicProof(Logic.VerifierInput calldata input, bytes32 tree, bool consumed)
-        internal
-        view
-        override
-    {
-        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-            seal: input.proof,
-            imageId: input.verifyingKey,
-            journalDigest: RiscZeroUtils.toJournalDigest(input, tree, consumed)
-        });
-    }
 }
