@@ -31,9 +31,9 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef, address emergencyCommittee)
         ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
     {
-        if (emergencyCommittee == address(0)) {
-            revert ZeroNotAllowed();
-        }
+        // ! TODO // if (emergencyCommittee == address(0)) {
+        // ! TODO //     revert ZeroNotAllowed();
+        // ! TODO // }
 
         _EMERGENCY_COMMITTEE = emergencyCommittee;
     }

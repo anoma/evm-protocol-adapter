@@ -8,7 +8,7 @@ arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "164edf283d3
     "groth16_prover",
     "bonsai"
 ] }
-alloy = { version = "1.0.23", features = ["full"] }
+alloy = { version = "1.0.30", features = ["full", "eip712", "node-bindings"] }
 tokio = "1.44"
 serde = { version = "1.0.197", default-features = false }
 
