@@ -20,22 +20,28 @@ import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 import {Transaction, Action} from "../src/Types.sol";
 import {Compliance} from "../src/proving/Compliance.sol";
 import {Logic} from "../src/proving/Logic.sol";
+import {TxGen} from "./libs/TxGen.sol";
+import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
 
 struct ProtocolAdapterTestArgs {
     RiscZeroVerifierRouter router;
     RiscZeroVerifierEmergencyStop emergencyStop;
-    RiscZeroGroth16Verifier verifier;
+    RiscZeroMockVerifier verifier;
 }
 
 contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
+    RiscZeroMockVerifier internal _mockVerifier;
     bytes4 internal _verifierSelector;
+    using TxGen for Vm;
 
     constructor(ProtocolAdapterTestArgs memory args) ProtocolAdapter(args.router, args.verifier.SELECTOR()) {
         _router = args.router;
         _emergencyStop = args.emergencyStop;
+        _mockVerifier = args.verifier;
         _verifierSelector = args.verifier.SELECTOR();
     }
 
@@ -54,16 +60,25 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         new ProtocolAdapter(_router, _verifierSelector);
     }
 
-    function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {
+    function test_execute_reverts_on_vulnerable_risc_zero_verifier(uint8 nActions, uint8 nCUs, UnknownTagFailsParams memory params) public {
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
+
+        (Transaction memory txn, bytes32 updatedNonce) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
         vm.prank(_emergencyStop.owner());
         _emergencyStop.estop();
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
-        _pa.execute(TransactionExample.transaction());
+        _pa.execute(txn);
     }
 
-    function test_execute() public {
-        _pa.execute(TransactionExample.transaction());
+    function test_execute(uint8 nActions, uint8 nCUs) public {
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+
+        (Transaction memory txn, bytes32 updatedNonce) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        _pa.execute(txn);
     }
 
     function test_execute_executes_the_empty_transaction() public {
@@ -127,7 +142,12 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         this.execute(transaction);
     }
 
-    function test_execute_non_existing_root_fails(NonExistingRootFailsParams memory params) public {
+    /// @notice Test that transactions with nonexistent rotts fail
+    function test_execute_non_existing_root_fails(uint8 nActions, uint8 nCUs, NonExistingRootFailsParams memory params) public {
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+
+        (Transaction memory txn, bytes32 updatedNonce) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutation_test_execute_non_existing_root_fails(TransactionExample.transaction(), params);
     }
 
@@ -166,7 +186,12 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         this.execute(transaction);
     }
 
-    function test_execute_short_proof_fails(ShortProofFailsParams memory params) public {
+    /// @notice Test that transactions with short proofs fail
+    function test_execute_short_proof_fails(uint8 nActions, uint8 nCUs, ShortProofFailsParams memory params) public {
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+
+        (Transaction memory txn, bytes32 updatedNonce) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutation_test_execute_short_proof_fails(TransactionExample.transaction(), params);
     }
 
@@ -205,7 +230,12 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         this.execute(transaction);
     }
 
-    function test_execute_unknown_selector_fails(UnknownSelectorFailsParams memory params) public {
+    /// @notice Test that transactions with unknown selectors fail
+    function test_execute_unknown_selector_fails(uint8 nActions, uint8 nCUs, UnknownSelectorFailsParams memory params) public {
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+
+        (Transaction memory txn, bytes32 updatedNonce) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutation_test_execute_unknown_selector_fails(TransactionExample.transaction(), params);
     }
 
@@ -248,8 +278,13 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         this.execute(transaction);
     }
 
-    function test_execute_unknown_nullifier_tag_fails(UnknownTagFailsParams memory params) public {
-        mutation_test_execute_unknown_nullifier_tag_fails(TransactionExample.transaction(), params);
+    /// @notice Test that transactions with unknown nullifier tags fail
+    function test_execute_unknown_nullifier_tag_fails(uint8 nActions, uint8 nCUs, UnknownTagFailsParams memory params) public {
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+
+        (Transaction memory txn, bytes32 updatedNonce) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        mutation_test_execute_unknown_nullifier_tag_fails(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
@@ -281,8 +316,13 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         this.execute(transaction);
     }
 
-    function test_execute_unknown_commitment_tag_fails(UnknownTagFailsParams memory params) public {
-        mutation_test_execute_unknown_commitment_tag_fails(TransactionExample.transaction(), params);
+    /// @notice Test that transactions with unknown commitment tags fail
+    function test_execute_unknown_commitment_tag_fails(uint8 nActions, uint8 nCUs, UnknownTagFailsParams memory params) public {
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+
+        (Transaction memory txn, bytes32 updatedNonce) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        mutation_test_execute_unknown_commitment_tag_fails(txn, params);
     }
 }
 
@@ -292,8 +332,8 @@ contract ProtocolAdapterTest is ProtocolAdapterTestBase {
     function baseArgs() public returns (ProtocolAdapterTestArgs memory args) {
         RiscZeroVerifierRouter router;
         RiscZeroVerifierEmergencyStop emergencyStop;
-        RiscZeroGroth16Verifier verifier;
-        (router, emergencyStop, verifier) = new DeployRiscZeroContracts().run();
+        RiscZeroMockVerifier verifier;
+        (router, emergencyStop, verifier) = new DeployRiscZeroContractsMock().run();
         return ProtocolAdapterTestArgs({ router: router, emergencyStop: emergencyStop, verifier: verifier });
     }
 }
