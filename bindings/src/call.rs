@@ -7,6 +7,7 @@ use alloy::providers::fillers::{
 };
 use alloy::providers::{Identity, ProviderBuilder, RootProvider};
 use alloy::signers::local::PrivateKeySigner;
+use alloy::sol;
 use std::env;
 
 type DefaultProvider = FillProvider<
@@ -29,6 +30,20 @@ pub fn protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<DefaultPro
     ProtocolAdapter::new(protocol_adapter, provider())
 }
 
+sol!(
+    #[allow(missing_docs)]
+    #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+    #[sol(rpc)]
+    ERC20Forwarder,
+    "../contracts/out/ERC20Forwarder.sol/ERC20Forwarder.json"
+);
+
+pub fn erc20_forwarder(
+    forwarder: Address,
+) -> ERC20Forwarder::ERC20ForwarderInstance<DefaultProvider> {
+    ERC20Forwarder::new(forwarder, provider())
+}
+
 pub fn provider() -> DefaultProvider {
     let signer = env::var("PRIVATE_KEY")
         .expect("Couldn't read PRIVATE_KEY")
@@ -48,7 +63,6 @@ pub fn provider() -> DefaultProvider {
 }
 
 #[cfg(test)]
-
 mod tests {
     use crate::call::protocol_adapter;
     use crate::conversion::ProtocolAdapter;

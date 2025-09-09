@@ -22,7 +22,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
     /// @notice The canonical Uniswap Permit2 contract deployed at the same address on all supported chains
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
-    IPermit2 internal constant _PERMIT2 = IPermit2(address(Permit2Lib.PERMIT2));
+    IPermit2 internal constant _PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
     // solhint-disable gas-indexed-events
     /// @notice Emitted when ERC20 tokens get wrapped.
