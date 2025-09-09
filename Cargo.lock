@@ -2781,6 +2781,7 @@ dependencies = [
  "alloy-sol-types",
  "arm",
  "serde",
+ "serde_json",
  "simple-transfer-app",
  "tokio",
 ]

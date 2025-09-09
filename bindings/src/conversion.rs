@@ -133,6 +133,7 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 mod tests {
     use super::*;
     use crate::conversion::ProtocolAdapter;
+    use alloy::primitives::{address, bytes};
     use std::env;
 
     #[test]
@@ -379,11 +380,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "reason: takes too long"]
     fn print_simple_mint_tx() {
-        let forwarder_addr = vec![1u8; 20];
-        let token_addr = vec![2u8; 20];
-        let user_addr = vec![3u8; 20];
+        let forwarder_addr = address!("0xD6BbDE9174b1CdAa358d2Cf4D57D1a9F7178FBfF").to_vec();
+        let token_addr = address!("0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f").to_vec();
+        let user_addr = address!("0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7").to_vec();
         let quantity = 100;
 
         // Construct the consumed resource
@@ -420,8 +420,8 @@ mod tests {
 
         // Fetch the permit signature somewhere
         let permit_nonce = vec![7u8; 32];
-        let permit_deadline = vec![8u8; 32];
-        let permit_sig = vec![9u8; 65];
+        let permit_deadline = vec![255u8; 32];
+        let permit_sig = bytes!("0x1731dd7ac235f854d7350e49d5712919d89f4d9734e9cd135a7d5e345db3bcb97b85631a575b6b6db4da44fa98bed262d2147ad73539b973d7014996ac4293671c").to_vec();
 
         // Construct the mint transaction
         let tx_start_timer = std::time::Instant::now();
@@ -453,6 +453,13 @@ mod tests {
         let decoded_tx: ProtocolAdapter::Transaction =
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
         assert_eq!(evm_tx, decoded_tx);
-        println!("Transaction: {:#?}", evm_tx);
+        std::fs::write(
+            format!("simple_transfer_mint.json"),
+            serde_json::to_string_pretty(&evm_tx).unwrap(),
+        )
+        .unwrap();
+
+        std::fs::write(format!("simple_transfer_mint.bin"), &encoded_tx)
+            .expect("Failed to write encoded transaction to file");
     }
 }

@@ -6,24 +6,35 @@ import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol
 import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {Test, stdError} from "forge-std/Test.sol";
+import {Test, console, stdError} from "forge-std/Test.sol";
 
 import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {Transaction} from "../src/Types.sol";
 
 import {ERC20Example} from "../test/examples/ERC20.e.sol";
 
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
-contract ERC20ForwarderTest is Test {
+import {BenchmarkData} from "./benchmark/Benchmark.t.sol";
+
+import {SHA256} from "../src/libs/SHA256.sol";
+
+contract ERC20ForwarderTest is BenchmarkData {
     uint256 internal constant _ALICE_PRIVATE_KEY = 0xA11CE;
-    uint128 internal constant _TRANSFER_AMOUNT = 1 * 10 ** 18;
+    uint128 internal constant _TRANSFER_AMOUNT = 100;
     bytes internal constant _EXPECTED_OUTPUT = "";
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(type(uint256).max);
 
-    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(type(uint256).max);
+    bytes32 internal _mintActionRoot = SHA256.hash(
+        0x3589f88862ba17814c06b1840e9efb22a4b6fb4d1aa94fb9f146616acc78a76d,
+        0x09d4eca5b170dff7951d631baa6605ff758060bf27830a97672f0e3356fe79e6
+    );
+
+    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF =
+        bytes32(0xc14d7753af4c84dc6a76f9cc55df266c0020efc0522cefa5a3ec1fe6e0894597);
 
     address internal _pa;
     address internal _alice;
@@ -40,18 +51,22 @@ contract ERC20ForwarderTest is Test {
 
     function setUp() public {
         _alice = vm.addr(_ALICE_PRIVATE_KEY);
+        console.log("alice", _alice);
 
         // Deploy token and mint for alice
         _erc20 = new ERC20Example();
+        console.log("erc20", address(_erc20));
 
         // Deploy Permit2 to the canonical address.
         _permit2 = new DeployPermit2().run();
+        console.log("permit", address(_permit2));
 
         // Deploy RISC Zero contracts
         (RiscZeroVerifierRouter _router,,) = new DeployRiscZeroContracts().run();
 
         // Deploy the protocol adapter
         _pa = address(new ProtocolAdapter({riscZeroVerifierRouter: _router}));
+        console.log("pa", address(_pa));
 
         // Deploy the ERC20 forwarder
         _fwd = address(
@@ -61,12 +76,47 @@ contract ERC20ForwarderTest is Test {
                 calldataCarrierLogicRef: bytes32(type(uint256).max)
             })
         );
+        console.log("fwd", address(_fwd));
 
         _defaultPermit = ISignatureTransfer.PermitTransferFrom({
             permitted: ISignatureTransfer.TokenPermissions({token: address(_erc20), amount: _TRANSFER_AMOUNT}),
             nonce: 0,
             deadline: Time.timestamp() + 5 minutes
         });
+    }
+
+    function test_forwardCall_e2e() public {
+        _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
+        uint256 startBalanceAlice = _erc20.balanceOf(_alice);
+        uint256 startBalanceForwarder = _erc20.balanceOf(_fwd);
+
+        vm.prank(_alice);
+        _erc20.approve(address(_permit2), type(uint256).max);
+
+        bytes memory input;
+        bytes memory signature;
+        {
+            address from = _alice;
+            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
+            bytes32 witness = _mintActionRoot;
+            signature = _createPermitWitnessTransferFromSignature({
+                permit: _defaultPermit,
+                privateKey: _ALICE_PRIVATE_KEY,
+                spender: _fwd,
+                witness: witness
+            });
+
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+        }
+
+        console.logBytes(signature);
+
+        Transaction memory txn = _parse(string.concat("/test/simple_transfer_mint.bin"));
+
+        ProtocolAdapter(_pa).execute(txn);
+
+        assertEq(_erc20.balanceOf(_alice), startBalanceAlice - _TRANSFER_AMOUNT);
+        assertEq(_erc20.balanceOf(_fwd), startBalanceForwarder + _TRANSFER_AMOUNT);
     }
 
     function testFuzz_enum_panics(uint8 v) public {
