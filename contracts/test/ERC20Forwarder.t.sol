@@ -6,7 +6,7 @@ import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol
 import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {Test, stdError} from "forge-std/Test.sol";
+import {Test, console, stdError} from "forge-std/Test.sol";
 
 import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
 
@@ -39,13 +39,14 @@ contract ERC20ForwarderTest is Test {
     error InvalidNonce();
 
     function setUp() public {
+        vm.selectFork(vm.createFork("sepolia"));
         _alice = vm.addr(_ALICE_PRIVATE_KEY);
 
         // Deploy token and mint for alice
         _erc20 = new ERC20Example();
 
         // Deploy Permit2 to the canonical address.
-        _permit2 = new DeployPermit2().run();
+        _permit2 = IPermit2(address(0x000000000022D473030F116dDEE9F6B43aC78BA3)); //new DeployPermit2().run();
 
         // Deploy RISC Zero contracts
         (RiscZeroVerifierRouter _router,,) = new DeployRiscZeroContracts().run();
@@ -320,6 +321,9 @@ contract ERC20ForwarderTest is Test {
                 witness
             )
         );
+
+        console.log("DOMAIN_SEPARATOR:");
+        console.logBytes32(_permit2.DOMAIN_SEPARATOR());
 
         digest = keccak256(abi.encodePacked("\x19\x01", _permit2.DOMAIN_SEPARATOR(), structHash));
     }
