@@ -4,15 +4,19 @@ version = "1.0.0-beta"
 edition = "2024"
 
 [dependencies]
-arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.5.0", package = "arm", features = [
-    "transaction",
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "592b1a9734e4314a63d659db765d048d0cca6b23", package = "arm", features = [
+    "groth16_prover",
+    "bonsai"
 ] }
-alloy = { version = "1.0.23", features = ["full"] }
-tokio = "1.44"
+alloy = { version = "1.0.30", features = ["full", "eip712", "node-bindings"] }
+tokio = { version = "1.44", features = ["rt-multi-thread"] }
 serde = { version = "1.0.197", default-features = false }
+sha2 = { version = "0.10.9" }
+serde_json = "1.0.143"
+hex = "0.4.3"
+simple_transfer_app = { git = "https://github.com/anoma/arm-risc0.git", rev = "592b1a9734e4314a63d659db765d048d0cca6b23", package = "simple-transfer-app" }
 
-[dev-dependencies]
-alloy-sol-types = "1.0.23"
+
 
 [features]
 # These features are enabled to generate test transactions and is not required for using the library.
