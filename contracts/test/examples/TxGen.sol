@@ -3,7 +3,6 @@ pragma solidity ^0.8.30;
 
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
-import {ComputableComponents} from "../../src/libs/ComputableComponents.sol";
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
@@ -16,7 +15,6 @@ import {Transaction, Action, Resource} from "../../src/Types.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
-    using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.VerifierInput;
     using Logic for Logic.VerifierInput[];
@@ -44,16 +42,14 @@ library TxGen {
         Resource memory consumed,
         Resource memory created
     ) internal view returns (Compliance.VerifierInput memory unit) {
-        bytes32 nf = consumed.nullifier({nullifierKey: 0});
-        bytes32 cm = created.commitment();
+        bytes32 nf = nullifier(consumed, 0);
+        bytes32 cm = commitment(created);
 
         bytes32 unitDeltaX;
         bytes32 unitDeltaY;
         unchecked {
-            unitDeltaX =
-                bytes32(uint256(ComputableComponents.kind(consumed.logicRef, consumed.labelRef)) * consumed.quantity);
-            unitDeltaY =
-                bytes32(uint256(ComputableComponents.kind(created.logicRef, created.labelRef)) * created.quantity);
+            unitDeltaX = bytes32(uint256(sha256(abi.encode(consumed.logicRef, consumed.labelRef))) * consumed.quantity);
+            unitDeltaY = bytes32(uint256(sha256(abi.encode(created.logicRef, created.labelRef))) * created.quantity);
         }
 
         Compliance.Instance memory instance = Compliance.Instance({
@@ -82,7 +78,7 @@ library TxGen {
         Logic.AppData memory appData
     ) internal view returns (Logic.VerifierInput memory input) {
         input = Logic.VerifierInput({
-            tag: isConsumed ? resource.nullifier({nullifierKey: 0}) : resource.commitment(),
+            tag: isConsumed ? nullifier(resource, 0) : commitment(resource),
             verifyingKey: resource.logicRef,
             appData: appData,
             proof: ""
@@ -111,8 +107,8 @@ library TxGen {
         for (uint256 i = 0; i < nCUs; ++i) {
             uint256 index = (i * 2);
 
-            actionTreeTags[index] = consumed[i].resource.nullifier({nullifierKey: 0});
-            actionTreeTags[index + 1] = created[i].resource.commitment();
+            actionTreeTags[index] = nullifier(consumed[i].resource, 0);
+            actionTreeTags[index + 1] = commitment(created[i].resource);
         }
 
         bytes32 actionTreeRoot = actionTreeTags.computeRoot();
@@ -280,6 +276,14 @@ library TxGen {
             randSeed: 0,
             ephemeral: true
         });
+    }
+
+    function commitment(Resource memory resource) internal pure returns (bytes32 hash) {
+        hash = sha256(abi.encode(resource));
+    }
+
+    function nullifier(Resource memory resource, bytes32 nullifierKey) internal pure returns (bytes32 hash) {
+        hash = sha256(abi.encode(resource, nullifierKey));
     }
 
     function expirableBlobs() internal pure returns (Logic.ExpirableBlob[] memory blobs) {
