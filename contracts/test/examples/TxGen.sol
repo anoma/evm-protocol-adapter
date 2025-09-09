@@ -261,6 +261,20 @@ library TxGen {
         }
     }
 
+    function collectLogicRefs(Action[] memory actions) internal pure returns (bytes32[] memory logicRefs) {
+        logicRefs = new bytes32[](countComplianceUnits(actions) * 2);
+
+        uint256 n = 0;
+        for (uint256 i = 0; i < actions.length; ++i) {
+            uint256 nCUs = actions[i].complianceVerifierInputs.length;
+
+            for (uint256 j = 0; j < nCUs; ++j) {
+                logicRefs[n++] = actions[i].complianceVerifierInputs[j].instance.consumed.logicRef;
+                logicRefs[n++] = actions[i].complianceVerifierInputs[j].instance.created.logicRef;
+            }
+        }
+    }
+
     function mockResource(bytes32 nonce, bytes32 logicRef, bytes32 labelRef, uint128 quantity)
         internal
         pure
