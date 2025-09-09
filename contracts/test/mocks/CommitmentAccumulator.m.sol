@@ -44,14 +44,6 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
         hash = _merkleTreeZero(0);
     }
 
-    function findCommitmentIndex(bytes32 commitment) external view returns (uint256 index) {
-        index = _findCommitmentIndex(commitment);
-    }
-
-    function commitmentAtIndex(uint256 index) external view returns (bytes32 commitment) {
-        commitment = _commitmentAtIndex(index);
-    }
-
     function _merkleTreeZero(uint256 level) internal view returns (bytes32 zeroHash) {
         zeroHash = _merkleTree._zeros[level];
     }

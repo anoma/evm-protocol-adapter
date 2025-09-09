@@ -23,10 +23,4 @@ interface ICommitmentAccumulator {
     function verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path, uint256 directionBits)
         external
         view;
-
-    /// @notice Returns the Merkle proof and associated root for a commitment leaf in the tree.
-    /// @param commitment The commitment leaf to proof inclusion in the tree for.
-    /// @return siblings The siblings constituting the path from the leaf to the root.
-    /// @return directionBits The direction bits for the proof.
-    function merkleProof(bytes32 commitment) external view returns (bytes32[] memory siblings, uint256 directionBits);
 }
