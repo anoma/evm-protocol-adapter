@@ -230,28 +230,11 @@ contract ProtocolAdapterMockTest is Test {
             }),
             appData: Logic.AppData({
                 discoveryPayload: new Logic.ExpirableBlob[](0),
-                resourcePayload: new Logic.ExpirableBlob[](1),
+                resourcePayload: new Logic.ExpirableBlob[](0),
                 externalPayload: new Logic.ExpirableBlob[](nCalls),
                 applicationPayload: new Logic.ExpirableBlob[](0)
             })
         });
-
-        Logic.ExpirableBlob[] memory resourceBlobs = new Logic.ExpirableBlob[](1);
-        if (isConsumed) {
-            bytes32 nullifierKey = 0;
-
-            resourceBlobs[0] = Logic.ExpirableBlob({
-                deletionCriterion: Logic.DeletionCriterion.Never,
-                blob: abi.encode(data[0].resource, nullifierKey)
-            });
-        } else {
-            resourceBlobs[0] = Logic.ExpirableBlob({
-                deletionCriterion: Logic.DeletionCriterion.Never,
-                blob: abi.encode(data[0].resource)
-            });
-        }
-
-        data[0].appData.resourcePayload = resourceBlobs;
 
         Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](nCalls);
         for (uint256 i = 0; i < nCalls; ++i) {
