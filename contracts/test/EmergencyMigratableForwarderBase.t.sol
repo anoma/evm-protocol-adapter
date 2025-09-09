@@ -11,6 +11,8 @@ import {
     ForwarderTargetExample, INPUT_VALUE, OUTPUT_VALUE, INPUT, EXPECTED_OUTPUT
 } from "./examples/ForwarderTarget.e.sol";
 
+import {RiscZeroUtils} from "../src/libs/RiscZeroUtils.sol";
+
 import {ForwarderBaseTest} from "./ForwarderBase.t.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
@@ -23,7 +25,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
         _riscZeroAdmin = _emergencyStop.owner();
 
-        _pa = address(new ProtocolAdapter(_router));
+        _pa = address(new ProtocolAdapter(_router, RiscZeroUtils._SELECTOR));
 
         _emrgFwd = new EmergencyMigratableForwarderExample({
             protocolAdapter: _pa,

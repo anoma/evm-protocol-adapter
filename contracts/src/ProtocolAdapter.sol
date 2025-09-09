@@ -38,6 +38,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     using Delta for uint256[2];
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
+    bytes4 internal immutable _RISC_ZERO_SELECTOR;
 
     uint256 internal _txCount;
 
@@ -53,12 +54,14 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
-    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter) CommitmentAccumulator() {
+    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, bytes4 riscZeroSelector) CommitmentAccumulator() {
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
 
         if (address(riscZeroVerifierRouter) == address(0)) {
             revert ZeroNotAllowed();
         }
+
+        _RISC_ZERO_SELECTOR = riscZeroSelector;
 
         // Sanity check that the verifier has not been stopped already.
         if (isEmergencyStopped()) {
@@ -168,13 +171,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     }
 
     /// @inheritdoc IProtocolAdapter
-    function getProtocolAdapterVersion() public pure virtual override returns (string memory version) {
-        version = PROTOCOL_ADAPTER_VERSION;
+    function getRiscZeroVerifierSelector() public view override returns (bytes4 verifierSelector) {
+        verifierSelector = _RISC_ZERO_SELECTOR;
     }
 
     /// @inheritdoc IProtocolAdapter
-    function getRiscZeroVerifierSelector() public pure virtual override returns (bytes4 verifierSelector) {
-        verifierSelector = 0xbb001d44;
+    function getProtocolAdapterVersion() public pure virtual override returns (string memory version) {
+        version = PROTOCOL_ADAPTER_VERSION;
     }
 
     /// @notice Executes a call to a forwarder contracts.

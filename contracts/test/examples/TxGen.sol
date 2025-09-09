@@ -50,17 +50,24 @@ library TxGen {
 
         DeltaProofTest deltaProofTest = new DeltaProofTest();
         // Construct the delta for consumption based on kind and quantity
-        uint256[2] memory unitDelta = deltaProofTest.generateDeltaInstance(DeltaProofTest.DeltaInstanceInputs({
+        uint256[2] memory unitDelta = deltaProofTest.generateDeltaInstance(
+            DeltaProofTest.DeltaInstanceInputs({
                 kind: uint256(ComputableComponents.kind(consumed.logicRef, consumed.labelRef)),
                 quantity: -int256(uint256(consumed.quantity)),
                 rcv: 1
-        }));
+            })
+        );
         // Construct the delta for creation based on kind and quantity
-        unitDelta = Delta.add(unitDelta, deltaProofTest.generateDeltaInstance(DeltaProofTest.DeltaInstanceInputs({
-                kind: uint256(ComputableComponents.kind(created.logicRef, created.labelRef)),
-                quantity: int256(uint256(created.quantity)),
-                rcv: 1
-        })));
+        unitDelta = Delta.add(
+            unitDelta,
+            deltaProofTest.generateDeltaInstance(
+                DeltaProofTest.DeltaInstanceInputs({
+                    kind: uint256(ComputableComponents.kind(created.logicRef, created.labelRef)),
+                    quantity: int256(uint256(created.quantity)),
+                    rcv: 1
+                })
+            )
+        );
 
         Compliance.Instance memory instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
@@ -221,10 +228,9 @@ library TxGen {
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
         // Generate a proof over the tags where rcv value is the expected total
-        bytes memory proof = deltaProofTest.generateDeltaProof(DeltaProofTest.DeltaProofInputs({
-                rcv: tags.length,
-                verifyingKey: Delta.computeVerifyingKey(tags)
-        }));
+        bytes memory proof = deltaProofTest.generateDeltaProof(
+            DeltaProofTest.DeltaProofInputs({rcv: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)})
+        );
         txn = Transaction({actions: actions, deltaProof: proof});
     }
 
@@ -244,10 +250,9 @@ library TxGen {
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
         // Generate a proof over the tags where rcv value is the expected total
-        bytes memory proof = deltaProofTest.generateDeltaProof(DeltaProofTest.DeltaProofInputs({
-                rcv: tags.length,
-                verifyingKey: Delta.computeVerifyingKey(tags)
-        }));
+        bytes memory proof = deltaProofTest.generateDeltaProof(
+            DeltaProofTest.DeltaProofInputs({rcv: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)})
+        );
         txn = Transaction({actions: actions, deltaProof: proof});
     }
 

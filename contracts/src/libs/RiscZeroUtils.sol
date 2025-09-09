@@ -9,6 +9,8 @@ import {Logic} from "../proving/Logic.sol";
 /// @notice A library containing utility functions to convert and encode types for RISC Zero.
 /// @custom:security-contact security@anoma.foundation
 library RiscZeroUtils {
+    bytes4 internal constant _SELECTOR = 0xbb001d44;
+
     /// @notice Calculates the digest of the compliance instance (journal).
     /// @param instance The compliance instance.
     /// @return digest The journal digest.
