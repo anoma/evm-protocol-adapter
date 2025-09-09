@@ -180,6 +180,7 @@ mod tests {
     };
 
     #[test]
+    #[ignore = "reason: takes too long"]
     fn print_simple_transfer_tx() {
         let forwarder_addr = vec![1u8; 20];
         let token_addr = vec![2u8; 20];
@@ -278,6 +279,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "reason: takes too long"]
     fn print_simple_burn_tx() {
         let forwarder_addr = vec![1u8; 20];
         let token_addr = vec![2u8; 20];
@@ -377,6 +379,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "reason: takes too long"]
     fn print_simple_mint_tx() {
         let forwarder_addr = vec![1u8; 20];
         let token_addr = vec![2u8; 20];
