@@ -8,7 +8,6 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
-import {ComputableComponents} from "./libs/ComputableComponents.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 
@@ -19,7 +18,7 @@ import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 
 import {NullifierSet} from "./state/NullifierSet.sol";
 
-import {Action, Resource, Transaction} from "./Types.sol";
+import {Action, Transaction} from "./Types.sol";
 
 string constant PROTOCOL_ADAPTER_VERSION = "1.0.0-beta";
 
@@ -29,7 +28,6 @@ string constant PROTOCOL_ADAPTER_VERSION = "1.0.0-beta";
 /// @custom:security-contact security@anoma.foundation
 contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, CommitmentAccumulator, NullifierSet {
     using MerkleTree for bytes32[];
-    using ComputableComponents for Resource;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.VerifierInput;
     using Logic for Logic.VerifierInput[];
@@ -45,9 +43,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     error ResourceCountMismatch(uint256 expected, uint256 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
     error RiscZeroVerifierStopped();
-
-    error CalldataCarrierKindMismatch(bytes32 expected, bytes32 actual);
-    error CalldataCarrierTagMismatch(bytes32 expected, bytes32 actual);
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
