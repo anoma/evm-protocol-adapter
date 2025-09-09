@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ERC20} from "@openzeppelin-contracts/token/ERC20/ERC20.sol";
 import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
 import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
@@ -10,19 +9,13 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 import {Test, stdError} from "forge-std/Test.sol";
 
 import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
-import {ERC20ForwarderInput} from "../src/forwarders/ERC20ForwarderInput.sol";
+
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+
+import {ERC20Example} from "../test/examples/ERC20.e.sol";
 
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
-
-contract MyToken is ERC20 {
-    constructor() ERC20("MyToken", "MTK") {}
-
-    function mint(address to, uint256 value) external {
-        _mint(to, value);
-    }
-}
 
 contract ERC20ForwarderTest is Test {
     uint256 internal constant _ALICE_PRIVATE_KEY = 0xA11CE;
@@ -36,7 +29,7 @@ contract ERC20ForwarderTest is Test {
     address internal _alice;
     address internal _fwd;
     IPermit2 internal _permit2;
-    MyToken internal _erc20;
+    ERC20Example internal _erc20;
 
     ISignatureTransfer.PermitTransferFrom internal _defaultPermit;
 
@@ -49,7 +42,7 @@ contract ERC20ForwarderTest is Test {
         _alice = vm.addr(_ALICE_PRIVATE_KEY);
 
         // Deploy token and mint for alice
-        _erc20 = new MyToken();
+        _erc20 = new ERC20Example();
 
         // Deploy Permit2 to the canonical address.
         _permit2 = new DeployPermit2().run();
@@ -77,13 +70,13 @@ contract ERC20ForwarderTest is Test {
     }
 
     function testFuzz_enum_panics(uint8 v) public {
-        uint8 callTypeEnumLength = uint8(type(ERC20ForwarderInput.CallType).max) + 1;
+        uint8 callTypeEnumLength = uint8(type(ERC20Forwarder.CallType).max) + 1;
 
         if (v < callTypeEnumLength) {
-            ERC20ForwarderInput.CallType(v);
+            ERC20Forwarder.CallType(v);
         } else {
             vm.expectRevert(stdError.enumConversionError);
-            ERC20ForwarderInput.CallType(v);
+            ERC20Forwarder.CallType(v);
         }
     }
 
@@ -92,8 +85,14 @@ contract ERC20ForwarderTest is Test {
         uint256 startBalanceAlice = _erc20.balanceOf(_alice);
         uint256 startBalanceForwarder = _erc20.balanceOf(_fwd);
 
-        bytes memory input =
-            ERC20ForwarderInput.encodeUnwrap({token: address(_erc20), to: _alice, value: _TRANSFER_AMOUNT});
+        bytes memory input;
+        {
+            address token = address(_erc20);
+            address to = _alice;
+            uint256 amount = _TRANSFER_AMOUNT;
+
+            input = abi.encode(ERC20Forwarder.CallType.Unwrap, token, to, amount);
+        }
 
         vm.prank(_pa);
         bytes memory output = ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
@@ -105,8 +104,7 @@ contract ERC20ForwarderTest is Test {
 
     function test_forwardCall_Unwrap_call_emits_the_Unwrapped_event() public {
         _erc20.mint({to: _fwd, value: _TRANSFER_AMOUNT});
-        bytes memory input =
-            ERC20ForwarderInput.encodeUnwrap({token: address(_erc20), to: _alice, value: _TRANSFER_AMOUNT});
+        bytes memory input = abi.encode(ERC20Forwarder.CallType.Unwrap, address(_erc20), _alice, _TRANSFER_AMOUNT);
 
         vm.prank(_pa);
         vm.expectEmit(address(_fwd));
@@ -117,17 +115,20 @@ contract ERC20ForwarderTest is Test {
     function test_forwardCall_Wrap_call_reverts_if_user_did_not_approve_permit2() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
 
-        bytes memory input = ERC20ForwarderInput.encodeWrap({
-            from: _alice,
-            permit: _defaultPermit,
-            witness: _ACTION_TREE_ROOT,
-            signature: _createPermitWitnessTransferFromSignature({
+        bytes memory input;
+        {
+            address from = _alice;
+            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
+            bytes32 witness = _ACTION_TREE_ROOT;
+            bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
-                witness: _ACTION_TREE_ROOT
-            })
-        });
+                witness: witness
+            });
+
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+        }
 
         vm.prank(_pa);
         vm.expectRevert("TRANSFER_FROM_FAILED", address(_erc20));
@@ -139,17 +140,20 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
 
-        bytes memory input = ERC20ForwarderInput.encodeWrap({
-            from: _alice,
-            permit: _defaultPermit,
-            witness: _ACTION_TREE_ROOT,
-            signature: _createPermitWitnessTransferFromSignature({
+        bytes memory input;
+        {
+            address from = _alice;
+            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
+            bytes32 witness = _ACTION_TREE_ROOT;
+            bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
-                witness: _ACTION_TREE_ROOT
-            })
-        });
+                witness: witness
+            });
+
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+        }
 
         // Advance time after the deadline
         vm.warp(_defaultPermit.deadline + 1);
@@ -164,17 +168,20 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
 
-        bytes memory input = ERC20ForwarderInput.encodeWrap({
-            from: _alice,
-            permit: _defaultPermit,
-            witness: _ACTION_TREE_ROOT,
-            signature: _createPermitWitnessTransferFromSignature({
+        bytes memory input;
+        {
+            address from = _alice;
+            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
+            bytes32 witness = _ACTION_TREE_ROOT;
+            bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
-                witness: _ACTION_TREE_ROOT
-            })
-        });
+                witness: witness
+            });
+
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+        }
 
         // Use the signature.
         vm.startPrank(_pa);
@@ -198,17 +205,19 @@ contract ERC20ForwarderTest is Test {
             deadline: Time.timestamp() + 5 minutes
         });
 
-        bytes memory input = ERC20ForwarderInput.encodeWrap({
-            from: _alice,
-            permit: permit,
-            witness: _ACTION_TREE_ROOT,
-            signature: _createPermitWitnessTransferFromSignature({
+        bytes memory input;
+        {
+            address from = _alice;
+            bytes32 witness = _ACTION_TREE_ROOT;
+            bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: permit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
-                witness: _ACTION_TREE_ROOT
-            })
-        });
+                witness: witness
+            });
+
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+        }
 
         vm.prank(_pa);
         vm.expectRevert(
@@ -225,17 +234,20 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
 
-        bytes memory input = ERC20ForwarderInput.encodeWrap({
-            from: _alice,
-            permit: _defaultPermit,
-            witness: _ACTION_TREE_ROOT,
-            signature: _createPermitWitnessTransferFromSignature({
+        bytes memory input;
+        {
+            address from = _alice;
+            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
+            bytes32 witness = _ACTION_TREE_ROOT;
+            bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
-                witness: _ACTION_TREE_ROOT
-            })
-        });
+                witness: witness
+            });
+
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+        }
 
         vm.prank(_pa);
         bytes memory output = ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
@@ -251,17 +263,20 @@ contract ERC20ForwarderTest is Test {
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
 
-        bytes memory input = ERC20ForwarderInput.encodeWrap({
-            from: _alice,
-            permit: _defaultPermit,
-            witness: _ACTION_TREE_ROOT,
-            signature: _createPermitWitnessTransferFromSignature({
+        bytes memory input;
+        {
+            address from = _alice;
+            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
+            bytes32 witness = _ACTION_TREE_ROOT;
+            bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
                 privateKey: _ALICE_PRIVATE_KEY,
                 spender: _fwd,
-                witness: _ACTION_TREE_ROOT
-            })
-        });
+                witness: witness
+            });
+
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+        }
 
         vm.prank(_pa);
         vm.expectEmit(address(_fwd));

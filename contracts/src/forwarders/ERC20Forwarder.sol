@@ -8,15 +8,17 @@ import {Permit2Lib} from "@permit2/src/libraries/Permit2Lib.sol";
 
 import {EmergencyMigratableForwarderBase} from "./EmergencyMigratableForwarderBase.sol";
 
-import {ERC20ForwarderInput} from "./ERC20ForwarderInput.sol";
-
 /// @title ERC20Forwarder
 /// @author Anoma Foundation, 2025
 /// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources.
 /// @custom:security-contact security@anoma.foundation
 contract ERC20Forwarder is EmergencyMigratableForwarderBase {
-    using ERC20ForwarderInput for bytes;
     using SafeERC20 for IERC20;
+
+    enum CallType {
+        Unwrap,
+        Wrap
+    }
 
     /// @notice The canonical Uniswap Permit2 contract deployed at the same address on all supported chains
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
@@ -52,21 +54,21 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param input The `bytes` encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
     function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
-        ERC20ForwarderInput.CallType callType = ERC20ForwarderInput.CallType(uint8(input[31]));
+        CallType callType = CallType(uint8(input[31]));
 
-        if (callType == ERC20ForwarderInput.CallType.Unwrap) {
+        if (callType == CallType.Unwrap) {
             // slither-disable-next-line unused-return
             (
                 , // CallType
                 address token,
                 address to,
                 uint256 value
-            ) = input.decodeUnwrap();
+            ) = abi.decode(input, (CallType, address, address, uint128));
 
             emit Unwrapped({token: token, to: to, value: value});
 
             IERC20(token).safeTransfer({to: to, value: value});
-        } else if (callType == ERC20ForwarderInput.CallType.Wrap) {
+        } else if (callType == CallType.Wrap) {
             // slither-disable-next-line unused-return
             (
                 , // CallType
@@ -74,7 +76,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                 ISignatureTransfer.PermitTransferFrom memory permit,
                 bytes32 witness,
                 bytes memory signature
-            ) = input.decodeWrap();
+            ) = abi.decode(input, (CallType, address, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
 
             if (permit.permitted.amount > type(uint128).max) {
                 revert TypeOverflow({limit: type(uint128).max, actual: permit.permitted.amount});
