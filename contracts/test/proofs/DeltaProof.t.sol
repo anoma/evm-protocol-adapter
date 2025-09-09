@@ -56,7 +56,22 @@ contract DeltaProofTest is Test {
         }
     }
 
-    function generateDeltaProof(bytes32 verifyingKey) public returns (bytes memory proof) {
+    /// @notice Test that proofs from generateDeltaProof2 are accepted
+    function test_generateDeltaProof2(bytes32 verifyingKey, uint256 rcv) public {
+        // The signature correspond to the proof delta will not be accepted if rcv = 0
+        vm.assume(rcv != 0);
+        // Quantity needs to be zero to simulate a balanced transaction in this test
+        int256 quantity = 0;
+        // Finally, generate the delta proof with our custom method
+        bytes memory proof = generateDeltaProof2(DeltaProofInputs({rcv: rcv, verifyingKey: verifyingKey}));
+        // Generate the instance that will be verified
+        uint256[2] memory instance = generateDeltaInstance(DeltaInstanceInputs({kind: 1, quantity: quantity, rcv: rcv}));
+        // Finally verify our custom delta proof
+        Delta.verify({proof: proof, instance: instance, verifyingKey: verifyingKey});
+    }
+
+    /// @notice Generate a delta proof using k=1 as a parameter
+    function generateDeltaProof2(DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
         // secp256k1 base point
         uint256 GX = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
         uint256 GY = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
@@ -64,15 +79,12 @@ contract DeltaProofTest is Test {
         uint256 N =  0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
         uint256 r = GX % N;
         assertNotEq(r, 0);
-        uint256 s = uint256(verifyingKey) % N;
+        uint256 s = addmod(uint256(deltaInputs.verifyingKey), mulmod(r, deltaInputs.rcv, SECP256K1_ORDER), N);
         assertNotEq(s, 0);
         // Compute the recovery ID
         uint8 v = uint8(GY & 1);
         if (s > N/2) {
             v = v ^ 1;
-        }
-        if (s > N/2) {
-            v = 1 - v;
             s = N - s;
         }
         v += 27;
@@ -89,7 +101,7 @@ contract DeltaProofTest is Test {
             // Finally compute the transaction delta proof
             proof = abi.encodePacked(r, s, v);
         } else {
-            proof = generateDeltaProof(deltaInputs.verifyingKey);
+            proof = generateDeltaProof2(deltaInputs);
         }
     }
 
