@@ -493,6 +493,14 @@ mod tests {
         assert!(tx.clone().verify(), "Transaction verification failed");
 
         println!("{:?}", tx);
+
+        let cu_instance = tx.actions[0].compliance_units[0].get_instance();
+        println!(
+            "x:{:?}, y:{:?}",
+            hex::encode(words_to_bytes(&cu_instance.delta_x)),
+            hex::encode(words_to_bytes(&cu_instance.delta_y))
+        );
+
         let evm_tx = ProtocolAdapter::Transaction::from(tx);
 
         use alloy_sol_types::SolValue; // Import the trait for abi_encode

@@ -79,16 +79,19 @@ contract ERC20ForwarderTest is BenchmarkData {
 
     function test_execute_simple_transfer_mint() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
-        console.log(_alice);
-
         assertEq(_alice, address(0x79a7Aea85709D882F2075ee36Cb896B7E393576e));
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
-        console.log(_alice);
+
+        uint256 aliceBalanceBefore = _erc20.balanceOf(_alice);
+        uint256 fwdBalanceBefore = _erc20.balanceOf(_fwd);
 
         Transaction memory txn = _parse("/test/simple_transfer_mint.bin");
 
         ProtocolAdapter(_pa).execute(txn);
+
+        assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
+        assertEq(_erc20.balanceOf(_fwd), fwdBalanceBefore + _TRANSFER_AMOUNT);
     }
 
     function testFuzz_enum_panics(uint8 v) public {
