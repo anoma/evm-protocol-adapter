@@ -324,6 +324,131 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         (Transaction memory txn, bytes32 updatedNonce) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutation_test_execute_unknown_commitment_tag_fails(txn, params);
     }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct MismatchingResourcesFailParams {
+        // The index of the action to mutate
+        uint256 actionIdx;
+        // The index of the compliance verifier input of the action to mutate
+        uint256 inputIdx;
+    }
+
+    /// @notice Take a transaction that would execute successfully and make it
+    /// fail by ensuring that it has less compliance verifier inputs than half
+    /// the logic verifier inputs.
+    function mutate_test_execute_missing_compliance_verifier_input_fail(Transaction memory transaction, MismatchingResourcesFailParams memory params) public {
+        // Cannot do mutation if the transaction has no actions
+        vm.assume(transaction.actions.length > 0);
+        // Wrap the action index into range
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Compliance.VerifierInput[] memory complianceVerifierInputs = transaction.actions[params.actionIdx].complianceVerifierInputs;
+        // Cannot do do mutation if transaction has no compliance verifier inputs
+        vm.assume(complianceVerifierInputs.length > 0);
+        // Wrap the compliance verifier input index into range
+        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
+        // Now delete the array entry
+        // Replace the target position with the last element
+        complianceVerifierInputs[params.inputIdx] = complianceVerifierInputs[complianceVerifierInputs.length - 1];
+        // Then make a shorter array of compliance verifier inputs
+        Compliance.VerifierInput[] memory shorter = new Compliance.VerifierInput[](complianceVerifierInputs.length - 1);
+        for (uint256 i = 0; i < shorter.length; i++) {
+            shorter[i] = complianceVerifierInputs[i];
+        }
+        // Finally, replace the compliance verifier inputs with the shorter array
+        transaction.actions[params.actionIdx].complianceVerifierInputs = shorter;
+        // With mismatching resource counts, we expect failure
+        vm.expectPartialRevert(ResourceCountMismatch.selector);
+        // Finally, execute the transaction to make sure that it fails
+        this.execute(transaction);
+    }
+
+    /// @notice Test that transactions with a missing compliance verifier input fail
+    function test_execute_missing_compliance_verifier_input_fail(uint8 nActions, uint8 nCUs, MismatchingResourcesFailParams memory params) public {
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+
+        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        mutate_test_execute_missing_compliance_verifier_input_fail(txn, params);
+    }
+
+    /// @notice Take a transaction that would execute successfully and make it
+    /// fail by ensuring that it has less logic verifier inputs double half the
+    /// compliance verifier inputs.
+    function mutate_test_execute_missing_logic_verifier_input_fail(Transaction memory transaction, MismatchingResourcesFailParams memory params) public {
+        // Cannot do mutation if the transaction has no actions
+        vm.assume(transaction.actions.length > 0);
+        // Wrap the action index into range
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Logic.VerifierInput[] memory logicVerifierInputs = transaction.actions[params.actionIdx].logicVerifierInputs;
+        // Cannot do do mutation if transaction has no logic verifier inputs
+        vm.assume(logicVerifierInputs.length > 0);
+        // Wrap the logic verifier input index into range
+        params.inputIdx = params.inputIdx % logicVerifierInputs.length;
+        // Now delete the array entry
+        // Replace the target position with the last element
+        logicVerifierInputs[params.inputIdx] = logicVerifierInputs[logicVerifierInputs.length - 1];
+        // Then make a shorter array of logic verifier inputs
+        Logic.VerifierInput[] memory shorter = new Logic.VerifierInput[](logicVerifierInputs.length - 1);
+        for (uint256 i = 0; i < shorter.length; i++) {
+            shorter[i] = logicVerifierInputs[i];
+        }
+        // Finally, replace the logic verifier inputs with the shorter array
+        transaction.actions[params.actionIdx].logicVerifierInputs = shorter;
+        // With mismatching resource counts, we expect failure
+        vm.expectPartialRevert(ResourceCountMismatch.selector);
+        // Finally, execute the transaction to make sure that it fails
+        this.execute(transaction);
+    }
+
+    /// @notice Test that transactions with a missing logic verifier input fail
+    function test_execute_missing_logic_verifier_input_fail(uint8 nActions, uint8 nCUs, MismatchingResourcesFailParams memory params) public {
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+
+        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        mutate_test_execute_missing_logic_verifier_input_fail(txn, params);
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct MismatchingLogicRefsFailParams {
+        // The index of the action to mutate
+        uint256 actionIdx;
+        // The index of the logic verifier input of the action to mutate
+        uint256 inputIdx;
+        // The logic reference to overwrite with
+        bytes32 logicRef;
+    }
+
+    /// @notice Take a transaction that would execute successfully and make it
+    /// fail by ensuring that it has less compliance verifier inputs than half
+    /// the logic verifier inputs.
+    function mutate_test_execute_mismatching_logic_refs_fail(Transaction memory transaction, MismatchingLogicRefsFailParams memory params) public {
+        // Cannot do mutation if the transaction has no actions
+        vm.assume(transaction.actions.length > 0);
+        // Wrap the action index into range
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Logic.VerifierInput[] memory logicVerifierInputs = transaction.actions[params.actionIdx].logicVerifierInputs;
+        // Cannot do do mutation if transaction has no logic verifier inputs
+        vm.assume(logicVerifierInputs.length > 0);
+        // Wrap the logic verifier input index into range
+        params.inputIdx = params.inputIdx % logicVerifierInputs.length;
+        // Now corrupt the logic reference
+        vm.assume(logicVerifierInputs[params.inputIdx].verifyingKey != params.logicRef);
+        logicVerifierInputs[params.inputIdx].verifyingKey = params.logicRef;
+        // With mismatching logic references, we expect failure
+        vm.expectPartialRevert(LogicRefMismatch.selector);
+        // Finally, execute the transaction to make sure that it fails
+        this.execute(transaction);
+    }
+
+    /// @notice Test that transactions with mismatching logic references fail
+    function test_execute_mismatching_logic_refs_fail(uint8 nActions, uint8 nCUs, MismatchingLogicRefsFailParams memory params) public {
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+
+        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        mutate_test_execute_mismatching_logic_refs_fail(txn, params);
+    }
 }
 
 contract ProtocolAdapterTest is ProtocolAdapterTestBase {
