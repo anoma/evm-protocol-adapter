@@ -381,13 +381,16 @@ mod tests {
     #[test]
     #[ignore = "reason: takes too long"]
     fn print_simple_mint_tx() {
+        use arm_risc0::encryption::AffinePoint;
+
         let forwarder_addr = vec![1u8; 20];
         let token_addr = vec![2u8; 20];
         let user_addr = vec![3u8; 20];
         let quantity = 100;
 
         // Construct the consumed resource
-        let (consumed_nf_key, consumed_nf_cm) = NullifierKey::random_pair();
+        let consumed_nf_key = NullifierKey::from_bytes(&vec![13u8; 32]);
+        let consumed_nf_cm = consumed_nf_key.commit();
         let consumed_resource = construct_ephemeral_resource(
             &forwarder_addr,
             &token_addr,
@@ -403,11 +406,12 @@ mod tests {
         let latest_cm_tree_root = INITIAL_ROOT.as_words().to_vec();
 
         // Generate the created resource
-        let (_created_nf_key, created_nf_cm) = NullifierKey::random_pair();
-        let created_auth_sk = AuthorizationSigningKey::new();
+        let created_nf_key = NullifierKey::from_bytes(&vec![14u8; 32]);
+        let created_nf_cm = created_nf_key.commit();
+        let created_auth_sk = AuthorizationSigningKey::from_bytes(&vec![15u8; 32]);
         let created_auth_pk = AuthorizationVerifyingKey::from_signing_key(&created_auth_sk);
-        let (_created_discovery_sk, created_discovery_pk) = random_keypair();
-        let (_created_encryption_sk, created_encryption_pk) = random_keypair();
+        let created_discovery_pk = AffinePoint::GENERATOR;
+        let created_encryption_pk = AffinePoint::GENERATOR;
         let created_resource = construct_persistent_resource(
             &forwarder_addr,
             &token_addr,
