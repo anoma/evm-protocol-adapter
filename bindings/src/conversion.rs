@@ -706,5 +706,5 @@ fn transfer_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
     // Verify the transaction
     assert!(tx.clone().verify(), "Transaction verification failed");
 
-    // ProtocolAdapter::Transaction::from(tx)
+    ProtocolAdapter::Transaction::from(tx)
 }
