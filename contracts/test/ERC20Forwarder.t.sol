@@ -17,7 +17,10 @@ import {ERC20Example} from "../test/examples/ERC20.e.sol";
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
-contract ERC20ForwarderTest is Test {
+import {BenchmarkData} from "./benchmark/Benchmark.t.sol";
+import {Transaction} from "../src/Types.sol";
+
+contract ERC20ForwarderTest is BenchmarkData {
     uint256 internal constant _ALICE_PRIVATE_KEY =
         uint256(bytes32(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)); //0xA11CE;
     uint128 internal constant _TRANSFER_AMOUNT = 1000;
@@ -313,6 +316,23 @@ contract ERC20ForwarderTest is Test {
         console.log("\nDigest");
 
         console.logBytes32(digest);
+    }
+
+    function test_execute_simple_transfer_mint() public {
+        Transaction memory txn = _parse("/test/simple_transfer_mint.bin");
+
+        ProtocolAdapter(_pa).execute(txn);
+    }
+
+    function test_example_action_tree_root() public {
+        bytes32 actionTreeRoot = sha256(
+            abi.encode(
+                bytes32(0x15a0677d564d21e3789ce6e5e574c6f611d9af4b31aeebb0f527bd23c5d0ac09),
+                bytes32(0xa01386b0688a3100460fcf370cf509172c62f3b4ef1522a31dbca4640e47f63a)
+            )
+        );
+        console.logBytes32(actionTreeRoot);
+        assertEq(actionTreeRoot, bytes32(0x9524e8c0c71f5a53aa07d514cd508ac68a310c86809cd22f9c8a62cecd848e57));
     }
 
     function test_example_sig() public {

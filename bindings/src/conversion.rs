@@ -287,6 +287,15 @@ mod tests {
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
         assert_eq!(evm_tx, decoded_tx);
         println!("Transaction: {:#?}", evm_tx);
+
+        std::fs::write(
+            format!("simple_transfer.json"),
+            serde_json::to_string_pretty(&evm_tx).unwrap(),
+        )
+        .unwrap();
+
+        std::fs::write(format!("simple_transfer.bin"), &encoded_tx)
+            .expect("Failed to write encoded transaction to file");
     }
 
     #[test]
@@ -389,12 +398,12 @@ mod tests {
         println!("Transaction: {:#?}", evm_tx);
 
         std::fs::write(
-            format!("simple_transfer_mint.json"),
+            format!("simple_transfer_burn.json"),
             serde_json::to_string_pretty(&evm_tx).unwrap(),
         )
         .unwrap();
 
-        std::fs::write(format!("simple_transfer_mint.bin"), &encoded_tx)
+        std::fs::write(format!("simple_transfer_burn.bin"), &encoded_tx)
             .expect("Failed to write encoded transaction to file");
     }
 
@@ -447,7 +456,11 @@ mod tests {
 
         let cm = created_resource.commitment();
         let nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();
+        println!("nf: {:?}, cm: {:?}", nf, cm);
+
         let action_tree_root = sha256(nf.as_bytes(), cm.as_bytes());
+
+        println!("action_tree_root: {:#x}", action_tree_root);
 
         // Construct the mint transaction
         let tx_start_timer = std::time::Instant::now();
@@ -480,5 +493,14 @@ mod tests {
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
         assert_eq!(evm_tx, decoded_tx);
         println!("Transaction: {:#?}", evm_tx);
+
+        std::fs::write(
+            format!("simple_transfer_mint.json"),
+            serde_json::to_string_pretty(&evm_tx).unwrap(),
+        )
+        .unwrap();
+
+        std::fs::write(format!("simple_transfer_mint.bin"), &encoded_tx)
+            .expect("Failed to write encoded transaction to file");
     }
 }
