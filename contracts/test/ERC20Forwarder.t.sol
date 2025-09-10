@@ -77,7 +77,7 @@ contract ERC20ForwarderTest is BenchmarkData {
         });
     }
 
-    function test_execute_simple_transfer_mint() public {
+    function test_execute_simple_mint_and_transfer() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
         assertEq(_alice, address(0x79a7Aea85709D882F2075ee36Cb896B7E393576e));
         vm.prank(_alice);
@@ -86,12 +86,15 @@ contract ERC20ForwarderTest is BenchmarkData {
         uint256 aliceBalanceBefore = _erc20.balanceOf(_alice);
         uint256 fwdBalanceBefore = _erc20.balanceOf(_fwd);
 
-        Transaction memory txn = _parse("/test/simple_transfer_mint.bin");
+        Transaction memory mint_tx = _parse("/test/mint.bin");
+        Transaction memory transfer_tx = _parse("/test/transfer.bin");
 
-        ProtocolAdapter(_pa).execute(txn);
+        ProtocolAdapter(_pa).execute(mint_tx);
 
         assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
         assertEq(_erc20.balanceOf(_fwd), fwdBalanceBefore + _TRANSFER_AMOUNT);
+
+        ProtocolAdapter(_pa).execute(transfer_tx);
     }
 
     function testFuzz_enum_panics(uint8 v) public {

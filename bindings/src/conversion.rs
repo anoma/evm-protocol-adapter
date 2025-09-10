@@ -1,15 +1,26 @@
+use crate::permit2::{default_values, permit_witness_transfer_from_signature, SetUp};
 use alloy::primitives::{Bytes, B256};
-use alloy::sol;
-
+use alloy::{hex, sol};
+use alloy_sol_types::SolValue;
 use arm_risc0::action::Action;
-use arm_risc0::compliance::ComplianceInstance;
+use arm_risc0::action_tree::MerkleTree;
+use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
+use arm_risc0::compliance::{ComplianceInstance, INITIAL_ROOT};
 use arm_risc0::compliance_unit::ComplianceUnit;
+use arm_risc0::encryption::{random_keypair, AffinePoint};
+use arm_risc0::evm::CallType;
 use arm_risc0::logic_instance::{AppData, ExpirableBlob};
 use arm_risc0::logic_proof::LogicVerifierInputs;
+use arm_risc0::merkle_path::MerklePath;
+use arm_risc0::nullifier_key::NullifierKey;
 use arm_risc0::proving_system::encode_seal;
 use arm_risc0::transaction::{Delta, Transaction};
-use arm_risc0::utils::words_to_bytes;
+use arm_risc0::utils::{bytes_to_words, words_to_bytes};
 use sha2::{Digest, Sha256};
+use simple_transfer_app::mint::construct_mint_tx;
+use simple_transfer_app::resource::{construct_ephemeral_resource, construct_persistent_resource};
+use simple_transfer_app::transfer::construct_transfer_tx;
+use simple_transfer_app::utils::authorize_the_action;
 
 fn sha256(a: &[u8], b: &[u8]) -> B256 {
     let mut hasher = Sha256::new();
@@ -519,4 +530,169 @@ mod tests {
         std::fs::write(format!("simple_transfer_mint.bin"), &encoded_tx)
             .expect("Failed to write encoded transaction to file");
     }
+
+    #[test]
+    fn generates_simple_transfer_txns() {
+        let d = default_values();
+
+        let mint_tx = ProtocolAdapter::Transaction::from(mint_tx(&d));
+        write_to_file(mint_tx, "mint");
+
+        let transfer_tx = ProtocolAdapter::Transaction::from(transfer_tx(&d));
+        write_to_file(transfer_tx, "transfer");
+    }
+}
+
+fn write_to_file(tx: ProtocolAdapter::Transaction, file_name: &str) {
+    let encoded_tx = tx.abi_encode();
+
+    std::fs::write(
+        format!("{file_name}.json"),
+        serde_json::to_string_pretty(&tx).unwrap(),
+    )
+    .expect("Failed to write file");
+
+    std::fs::write(format!("{file_name}.bin"), encoded_tx).expect("Failed to write file");
+}
+
+fn mint_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
+    // Construct the consumed resource
+    let consumed_nf_key = NullifierKey::from_bytes(&vec![13u8; 32]);
+    let consumed_nf_cm = consumed_nf_key.commit();
+    let consumed_resource = construct_ephemeral_resource(
+        &d.spender.to_vec(),
+        &d.erc20.to_vec(),
+        d.amount.try_into().unwrap(),
+        vec![4u8; 32], // nonce
+        consumed_nf_cm,
+        vec![5u8; 32], // rand_seed
+        CallType::Wrap,
+        &d.signer.address().to_vec(),
+    );
+    let consumed_nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();
+    // Fetch the latest cm tree root from the chain
+    let latest_cm_tree_root = INITIAL_ROOT.as_words().to_vec();
+
+    // Generate the created resource
+    let created_nf_key = NullifierKey::from_bytes(&vec![14u8; 32]);
+    let created_nf_cm = created_nf_key.commit();
+    let created_auth_sk = AuthorizationSigningKey::from_bytes(&vec![15u8; 32]);
+    let created_auth_pk = AuthorizationVerifyingKey::from_signing_key(&created_auth_sk);
+    let created_discovery_pk = AffinePoint::GENERATOR;
+    let created_encryption_pk = AffinePoint::GENERATOR;
+    let created_resource = construct_persistent_resource(
+        &d.spender.to_vec(),
+        &d.erc20.to_vec(),
+        d.amount.try_into().unwrap(),
+        consumed_nf.as_bytes().to_vec(), // nonce
+        created_nf_cm,
+        vec![6u8; 32], // rand_seed
+        &created_auth_pk,
+    );
+
+    let cm = created_resource.commitment();
+    let nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();
+    println!("nf: {:?}, cm: {:?}", nf, cm);
+
+    let action_tree_root = sha256(nf.as_bytes(), cm.as_bytes());
+
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let permit_sig = rt.block_on(permit_witness_transfer_from_signature(
+        &d.signer,
+        d.erc20,
+        d.amount,
+        d.nonce,
+        d.deadline,
+        d.spender,
+        action_tree_root, // Witness
+    ));
+
+    // Construct the mint transaction
+    let tx = construct_mint_tx(
+        consumed_resource,
+        latest_cm_tree_root,
+        consumed_nf_key,
+        created_discovery_pk,
+        d.spender.to_vec(),
+        d.erc20.to_vec(),
+        d.signer.address().to_vec(),
+        d.nonce.to_be_bytes_vec(),
+        d.deadline.to_be_bytes_vec(),
+        permit_sig.as_bytes().to_vec(),
+        created_resource,
+        created_discovery_pk,
+        created_encryption_pk,
+    );
+
+    // Verify the transaction
+    assert!(tx.clone().verify(), "Transaction verification failed");
+
+    ProtocolAdapter::Transaction::from(tx)
+}
+
+fn transfer_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
+    // Obtain the consumed resource data
+    let consumed_auth_sk = AuthorizationSigningKey::new();
+    let consumed_auth_pk = AuthorizationVerifyingKey::from_signing_key(&consumed_auth_sk);
+    let (consumed_nf_key, consumed_nf_cm) = NullifierKey::random_pair();
+    let (_, consumed_discovery_pk) = random_keypair();
+    let (_, consumed_encryption_pk) = random_keypair();
+    let consumed_resource = construct_persistent_resource(
+        &d.spender.to_vec(), // forwarder_addr
+        &d.erc20.to_vec(),   // token_addr
+        d.amount.try_into().unwrap(),
+        d.nonce.to_be_bytes_vec(), // nonce
+        consumed_nf_cm,
+        vec![5u8; 32], // rand_seed
+        &consumed_auth_pk,
+    );
+    let consumed_nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();
+
+    // Create the created resource data
+    let created_auth_sk = AuthorizationSigningKey::new();
+    let created_auth_pk = AuthorizationVerifyingKey::from_signing_key(&created_auth_sk);
+    let (_, created_nf_cm) = NullifierKey::random_pair();
+    let (_, created_discovery_pk) = random_keypair();
+    let (_, created_encryption_pk) = random_keypair();
+    let created_resource = construct_persistent_resource(
+        &d.spender.to_vec(), // forwarder_addr
+        &d.erc20.to_vec(),   // token_addr
+        d.amount.try_into().unwrap(),
+        consumed_nf.as_bytes().to_vec(), // nonce
+        created_nf_cm,
+        vec![7u8; 32], // rand_seed
+        &created_auth_pk,
+    );
+    let created_cm = created_resource.commitment();
+
+    // Get the authorization signature, it can be from external signing(e.g. wallet)
+    let action_tree = MerkleTree::new(vec![consumed_nf, created_cm]);
+    let auth_sig = authorize_the_action(&consumed_auth_sk, &action_tree);
+
+    let empty_hash = B256::from(hex!(
+        "cc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06"
+    ));
+
+    // Construct the transfer transaction
+    let is_left = false;
+    let path: &[(Vec<u32>, bool)] = &[(bytes_to_words(empty_hash.as_slice()), is_left)];
+    let merkle_path = MerklePath::from_path(path);
+
+    let tx = construct_transfer_tx(
+        consumed_resource.clone(),
+        merkle_path.clone(),
+        consumed_nf_key.clone(),
+        consumed_auth_pk,
+        auth_sig,
+        consumed_discovery_pk,
+        consumed_encryption_pk,
+        created_resource.clone(),
+        created_discovery_pk,
+        created_encryption_pk,
+    );
+
+    // Verify the transaction
+    assert!(tx.clone().verify(), "Transaction verification failed");
+
+    ProtocolAdapter::Transaction::from(tx)
 }
