@@ -1,7 +1,6 @@
 use crate::permit2::{default_values, permit_witness_transfer_from_signature, SetUp};
 use alloy::primitives::{Bytes, B256};
 use alloy::{hex, sol};
-use alloy_sol_types::SolValue;
 use arm_risc0::action::Action;
 use arm_risc0::action_tree::MerkleTree;
 use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
@@ -14,6 +13,7 @@ use arm_risc0::logic_proof::LogicVerifierInputs;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::NullifierKey;
 use arm_risc0::proving_system::encode_seal;
+
 use arm_risc0::transaction::{Delta, Transaction};
 use arm_risc0::utils::{bytes_to_words, words_to_bytes};
 use sha2::{Digest, Sha256};
@@ -173,7 +173,7 @@ mod tests {
         println!("{:?}", raw_tx);
         let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
 
-        use alloy_sol_types::SolValue; // Import the trait for abi_encode
+        use alloy::sol_types::SolValue;
         let encoded_tx = evm_tx.abi_encode();
         let decoded_tx: ProtocolAdapter::Transaction =
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
@@ -292,7 +292,7 @@ mod tests {
         println!("{:?}", tx);
         let evm_tx = ProtocolAdapter::Transaction::from(tx);
 
-        use alloy_sol_types::SolValue; // Import the trait for abi_encode
+        use alloy::sol_types::SolValue;
         let encoded_tx = evm_tx.abi_encode();
         let decoded_tx: ProtocolAdapter::Transaction =
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
@@ -401,7 +401,7 @@ mod tests {
         println!("{:?}", tx);
         let evm_tx = ProtocolAdapter::Transaction::from(tx);
 
-        use alloy_sol_types::SolValue; // Import the trait for abi_encode
+        use alloy::sol_types::SolValue;
         let encoded_tx = evm_tx.abi_encode();
         let decoded_tx: ProtocolAdapter::Transaction =
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
@@ -514,7 +514,7 @@ mod tests {
 
         let evm_tx = ProtocolAdapter::Transaction::from(tx);
 
-        use alloy_sol_types::SolValue; // Import the trait for abi_encode
+        use alloy::sol_types::SolValue;
         let encoded_tx = evm_tx.abi_encode();
         let decoded_tx: ProtocolAdapter::Transaction =
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
@@ -544,6 +544,8 @@ mod tests {
 }
 
 fn write_to_file(tx: ProtocolAdapter::Transaction, file_name: &str) {
+    use alloy::sol_types::SolValue; // Import the trait for abi_encode
+
     let encoded_tx = tx.abi_encode();
 
     std::fs::write(
