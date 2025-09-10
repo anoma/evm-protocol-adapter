@@ -650,7 +650,7 @@ fn transfer_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
     let (_, (minted_resource, minted_resource_nf_key)) = mint_consumed_created_pair(d);
 
     // Obtain the consumed resource data
-    let consumed_auth_sk = AuthorizationSigningKey::new();
+    let consumed_auth_sk = AuthorizationSigningKey::from_bytes(&vec![15u8; 32]);
     let consumed_auth_pk = AuthorizationVerifyingKey::from_signing_key(&consumed_auth_sk);
 
     let (_, consumed_discovery_pk) = random_keypair();
@@ -706,5 +706,5 @@ fn transfer_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
     // Verify the transaction
     assert!(tx.clone().verify(), "Transaction verification failed");
 
-    ProtocolAdapter::Transaction::from(tx)
+    // ProtocolAdapter::Transaction::from(tx)
 }
