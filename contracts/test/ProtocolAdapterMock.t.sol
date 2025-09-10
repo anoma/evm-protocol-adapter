@@ -183,7 +183,7 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function _exampleResourceAndEmptyAppData(uint256 nonce)
-        private
+        public
         view
         returns (TxGen.ResourceAndAppData[] memory data)
     {
@@ -206,7 +206,7 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function _exampleCarrierResourceAndAppData(uint256 nonce, address[] memory fwdList)
-        private
+        public
         view
         returns (TxGen.ResourceAndAppData[] memory data)
     {
