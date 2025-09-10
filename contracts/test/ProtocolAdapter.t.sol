@@ -11,13 +11,17 @@ import {Test} from "forge-std/Test.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {TransactionExample} from "./examples/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
-import {Transaction, Action} from "../src/Types.sol";
+import {Transaction, Action, ForwarderCalldata} from "../src/Types.sol";
 import {Compliance} from "../src/proving/Compliance.sol";
 import {Logic} from "../src/proving/Logic.sol";
 import {TxGen} from "./examples/TxGen.sol";
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
+import {ForwarderExample} from "./examples/Forwarder.e.sol";
+import {ProtocolAdapterMockTest} from "./ProtocolAdapterMock.t.sol";
+import {RiscZeroUtils} from "../src/libs/RiscZeroUtils.sol";
+import {MerkleTree} from "../src/libs/MerkleTree.sol";
 
 contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
     RiscZeroVerifierRouter internal _router;
@@ -25,6 +29,8 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
     ProtocolAdapter internal _pa;
     RiscZeroMockVerifier internal _mockVerifier;
     using TxGen for RiscZeroMockVerifier;
+    using RiscZeroUtils for Logic.VerifierInput;
+    using MerkleTree for bytes32[];
 
     constructor() ProtocolAdapterMock(riscZeroVerifierRouter()) {}
 
@@ -413,5 +419,109 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
 
         (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
         mutate_test_execute_mismatching_logic_refs_fail(txn, params);
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct MismatchingForwarderCallOutputsFailParams {
+        // The index of the action to mutate
+        uint256 actionIdx;
+        // The index of the logic verifier input of the action to mutate
+        uint256 inputIdx;
+        // The index of the external payload to mutate
+        uint256 payloadIdx;
+        // The output to overwrite with
+        bytes output;
+    }
+
+    /// @notice Take a transaction that would execute successfully and make it
+    /// fail by ensuring that one of its forwarder call outputs mismatch.
+    function mutate_test_execute_mismatching_forwarder_call_outputs_fail(Transaction memory transaction, MismatchingForwarderCallOutputsFailParams memory params) public {
+        // Cannot do mutation if the transaction has no actions
+        vm.assume(transaction.actions.length > 0);
+        // Wrap the action index into range
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Action memory action = transaction.actions[params.actionIdx];
+        Logic.VerifierInput[] memory logicVerifierInputs = action.logicVerifierInputs;
+        // Cannot do mutation if transaction has no logic verifier inputs
+        vm.assume(logicVerifierInputs.length > 0);
+        // Wrap the logic verifier input index into range
+        params.inputIdx = params.inputIdx % logicVerifierInputs.length;
+        Logic.VerifierInput memory logicVerifierInput = logicVerifierInputs[params.inputIdx];
+        Logic.ExpirableBlob[] memory externalPayloads = logicVerifierInput.appData.externalPayload;
+        // Cannot do the mutation if transaction has no external payloads
+        vm.assume(externalPayloads.length > 0);
+        // Wrap the external payload index into range
+        params.payloadIdx = params.payloadIdx % externalPayloads.length;
+        // Now corrupt the calldata output
+        ForwarderCalldata memory call = abi.decode(externalPayloads[params.payloadIdx].blob, (ForwarderCalldata));
+        vm.assume(call.output.length != params.output.length || keccak256(call.output) != keccak256(params.output));
+        call.output = params.output;
+        // Re-encode the calldata and replace the value in the external payloads
+        externalPayloads[params.payloadIdx].blob = abi.encode(call);
+        // Now determine whether the current resource is being created or consumed
+        Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
+        bool isConsumed;
+        for (uint256 i = 0; i < complianceVerifierInputs.length; i++) {
+            if (complianceVerifierInputs[i].instance.consumed.nullifier == logicVerifierInput.tag) {
+                isConsumed = true;
+            } else if (complianceVerifierInputs[i].instance.created.commitment == logicVerifierInputs[params.inputIdx].tag) {
+                isConsumed = false;
+            }
+        }
+        // Compute the action tree root
+        bytes32 actionTreeRoot = _computeActionTreeRoot_memory(action, action.complianceVerifierInputs.length);
+        // Recompute the logic verifier input proof
+        logicVerifierInputs[params.inputIdx].proof = _mockVerifier.mockProve({
+            imageId: logicVerifierInputs[params.inputIdx].verifyingKey,
+            journalDigest: logicVerifierInputs[params.inputIdx].toJournalDigest(actionTreeRoot, isConsumed)
+        }).seal;
+        // With mismatching forwarder call outputs, we expect failure
+        vm.expectPartialRevert(ForwarderCallOutputMismatch.selector);
+        // Finally, execute the transaction to make sure that it fails
+        this.execute(transaction);
+    }
+
+    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
+    /// @param action The action whose root we compute.
+    /// @param nCUs The number of compliance units in the action.
+    /// @return root The root of the corresponding tree.
+    function _computeActionTreeRoot_memory(Action memory action, uint256 nCUs) internal pure returns (bytes32 root) {
+        bytes32[] memory actionTreeTags = new bytes32[](nCUs * 2);
+
+        // The order in which the tags are added to the tree are provided by the compliance units
+        for (uint256 j = 0; j < nCUs; ++j) {
+            Compliance.VerifierInput memory complianceVerifierInput = action.complianceVerifierInputs[j];
+
+            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
+            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
+        }
+
+        root = actionTreeTags.computeRoot();
+    }
+
+    /// @notice Test that transactions with mismatching forwarder call outputs fails
+    function test_execute_mismatching_forwarder_call_outputs_fail(uint8 nActions, uint8 nCUs, MismatchingForwarderCallOutputsFailParams memory params) public {
+        bytes32 _CARRIER_LOGIC_REF = bytes32(uint256(123));
+        address _fwd = address(
+            new ForwarderExample({protocolAdapter: address(this), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
+        );
+        address fwd2 = address(
+            new ForwarderExample({protocolAdapter: address(this), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
+        );
+        assertNotEq(_fwd, fwd2);
+
+        address[] memory fwdList = new address[](2);
+        fwdList[0] = _fwd;
+        fwdList[1] = fwd2;
+        ProtocolAdapterMockTest test = new ProtocolAdapterMockTest();
+
+        TxGen.ResourceAndAppData[] memory consumed = test._exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created =
+            test._exampleCarrierResourceAndAppData({nonce: 1, fwdList: fwdList, isConsumed: false});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = _mockVerifier.transaction(resourceLists);
+        mutate_test_execute_mismatching_forwarder_call_outputs_fail(txn, params);
     }
 }
