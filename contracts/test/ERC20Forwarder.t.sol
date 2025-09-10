@@ -13,6 +13,7 @@ import {Test, console, stdError} from "forge-std/Test.sol";
 import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {NullifierSet} from "../src/state/NullifierSet.sol";
 
 import {ERC20Example} from "../test/examples/ERC20.e.sol";
 
@@ -106,6 +107,9 @@ contract ERC20ForwarderTest is BenchmarkData {
         assertEq(_erc20.balanceOf(_fwd), fwdBalanceBefore + _TRANSFER_AMOUNT);
 
         ProtocolAdapter(_pa).execute(transfer_tx);
+        NullifierSet(_pa).contains({
+            nullifier: transfer_tx.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
+        });
     }
 
     function testFuzz_enum_panics(uint8 v) public {
