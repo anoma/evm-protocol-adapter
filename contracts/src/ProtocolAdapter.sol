@@ -22,6 +22,8 @@ import {NullifierSet} from "./state/NullifierSet.sol";
 
 import {Action, Resource, Transaction} from "./Types.sol";
 
+import {console} from "forge-std/Test.sol";
+
 string constant PROTOCOL_ADAPTER_VERSION = "1.0.0-beta";
 
 /// @title ProtocolAdapter
@@ -181,8 +183,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param carrierLogicRef The logic reference of the carrier resource.
     /// @param callBlob The blob containing the call instruction.
     function _executeForwarderCall(bytes32 carrierLogicRef, bytes memory callBlob) internal {
+        console.log("decoding callBlob...");
+
+        console.logBytes(callBlob);
         (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
             abi.decode(callBlob, (address, bytes, bytes));
+
+        console.log("preparing call...");
 
         // slither-disable-next-line calls-loop
         bytes memory actualOutput =
@@ -243,6 +250,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param verifierInput The logic verifier input of a resource making the call.
     /// @param consumed A flag indicating whether the resource is consumed or not.
     function _processForwarderCalls(Logic.VerifierInput calldata verifierInput, bool consumed) internal {
+        console.log("_verifyForwarderCalls...");
+
         _verifyForwarderCalls({
             carrierBlob: verifierInput.appData.resourcePayload[0].blob,
             expectedTag: verifierInput.tag,
@@ -250,7 +259,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         });
 
         uint256 nCalls = verifierInput.appData.externalPayload.length;
+
         for (uint256 i = 0; i < nCalls; ++i) {
+            console.log("_executeForwarderCall...", i);
             _executeForwarderCall({
                 carrierLogicRef: verifierInput.verifyingKey,
                 callBlob: verifierInput.appData.externalPayload[i].blob

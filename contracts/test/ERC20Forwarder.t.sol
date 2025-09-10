@@ -324,6 +324,14 @@ contract ERC20ForwarderTest is BenchmarkData {
         ProtocolAdapter(_pa).execute(txn);
     }
 
+    function test_decode_external_blob() public {
+        address a = address(type(uint160).max);
+        bytes memory b = hex"ab";
+        bytes memory c = hex"cd";
+
+        console.logBytes(abi.encode(a, b, c));
+    }
+
     function test_example_action_tree_root() public {
         bytes32 actionTreeRoot = sha256(
             abi.encode(
