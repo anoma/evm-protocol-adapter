@@ -1,10 +1,11 @@
 //! Example of how to transfer ERC20 tokens from one account to another using a signed permit.
 
-use alloy::primitives::{bytes, keccak256, Address, Bytes, FixedBytes, Signature, B256, U256};
+use alloy::primitives::{
+    address, bytes, keccak256, Address, Bytes, FixedBytes, Signature, B256, U256,
+};
 use alloy::signers::{local::PrivateKeySigner, Signer};
 use alloy::sol;
 use alloy::sol_types::SolValue;
-use alloy_sol_types::private::primitives::address;
 
 const CANONICAL_PERMIT2_ADDRESS: Address = address!("0x000000000022D473030F116dDEE9F6B43aC78BA3");
 
