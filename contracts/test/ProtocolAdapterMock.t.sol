@@ -207,7 +207,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function _exampleResourceAndEmptyAppData(uint256 nonce)
-        private
+        public
         view
         returns (TxGen.ResourceAndAppData[] memory data)
     {
@@ -230,7 +230,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function _exampleCarrierResourceAndAppData(uint256 nonce, address[] memory fwdList)
-        private
+        public
         view
         returns (TxGen.ResourceAndAppData[] memory data)
     {
