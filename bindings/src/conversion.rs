@@ -398,8 +398,8 @@ mod tests {
             .expect("Failed to write encoded transaction to file");
     }
 
-    #[tokio::test]
-    async fn print_simple_mint_tx() {
+    #[test]
+    fn print_simple_mint_tx() {
         let d = default_values();
 
         use arm_risc0::encryption::AffinePoint;
@@ -437,13 +437,13 @@ mod tests {
             vec![6u8; 32], // rand_seed
             &created_auth_pk,
         );
-
-        let permit_sig = permit_witness_transfer_from_signature(
-            &d.signer, d.erc20, d.amount, d.nonce, d.deadline, d.spender, d.witness,
-        )
-        .await
-        .as_bytes()
-        .to_vec();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let permit_sig = rt
+            .block_on(permit_witness_transfer_from_signature(
+                &d.signer, d.erc20, d.amount, d.nonce, d.deadline, d.spender, d.witness,
+            ))
+            .as_bytes()
+            .to_vec();
 
         let cm = created_resource.commitment();
         let nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();

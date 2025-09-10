@@ -9,7 +9,7 @@ arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "164edf283d3
     "bonsai"
 ] }
 alloy = { version = "1.0.30", features = ["full", "eip712", "node-bindings"] }
-tokio = "1.44"
+tokio = { version = "1.44", features = ["rt-multi-thread"] }
 serde = { version = "1.0.197", default-features = false }
 sha2 = { version = "0.10.9" }
 serde_json = "1.0.143"
