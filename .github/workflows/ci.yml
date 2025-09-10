@@ -1,18 +1,31 @@
-name: Tests
+name: CI & Tests
 
 on:
   push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
   workflow_dispatch:
+
+# Cancel in-progress runs on the same branch when a new commit is pushed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   contracts:
-    name: Contracts
+    name: "Contracts CI"
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       FOUNDRY_PROFILE: ci
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -22,40 +35,48 @@ jobs:
         with:
           cache: true
 
-      - name: Show Foundry version
+      - name: Show Foundry Version
         run: forge --version
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v1
 
-      - name: Show Bun version
-        run: bun --version
-        working-directory: ./contracts
+      - name: Cache Bun Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
-      - name: Install Solhint
+      - name: Install Bun Dependencies
         run: bun install solhint
         working-directory: ./contracts
 
-      - name: Run Solhint in `src`
-        run: bunx --bun solhint --config .solhint.json 'src/**/*.sol'
-        working-directory: ./contracts
-        id: solhint-src
-
-      - name: Run Solhint in `test` dir
-        run: bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
-        working-directory: ./contracts
-        id: solhint-test
-
-      - name: Run Solhint in `script` dir
-        run: bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
-        working-directory: ./contracts
-        id: solhint-script
-
-      - name: Run Forge build
-        run: forge build --sizes --ast
+      - name: Run Linter (Solhint)
+        run: |
+          bunx --bun solhint --config .solhint.json 'src/**/*.sol'
+          bunx --bun solhint --config .solhint.other.json '{test,script}/**/*.sol'
         working-directory: ./contracts
 
-      - name: Run Forge tests
+      - name: Check Formatting (Forge Fmt)
+        run: forge fmt --check
+        working-directory: ./contracts
+
+      - name: Run Static Analyzer (Slither)
+        uses: crytic/slither-action@v0.4.1
+        with:
+          node-version: 20
+          slither-args: --config-file slither.config.json
+          sarif: slither-results.sarif
+          fail-on: medium # Or 'high' depending on the policy
+        continue-on-error: true # Optional: Set to false to fail the build on findings
+
+      - name: Run Forge Build
+        run: forge build --sizes
+        working-directory: ./contracts
+
+      - name: Run Forge Tests
         run: forge test -vvv --gas-report
         env:
           API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
@@ -63,23 +84,26 @@ jobs:
         working-directory: ./contracts
 
       - name: Upload Contract Artifacts
+        if: github.ref == 'refs/heads/main' # Only upload artifacts from main branch
         uses: actions/upload-artifact@v4
         with:
           name: contract-artifacts
           path: ./contracts/out
 
   bindings:
-    name: Bindings
+    name: "Bindings CI"
     runs-on: ubuntu-latest
     needs: contracts
+    timeout-minutes: 30
     env:
+      # These are likely needed for integration tests that run against a live network
       PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: ${{ vars.PROTOCOL_ADAPTER_ADDRESS_SEPOLIA }}
       API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
       API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Download Contract Artifacts
@@ -93,24 +117,30 @@ jobs:
         with:
           toolchain: stable
           override: true
+          components: rustfmt
 
-      - name: Show Rust version
+      - name: Show Rust Version
         run: rustc --version
 
-      - name: Cache Rust toolchain and dependencies
-        uses: actions/cache@v3
+      - name: Cache Rust Dependencies
+        uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo
-            ./bindings/target
-          key: rust-build-${{ hashFiles('bindings/Cargo.toml') }}
-          restore-keys: |
-            rust-build-
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ./bindings/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('bindings/Cargo.lock') }}
+
+      - name: Check Formatting (Cargo Fmt)
+        run: cargo fmt -- --check
+        working-directory: ./bindings
 
       - name: Build Bindings
         run: cargo build --release
         working-directory: ./bindings
 
-      - name: Run Tests
+      - name: Run Bindings Tests
         run: cargo test --verbose
         working-directory: ./bindings
