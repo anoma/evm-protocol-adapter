@@ -4,7 +4,7 @@ version = "1.0.0-beta"
 edition = "2024"
 
 [dependencies]
-arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "164edf283d32cbd537f82d925b1f3212efed6e13", package = "arm", features = [
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "592b1a9734e4314a63d659db765d048d0cca6b23", package = "arm", features = [
     "groth16_prover",
     "bonsai"
 ] }
@@ -17,7 +17,7 @@ hex = "0.4.3"
 
 [dev-dependencies]
 alloy-sol-types = "1.0.23"
-simple_transfer_app = { git = "https://github.com/anoma/arm-risc0.git", rev = "164edf283d32cbd537f82d925b1f3212efed6e13", package = "simple-transfer-app" }
+simple_transfer_app = { git = "https://github.com/anoma/arm-risc0.git", rev = "592b1a9734e4314a63d659db765d048d0cca6b23", package = "simple-transfer-app" }
 
 [features]
 # These features are enabled to generate test transactions and is not required for using the library.
