@@ -22,6 +22,8 @@ import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 import {BenchmarkData} from "./benchmark/Benchmark.t.sol";
 import {Transaction} from "../src/Types.sol";
 
+import {SHA256} from "../src/libs/SHA256.sol";
+
 contract ERC20ForwarderTest is BenchmarkData {
     uint256 internal constant _ALICE_PRIVATE_KEY =
         uint256(bytes32(0x97ecae11e1bd9b504ff977ae3815599331c6b0757ee4af3140fe616adb19ae45)); //0xA11CE;
@@ -87,9 +89,18 @@ contract ERC20ForwarderTest is BenchmarkData {
         uint256 fwdBalanceBefore = _erc20.balanceOf(_fwd);
 
         Transaction memory mint_tx = _parse("/test/mint.bin");
+        console.log("mint tx: created cm");
+        bytes32 minted_cm = mint_tx.actions[0].complianceVerifierInputs[0].instance.created.commitment;
+        console.logBytes32(minted_cm);
+
+        console.log("Expected root");
+        console.logBytes32(SHA256.hash(minted_cm, SHA256.EMPTY_HASH));
+
         Transaction memory transfer_tx = _parse("/test/transfer.bin");
 
         ProtocolAdapter(_pa).execute(mint_tx);
+        console.log("Latest root");
+        console.logBytes32(ProtocolAdapter(_pa).latestRoot());
 
         assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
         assertEq(_erc20.balanceOf(_fwd), fwdBalanceBefore + _TRANSFER_AMOUNT);

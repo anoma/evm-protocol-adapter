@@ -555,8 +555,12 @@ fn write_to_file(tx: ProtocolAdapter::Transaction, file_name: &str) {
     std::fs::write(format!("{file_name}.bin"), encoded_tx).expect("Failed to write file");
 }
 
-fn mint_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
-    // Construct the consumed resource
+fn mint_consumed_created_pair(
+    d: &SetUp,
+) -> (
+    (arm_risc0::resource::Resource, NullifierKey),
+    (arm_risc0::resource::Resource, NullifierKey),
+) {
     let consumed_nf_key = NullifierKey::from_bytes(&vec![13u8; 32]);
     let consumed_nf_cm = consumed_nf_key.commit();
     let consumed_resource = construct_ephemeral_resource(
@@ -570,16 +574,12 @@ fn mint_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
         &d.signer.address().to_vec(),
     );
     let consumed_nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();
-    // Fetch the latest cm tree root from the chain
-    let latest_cm_tree_root = INITIAL_ROOT.as_words().to_vec();
 
-    // Generate the created resource
     let created_nf_key = NullifierKey::from_bytes(&vec![14u8; 32]);
     let created_nf_cm = created_nf_key.commit();
     let created_auth_sk = AuthorizationSigningKey::from_bytes(&vec![15u8; 32]);
     let created_auth_pk = AuthorizationVerifyingKey::from_signing_key(&created_auth_sk);
-    let created_discovery_pk = AffinePoint::GENERATOR;
-    let created_encryption_pk = AffinePoint::GENERATOR;
+
     let created_resource = construct_persistent_resource(
         &d.spender.to_vec(),
         &d.erc20.to_vec(),
@@ -589,6 +589,17 @@ fn mint_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
         vec![6u8; 32], // rand_seed
         &created_auth_pk,
     );
+    (
+        (consumed_resource, consumed_nf_key),
+        (created_resource, created_nf_key),
+    )
+}
+
+fn mint_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
+    let latest_cm_tree_root = INITIAL_ROOT.as_words().to_vec();
+
+    let ((consumed_resource, consumed_nf_key), (created_resource, _)) =
+        mint_consumed_created_pair(d);
 
     let cm = created_resource.commitment();
     let nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();
@@ -606,6 +617,9 @@ fn mint_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
         d.spender,
         action_tree_root, // Witness
     ));
+
+    let created_discovery_pk = AffinePoint::GENERATOR;
+    let created_encryption_pk = AffinePoint::GENERATOR;
 
     // Construct the mint transaction
     let tx = construct_mint_tx(
@@ -631,29 +645,25 @@ fn mint_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
 }
 
 fn transfer_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
+    let (_, (minted_resource, minted_resource_nf_key)) = mint_consumed_created_pair(d);
+
     // Obtain the consumed resource data
     let consumed_auth_sk = AuthorizationSigningKey::new();
     let consumed_auth_pk = AuthorizationVerifyingKey::from_signing_key(&consumed_auth_sk);
-    let (consumed_nf_key, consumed_nf_cm) = NullifierKey::random_pair();
+
     let (_, consumed_discovery_pk) = random_keypair();
     let (_, consumed_encryption_pk) = random_keypair();
-    let consumed_resource = construct_persistent_resource(
-        &d.spender.to_vec(), // forwarder_addr
-        &d.erc20.to_vec(),   // token_addr
-        d.amount.try_into().unwrap(),
-        d.nonce.to_be_bytes_vec(), // nonce
-        consumed_nf_cm,
-        vec![5u8; 32], // rand_seed
-        &consumed_auth_pk,
-    );
-    let consumed_nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();
+
+    let consumed_nf = minted_resource.nullifier(&minted_resource_nf_key).unwrap();
 
     // Create the created resource data
     let created_auth_sk = AuthorizationSigningKey::new();
     let created_auth_pk = AuthorizationVerifyingKey::from_signing_key(&created_auth_sk);
-    let (_, created_nf_cm) = NullifierKey::random_pair();
+    let created_nf_cm = minted_resource_nf_key.commit();
+
     let (_, created_discovery_pk) = random_keypair();
     let (_, created_encryption_pk) = random_keypair();
+
     let created_resource = construct_persistent_resource(
         &d.spender.to_vec(), // forwarder_addr
         &d.erc20.to_vec(),   // token_addr
@@ -679,9 +689,9 @@ fn transfer_tx(d: &SetUp) -> ProtocolAdapter::Transaction {
     let merkle_path = MerklePath::from_path(path);
 
     let tx = construct_transfer_tx(
-        consumed_resource.clone(),
+        minted_resource.clone(),
         merkle_path.clone(),
-        consumed_nf_key.clone(),
+        minted_resource_nf_key.clone(),
         consumed_auth_pk,
         auth_sig,
         consumed_discovery_pk,
