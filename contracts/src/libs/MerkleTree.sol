@@ -57,9 +57,7 @@ library MerkleTree {
         // Propagate a hash update up the Merkle tree until there's space
         for (; self._nextLeafIndex & (1 << height) != 0; height++) {
             // Compute the replacement of the parent node
-            replacementNode = SHA256.hash(self._sides[height], replacementNode);
-            // Delete the current level as it's now completed
-            delete self._sides[height];
+            replacementNode = SHA256.hash(Arrays.unsafeAccess(self._sides, height).value, replacementNode);
         }
         accumulatorNode = replacementNode;
         // Record where we are going to insert the new node
@@ -68,14 +66,14 @@ library MerkleTree {
         for (; height < self._zeros.length - 1; height++) {
             if (self._nextLeafIndex & (1 << height) == 0) {
                 // If no partial tree at current level, then right-pad the accumulator
-                accumulatorNode = SHA256.hash(accumulatorNode, self._zeros[height]);
+                accumulatorNode = SHA256.hash(accumulatorNode, Arrays.unsafeAccess(self._zeros, height).value);
             } else {
                 // If there's a partial tree, then combine it with the accumulator
-                accumulatorNode = SHA256.hash(self._sides[height], accumulatorNode);
+                accumulatorNode = SHA256.hash(Arrays.unsafeAccess(self._sides, height).value, accumulatorNode);
             }
         }
         // Finish off the propagation with a final assignment
-        self._sides[insertHeight] = replacementNode;
+        Arrays.unsafeAccess(self._sides, insertHeight).value = replacementNode;
         index = self._nextLeafIndex++;
     }
 
