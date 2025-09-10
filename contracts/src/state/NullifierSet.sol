@@ -33,7 +33,7 @@ contract NullifierSet is INullifierSet {
         nullifier = _nullifierSet.at(index);
     }
 
-    /// @notice Adds a nullifier to to the set, if it does not exist already.
+    /// @notice Adds a nullifier to the set, if it does not exist already.
     /// @param nullifier The nullifier to add.
     function _addNullifier(bytes32 nullifier) internal {
         (bool success) = _nullifierSet.add(nullifier);
