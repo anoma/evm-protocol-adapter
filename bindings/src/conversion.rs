@@ -535,10 +535,10 @@ mod tests {
     fn generates_simple_transfer_txns() {
         let d = default_values();
 
-        let mint_tx = ProtocolAdapter::Transaction::from(mint_tx(&d));
+        let mint_tx = mint_tx(&d);
         write_to_file(mint_tx, "mint");
 
-        let transfer_tx = ProtocolAdapter::Transaction::from(transfer_tx(&d));
+        let transfer_tx = transfer_tx(&d);
         write_to_file(transfer_tx, "transfer");
     }
 }
