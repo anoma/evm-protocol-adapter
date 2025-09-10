@@ -1,7 +1,7 @@
 //! Example of how to transfer ERC20 tokens from one account to another using a signed permit.
 
-use alloy::primitives::{keccak256, Address, Signature, B256, U256};
-use alloy::signers::{local::PrivateKeySigner, Signer};
+use alloy::primitives::{Address, B256, Signature, U256, keccak256};
+use alloy::signers::{Signer, local::PrivateKeySigner};
 use alloy::sol;
 use alloy::sol_types::SolValue;
 
@@ -64,7 +64,13 @@ pub fn permit_witness_transfer_from_digest(
     let witness_type_string = "bytes32 witness";
     let struct_hash: B256 = keccak256(
         (
-            keccak256((token_permissions_typehash(), witness_type_string).abi_encode_packed()),
+            keccak256(
+                (
+                    permit_transfer_from_witness_typehash_stub(),
+                    witness_type_string,
+                )
+                    .abi_encode_packed(),
+            ),
             keccak256(
                 (
                     token_permissions_typehash(),
