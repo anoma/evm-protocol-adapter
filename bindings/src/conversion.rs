@@ -446,13 +446,6 @@ mod tests {
             vec![6u8; 32], // rand_seed
             &created_auth_pk,
         );
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        let permit_sig = rt
-            .block_on(permit_witness_transfer_from_signature(
-                &d.signer, d.erc20, d.amount, d.nonce, d.deadline, d.spender, d.witness,
-            ))
-            .as_bytes()
-            .to_vec();
 
         let cm = created_resource.commitment();
         let nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();
@@ -460,7 +453,21 @@ mod tests {
 
         let action_tree_root = sha256(nf.as_bytes(), cm.as_bytes());
 
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let permit_sig = rt.block_on(permit_witness_transfer_from_signature(
+            &d.signer,
+            d.erc20,
+            d.amount,
+            d.nonce,
+            d.deadline,
+            d.spender,
+            action_tree_root, // Witness
+        ));
+
+        println!("permit_sig: {:?}", permit_sig);
+
         println!("action_tree_root: {:#x}", action_tree_root);
+        println!("{:?}", permit_sig.as_bytes());
 
         // Construct the mint transaction
         let tx_start_timer = std::time::Instant::now();
@@ -474,11 +481,12 @@ mod tests {
             d.signer.address().to_vec(),
             d.nonce.to_be_bytes_vec(),
             d.deadline.to_be_bytes_vec(),
-            permit_sig,
+            permit_sig.as_bytes().to_vec(),
             created_resource,
             created_discovery_pk,
             created_encryption_pk,
         );
+
         println!("Tx build duration time: {:?}", tx_start_timer.elapsed());
 
         // Verify the transaction

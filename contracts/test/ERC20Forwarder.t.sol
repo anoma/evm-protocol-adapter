@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
+
 import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
 import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
@@ -22,7 +24,8 @@ import {Transaction} from "../src/Types.sol";
 
 contract ERC20ForwarderTest is BenchmarkData {
     uint256 internal constant _ALICE_PRIVATE_KEY =
-        uint256(bytes32(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)); //0xA11CE;
+        uint256(bytes32(0x97ecae11e1bd9b504ff977ae3815599331c6b0757ee4af3140fe616adb19ae45)); //0xA11CE;
+
     uint128 internal constant _TRANSFER_AMOUNT = 1000;
     bytes internal constant _EXPECTED_OUTPUT = "";
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(uint256(0));
@@ -72,6 +75,20 @@ contract ERC20ForwarderTest is BenchmarkData {
             nonce: 0,
             deadline: Time.timestamp() + 5 minutes
         });
+    }
+
+    function test_execute_simple_transfer_mint() public {
+        _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
+        console.log(_alice);
+
+        assertEq(_alice, address(0x79a7Aea85709D882F2075ee36Cb896B7E393576e));
+        vm.prank(_alice);
+        _erc20.approve(address(_permit2), type(uint256).max);
+        console.log(_alice);
+
+        Transaction memory txn = _parse("/test/simple_transfer_mint.bin");
+
+        ProtocolAdapter(_pa).execute(txn);
     }
 
     function testFuzz_enum_panics(uint8 v) public {
@@ -318,12 +335,6 @@ contract ERC20ForwarderTest is BenchmarkData {
         console.logBytes32(digest);
     }
 
-    function test_execute_simple_transfer_mint() public {
-        Transaction memory txn = _parse("/test/simple_transfer_mint.bin");
-
-        ProtocolAdapter(_pa).execute(txn);
-    }
-
     function test_decode_external_blob() public {
         address a = address(type(uint160).max);
         bytes memory b = hex"ab";
@@ -346,17 +357,18 @@ contract ERC20ForwarderTest is BenchmarkData {
     function test_example_sig() public {
         uint256 privateKey = _ALICE_PRIVATE_KEY;
         address signer = vm.addr(_ALICE_PRIVATE_KEY);
-        assertEq(signer, address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266));
+        assertEq(signer, address(0x79a7Aea85709D882F2075ee36Cb896B7E393576e));
 
         address token = address(_erc20);
         uint256 amount = _TRANSFER_AMOUNT;
-        uint256 deadline = 2000;
+        uint256 nonce = 0;
+        uint256 deadline = 1789040701;
         address spender = address(_fwd);
-        bytes32 witness = bytes32(0);
+        bytes32 witness = bytes32(0x88492b7b94468a0d3e0d1b7d35c0561a75855634323708555263eb1ed5ec5bbe);
 
         ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
             permitted: ISignatureTransfer.TokenPermissions({token: token, amount: amount}),
-            nonce: 0,
+            nonce: nonce,
             deadline: deadline
         });
 
@@ -366,23 +378,43 @@ contract ERC20ForwarderTest is BenchmarkData {
         console.log("\nDigest:");
         console.logBytes32(digest);
 
-        bytes memory sig = _createPermitWitnessTransferFromSignature({
+        (uint8 v, bytes32 r, bytes32 s) = _createPermitWitnessTransferFromSignatureRsv({
             permit: permit,
             spender: address(_fwd),
             privateKey: _ALICE_PRIVATE_KEY,
             witness: witness
         });
-
         console.log("computed sig:");
-        console.logBytes(sig);
+        address recoveredSigner = ECDSA.recover({hash: digest, r: r, s: s, v: v});
+        assertEq(recoveredSigner, signer);
 
-        bool parity = false;
-        bytes32 r = bytes32(0xba6735bb49280a954e3161d7162cae336e809ae8e5d0a37a5efd3fd42208833b);
-        bytes32 s = bytes32(0x24b8dd3e25c27bf765aadf8feb63cff75f5c17c37fa0b29e670b9a90ba1b8b20);
-        uint8 v = parity ? 27 : 28;
+        bool parityRust = false;
+        bytes32 rRust = bytes32(uint256(92672505740713331757462010954000961668090421287713200621916730223694616252673));
+        bytes32 sRust = bytes32(uint256(26901149672580985869630388208433085165244229633129207940712809514459034556650));
+        uint8 vRust = parityRust ? 28 : 27;
+
+        address recoveredSignerRust = ECDSA.recover({hash: digest, r: rRust, s: sRust, v: vRust});
+        assertEq(recoveredSignerRust, signer);
 
         console.log("expected sig:");
         console.logBytes(abi.encodePacked(r, s, v));
+    }
+
+    function _createPermitWitnessTransferFromSignatureRsv(
+        ISignatureTransfer.PermitTransferFrom memory permit,
+        address spender,
+        uint256 privateKey,
+        bytes32 witness
+    ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
+        bytes32 digest = _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: witness});
+        console.logBytes32(digest);
+
+        (v, r, s) = vm.sign(privateKey, digest);
+
+        console.log("r,s,v:");
+        console.logBytes32(r);
+        console.logBytes32(s);
+        console.log(v);
     }
 
     function _createPermitWitnessTransferFromSignature(
@@ -391,14 +423,13 @@ contract ERC20ForwarderTest is BenchmarkData {
         uint256 privateKey,
         bytes32 witness
     ) internal view returns (bytes memory signature) {
-        bytes32 digest = _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: witness});
-        console.logBytes32(digest);
+        (uint8 v, bytes32 r, bytes32 s) = _createPermitWitnessTransferFromSignatureRsv({
+            permit: permit,
+            spender: spender,
+            privateKey: privateKey,
+            witness: witness
+        });
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
-        console.log("r,s,v:");
-        console.logBytes32(r);
-        console.logBytes32(s);
-        console.log(v);
         return abi.encodePacked(r, s, v);
     }
 

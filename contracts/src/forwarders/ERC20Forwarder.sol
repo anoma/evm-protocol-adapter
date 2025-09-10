@@ -8,6 +8,8 @@ import {Permit2Lib} from "@permit2/src/libraries/Permit2Lib.sol";
 
 import {EmergencyMigratableForwarderBase} from "./EmergencyMigratableForwarderBase.sol";
 
+import {console} from "forge-std/Test.sol";
+
 /// @title ERC20Forwarder
 /// @author Anoma Foundation, 2025
 /// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources.
@@ -77,6 +79,17 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                 bytes32 witness,
                 bytes memory signature
             ) = abi.decode(input, (CallType, address, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
+
+            console.log("from", from);
+
+            console.log("permit.permitted.token", permit.permitted.token);
+            console.log("permit.permitted.amount", permit.permitted.amount);
+            console.log("permit.nonce", permit.nonce);
+            console.log("permit.deadline", permit.deadline);
+            console.log("witness");
+            console.logBytes32(witness);
+            console.log("signature");
+            console.logBytes(signature);
 
             if (permit.permitted.amount > type(uint128).max) {
                 revert TypeOverflow({limit: type(uint128).max, actual: permit.permitted.amount});
