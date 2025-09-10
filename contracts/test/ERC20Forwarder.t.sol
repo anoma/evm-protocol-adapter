@@ -18,10 +18,11 @@ import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract ERC20ForwarderTest is Test {
-    uint256 internal constant _ALICE_PRIVATE_KEY = 0xA11CE;
-    uint128 internal constant _TRANSFER_AMOUNT = 1 * 10 ** 18;
+    uint256 internal constant _ALICE_PRIVATE_KEY =
+        uint256(bytes32(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)); //0xA11CE;
+    uint128 internal constant _TRANSFER_AMOUNT = 1000;
     bytes internal constant _EXPECTED_OUTPUT = "";
-    bytes32 internal constant _ACTION_TREE_ROOT = bytes32(type(uint256).max);
+    bytes32 internal constant _ACTION_TREE_ROOT = bytes32(uint256(0));
 
     bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(type(uint256).max);
 
@@ -285,6 +286,77 @@ contract ERC20ForwarderTest is Test {
         ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
+    function test_example_digest() public {
+        address token = address(_erc20);
+        uint256 amount = 1000;
+        uint256 nonce = 0;
+        uint256 deadline = 2000;
+        address spender = address(_fwd);
+        bytes32 witness = bytes32(0);
+
+        console.log("token", token);
+        console.log("amount", amount);
+        console.log("nonce", nonce);
+        console.log("deadline", deadline);
+        console.log("spender", spender);
+
+        bytes32 digest = _computePermitWitnessTransferFromDigest({
+            permit: ISignatureTransfer.PermitTransferFrom({
+                permitted: ISignatureTransfer.TokenPermissions({token: token, amount: amount}),
+                nonce: nonce,
+                deadline: deadline
+            }),
+            spender: spender,
+            witness: witness
+        });
+
+        console.log("\nDigest");
+
+        console.logBytes32(digest);
+    }
+
+    function test_example_sig() public {
+        uint256 privateKey = _ALICE_PRIVATE_KEY;
+        address signer = vm.addr(_ALICE_PRIVATE_KEY);
+        assertEq(signer, address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266));
+
+        address token = address(_erc20);
+        uint256 amount = _TRANSFER_AMOUNT;
+        uint256 deadline = 2000;
+        address spender = address(_fwd);
+        bytes32 witness = bytes32(0);
+
+        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({token: token, amount: amount}),
+            nonce: 0,
+            deadline: deadline
+        });
+
+        bytes32 digest =
+            _computePermitWitnessTransferFromDigest({permit: permit, spender: address(_fwd), witness: witness});
+
+        console.log("\nDigest:");
+        console.logBytes32(digest);
+
+        bytes memory sig = _createPermitWitnessTransferFromSignature({
+            permit: permit,
+            spender: address(_fwd),
+            privateKey: _ALICE_PRIVATE_KEY,
+            witness: witness
+        });
+
+        console.log("computed sig:");
+        console.logBytes(sig);
+
+        bool parity = false;
+        bytes32 r = bytes32(0xba6735bb49280a954e3161d7162cae336e809ae8e5d0a37a5efd3fd42208833b);
+        bytes32 s = bytes32(0x24b8dd3e25c27bf765aadf8feb63cff75f5c17c37fa0b29e670b9a90ba1b8b20);
+        uint8 v = parity ? 27 : 28;
+
+        console.log("expected sig:");
+        console.logBytes(abi.encodePacked(r, s, v));
+    }
+
     function _createPermitWitnessTransferFromSignature(
         ISignatureTransfer.PermitTransferFrom memory permit,
         address spender,
@@ -292,8 +364,13 @@ contract ERC20ForwarderTest is Test {
         bytes32 witness
     ) internal view returns (bytes memory signature) {
         bytes32 digest = _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: witness});
+        console.logBytes32(digest);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+        console.log("r,s,v:");
+        console.logBytes32(r);
+        console.logBytes32(s);
+        console.log(v);
         return abi.encodePacked(r, s, v);
     }
 
@@ -309,22 +386,29 @@ contract ERC20ForwarderTest is Test {
     ) internal view returns (bytes32 digest) {
         string memory witnessTypeString = "bytes32 witness";
 
-        bytes32 structHash = keccak256(
-            abi.encode(
-                keccak256(abi.encodePacked(PermitHash._PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB, witnessTypeString)),
-                keccak256(
-                    abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted.token, permit.permitted.amount)
-                ),
-                spender,
-                permit.nonce,
-                permit.deadline,
-                witness
-            )
+        bytes32 hash1 =
+            keccak256(abi.encodePacked(PermitHash._PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB, witnessTypeString));
+        console.log("hash1:");
+        console.logBytes32(hash1);
+
+        bytes32 hash2 = keccak256(
+            abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted.token, permit.permitted.amount)
         );
+        console.log("hash2:");
+        console.logBytes32(hash2);
+
+        bytes32 structHash = keccak256(abi.encode(hash1, hash2, spender, permit.nonce, permit.deadline, witness));
+        console.log("structHash:");
+        console.logBytes32(structHash);
 
         console.log("DOMAIN_SEPARATOR:");
         console.logBytes32(_permit2.DOMAIN_SEPARATOR());
 
-        digest = keccak256(abi.encodePacked("\x19\x01", _permit2.DOMAIN_SEPARATOR(), structHash));
+        bytes memory msgdata = abi.encodePacked("\x19\x01", _permit2.DOMAIN_SEPARATOR(), structHash);
+
+        console.log("msg before digest:");
+        console.logBytes(msgdata);
+
+        digest = keccak256(msgdata);
     }
 }

@@ -142,8 +142,7 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 mod tests {
     use super::*;
     use crate::conversion::ProtocolAdapter;
-    use alloy::primitives::{address, U256};
-    use alloy::signers::local::PrivateKeySigner;
+    use alloy::primitives::address;
     use std::env;
 
     #[test]
@@ -173,7 +172,7 @@ mod tests {
             .expect("Failed to write encoded transaction to file");
     }
 
-    use crate::permit2::permit_witness_transfer_from_signature;
+    use crate::permit2::{default_values, permit_witness_transfer_from_signature};
     use arm_risc0::{
         action_tree::MerkleTree,
         authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey},
@@ -388,28 +387,35 @@ mod tests {
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
         assert_eq!(evm_tx, decoded_tx);
         println!("Transaction: {:#?}", evm_tx);
+
+        std::fs::write(
+            format!("simple_transfer_mint.json"),
+            serde_json::to_string_pretty(&evm_tx).unwrap(),
+        )
+        .unwrap();
+
+        std::fs::write(format!("simple_transfer_mint.bin"), &encoded_tx)
+            .expect("Failed to write encoded transaction to file");
     }
 
-    #[test]
-    fn print_simple_mint_tx() {
+    #[tokio::test]
+    async fn print_simple_mint_tx() {
+        let d = default_values();
+
         use arm_risc0::encryption::AffinePoint;
-        let forwarder_addr = address!("0xD6BbDE9174b1CdAa358d2Cf4D57D1a9F7178FBfF");
-        let token_addr = address!("0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f");
-        let user_addr = address!("0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7");
-        let quantity = 100;
 
         // Construct the consumed resource
         let consumed_nf_key = NullifierKey::from_bytes(&vec![13u8; 32]);
         let consumed_nf_cm = consumed_nf_key.commit();
         let consumed_resource = construct_ephemeral_resource(
-            &forwarder_addr.to_vec(),
-            &token_addr.to_vec(),
-            quantity,
+            &d.spender.to_vec(),
+            &d.erc20.to_vec(),
+            d.amount.try_into().unwrap(),
             vec![4u8; 32], // nonce
             consumed_nf_cm,
             vec![5u8; 32], // rand_seed
             CallType::Wrap,
-            &user_addr.to_vec(),
+            &d.signer.address().to_vec(),
         );
         let consumed_nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();
         // Fetch the latest cm tree root from the chain
@@ -423,33 +429,25 @@ mod tests {
         let created_discovery_pk = AffinePoint::GENERATOR;
         let created_encryption_pk = AffinePoint::GENERATOR;
         let created_resource = construct_persistent_resource(
-            &forwarder_addr.to_vec(),
-            &token_addr.to_vec(),
-            quantity,
+            &d.spender.to_vec(),
+            &d.signer.address().to_vec(),
+            d.amount.try_into().unwrap(),
             consumed_nf.as_bytes().to_vec(), // nonce
             created_nf_cm,
             vec![6u8; 32], // rand_seed
             &created_auth_pk,
         );
 
-        // Fetch the permit signature somewhere
-        let permit_nonce = vec![7u8; 32];
-        let permit_deadline = vec![255u8; 32];
-        let permit_sig = vec![9u8; 65];
+        let permit_sig = permit_witness_transfer_from_signature(
+            &d.signer, d.erc20, d.amount, d.nonce, d.deadline, d.spender, d.witness,
+        )
+        .await
+        .as_bytes()
+        .to_vec();
 
         let cm = created_resource.commitment();
         let nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();
         let action_tree_root = sha256(nf.as_bytes(), cm.as_bytes());
-
-        let sig = permit_witness_transfer_from_signature(
-            PrivateKeySigner::from_slice(&[1u8]),
-            token_addr,
-            quantity,
-            U256::from(permit_nonce),
-            U256::from(permit_nonce),
-            forwarder_addr,
-            action_tree_root,
-        );
 
         // Construct the mint transaction
         let tx_start_timer = std::time::Instant::now();
@@ -458,11 +456,11 @@ mod tests {
             latest_cm_tree_root,
             consumed_nf_key,
             created_discovery_pk,
-            forwarder_addr.to_vec(),
-            token_addr.to_vec(),
-            user_addr.to_vec(),
-            permit_nonce,
-            permit_deadline,
+            d.spender.to_vec(),
+            d.erc20.to_vec(),
+            d.signer.address().to_vec(),
+            d.nonce.to_be_bytes_vec(),
+            d.deadline.to_be_bytes_vec(),
             permit_sig,
             created_resource,
             created_discovery_pk,
