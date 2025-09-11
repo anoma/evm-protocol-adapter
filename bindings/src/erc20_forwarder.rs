@@ -11,7 +11,7 @@ use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
 
 use crate::conversion::ProtocolAdapter;
-use arm_risc0::utils::bytes_to_words;
+use arm_risc0::utils::{bytes_to_words, words_to_bytes};
 use sha2::{Digest, Sha256};
 use simple_transfer_app::burn::construct_burn_tx;
 use simple_transfer_app::mint::construct_mint_tx;
@@ -70,17 +70,17 @@ impl KeyChain {
     }
 }
 
-fn keychain_a() -> KeyChain {
+fn example_keychain() -> KeyChain {
     let (discovery_sk, discovery_pk) = random_keypair();
     let (encryption_sk, encryption_pk) = random_keypair();
 
     KeyChain {
         auth_signing_key: AuthorizationSigningKey::from_bytes(&vec![15u8; 32]),
         nf_key: NullifierKey::from_bytes(&vec![13u8; 32]),
-        discovery_sk: discovery_sk,
-        discovery_pk: discovery_pk,
-        encryption_sk: encryption_sk,
-        encryption_pk: encryption_pk,
+        discovery_sk,
+        discovery_pk,
+        encryption_sk,
+        encryption_pk,
     }
 }
 
@@ -90,15 +90,33 @@ fn mint_tx(
 ) -> (ProtocolAdapter::Transaction, arm_risc0::resource::Resource) {
     let latest_cm_tree_root = INITIAL_ROOT.as_words().to_vec();
 
-    let (consumed_resource, created_resource) = mint_consumed_created_pair(d, keychain);
-
-    let action_tree_root = sha256(
-        consumed_resource
-            .nullifier(&keychain.nf_key)
-            .unwrap()
-            .as_bytes(),
-        created_resource.commitment().as_bytes(),
+    let consumed_resource = construct_ephemeral_resource(
+        &d.spender.to_vec(),
+        &d.erc20.to_vec(),
+        d.amount.try_into().unwrap(),
+        vec![4u8; 32], // nonce
+        keychain.nf_key.commit(),
+        vec![5u8; 32], // rand_seed
+        CallType::Wrap,
+        &d.signer.address().to_vec(),
     );
+
+    let consumed_nf = consumed_resource.nullifier(&keychain.nf_key).unwrap();
+
+    // Note: We could use a different nullifier key here
+    let created_resource = construct_persistent_resource(
+        &d.spender.to_vec(),
+        &d.erc20.to_vec(),
+        d.amount.try_into().unwrap(),
+        consumed_nf.as_bytes().to_vec(), // nonce // ZCash Trick
+        keychain.nf_key.commit(),
+        vec![6u8; 32], // rand_seed
+        &keychain.auth_verifying_key(),
+    );
+
+    let created_cm = created_resource.commitment();
+
+    let action_tree = MerkleTree::new(vec![consumed_nf, created_cm]);
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     let permit_sig = rt.block_on(permit_witness_transfer_from_signature(
@@ -108,7 +126,7 @@ fn mint_tx(
         d.nonce,
         d.deadline,
         d.spender,
-        action_tree_root, // Witness
+        B256::from_slice(words_to_bytes(action_tree.root().as_slice())), // Witness
     ));
 
     // Construct the mint transaction
@@ -132,37 +150,6 @@ fn mint_tx(
     assert!(tx.clone().verify(), "Transaction verification failed");
 
     (ProtocolAdapter::Transaction::from(tx), created_resource)
-}
-
-fn mint_consumed_created_pair(
-    d: &SetUp,
-    keychain: &KeyChain,
-) -> (arm_risc0::resource::Resource, arm_risc0::resource::Resource) {
-    let consumed_resource = construct_ephemeral_resource(
-        &d.spender.to_vec(),
-        &d.erc20.to_vec(),
-        d.amount.try_into().unwrap(),
-        vec![4u8; 32], // nonce
-        keychain.nf_key.commit(),
-        vec![5u8; 32], // rand_seed
-        CallType::Wrap,
-        &d.signer.address().to_vec(),
-    );
-
-    // ZCash Nonce trick
-    let consumed_nf = consumed_resource.nullifier(&keychain.nf_key).unwrap();
-
-    // Note: We could use a different nullifier key here
-    let created_resource = construct_persistent_resource(
-        &d.spender.to_vec(),
-        &d.erc20.to_vec(),
-        d.amount.try_into().unwrap(),
-        consumed_nf.as_bytes().to_vec(), // nonce
-        keychain.nf_key.commit(),
-        vec![6u8; 32], // rand_seed
-        &keychain.auth_verifying_key(),
-    );
-    (consumed_resource, created_resource)
 }
 
 fn transfer_tx(
@@ -334,7 +321,7 @@ mod tests {
         env::var("BONSAI_API_URL").expect("Couldn't read BONSAI_API_URL");
 
         let d = default_values();
-        let keychain = keychain_a();
+        let keychain = example_keychain();
 
         let (mint_tx, minted_resource) = mint_tx(&d, &keychain);
         write_to_file(mint_tx, "mint");
