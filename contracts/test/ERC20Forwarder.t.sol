@@ -358,17 +358,19 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
     ) internal view returns (bytes32 digest) {
         string memory witnessTypeString = "bytes32 witness";
 
-        bytes32 hash1 =
-            keccak256(abi.encodePacked(PermitHash._PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB, witnessTypeString));
-
-        bytes32 hash2 = keccak256(
-            abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted.token, permit.permitted.amount)
+        bytes32 structHash = keccak256(
+            abi.encode(
+                keccak256(abi.encodePacked(PermitHash._PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB, witnessTypeString)),
+                keccak256(
+                    abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted.token, permit.permitted.amount)
+                ),
+                spender,
+                permit.nonce,
+                permit.deadline,
+                witness
+            )
         );
 
-        bytes32 structHash = keccak256(abi.encode(hash1, hash2, spender, permit.nonce, permit.deadline, witness));
-
-        bytes memory msgdata = abi.encodePacked("\x19\x01", _permit2.DOMAIN_SEPARATOR(), structHash);
-
-        digest = keccak256(msgdata);
+        digest = keccak256(abi.encodePacked("\x19\x01", _permit2.DOMAIN_SEPARATOR(), structHash));
     }
 }
