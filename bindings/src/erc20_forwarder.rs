@@ -5,7 +5,7 @@ use alloy::signers::local::PrivateKeySigner;
 use arm_risc0::action_tree::MerkleTree;
 use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
 use arm_risc0::compliance::INITIAL_ROOT;
-use arm_risc0::encryption::{random_keypair, AffinePoint};
+use arm_risc0::encryption::AffinePoint;
 use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
@@ -70,7 +70,10 @@ fn keychain_a() -> KeyChain {
     }
 }
 
-fn mint_tx(d: &SetUp, keychain: &KeyChain) -> ProtocolAdapter::Transaction {
+fn mint_tx(
+    d: &SetUp,
+    keychain: &KeyChain,
+) -> (ProtocolAdapter::Transaction, arm_risc0::resource::Resource) {
     let latest_cm_tree_root = INITIAL_ROOT.as_words().to_vec();
 
     let (consumed_resource, created_resource) = mint_consumed_created_pair(d, keychain);
@@ -106,7 +109,7 @@ fn mint_tx(d: &SetUp, keychain: &KeyChain) -> ProtocolAdapter::Transaction {
         d.nonce.to_be_bytes_vec(),
         d.deadline.to_be_bytes_vec(),
         permit_sig.as_bytes().to_vec(),
-        created_resource,
+        created_resource.clone(),
         keychain.discovery_pk,
         keychain.encryption_pk,
     );
@@ -114,7 +117,7 @@ fn mint_tx(d: &SetUp, keychain: &KeyChain) -> ProtocolAdapter::Transaction {
     // Verify the transaction
     assert!(tx.clone().verify(), "Transaction verification failed");
 
-    ProtocolAdapter::Transaction::from(tx)
+    (ProtocolAdapter::Transaction::from(tx), created_resource)
 }
 
 fn mint_consumed_created_pair(
@@ -148,10 +151,12 @@ fn mint_consumed_created_pair(
     (consumed_resource, created_resource)
 }
 
-fn transfer_tx(d: &SetUp, keychain: &KeyChain) -> ProtocolAdapter::Transaction {
-    let (_, minted_resource) = mint_consumed_created_pair(d, &keychain);
-
-    let consumed_nf = minted_resource.nullifier(&keychain.nf_key).unwrap();
+fn transfer_tx(
+    d: &SetUp,
+    keychain: &KeyChain,
+    resource_to_transfer: &arm_risc0::resource::Resource,
+) -> (ProtocolAdapter::Transaction, arm_risc0::resource::Resource) {
+    let consumed_nf = resource_to_transfer.nullifier(&keychain.nf_key).unwrap();
 
     let created_resource = construct_persistent_resource(
         &d.spender.to_vec(), // forwarder_addr
@@ -179,7 +184,7 @@ fn transfer_tx(d: &SetUp, keychain: &KeyChain) -> ProtocolAdapter::Transaction {
     let merkle_path = MerklePath::from_path(path);
 
     let tx = construct_transfer_tx(
-        minted_resource.clone(),
+        resource_to_transfer.clone(),
         merkle_path.clone(),
         keychain.nf_key.clone(),
         keychain.auth_verifying_key(),
@@ -194,49 +199,7 @@ fn transfer_tx(d: &SetUp, keychain: &KeyChain) -> ProtocolAdapter::Transaction {
     // Verify the transaction
     assert!(tx.clone().verify(), "Transaction verification failed");
 
-    ProtocolAdapter::Transaction::from(tx)
-}
-
-fn transfer_consumed_created_pair(
-    d: &SetUp,
-) -> (
-    (arm_risc0::resource::Resource, NullifierKey),
-    (arm_risc0::resource::Resource, NullifierKey),
-) {
-    // Obtain the consumed resource data
-    let consumed_auth_sk = AuthorizationSigningKey::new();
-    let consumed_auth_pk = AuthorizationVerifyingKey::from_signing_key(&consumed_auth_sk);
-    let (consumed_nf_key, consumed_nf_cm) = NullifierKey::random_pair();
-
-    let consumed_resource = construct_persistent_resource(
-        &d.spender.to_vec(), // forwarder_addr
-        &d.erc20.to_vec(),   // token_addr
-        d.amount.try_into().unwrap(),
-        vec![4u8; 32], // nonce
-        consumed_nf_cm,
-        vec![5u8; 32], // rand_seed
-        &consumed_auth_pk,
-    );
-    let consumed_nf = consumed_resource.nullifier(&consumed_nf_key).unwrap();
-
-    // Create the ephemeral resource
-    let (created_nf_key, created_nf_cm) = NullifierKey::random_pair();
-    let (_created_discovery_sk, created_discovery_pk) = random_keypair();
-    let created_resource = construct_ephemeral_resource(
-        &d.spender.to_vec(), // forwarder_addr
-        &d.erc20.to_vec(),   // token_addr
-        d.amount.try_into().unwrap(),
-        consumed_nf.as_bytes().to_vec(), // nonce
-        created_nf_cm,
-        vec![6u8; 32], // rand_seed
-        CallType::Unwrap,
-        &d.signer.address().to_vec(), // user_addr
-    );
-
-    (
-        (consumed_resource, consumed_nf_key),
-        (created_resource, created_nf_key),
-    )
+    (ProtocolAdapter::Transaction::from(tx), created_resource)
 }
 
 fn sha256(a: &[u8], b: &[u8]) -> B256 {
@@ -301,10 +264,10 @@ mod tests {
         let d = default_values();
         let keychain = keychain_a();
 
-        let mint_tx = mint_tx(&d, &keychain);
+        let (mint_tx, minted_resource) = mint_tx(&d, &keychain);
         write_to_file(mint_tx, "mint");
 
-        let transfer_tx = transfer_tx(&d, &keychain);
+        let (transfer_tx, transferred_resource) = transfer_tx(&d, &keychain, &minted_resource);
         write_to_file(transfer_tx, "transfer");
     }
 }
