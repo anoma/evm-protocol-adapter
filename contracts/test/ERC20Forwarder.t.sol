@@ -1,25 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
-
 import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
 import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {Test, console, stdError} from "forge-std/Test.sol";
+import {stdError} from "forge-std/Test.sol";
 
 import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {Transaction} from "../src/Types.sol";
-import {SHA256} from "../src/libs/SHA256.sol";
-
 import {ERC20Example} from "../test/examples/ERC20.e.sol";
 
-import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 import {TransactionParsingBaseTest} from "./transactions/TransactionParsingBase.t.sol";
@@ -90,17 +85,17 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
         uint256 aliceBalanceBefore = _erc20.balanceOf(_alice);
         uint256 fwdBalanceBefore = _erc20.balanceOf(_fwd);
 
-        Transaction memory mint_tx = _parseTransaction("/test/transactions/mint.bin");
-        Transaction memory transfer_tx = _parseTransaction("/test/transactions/transfer.bin");
+        Transaction memory mintTx = _parseTransaction("/test/transactions/mint.bin");
+        Transaction memory transferTx = _parseTransaction("/test/transactions/transfer.bin");
 
-        ProtocolAdapter(_pa).execute(mint_tx);
+        ProtocolAdapter(_pa).execute(mintTx);
 
         assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
         assertEq(_erc20.balanceOf(_fwd), fwdBalanceBefore + _TRANSFER_AMOUNT);
 
-        ProtocolAdapter(_pa).execute(transfer_tx);
+        ProtocolAdapter(_pa).execute(transferTx);
         NullifierSet(_pa).contains({
-            nullifier: transfer_tx.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
+            nullifier: transferTx.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
         });
     }
 
