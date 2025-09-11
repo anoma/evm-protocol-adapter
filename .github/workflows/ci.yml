@@ -60,6 +60,7 @@ jobs:
         env:
           API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
           API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
         working-directory: ./contracts
 
       - name: Upload Contract Artifacts
