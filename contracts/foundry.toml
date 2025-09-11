@@ -7,6 +7,7 @@ fs_permissions = [
     { access = "read", path = "./test/transactions/test_tx15.bin" },
     { access = "read", path = "./test/transactions/mint.bin" },
     { access = "read", path = "./test/transactions/transfer.bin" },
+    { access = "read", path = "./test/transactions/burn.bin" },
 ]
 
 

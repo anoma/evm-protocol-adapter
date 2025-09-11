@@ -75,7 +75,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
         });
     }
 
-    function test_execute_simple_mint_and_transfer() public {
+    function test_execute_mint_transfer_burn() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
         assertEq(_alice, address(0x79a7Aea85709D882F2075ee36Cb896B7E393576e));
 
@@ -85,6 +85,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
         uint256 aliceBalanceBefore = _erc20.balanceOf(_alice);
         uint256 fwdBalanceBefore = _erc20.balanceOf(_fwd);
 
+        // Mint
         {
             Transaction memory mintTx = _parseTransaction("/test/transactions/mint.bin");
             ProtocolAdapter(_pa).execute(mintTx);
@@ -93,12 +94,22 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
             assertEq(_erc20.balanceOf(_fwd), fwdBalanceBefore + _TRANSFER_AMOUNT);
         }
 
+        // Transfer
         {
             Transaction memory transferTx = _parseTransaction("/test/transactions/transfer.bin");
             ProtocolAdapter(_pa).execute(transferTx);
-            NullifierSet(_pa).contains({
-                nullifier: transferTx.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
-            });
+
+            assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
+            assertEq(_erc20.balanceOf(_fwd), fwdBalanceBefore + _TRANSFER_AMOUNT);
+        }
+
+        // Burn
+        {
+            Transaction memory burnTx = _parseTransaction("/test/transactions/burn.bin");
+            ProtocolAdapter(_pa).execute(burnTx);
+
+            assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore);
+            assertEq(_erc20.balanceOf(_fwd), fwdBalanceBefore);
         }
     }
 

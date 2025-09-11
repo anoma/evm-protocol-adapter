@@ -5,7 +5,7 @@ use alloy::signers::local::PrivateKeySigner;
 use arm_risc0::action_tree::MerkleTree;
 use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
 use arm_risc0::compliance::INITIAL_ROOT;
-use arm_risc0::encryption::AffinePoint;
+use arm_risc0::encryption::{random_keypair, AffinePoint, SecretKey};
 use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
@@ -13,6 +13,7 @@ use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
 use crate::conversion::ProtocolAdapter;
 use arm_risc0::utils::bytes_to_words;
 use sha2::{Digest, Sha256};
+use simple_transfer_app::burn::construct_burn_tx;
 use simple_transfer_app::mint::construct_mint_tx;
 use simple_transfer_app::resource::{construct_ephemeral_resource, construct_persistent_resource};
 use simple_transfer_app::transfer::construct_transfer_tx;
@@ -25,6 +26,12 @@ pub struct SetUp {
     pub nonce: U256,
     pub deadline: U256,
     pub spender: Address,
+}
+
+fn empty_leaf_hash() -> B256 {
+    B256::from(hex!(
+        "cc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06"
+    ))
 }
 
 pub fn default_values() -> SetUp {
@@ -43,7 +50,9 @@ pub fn default_values() -> SetUp {
 pub struct KeyChain {
     auth_signing_key: AuthorizationSigningKey,
     nf_key: NullifierKey,
+    discovery_sk: SecretKey,
     discovery_pk: AffinePoint,
+    encryption_sk: SecretKey,
     encryption_pk: AffinePoint,
 }
 
@@ -62,11 +71,16 @@ impl KeyChain {
 }
 
 fn keychain_a() -> KeyChain {
+    let (discovery_sk, discovery_pk) = random_keypair();
+    let (encryption_sk, encryption_pk) = random_keypair();
+
     KeyChain {
         auth_signing_key: AuthorizationSigningKey::from_bytes(&vec![15u8; 32]),
         nf_key: NullifierKey::from_bytes(&vec![13u8; 32]),
-        discovery_pk: AffinePoint::GENERATOR,
-        encryption_pk: AffinePoint::GENERATOR,
+        discovery_sk: discovery_sk,
+        discovery_pk: discovery_pk,
+        encryption_sk: encryption_sk,
+        encryption_pk: encryption_pk,
     }
 }
 
@@ -163,7 +177,7 @@ fn transfer_tx(
         &d.erc20.to_vec(),   // token_addr
         d.amount.try_into().unwrap(),
         consumed_nf.as_bytes().to_vec(), // nonce
-        keychain.nf_key.commit(),
+        keychain.nullifier_key_commitment(),
         vec![7u8; 32], // rand_seed
         &keychain.auth_verifying_key(),
     );
@@ -174,13 +188,9 @@ fn transfer_tx(
 
     let auth_sig = authorize_the_action(&keychain.auth_signing_key, &action_tree);
 
-    let empty_hash = B256::from(hex!(
-        "cc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06"
-    ));
-
     // Construct the transfer transaction
     let is_left = false;
-    let path: &[(Vec<u32>, bool)] = &[(bytes_to_words(empty_hash.as_slice()), is_left)];
+    let path: &[(Vec<u32>, bool)] = &[(bytes_to_words(empty_leaf_hash().as_slice()), is_left)];
     let merkle_path = MerklePath::from_path(path);
 
     let tx = construct_transfer_tx(
@@ -200,6 +210,68 @@ fn transfer_tx(
     assert!(tx.clone().verify(), "Transaction verification failed");
 
     (ProtocolAdapter::Transaction::from(tx), created_resource)
+}
+
+fn burn_tx(
+    d: &SetUp,
+    keychain: &KeyChain,
+    minted_resource: &arm_risc0::resource::Resource,
+    resource_to_burn: &arm_risc0::resource::Resource,
+) -> ProtocolAdapter::Transaction {
+    let consumed_nf = resource_to_burn.nullifier(&keychain.nf_key).unwrap();
+
+    // Create the ephemeral resource
+    let created_resource = construct_ephemeral_resource(
+        &d.spender.to_vec(), // forwarder_addr
+        &d.erc20.to_vec(),   // token_addr
+        d.amount.try_into().unwrap(),
+        consumed_nf.as_bytes().to_vec(), // nonce
+        keychain.nullifier_key_commitment(),
+        vec![6u8; 32], // rand_seed
+        CallType::Unwrap,
+        &d.signer.address().to_vec(), // user_addr // TODO rename
+    );
+    let created_cm = created_resource.commitment();
+
+    // Get the authorization signature, it can be from external signing(e.g. wallet)
+    let action_tree = MerkleTree::new(vec![consumed_nf, created_cm]);
+    let auth_sig = authorize_the_action(&keychain.auth_signing_key, &action_tree);
+
+    // Construct the burn transaction
+
+    let sibling0is_left = true;
+    let sibling0 = (
+        bytes_to_words(minted_resource.commitment().as_bytes()),
+        sibling0is_left,
+    );
+
+    let sibling1is_left = false;
+    let sibling1 = (
+        bytes_to_words(
+            sha256(empty_leaf_hash().as_slice(), empty_leaf_hash().as_slice()).as_slice(),
+        ),
+        sibling1is_left,
+    );
+
+    let path: &[(Vec<u32>, bool)] = &[sibling0, sibling1];
+    let merkle_path = MerklePath::from_path(path);
+
+    let tx = construct_burn_tx(
+        resource_to_burn.clone(),
+        merkle_path,
+        keychain.nf_key.clone(),
+        keychain.auth_verifying_key(),
+        auth_sig,
+        keychain.discovery_pk,
+        keychain.encryption_pk,
+        created_resource,
+        keychain.discovery_pk,
+        d.spender.to_vec(),
+        d.erc20.to_vec(),
+        d.signer.address().to_vec(),
+    );
+
+    ProtocolAdapter::Transaction::from(tx)
 }
 
 fn sha256(a: &[u8], b: &[u8]) -> B256 {
@@ -269,5 +341,8 @@ mod tests {
 
         let (transfer_tx, transferred_resource) = transfer_tx(&d, &keychain, &minted_resource);
         write_to_file(transfer_tx, "transfer");
+
+        let burn_tx = burn_tx(&d, &keychain, &minted_resource, &transferred_resource);
+        write_to_file(burn_tx, "burn");
     }
 }
