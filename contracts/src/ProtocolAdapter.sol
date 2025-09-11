@@ -10,7 +10,6 @@ import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
-import {TagLookup} from "./libs/TagLookup.sol";
 
 import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
@@ -29,7 +28,6 @@ string constant PROTOCOL_ADAPTER_VERSION = "1.0.0-beta";
 /// @custom:security-contact security@anoma.foundation
 contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, CommitmentAccumulator, NullifierSet {
     using MerkleTree for bytes32[];
-    using TagLookup for bytes32[];
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.VerifierInput;
     using Logic for Logic.VerifierInput[];
