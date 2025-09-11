@@ -2779,9 +2779,7 @@ version = "1.0.0-beta"
 dependencies = [
  "alloy",
  "arm",
- "hex",
  "serde",
- "serde_json",
  "sha2",
  "simple-transfer-app",
  "tokio",

@@ -290,12 +290,6 @@ fn write_to_file(tx: ProtocolAdapter::Transaction, file_name: &str) {
     let encoded_tx = tx.abi_encode();
 
     std::fs::write(
-        format!("./contracts/test/transactions/{file_name}.json"),
-        serde_json::to_string_pretty(&tx).unwrap(),
-    )
-    .expect("Failed to write file");
-
-    std::fs::write(
         format!("./contracts/test/transactions/{file_name}.bin"),
         encoded_tx,
     )

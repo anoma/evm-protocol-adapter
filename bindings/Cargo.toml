@@ -12,8 +12,6 @@ alloy = { version = "1.0.30", features = ["full", "eip712", "node-bindings"] }
 tokio = { version = "1.44", features = ["rt-multi-thread"] }
 serde = { version = "1.0.197", default-features = false }
 sha2 = { version = "0.10.9" }
-serde_json = "1.0.143"
-hex = "0.4.3"
 simple_transfer_app = { git = "https://github.com/anoma/arm-risc0.git", rev = "592b1a9734e4314a63d659db765d048d0cca6b23", package = "simple-transfer-app" }
 
 
