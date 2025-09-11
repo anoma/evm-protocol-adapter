@@ -225,11 +225,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // Check the logic proof
         _verifyLogicProof({input: input, root: actionTreeRoot, consumed: consumed});
 
-        // The PA checks whether a call is to be made by looking inside
-        // the externalPayload and trying to process the first entry
-        if (input.appData.externalPayload.length != 0) {
-            _processForwarderCalls(input);
-        }
+        // Perform external calls
+        _processForwarderCalls(input);
     }
 
     /// @notice Processes forwarder calls by verifying and executing them.
