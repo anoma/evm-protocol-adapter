@@ -85,18 +85,21 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
         uint256 aliceBalanceBefore = _erc20.balanceOf(_alice);
         uint256 fwdBalanceBefore = _erc20.balanceOf(_fwd);
 
-        Transaction memory mintTx = _parseTransaction("/test/transactions/mint.bin");
-        Transaction memory transferTx = _parseTransaction("/test/transactions/transfer.bin");
+        {
+            Transaction memory mintTx = _parseTransaction("/test/transactions/mint.bin");
+            ProtocolAdapter(_pa).execute(mintTx);
 
-        ProtocolAdapter(_pa).execute(mintTx);
+            assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
+            assertEq(_erc20.balanceOf(_fwd), fwdBalanceBefore + _TRANSFER_AMOUNT);
+        }
 
-        assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
-        assertEq(_erc20.balanceOf(_fwd), fwdBalanceBefore + _TRANSFER_AMOUNT);
-
-        ProtocolAdapter(_pa).execute(transferTx);
-        NullifierSet(_pa).contains({
-            nullifier: transferTx.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
-        });
+        {
+            Transaction memory transferTx = _parseTransaction("/test/transactions/transfer.bin");
+            ProtocolAdapter(_pa).execute(transferTx);
+            NullifierSet(_pa).contains({
+                nullifier: transferTx.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier
+            });
+        }
     }
 
     function testFuzz_enum_panics(uint8 v) public {
