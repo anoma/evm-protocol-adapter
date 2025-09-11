@@ -11,7 +11,6 @@ import {stdError} from "forge-std/Test.sol";
 import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {Transaction} from "../src/Types.sol";
 import {ERC20Example} from "../test/examples/ERC20.e.sol";
 
@@ -20,9 +19,6 @@ import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 import {TransactionParsingBaseTest} from "./transactions/TransactionParsingBase.t.sol";
 
 contract ERC20ForwarderTest is TransactionParsingBaseTest {
-    uint256 internal constant _ALICE_PRIVATE_KEY =
-        uint256(bytes32(0x97ecae11e1bd9b504ff977ae3815599331c6b0757ee4af3140fe616adb19ae45)); //0xA11CE;
-
     uint128 internal constant _TRANSFER_AMOUNT = 1000;
     bytes internal constant _EXPECTED_OUTPUT = "";
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(uint256(0));
@@ -31,7 +27,9 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
         bytes32(0xbb4288ba7c999846ac8833aedeffd0a227d91a3fa42c213e7f3a4f7f9f7efc72);
 
     address internal _pa;
+
     address internal _alice;
+    uint256 internal _alicePrivateKey;
     address internal _fwd;
     IPermit2 internal _permit2;
     ERC20Example internal _erc20;
@@ -44,8 +42,10 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
     error InvalidNonce();
 
     function setUp() public {
+        _alicePrivateKey = uint256(vm.envBytes32("PRIVATE_KEY"));
+        _alice = vm.addr(_alicePrivateKey);
+
         vm.selectFork(vm.createFork("sepolia"));
-        _alice = vm.addr(_ALICE_PRIVATE_KEY);
 
         // Deploy token and mint for alice
         _erc20 = new ERC20Example();
@@ -77,8 +77,6 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
 
     function test_execute_mint_transfer_burn() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
-        assertEq(_alice, address(0x79a7Aea85709D882F2075ee36Cb896B7E393576e));
-
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
 
@@ -166,7 +164,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
             bytes32 witness = _ACTION_TREE_ROOT;
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
-                privateKey: _ALICE_PRIVATE_KEY,
+                privateKey: _alicePrivateKey,
                 spender: _fwd,
                 witness: witness
             });
@@ -191,7 +189,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
             bytes32 witness = _ACTION_TREE_ROOT;
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
-                privateKey: _ALICE_PRIVATE_KEY,
+                privateKey: _alicePrivateKey,
                 spender: _fwd,
                 witness: witness
             });
@@ -219,7 +217,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
             bytes32 witness = _ACTION_TREE_ROOT;
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
-                privateKey: _ALICE_PRIVATE_KEY,
+                privateKey: _alicePrivateKey,
                 spender: _fwd,
                 witness: witness
             });
@@ -255,7 +253,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
             bytes32 witness = _ACTION_TREE_ROOT;
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: permit,
-                privateKey: _ALICE_PRIVATE_KEY,
+                privateKey: _alicePrivateKey,
                 spender: _fwd,
                 witness: witness
             });
@@ -285,7 +283,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
             bytes32 witness = _ACTION_TREE_ROOT;
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
-                privateKey: _ALICE_PRIVATE_KEY,
+                privateKey: _alicePrivateKey,
                 spender: _fwd,
                 witness: witness
             });
@@ -314,7 +312,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
             bytes32 witness = _ACTION_TREE_ROOT;
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
-                privateKey: _ALICE_PRIVATE_KEY,
+                privateKey: _alicePrivateKey,
                 spender: _fwd,
                 witness: witness
             });

@@ -1,8 +1,6 @@
 //! Example of how to transfer ERC20 tokens from one account to another using a signed permit.
 
-use alloy::primitives::{
-    bytes, keccak256, Address, Bytes, FixedBytes, Signature, B256, U256,
-};
+use alloy::primitives::{bytes, keccak256, Address, Bytes, FixedBytes, Signature, B256, U256};
 use alloy::signers::{local::PrivateKeySigner, Signer};
 use alloy::sol;
 use alloy::sol_types::SolValue;
@@ -41,8 +39,6 @@ pub async fn permit_witness_transfer_from_signature(
     let digest =
         permit_witness_transfer_from_digest(erc20, amount, nonce, deadline, spender, witness);
 
-    println!("digest: {:?}", digest);
-
     signer.sign_hash(&digest).await.unwrap()
 }
 
@@ -62,31 +58,26 @@ pub fn permit_witness_transfer_from_digest(
         nonce,
         deadline,
     };
+
     let witness_type_string = "bytes32 witness";
-
-    let hash1 = keccak256(
-        (
-            PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB,
-            witness_type_string,
-        )
-            .abi_encode_packed(),
-    );
-    println!("hash1: {:?}", hash1);
-
-    let hash2 = keccak256(
-        (
-            token_permissions_typehash(),
-            permit.permitted.token,
-            permit.permitted.amount,
-        )
-            .abi_encode_params(),
-    );
-    println!("hash2: {:?}", hash2);
 
     let struct_hash: B256 = keccak256(
         (
-            hash1,
-            hash2,
+            keccak256(
+                (
+                    PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB,
+                    witness_type_string,
+                )
+                    .abi_encode_packed(),
+            ),
+            keccak256(
+                (
+                    token_permissions_typehash(),
+                    permit.permitted.token,
+                    permit.permitted.amount,
+                )
+                    .abi_encode_params(),
+            ),
             spender,
             permit.nonce,
             permit.deadline,
@@ -95,56 +86,8 @@ pub fn permit_witness_transfer_from_digest(
             .abi_encode_params(),
     );
 
-    println!("struct_hash: {:?}", struct_hash);
-
     let prefix = FixedBytes::<2>::from(&[0x19, 0x01]);
-    println!("prefix: {}", &prefix);
     let data = (&prefix, PERMIT2_DOMAIN_SEPARATOR_SEPOLIA, struct_hash).abi_encode_packed();
 
-    println!("msg before digest: {:?}", hex::encode(&data));
-
     keccak256(data)
-}
-
-#[cfg(test)]
-mod tests {
-
-    /*
-    #[test]
-    fn digest_is_as_expected() {
-        let setup = default_values();
-
-        let digest = permit_witness_transfer_from_digest(
-            setup.erc20,
-            setup.amount,
-            setup.nonce,
-            setup.deadline,
-            setup.spender,
-            setup.witness,
-        );
-
-        println!("PERMIT2_DOMAIN_SEPARATOR_SEPOLIA {PERMIT2_DOMAIN_SEPARATOR_SEPOLIA}");
-        println!("Digest {digest:?}");
-    }
-
-    #[tokio::test]
-    async fn sig_is_as_expected() {
-        let setup = default_values();
-
-        let sig = permit_witness_transfer_from_signature(
-            &setup.signer,
-            setup.erc20,
-            setup.amount,
-            setup.nonce,
-            setup.deadline,
-            setup.spender,
-            setup.witness,
-        )
-        .await;
-
-        println!("{:?},{:?}", B256::from(sig.r()), B256::from(sig.s()));
-
-        println!("{sig:?}");
-    }
-     */
 }
