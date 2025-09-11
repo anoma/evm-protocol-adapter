@@ -1,12 +1,12 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
 [profile.default]
 fs_permissions = [
-    { access = "read", path = "./test/benchmark/test_tx01.bin" },
-    { access = "read", path = "./test/benchmark/test_tx05.bin" },
-    { access = "read", path = "./test/benchmark/test_tx10.bin" },
-    { access = "read", path = "./test/benchmark/test_tx15.bin" },
-    { access = "read", path = "./test/mint.bin" },
-    { access = "read", path = "./test/transfer.bin" },
+    { access = "read", path = "./test/transactions/test_tx01.bin" },
+    { access = "read", path = "./test/transactions/test_tx05.bin" },
+    { access = "read", path = "./test/transactions/test_tx10.bin" },
+    { access = "read", path = "./test/transactions/test_tx15.bin" },
+    { access = "read", path = "./test/transactions/mint.bin" },
+    { access = "read", path = "./test/transactions/transfer.bin" },
 ]
 
 

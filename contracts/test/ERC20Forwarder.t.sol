@@ -14,18 +14,17 @@ import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
+import {Transaction} from "../src/Types.sol";
+import {SHA256} from "../src/libs/SHA256.sol";
 
 import {ERC20Example} from "../test/examples/ERC20.e.sol";
 
 import {DeployPermit2} from "./script/DeployPermit2.s.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
-import {BenchmarkData} from "./benchmark/Benchmark.t.sol";
-import {Transaction} from "../src/Types.sol";
+import {TransactionParsingBaseTest} from "./transactions/TransactionParsingBase.t.sol";
 
-import {SHA256} from "../src/libs/SHA256.sol";
-
-contract ERC20ForwarderTest is BenchmarkData {
+contract ERC20ForwarderTest is TransactionParsingBaseTest {
     uint256 internal constant _ALICE_PRIVATE_KEY =
         uint256(bytes32(0x97ecae11e1bd9b504ff977ae3815599331c6b0757ee4af3140fe616adb19ae45)); //0xA11CE;
 
@@ -33,7 +32,8 @@ contract ERC20ForwarderTest is BenchmarkData {
     bytes internal constant _EXPECTED_OUTPUT = "";
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(uint256(0));
 
-    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(type(uint256).max);
+    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF =
+        bytes32(0xbb4288ba7c999846ac8833aedeffd0a227d91a3fa42c213e7f3a4f7f9f7efc72);
 
     address internal _pa;
     address internal _alice;
@@ -69,7 +69,7 @@ contract ERC20ForwarderTest is BenchmarkData {
             new ERC20Forwarder({
                 protocolAdapter: _pa,
                 emergencyCommittee: address(uint160(1)),
-                calldataCarrierLogicRef: bytes32(type(uint256).max)
+                calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
             })
         );
 
@@ -83,25 +83,17 @@ contract ERC20ForwarderTest is BenchmarkData {
     function test_execute_simple_mint_and_transfer() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
         assertEq(_alice, address(0x79a7Aea85709D882F2075ee36Cb896B7E393576e));
+
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
 
         uint256 aliceBalanceBefore = _erc20.balanceOf(_alice);
         uint256 fwdBalanceBefore = _erc20.balanceOf(_fwd);
 
-        Transaction memory mint_tx = _parse("/test/mint.bin");
-        console.log("mint tx: created cm");
-        bytes32 minted_cm = mint_tx.actions[0].complianceVerifierInputs[0].instance.created.commitment;
-        console.logBytes32(minted_cm);
-
-        console.log("Expected root");
-        console.logBytes32(SHA256.hash(minted_cm, SHA256.EMPTY_HASH));
-
-        Transaction memory transfer_tx = _parse("/test/transfer.bin");
+        Transaction memory mint_tx = _parseTransaction("/test/transactions/mint.bin");
+        Transaction memory transfer_tx = _parseTransaction("/test/transactions/transfer.bin");
 
         ProtocolAdapter(_pa).execute(mint_tx);
-        console.log("Latest root");
-        console.logBytes32(ProtocolAdapter(_pa).latestRoot());
 
         assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
         assertEq(_erc20.balanceOf(_fwd), fwdBalanceBefore + _TRANSFER_AMOUNT);
@@ -327,100 +319,6 @@ contract ERC20ForwarderTest is BenchmarkData {
         ERC20Forwarder(_fwd).forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
-    function test_example_digest() public {
-        address token = address(_erc20);
-        uint256 amount = 1000;
-        uint256 nonce = 0;
-        uint256 deadline = 2000;
-        address spender = address(_fwd);
-        bytes32 witness = bytes32(0);
-
-        console.log("token", token);
-        console.log("amount", amount);
-        console.log("nonce", nonce);
-        console.log("deadline", deadline);
-        console.log("spender", spender);
-
-        bytes32 digest = _computePermitWitnessTransferFromDigest({
-            permit: ISignatureTransfer.PermitTransferFrom({
-                permitted: ISignatureTransfer.TokenPermissions({token: token, amount: amount}),
-                nonce: nonce,
-                deadline: deadline
-            }),
-            spender: spender,
-            witness: witness
-        });
-
-        console.log("\nDigest");
-
-        console.logBytes32(digest);
-    }
-
-    function test_decode_external_blob() public {
-        address a = address(type(uint160).max);
-        bytes memory b = hex"ab";
-        bytes memory c = hex"cd";
-
-        console.logBytes(abi.encode(a, b, c));
-    }
-
-    function test_example_action_tree_root() public {
-        bytes32 actionTreeRoot = sha256(
-            abi.encode(
-                bytes32(0x15a0677d564d21e3789ce6e5e574c6f611d9af4b31aeebb0f527bd23c5d0ac09),
-                bytes32(0xa01386b0688a3100460fcf370cf509172c62f3b4ef1522a31dbca4640e47f63a)
-            )
-        );
-        console.logBytes32(actionTreeRoot);
-        assertEq(actionTreeRoot, bytes32(0x9524e8c0c71f5a53aa07d514cd508ac68a310c86809cd22f9c8a62cecd848e57));
-    }
-
-    function test_example_sig() public {
-        uint256 privateKey = _ALICE_PRIVATE_KEY;
-        address signer = vm.addr(_ALICE_PRIVATE_KEY);
-        assertEq(signer, address(0x79a7Aea85709D882F2075ee36Cb896B7E393576e));
-
-        address token = address(_erc20);
-        uint256 amount = _TRANSFER_AMOUNT;
-        uint256 nonce = 0;
-        uint256 deadline = 1789040701;
-        address spender = address(_fwd);
-        bytes32 witness = bytes32(0x88492b7b94468a0d3e0d1b7d35c0561a75855634323708555263eb1ed5ec5bbe);
-
-        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
-            permitted: ISignatureTransfer.TokenPermissions({token: token, amount: amount}),
-            nonce: nonce,
-            deadline: deadline
-        });
-
-        bytes32 digest =
-            _computePermitWitnessTransferFromDigest({permit: permit, spender: address(_fwd), witness: witness});
-
-        console.log("\nDigest:");
-        console.logBytes32(digest);
-
-        (uint8 v, bytes32 r, bytes32 s) = _createPermitWitnessTransferFromSignatureRsv({
-            permit: permit,
-            spender: address(_fwd),
-            privateKey: _ALICE_PRIVATE_KEY,
-            witness: witness
-        });
-        console.log("computed sig:");
-        address recoveredSigner = ECDSA.recover({hash: digest, r: r, s: s, v: v});
-        assertEq(recoveredSigner, signer);
-
-        bool parityRust = false;
-        bytes32 rRust = bytes32(uint256(92672505740713331757462010954000961668090421287713200621916730223694616252673));
-        bytes32 sRust = bytes32(uint256(26901149672580985869630388208433085165244229633129207940712809514459034556650));
-        uint8 vRust = parityRust ? 28 : 27;
-
-        address recoveredSignerRust = ECDSA.recover({hash: digest, r: rRust, s: sRust, v: vRust});
-        assertEq(recoveredSignerRust, signer);
-
-        console.log("expected sig:");
-        console.logBytes(abi.encodePacked(r, s, v));
-    }
-
     function _createPermitWitnessTransferFromSignatureRsv(
         ISignatureTransfer.PermitTransferFrom memory permit,
         address spender,
@@ -428,14 +326,8 @@ contract ERC20ForwarderTest is BenchmarkData {
         bytes32 witness
     ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
         bytes32 digest = _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: witness});
-        console.logBytes32(digest);
 
         (v, r, s) = vm.sign(privateKey, digest);
-
-        console.log("r,s,v:");
-        console.logBytes32(r);
-        console.logBytes32(s);
-        console.log(v);
     }
 
     function _createPermitWitnessTransferFromSignature(
@@ -468,26 +360,14 @@ contract ERC20ForwarderTest is BenchmarkData {
 
         bytes32 hash1 =
             keccak256(abi.encodePacked(PermitHash._PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB, witnessTypeString));
-        console.log("hash1:");
-        console.logBytes32(hash1);
 
         bytes32 hash2 = keccak256(
             abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted.token, permit.permitted.amount)
         );
-        console.log("hash2:");
-        console.logBytes32(hash2);
 
         bytes32 structHash = keccak256(abi.encode(hash1, hash2, spender, permit.nonce, permit.deadline, witness));
-        console.log("structHash:");
-        console.logBytes32(structHash);
-
-        console.log("DOMAIN_SEPARATOR:");
-        console.logBytes32(_permit2.DOMAIN_SEPARATOR());
 
         bytes memory msgdata = abi.encodePacked("\x19\x01", _permit2.DOMAIN_SEPARATOR(), structHash);
-
-        console.log("msg before digest:");
-        console.logBytes(msgdata);
 
         digest = keccak256(msgdata);
     }

@@ -22,9 +22,9 @@ abstract contract ForwarderBase is IForwarder {
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
     /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef) {
-        // ! TODO // if (protocolAdapter == address(0) || calldataCarrierLogicRef == bytes32(0)) {
-        // ! TODO //     revert ZeroNotAllowed();
-        // ! TODO // }
+        if (protocolAdapter == address(0) || calldataCarrierLogicRef == bytes32(0)) {
+            revert ZeroNotAllowed();
+        }
 
         _PROTOCOL_ADAPTER = protocolAdapter;
 
@@ -33,9 +33,9 @@ abstract contract ForwarderBase is IForwarder {
 
     /// @inheritdoc IForwarder
     function forwardCall(bytes32 logicRef, bytes calldata input) external returns (bytes memory output) {
-        // ! TODO //_checkCaller(_PROTOCOL_ADAPTER);
+        _checkCaller(_PROTOCOL_ADAPTER);
 
-        // ! TODO // _checkLogicRef(logicRef);
+        _checkLogicRef(logicRef);
 
         output = _forwardCall(input);
     }

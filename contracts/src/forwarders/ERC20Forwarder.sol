@@ -80,17 +80,6 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                 bytes memory signature
             ) = abi.decode(input, (CallType, address, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
 
-            console.log("from", from);
-
-            console.log("permit.permitted.token", permit.permitted.token);
-            console.log("permit.permitted.amount", permit.permitted.amount);
-            console.log("permit.nonce", permit.nonce);
-            console.log("permit.deadline", permit.deadline);
-            console.log("witness");
-            console.logBytes32(witness);
-            console.log("signature");
-            console.logBytes(signature);
-
             if (permit.permitted.amount > type(uint128).max) {
                 revert TypeOverflow({limit: type(uint128).max, actual: permit.permitted.amount});
             }
