@@ -13,7 +13,7 @@ import {Compliance} from "../../src/proving/Compliance.sol";
 import {Delta} from "../../src/proving/Delta.sol";
 import {Logic} from "../../src/proving/Logic.sol";
 import {Transaction, Action, Resource} from "../../src/Types.sol";
-import {DeltaProofTest} from "../proofs/DeltaProof.t.sol";
+import {DeltaProofTest, DeltaProofGen} from "../proofs/DeltaProof.t.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
@@ -51,7 +51,7 @@ library TxGen {
         DeltaProofTest deltaProofTest = new DeltaProofTest();
         // Construct the delta for consumption based on kind and quantity
         uint256[2] memory unitDelta = deltaProofTest.generateDeltaInstance(
-            DeltaProofTest.DeltaInstanceInputs({
+            DeltaProofGen.DeltaInstanceInputs({
                 kind: uint256(ComputableComponents.kind(consumed.logicRef, consumed.labelRef)),
                 quantity: -int256(uint256(consumed.quantity)),
                 rcv: 1
@@ -61,7 +61,7 @@ library TxGen {
         unitDelta = Delta.add(
             unitDelta,
             deltaProofTest.generateDeltaInstance(
-                DeltaProofTest.DeltaInstanceInputs({
+                DeltaProofGen.DeltaInstanceInputs({
                     kind: uint256(ComputableComponents.kind(created.logicRef, created.labelRef)),
                     quantity: int256(uint256(created.quantity)),
                     rcv: 1
@@ -163,6 +163,7 @@ library TxGen {
                     applicationPayload: new Logic.ExpirableBlob[](0)
                 })
             });
+
             updatedNonce = bytes32(uint256(updatedNonce) + 1);
             created[i] = ResourceAndAppData({
                 resource: TxGen.mockResource({
@@ -209,7 +210,7 @@ library TxGen {
         bytes32[] memory tags = TxGen.collectTags(actions);
         // Generate a proof over the tags where rcv value is the expected total
         bytes memory proof = deltaProofTest.generateDeltaProof(
-            DeltaProofTest.DeltaProofInputs({rcv: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)})
+            DeltaProofGen.DeltaProofInputs({rcv: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)})
         );
         txn = Transaction({actions: actions, deltaProof: proof});
     }
@@ -231,7 +232,7 @@ library TxGen {
         bytes32[] memory tags = TxGen.collectTags(actions);
         // Generate a proof over the tags where rcv value is the expected total
         bytes memory proof = deltaProofTest.generateDeltaProof(
-            DeltaProofTest.DeltaProofInputs({rcv: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)})
+            DeltaProofGen.DeltaProofInputs({rcv: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)})
         );
         txn = Transaction({actions: actions, deltaProof: proof});
     }
