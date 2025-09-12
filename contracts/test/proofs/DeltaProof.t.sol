@@ -35,10 +35,9 @@ contract DeltaProofGen is Test {
 
     /// @notice Generates a transaction delta proof by signing verifyingKey with
     /// rcv, and a delta instance by computing a(kind)^quantity * b^rcv
-    function generateDeltaInstance(DeltaInstanceInputs memory deltaInputs)
-        public
-        returns (uint256[2] memory instance)
-    {
+    function generateDeltaInstance(
+        DeltaInstanceInputs memory deltaInputs // TODO! Rename
+    ) public returns (uint256[2] memory instance) {
         if (deltaInputs.rcv == 0) {
             revert RcvZero();
         }
@@ -51,12 +50,15 @@ contract DeltaProofGen is Test {
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
 
+        // TODO remove?
+        // vm.assume(preDelta != 0);
         if (preDelta == 0) {
             revert PreDeltaZero();
         }
 
         // Derive address and public key from transaction delta
         VmSafe.Wallet memory valueWallet = vm.createWallet(preDelta);
+
         // Extract the transaction delta from the wallet
         instance[0] = valueWallet.publicKeyX;
         instance[1] = valueWallet.publicKeyY;
@@ -130,6 +132,21 @@ contract DeltaProofGen is Test {
 
 contract DeltaProofTest is DeltaProofGen {
     using Delta for uint256[2];
+
+    function _boundInstance(uint256 kind, int256 quantity, uint256 rcv)
+        internal
+        pure
+        returns (uint256 boundKind, int256 boundQuantity, uint256 boundRcv)
+    {
+        boundKind = bound(kind, 1, type(uint256).max); // bound(kind, 1, SECP256K1_ORDER - 1); ?
+        boundRcv = bound(rcv, 1, SECP256K1_ORDER - 1);
+
+        uint256 canonicalizedQuantity = _canonicalizeQuantity(quantity);
+        uint256 prod = mulmod(boundKind, canonicalizedQuantity, SECP256K1_ORDER);
+        uint256 preDelta = addmod(prod, boundRcv, SECP256K1_ORDER);
+
+        vm.assume(preDelta != 0);
+    }
 
     /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
     function testFuzz_verify_delta_succeeds(uint256 kind, uint256 rcv, bytes32 verifyingKey) public {
@@ -236,6 +253,7 @@ contract DeltaProofTest is DeltaProofGen {
         bytes32 verifyingKey2
     ) public {
         kind = bound(kind, 1, SECP256K1_ORDER - 1);
+
         vm.assume(verifyingKey1 != verifyingKey2);
 
         DeltaProofInputs memory proofInputs = DeltaProofInputs({rcv: rcv, verifyingKey: verifyingKey1});
@@ -261,11 +279,10 @@ contract DeltaProofTest is DeltaProofGen {
                 mstore(instances, newLen)
             }
             for (uint256 i = 0; i < instances.length; ++i) {
-                instances[i] = DeltaInstanceInputs({
-                    kind: bound(instances[i].kind, 1, SECP256K1_ORDER - 1),
-                    quantity: instances[i].quantity,
-                    rcv: bound(instances[i].rcv, 1, SECP256K1_ORDER - 1)
-                });
+                (uint256 boundKind, int256 boundQuantity, uint256 boundRcv) =
+                    _boundInstance({kind: instances[i].kind, quantity: instances[i].quantity, rcv: instances[i].rcv});
+
+                instances[i] = DeltaInstanceInputs({kind: boundKind, quantity: boundQuantity, rcv: boundRcv});
             }
         }
 
