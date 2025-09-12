@@ -156,7 +156,7 @@ contract DeltaProofTest is DeltaProofGen {
     }
 
     /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
-    function test_verify_delta_succeeds(uint256 kind, uint256 rcv, bytes32 verifyingKey) public {
+    function testFuzz_verify_delta_succeeds(uint256 kind, uint256 rcv, bytes32 verifyingKey) public {
         vm.assume(kind != 0);
         vm.assume(rcv != 0);
 
@@ -170,7 +170,7 @@ contract DeltaProofTest is DeltaProofGen {
     }
 
     /// @notice Test that Delta.add correctly adds deltas
-    function test_add_delta_correctness(
+    function testFuzz_add_delta_correctness(
         DeltaInstanceInputs memory deltaInputs1,
         DeltaInstanceInputs memory deltaInputs2
     ) public {
@@ -209,7 +209,7 @@ contract DeltaProofTest is DeltaProofGen {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails1(
+    function testFuzz_verify_inconsistent_delta_fails1(
         DeltaInstanceInputs memory deltaInstanceInputs,
         DeltaProofInputs memory deltaProofInputs
     ) public {
@@ -228,7 +228,7 @@ contract DeltaProofTest is DeltaProofGen {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails2(
+    function testFuzz_verify_inconsistent_delta_fails2(
         DeltaProofInputs memory deltaInputs1,
         DeltaInstanceInputs memory deltaInputs2
     ) public {
@@ -244,7 +244,7 @@ contract DeltaProofTest is DeltaProofGen {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
-    function test_verify_inconsistent_delta_fails3(
+    function testFuzz_verify_inconsistent_delta_fails3(
         DeltaProofInputs memory deltaInputs1,
         DeltaInstanceInputs memory deltaInputs2,
         bytes32 verifyingKey
@@ -262,7 +262,7 @@ contract DeltaProofTest is DeltaProofGen {
     }
 
     /// @notice Check that a balanced transaction does pass verification
-    function test_verify_balanced_delta_succeeds(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey)
+    function testFuzz_verify_balanced_delta_succeeds(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey)
         public
     {
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
@@ -288,7 +288,7 @@ contract DeltaProofTest is DeltaProofGen {
     }
 
     /// @notice Check that an imbalanced transaction fails verification
-    function test_verify_imbalanced_delta_fails(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey)
+    function testFuzz_verify_imbalanced_delta_fails(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey)
         public
     {
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
