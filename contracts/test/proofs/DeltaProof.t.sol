@@ -207,7 +207,7 @@ contract DeltaProofTest is DeltaProofGen {
         vm.assume(_canonicalizeQuantity(quantity) != 0);
         rcv = bound(rcv, 1, type(uint256).max);
 
-        // Generate a delta proof and instance from the above tags and preimage
+        // Generate a delta proof and instance from the above tags and preimage // TODO: what tags?
         uint256[2] memory instance =
             generateDeltaInstance({deltaInputs: DeltaInstanceInputs({kind: kind, quantity: quantity, rcv: rcv})});
         bytes memory proof = generateDeltaProof({deltaInputs: DeltaProofInputs({rcv: rcv, verifyingKey: verifyingKey})});
@@ -237,23 +237,24 @@ contract DeltaProofTest is DeltaProofGen {
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
     function testFuzz_verify_inconsistent_delta_fails3(
-        DeltaProofInputs memory deltaInputs1,
-        DeltaInstanceInputs memory deltaInputs2,
-        bytes32 verifyingKey
+        uint256 kind,
+        uint256 rcv,
+        bytes32 verifyingKey1,
+        bytes32 verifyingKey2
     ) public {
-        deltaInputs2.rcv = deltaInputs1.rcv;
-        deltaInputs2.quantity = 0;
-
         // Filter out inadmissible private keys or equal keys
-        vm.assume(deltaInputs1.verifyingKey != verifyingKey);
+        vm.assume(verifyingKey1 != verifyingKey2);
+
+        DeltaProofInputs memory proofInputs = DeltaProofInputs({rcv: rcv, verifyingKey: verifyingKey1});
+        DeltaInstanceInputs memory instanceInputs = DeltaInstanceInputs({kind: kind, quantity: 0, rcv: rcv});
 
         // Generate a delta proof and instance from the above tags and preimage
-        bytes memory proof1 = generateDeltaProof(deltaInputs1);
-        uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
+        bytes memory proof = generateDeltaProof(proofInputs);
+        uint256[2] memory instance = generateDeltaInstance(instanceInputs);
 
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector); // TODO: Can we use a more explicit revert?
-        Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey});
+        Delta.verify({proof: proof, instance: instance, verifyingKey: verifyingKey2});
     }
 
     /// @notice Check that a balanced transaction does pass verification
