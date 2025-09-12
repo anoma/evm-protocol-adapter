@@ -39,8 +39,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
 
-    uint256 internal _txCount;
-
     error ZeroNotAllowed();
 
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
@@ -156,7 +154,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         }
 
         // Emit the event containing the transaction and new root
-        emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
+        emit TransactionExecuted({tags: tags, newRoot: newRoot});
     }
     // slither-disable-end reentrancy-no-eth
 
@@ -236,6 +234,44 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // the externalPayload and trying to process the first entry
         if (input.appData.externalPayload.length != 0) {
             _processForwarderCalls(input, consumed);
+        }
+
+        _emitBlobs(input);
+    }
+
+    /// @notice Emits app data blobs.
+    /// @param input The logic verifier input containing the app data.
+    function _emitBlobs(Logic.VerifierInput calldata input) internal {
+        Logic.ExpirableBlob[] calldata payload = input.appData.resourcePayload;
+        uint256 n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ResourcePayload({tag: input.tag, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.discoveryPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit DiscoveryPayload({tag: input.tag, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.externalPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ExternalPayload({tag: input.tag, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.applicationPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ApplicationPayload({tag: input.tag, blob: payload[i].blob});
+            }
         }
     }
 

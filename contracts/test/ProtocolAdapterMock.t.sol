@@ -15,7 +15,7 @@ import {RiscZeroUtils} from "../src/libs/RiscZeroUtils.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Logic} from "../src/proving/Logic.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
-import {Transaction, Resource} from "../src/Types.sol";
+import {Transaction, Action, Resource} from "../src/Types.sol";
 
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
 import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
@@ -29,6 +29,7 @@ contract ProtocolAdapterMockTest is Test {
     using RiscZeroUtils for Logic.VerifierInput;
     using TxGen for RiscZeroMockVerifier;
     using TxGen for Transaction;
+    using TxGen for Action[];
 
     bytes32 internal constant _CARRIER_LOGIC_REF = bytes32(uint256(123));
 
@@ -67,7 +68,7 @@ contract ProtocolAdapterMockTest is Test {
         bytes32 expectedRoot = cms.computeRoot({treeDepth: MerkleTree.computeMinimalTreeDepth(cms.length) + 1});
 
         vm.expectEmit(address(_mockPa));
-        emit IProtocolAdapter.TransactionExecuted({id: 0, transaction: txn, newRoot: expectedRoot});
+        emit IProtocolAdapter.TransactionExecuted({tags: txn.actions.collectTags(), newRoot: expectedRoot});
         _mockPa.execute(txn);
     }
 
