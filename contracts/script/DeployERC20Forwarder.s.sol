@@ -5,7 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
-contract DeployERC20Wrapper is Script {
+contract DeployERC20Forwarder is Script {
     ProtocolAdapter internal constant _PROTOCOL_ADAPTER = ProtocolAdapter(address(0));
 
     address internal constant _EMERGENCY_COMMITTEE = address(0);
@@ -22,3 +22,4 @@ contract DeployERC20Wrapper is Script {
         vm.stopBroadcast();
     }
 }
+// forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder --rpc-url sepolia --broadcast --verify --slow --account dev-wallet --resume
