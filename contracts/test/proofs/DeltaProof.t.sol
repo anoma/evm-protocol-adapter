@@ -37,7 +37,7 @@ contract DeltaProofTest is Test {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         vm.assume(deltaInputs.rcv != 0);
         vm.assume(deltaInputs.kind != 0);
-        uint256 quantity = _canonize_quantity(deltaInputs.quantity);
+        uint256 quantity = _canonicalize_quantity(deltaInputs.quantity);
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
         vm.assume(preDelta != 0);
@@ -107,7 +107,7 @@ contract DeltaProofTest is Test {
         // Filter out inadmissible private keys or equal keys
         deltaProofInputs.rcv = deltaInstanceInputs.rcv;
         vm.assume(deltaInstanceInputs.kind % SECP256K1_ORDER != 0);
-        vm.assume(canonize_quantity(deltaInstanceInputs.quantity) != 0);
+        vm.assume(_canonicalize_quantity(deltaInstanceInputs.quantity) != 0);
         // Generate a delta proof and instance from the above tags and preimage
         uint256[2] memory instance = generateDeltaInstance(deltaInstanceInputs);
         bytes memory proof = generateDeltaProof(deltaProofInputs);
@@ -187,7 +187,7 @@ contract DeltaProofTest is Test {
         // Accumulate the total quantity and randomness commitment
         (DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
         // Assume that the deltas are imbalanced
-        vm.assume(_canonize_quantity(quantity) != 0);
+        vm.assume(_canonicalize_quantity(quantity) != 0);
         for (uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
             uint256[2] memory instance = generateDeltaInstance(wrappedDeltaInputs[i]);
@@ -267,7 +267,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Convert a int256 exponent to an equivalent uin256 assuming an order of SECP256K1_ORDER
-    function _canonize_quantity(int256 quantity) internal pure returns (uint256 quantityu) {
+    function _canonicalize_quantity(int256 quantity) internal pure returns (uint256 quantityu) {
         // If positive, leave the number unchanged
         quantityu =
             quantity >= 0 ? uint256(quantity) : (SECP256K1_ORDER - 1 - (uint256(-(quantity + 1)) % SECP256K1_ORDER));
