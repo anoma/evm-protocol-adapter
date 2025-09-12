@@ -35,12 +35,9 @@ contract DeltaProofGen is Test {
 
     /// @notice Generates a transaction delta proof by signing verifyingKey with
     /// rcv, and a delta instance by computing a(kind)^quantity * b^rcv
-    function generateDeltaInstance(DeltaInstanceInputs memory deltaInputs)
-        public
-        returns (uint256[2] memory instance)
-    {
-        deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER; // TODO! move out of this function
-
+    function generateDeltaInstance(
+        DeltaInstanceInputs memory deltaInputs // TODO! Rename
+    ) public returns (uint256[2] memory instance) {
         // TODO remove?
         vm.assume(deltaInputs.rcv != 0);
         if (deltaInputs.rcv == 0) {
@@ -147,21 +144,29 @@ contract DeltaProofGen is Test {
 }
 
 contract DeltaProofTest is DeltaProofGen {
-    /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
-    function test_verify_delta_succeeds(
-        DeltaInstanceInputs memory deltaInstanceInputs,
-        DeltaProofInputs memory deltaProofInputs
-    ) public {
-        // Generate a delta proof and instance from the above tags and preimage
-        deltaInstanceInputs.quantity = 0;
-        deltaProofInputs.rcv = deltaInstanceInputs.rcv;
+    function _boundDeltaInstances(DeltaInstanceInputs memory input)
+        internal
+        pure
+        returns (DeltaInstanceInputs memory boundOutput)
+    {
+        vm.assume(input.rcv != 0);
+        vm.assume(input.kind != 0);
 
-        vm.assume(deltaInstanceInputs.rcv != 0);
-        vm.assume(deltaInstanceInputs.kind != 0);
-        uint256[2] memory instance = generateDeltaInstance(deltaInstanceInputs);
-        bytes memory proof = generateDeltaProof(deltaProofInputs);
+        boundOutput.rcv = input.rcv % SECP256K1_ORDER;
+    }
+
+    /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
+    function test_verify_delta_succeeds(uint256 kind, uint256 rcv, bytes32 verifyingKey) public {
+        vm.assume(kind != 0);
+        vm.assume(rcv != 0);
+
+        uint256[2] memory transactionDelta =
+            generateDeltaInstance({deltaInputs: DeltaInstanceInputs({kind: kind, quantity: 0, rcv: rcv})});
+
+        bytes memory proof = generateDeltaProof({deltaInputs: DeltaProofInputs({rcv: rcv, verifyingKey: verifyingKey})});
+
         // Verify that the generated delta proof is valid
-        Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
+        Delta.verify({proof: proof, instance: transactionDelta, verifyingKey: verifyingKey});
     }
 
     /// @notice Test that Delta.add correctly adds deltas
