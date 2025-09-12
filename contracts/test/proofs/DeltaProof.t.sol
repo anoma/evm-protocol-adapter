@@ -70,9 +70,11 @@ contract DeltaProofGen is Test {
     function generateDeltaProof(DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         vm.assume(deltaInputs.rcv != 0);
+
         // Compute the components of the transaction delta proof
         VmSafe.Wallet memory randomWallet = vm.createWallet(deltaInputs.rcv);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(randomWallet, deltaInputs.verifyingKey);
+
         // Finally compute the transaction delta proof
         proof = abi.encodePacked(r, s, v);
     }
@@ -144,21 +146,10 @@ contract DeltaProofGen is Test {
 }
 
 contract DeltaProofTest is DeltaProofGen {
-    function _boundDeltaInstances(DeltaInstanceInputs memory input)
-        internal
-        pure
-        returns (DeltaInstanceInputs memory boundOutput)
-    {
-        vm.assume(input.rcv != 0);
-        vm.assume(input.kind != 0);
-
-        boundOutput.rcv = input.rcv % SECP256K1_ORDER;
-    }
-
     /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
     function testFuzz_verify_delta_succeeds(uint256 kind, uint256 rcv, bytes32 verifyingKey) public {
-        vm.assume(kind != 0);
-        vm.assume(rcv != 0);
+        kind = bound(kind, 1, type(uint256).max); // vm.assume(input.kind != 0);
+        rcv = bound(rcv, 1, SECP256K1_ORDER - 1); // vm.assume(input.rcv != 0);
 
         uint256[2] memory transactionDelta =
             generateDeltaInstance({deltaInputs: DeltaInstanceInputs({kind: kind, quantity: 0, rcv: rcv})});
