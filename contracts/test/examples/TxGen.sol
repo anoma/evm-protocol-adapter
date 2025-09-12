@@ -13,6 +13,7 @@ import {Compliance} from "../../src/proving/Compliance.sol";
 import {Delta} from "../../src/proving/Delta.sol";
 import {Logic} from "../../src/proving/Logic.sol";
 import {Transaction, Action, Resource} from "../../src/Types.sol";
+import {DeltaProofTest} from "../proofs/DeltaProof.t.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
@@ -43,18 +44,23 @@ library TxGen {
         bytes32 commitmentTreeRoot, // historical root
         Resource memory consumed,
         Resource memory created
-    ) internal view returns (Compliance.VerifierInput memory unit) {
+    ) internal returns (Compliance.VerifierInput memory unit) {
         bytes32 nf = consumed.nullifier({nullifierKey: 0});
         bytes32 cm = created.commitment();
 
-        bytes32 unitDeltaX;
-        bytes32 unitDeltaY;
-        unchecked {
-            unitDeltaX =
-                bytes32(uint256(ComputableComponents.kind(consumed.logicRef, consumed.labelRef)) * consumed.quantity);
-            unitDeltaY =
-                bytes32(uint256(ComputableComponents.kind(created.logicRef, created.labelRef)) * created.quantity);
-        }
+        DeltaProofTest deltaProofTest = new DeltaProofTest();
+        // Construct the delta for consumption based on kind and quantity
+        uint256[2] memory unitDelta = deltaProofTest.generateDeltaInstance(DeltaProofTest.DeltaInstanceInputs({
+                kind: uint256(ComputableComponents.kind(consumed.logicRef, consumed.labelRef)),
+                quantity: -int256(uint256(consumed.quantity)),
+                rcv: 1
+        }));
+        // Construct the delta for creation based on kind and quantity
+        unitDelta = Delta.add(unitDelta, deltaProofTest.generateDeltaInstance(DeltaProofTest.DeltaInstanceInputs({
+                kind: uint256(ComputableComponents.kind(created.logicRef, created.labelRef)),
+                quantity: int256(uint256(created.quantity)),
+                rcv: 1
+        })));
 
         Compliance.Instance memory instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
@@ -63,8 +69,8 @@ library TxGen {
                 logicRef: consumed.logicRef
             }),
             created: Compliance.CreatedRefs({commitment: cm, logicRef: created.logicRef}),
-            unitDeltaX: unitDeltaX,
-            unitDeltaY: unitDeltaY
+            unitDeltaX: bytes32(unitDelta[0]),
+            unitDeltaY: bytes32(unitDelta[1])
         });
 
         unit = Compliance.VerifierInput({
@@ -98,7 +104,7 @@ library TxGen {
         RiscZeroMockVerifier mockVerifier,
         ResourceAndAppData[] memory consumed,
         ResourceAndAppData[] memory created
-    ) internal view returns (Action memory action) {
+    ) internal returns (Action memory action) {
         if (consumed.length != created.length) {
             revert ConsumedCreatedCountMismatch({nConsumed: consumed.length, nCreated: created.length});
         }
@@ -148,7 +154,6 @@ library TxGen {
 
     function createDefaultAction(RiscZeroMockVerifier mockVerifier, bytes32 nonce, uint256 nCUs)
         internal
-        view
         returns (Action memory action, bytes32 updatedNonce)
     {
         updatedNonce = nonce;
@@ -194,7 +199,6 @@ library TxGen {
 
     function transaction(RiscZeroMockVerifier mockVerifier, ResourceLists[] memory actionResources)
         internal
-        view
         returns (Transaction memory txn)
     {
         Action[] memory actions = new Action[](actionResources.length);
@@ -213,12 +217,19 @@ library TxGen {
             });
         }
 
-        txn = Transaction({actions: actions, deltaProof: abi.encodePacked(collectTags(actions))});
+        DeltaProofTest deltaProofTest = new DeltaProofTest();
+        // Grab the tags that will be signed over
+        bytes32[] memory tags = TxGen.collectTags(actions);
+        // Generate a proof over the tags where rcv value is the expected total
+        bytes memory proof = deltaProofTest.generateDeltaProof(DeltaProofTest.DeltaProofInputs({
+                rcv: tags.length,
+                verifyingKey: Delta.computeVerifyingKey(tags)
+        }));
+        txn = Transaction({actions: actions, deltaProof: proof});
     }
 
     function transaction(RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
         internal
-        view
         returns (Transaction memory txn, bytes32 updatedNonce)
     {
         updatedNonce = nonce;
@@ -229,7 +240,15 @@ library TxGen {
                 createDefaultAction({mockVerifier: mockVerifier, nonce: updatedNonce, nCUs: configs[i].nCUs});
         }
 
-        txn = Transaction({actions: actions, deltaProof: abi.encodePacked(collectTags(actions))});
+        DeltaProofTest deltaProofTest = new DeltaProofTest();
+        // Grab the tags that will be signed over
+        bytes32[] memory tags = TxGen.collectTags(actions);
+        // Generate a proof over the tags where rcv value is the expected total
+        bytes memory proof = deltaProofTest.generateDeltaProof(DeltaProofTest.DeltaProofInputs({
+                rcv: tags.length,
+                verifyingKey: Delta.computeVerifyingKey(tags)
+        }));
+        txn = Transaction({actions: actions, deltaProof: proof});
     }
 
     function generateActionConfigs(uint256 nActions, uint256 nCUs)
