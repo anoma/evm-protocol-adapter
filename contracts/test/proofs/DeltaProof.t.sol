@@ -162,6 +162,7 @@ contract DeltaProofTest is DeltaProofGen {
 
     /// @notice Test that Delta.add correctly adds deltas
     function testFuzz_add_delta_correctness(
+        // TODO Improve variable naming
         uint256 kind,
         int256 quantity1,
         int256 quantity2,
@@ -219,30 +220,37 @@ contract DeltaProofTest is DeltaProofGen {
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
     function testFuzz_verify_inconsistent_delta_fails2(
-        DeltaProofInputs memory deltaInputs1,
-        DeltaInstanceInputs memory deltaInputs2
+        // TODO Improve variable naming
+        uint256 kind,
+        int256 quantity,
+        uint256 rcv1,
+        uint256 rcv2,
+        bytes32 verifyingKey
     ) public {
-        deltaInputs2.quantity = 0;
-        // Filter out inadmissible private keys or equal keys
-        vm.assume((deltaInputs1.rcv % SECP256K1_ORDER) != (deltaInputs2.rcv % SECP256K1_ORDER));
-        // Generate a delta proof and instance from the above tags and preimage
+        kind = bound(kind, 1, SECP256K1_ORDER - 1);
+        rcv1 = bound(rcv1, 1, SECP256K1_ORDER - 1);
+        rcv2 = bound(rcv2, 1, SECP256K1_ORDER - 1);
+        vm.assume(rcv1 != rcv2);
 
-        bytes memory proof1 = generateDeltaProof(deltaInputs1);
-        uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
+        // Generate a delta  instance and proof from the above tags and preimage
+        uint256[2] memory instance =
+            generateDeltaInstance(DeltaInstanceInputs({kind: kind, quantity: quantity, rcv: rcv1}));
+        bytes memory proof = generateDeltaProof(DeltaProofInputs({rcv: rcv2, verifyingKey: verifyingKey}));
 
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector); // TODO: Can we use a more explicit revert?
-        Delta.verify({proof: proof1, instance: instance2, verifyingKey: deltaInputs1.verifyingKey});
+        Delta.verify({proof: proof, instance: instance, verifyingKey: verifyingKey});
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
     function testFuzz_verify_inconsistent_delta_fails3(
+        // TODO Improve variable naming
         uint256 kind,
         uint256 rcv,
         bytes32 verifyingKey1,
         bytes32 verifyingKey2
     ) public {
-        // Filter out inadmissible private keys or equal keys
+        kind = bound(kind, 1, SECP256K1_ORDER - 1);
         vm.assume(verifyingKey1 != verifyingKey2);
 
         DeltaProofInputs memory proofInputs = DeltaProofInputs({rcv: rcv, verifyingKey: verifyingKey1});
