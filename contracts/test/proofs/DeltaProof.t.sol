@@ -35,17 +35,14 @@ contract DeltaProofGen is Test {
 
     /// @notice Generates a transaction delta proof by signing verifyingKey with
     /// rcv, and a delta instance by computing a(kind)^quantity * b^rcv
-    function generateDeltaInstance(
-        DeltaInstanceInputs memory deltaInputs // TODO! Rename
-    ) public returns (uint256[2] memory instance) {
-        // TODO remove?
-        vm.assume(deltaInputs.rcv != 0);
+    function generateDeltaInstance(DeltaInstanceInputs memory deltaInputs)
+        public
+        returns (uint256[2] memory instance)
+    {
         if (deltaInputs.rcv == 0) {
             revert RcvZero();
         }
 
-        // TODO remove?
-        vm.assume(deltaInputs.kind != 0);
         if (deltaInputs.kind == 0) {
             revert KindZero();
         }
@@ -54,8 +51,6 @@ contract DeltaProofGen is Test {
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
 
-        // TODO remove?
-        vm.assume(preDelta != 0);
         if (preDelta == 0) {
             revert PreDeltaZero();
         }
