@@ -153,8 +153,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             _storeRoot(newRoot);
         }
 
-        // Emit the event containing the transaction and new root
-        emit TransactionExecuted({tags: tags, newRoot: newRoot});
+        // Emit the event containing the transaction hash and new root
+        emit TransactionExecuted({id: keccak256(abi.encode(tags)), newRoot: newRoot});
     }
     // slither-disable-end reentrancy-no-eth
 
@@ -246,7 +246,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         uint256 n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ResourcePayload({tag: input.tag, blob: payload[i].blob});
+                emit ResourcePayload({tag: input.tag, order: i, blob: payload[i].blob});
             }
         }
 
@@ -254,7 +254,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit DiscoveryPayload({tag: input.tag, blob: payload[i].blob});
+                emit DiscoveryPayload({tag: input.tag, order: i, blob: payload[i].blob});
             }
         }
 
@@ -262,7 +262,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ExternalPayload({tag: input.tag, blob: payload[i].blob});
+                emit ExternalPayload({tag: input.tag, order: i, blob: payload[i].blob});
             }
         }
 
@@ -270,7 +270,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ApplicationPayload({tag: input.tag, blob: payload[i].blob});
+                emit ApplicationPayload({tag: input.tag, order: i, blob: payload[i].blob});
             }
         }
     }

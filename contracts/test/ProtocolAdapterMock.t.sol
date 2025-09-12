@@ -68,7 +68,10 @@ contract ProtocolAdapterMockTest is Test {
         bytes32 expectedRoot = cms.computeRoot({treeDepth: MerkleTree.computeMinimalTreeDepth(cms.length) + 1});
 
         vm.expectEmit(address(_mockPa));
-        emit IProtocolAdapter.TransactionExecuted({tags: txn.actions.collectTags(), newRoot: expectedRoot});
+        emit IProtocolAdapter.TransactionExecuted({
+            id: keccak256(abi.encode(txn.actions.collectTags())),
+            newRoot: expectedRoot
+        });
         _mockPa.execute(txn);
     }
 

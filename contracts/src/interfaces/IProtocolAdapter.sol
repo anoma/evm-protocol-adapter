@@ -9,9 +9,19 @@ import {Transaction} from "../Types.sol";
 /// @custom:security-contact security@anoma.foundation
 interface IProtocolAdapter {
     /// @notice Emitted when a transaction is executed.
-    /// @param tags The tags of resources being consumed and created in this transaction in alternating appearance.
+    /// @param id The keccak hash of all added tags
     /// @param newRoot The new commitment tree root.
-    event TransactionExecuted(bytes32[] tags, bytes32 newRoot);
+    event TransactionExecuted(bytes32 id, bytes32 newRoot);
+
+    /// @notice Emitted when a commitment is added
+    /// @param cm The commitment hash
+    /// @param logicRef The logic reference of the resouce
+    event CommitmentAdded(bytes32 indexed cm, bytes32 indexed logicRef);
+
+    /// @notice Emitted when a commitment is added
+    /// @param nf The nullifier hash
+    /// @param logicRef The logic reference of the resouce
+    event NullifierAdded(bytes32 indexed nf, bytes32 indexed logicRef);
 
     /// @notice Emitted when a forwarder call is executed.
     /// @param untrustedForwarder The forwarder contract forwarding the call.
@@ -21,23 +31,27 @@ interface IProtocolAdapter {
 
     /// @notice Emitted to store a resource payload blob persistently.
     /// @param tag The tag of the resource this blob belongs to.
+    /// @param order The order in which the blob appears in the payload.
     /// @param blob The blob.
-    event ResourcePayload(bytes32 indexed tag, bytes blob);
+    event ResourcePayload(bytes32 indexed tag, uint256 indexed order, bytes blob);
 
     /// @notice Emitted to store a discovery payload blob persistently.
     /// @param tag The tag of the resource this blob belongs to.
+    /// @param order The order in which the blob appears in the payload.
     /// @param blob The blob.
-    event DiscoveryPayload(bytes32 indexed tag, bytes blob);
+    event DiscoveryPayload(bytes32 indexed tag, uint256 indexed order, bytes blob);
 
     /// @notice Emitted to store a external call payload blob persistently.
     /// @param tag The tag of the resource this blob belongs to.
+    /// @param order The order in which the blob appears in the payload.
     /// @param blob The blob.
-    event ExternalPayload(bytes32 indexed tag, bytes blob);
+    event ExternalPayload(bytes32 indexed tag, uint256 indexed order, bytes blob);
 
     /// @notice Emitted to store an application payload blob persistently.
     /// @param tag The tag of the resource this blob belongs to.
+    /// @param order The order in which the blob appears in the payload.
     /// @param blob The blob.
-    event ApplicationPayload(bytes32 indexed tag, bytes blob);
+    event ApplicationPayload(bytes32 indexed tag, uint256 indexed order, bytes blob);
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
