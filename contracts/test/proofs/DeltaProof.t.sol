@@ -108,9 +108,11 @@ contract DeltaProofTest is Test {
         deltaProofInputs.rcv = deltaInstanceInputs.rcv;
         vm.assume(deltaInstanceInputs.kind % SECP256K1_ORDER != 0);
         vm.assume(_canonicalize_quantity(deltaInstanceInputs.quantity) != 0);
+
         // Generate a delta proof and instance from the above tags and preimage
         uint256[2] memory instance = generateDeltaInstance(deltaInstanceInputs);
         bytes memory proof = generateDeltaProof(deltaProofInputs);
+
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
@@ -267,9 +269,9 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Convert a int256 exponent to an equivalent uin256 assuming an order of SECP256K1_ORDER
-    function _canonicalize_quantity(int256 quantity) internal pure returns (uint256 quantityu) {
+    function _canonicalize_quantity(int256 quantity) internal pure returns (uint256 canonicalized) {
         // If positive, leave the number unchanged
-        quantityu =
+        canonicalized =
             quantity >= 0 ? uint256(quantity) : (SECP256K1_ORDER - 1 - (uint256(-(quantity + 1)) % SECP256K1_ORDER));
     }
 }
