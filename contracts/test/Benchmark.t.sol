@@ -5,33 +5,30 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {Test, console} from "forge-std/Test.sol";
+import {console} from "forge-std/Test.sol";
 
-import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {Transaction} from "../../src/Types.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {Transaction} from "../src/Types.sol";
 
-import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
+import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
+import {TransactionParsingBaseTest} from "./transactions/TransactionParsingBase.t.sol";
 
-contract BenchmarkData is Test {
-    function _parse(string memory path) internal view returns (Transaction memory txn) {
-        string memory fullPath = string.concat(vm.projectRoot(), path);
-        bytes memory data = vm.readFileBinary(fullPath);
-
-        txn = abi.decode(data, (Transaction));
-    }
-}
-
-contract Benchmark is BenchmarkData {
+contract Benchmark is TransactionParsingBaseTest {
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
     Transaction[4] internal _txns;
 
     function setUp() public {
-        string[4] memory paths = ["test_tx01.bin", "test_tx05.bin", "test_tx10.bin", "test_tx15.bin"];
+        string[4] memory paths = [
+            "../transactions/test_tx01.bin",
+            "../transactions/test_tx05.bin",
+            "../transactions/test_tx10.bin",
+            "../transactions/test_tx15.bin"
+        ];
 
         for (uint256 i = 0; i < paths.length; ++i) {
-            _txns[i] = _parse(string.concat("/test/benchmark/", paths[i]));
+            _txns[i] = _parseTransaction(string.concat("/test/benchmark/", paths[i]));
         }
         {
             (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
