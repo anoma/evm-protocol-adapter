@@ -19,12 +19,8 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using Arrays for bytes32[];
 
-    uint256 internal constant _COMMITMENT_INDEX_OFFSET = 1;
-
     MerkleTree.Tree internal _merkleTree;
     EnumerableSet.Bytes32Set internal _roots;
-
-    mapping(bytes32 commitment => uint256 index) internal _indices;
 
     error EmptyCommitment();
     error NonExistingCommitment(bytes32 commitment);
@@ -63,25 +59,12 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         _verifyMerkleProof({root: root, commitment: commitment, path: path, directionBits: directionBits});
     }
 
-    /// @inheritdoc ICommitmentAccumulator
-    function merkleProof(bytes32 commitment)
-        external
-        view
-        override
-        returns (bytes32[] memory siblings, uint256 directionBits)
-    {
-        (siblings, directionBits) = _merkleProof(commitment);
-    }
-
     /// @notice Adds a commitment to to the set, if it does not exist already and returns the new root.
     /// @param commitment The commitment to add.
     /// @return newRoot The resulting new root.
     function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
-        _checkCommitmentNonExistence(commitment);
-
         uint256 index;
         (index, newRoot) = _merkleTree.push(commitment);
-        _indices[commitment] = index + _COMMITMENT_INDEX_OFFSET; // Add 1 to use 0 as a sentinel value
     }
 
     /// @notice Stores a root in the set of historical roots.
@@ -119,92 +102,12 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         }
     }
 
-    /// @notice An internal function returning the Merkle proof and associated root for a commitment leaf in the tree.
-    /// @param commitment The commitment leaf to proof inclusion in the tree for.
-    /// @return siblings The siblings constituting the path from the leaf to the root.
-    /// @return directionBits The direction bits for the proof.
-    function _merkleProof(bytes32 commitment)
-        internal
-        view
-        returns (bytes32[] memory siblings, uint256 directionBits)
-    {
-        uint256 leafIndex = _findCommitmentIndex(commitment);
-        (siblings, directionBits) = (_merkleTree.merkleProof(leafIndex));
-    }
-
-    /// @notice Returns whether a commitment is already contained in the accumulator.
-    /// @param commitment The commitment to check.
-    /// @return isContained Whether the commitment is contained or not.
-    function _isContained(bytes32 commitment) internal view returns (bool isContained) {
-        uint256 index = _indices[commitment];
-
-        isContained = index != 0;
-    }
-
-    /// @notice Finds the index of a commitment in the accumulator or reverts.
-    /// @param commitment The commitment to find the index for.
-    /// @return index The index of the commitment in the accumulator.
-    function _findCommitmentIndex(bytes32 commitment) internal view returns (uint256 index) {
-        if (commitment == _emptyLeaf()) {
-            revert EmptyCommitment();
-        }
-
-        index = _indices[commitment];
-
-        if (index == 0) {
-            revert NonExistingCommitment(commitment);
-        }
-
-        index -= _COMMITMENT_INDEX_OFFSET;
-
-        bytes32 retrieved = _commitmentAtIndex(index);
-        if (retrieved != commitment) {
-            revert CommitmentMismatch({expected: commitment, actual: retrieved});
-        }
-    }
-
-    /// @notice Returns a commitment based on its index in the accumulator or reverts.
-    /// @param index The index to find the commitment for.
-    /// @return commitment The commitment associated with the index.
-    function _commitmentAtIndex(uint256 index) internal view returns (bytes32 commitment) {
-        if (index + 1 > _merkleTree._nextLeafIndex) {
-            revert CommitmentIndexOutOfBounds({current: index, limit: _merkleTree._nextLeafIndex});
-        }
-
-        commitment = _merkleTree._nodes[0][index];
-    }
-
-    /// @notice Checks the non-existence of a commitment in the tree.
-    /// @param commitment The commitment to check.
-    function _checkCommitmentNonExistence(bytes32 commitment) internal view {
-        if (_isContained(commitment)) {
-            revert PreExistingCommitment(commitment);
-        }
-    }
-
-    // slither-disable-start dead-code
-    /// @notice Checks the existence of a commitment in the tree.
-    /// @param commitment The commitment to check.
-
-    function _checkCommitmentPreExistence(bytes32 commitment) internal view {
-        if (!_isContained(commitment)) {
-            revert NonExistingCommitment(commitment);
-        }
-    }
-    // slither-disable-end dead-code
-
     /// @notice Checks the existence of a root in the set of historical roots.
     /// @param root The root to check.
     function _checkRootPreExistence(bytes32 root) internal view {
         if (!_roots.contains(root)) {
             revert NonExistingRoot(root);
         }
-    }
-
-    /// @notice Returns the hash indicating that a leaf in the tree is empty.
-    /// @return emptyLeaf The empty leaf hash.
-    function _emptyLeaf() internal view returns (bytes32 emptyLeaf) {
-        emptyLeaf = _merkleTree._zeros[0];
     }
 
     /// @notice Returns the latest  commitment tree state root.
