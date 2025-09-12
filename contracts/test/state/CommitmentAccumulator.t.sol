@@ -49,6 +49,7 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
     }
 
     function test_addCommitment_allows_adding_the_same_commitment_multiple_times() public {
+        // Note: The compliance circuit will prevent the same commitment being added a second time.
         bytes32 cm = sha256("SOMETHING");
 
         _cmAcc.addCommitment(cm);
