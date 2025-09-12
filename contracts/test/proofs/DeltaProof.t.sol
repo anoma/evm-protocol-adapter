@@ -162,32 +162,30 @@ contract DeltaProofTest is DeltaProofGen {
 
     /// @notice Test that Delta.add correctly adds deltas
     function testFuzz_add_delta_correctness(
-        DeltaInstanceInputs memory deltaInputs1,
-        DeltaInstanceInputs memory deltaInputs2
+        uint256 kind,
+        int256 quantity1,
+        int256 quantity2,
+        uint256 rcv1,
+        uint256 rcv2
     ) public {
-        // Ensure that we're adding assets of the same kind over the same verifying key
-        deltaInputs2.kind = deltaInputs1.kind;
+        vm.assume(kind != 0);
+        vm.assume(rcv1 != 0);
+        vm.assume(rcv2 != 0);
 
         // Filter out overflows
-        vm.assume(deltaInputs1.quantity < 0 || deltaInputs2.quantity <= type(int256).max - deltaInputs1.quantity);
-        vm.assume(deltaInputs1.quantity >= 0 || type(int256).min - deltaInputs1.quantity <= deltaInputs2.quantity);
-        vm.assume(0 < deltaInputs2.rcv && deltaInputs2.rcv <= type(uint256).max - deltaInputs1.rcv);
+        vm.assume(quantity1 < 0 || quantity2 <= type(int256).max - quantity1);
+        vm.assume(quantity1 >= 0 || type(int256).min - quantity1 <= quantity2);
+        vm.assume(0 < rcv2 && rcv2 <= type(uint256).max - rcv1);
 
         // Compute the inputs corresponding to the sum of deltas
-        DeltaInstanceInputs memory deltaInputs3 = DeltaInstanceInputs({
-            kind: deltaInputs1.kind,
-            quantity: deltaInputs1.quantity + deltaInputs2.quantity,
-            rcv: deltaInputs1.rcv + deltaInputs2.rcv
-        });
+        DeltaInstanceInputs memory deltaInputs3 =
+            DeltaInstanceInputs({kind: kind, quantity: quantity1 + quantity2, rcv: rcv1 + rcv2});
         // Generate a delta proof and instance from the above tags and preimage
 
-        vm.assume(deltaInputs1.rcv != 0);
-        vm.assume(deltaInputs1.kind != 0);
-        uint256[2] memory instance1 = generateDeltaInstance(deltaInputs1);
-
-        vm.assume(deltaInputs2.rcv != 0);
-        vm.assume(deltaInputs2.kind != 0);
-        uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
+        uint256[2] memory instance1 =
+            generateDeltaInstance(DeltaInstanceInputs({kind: kind, quantity: quantity1, rcv: rcv1}));
+        uint256[2] memory instance2 =
+            generateDeltaInstance(DeltaInstanceInputs({kind: kind, quantity: quantity2, rcv: rcv2}));
 
         vm.assume(deltaInputs3.rcv != 0);
         vm.assume(deltaInputs3.kind != 0);
