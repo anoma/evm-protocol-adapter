@@ -125,18 +125,6 @@ contract DeltaProofGen is Test {
         wrappedDeltaInputs = deltaInputs;
     }
 
-    /// @notice Grab the first length elements from deltaInputs
-    function truncateDeltaInputs(DeltaInstanceInputs[] memory deltaInputs, uint256 length)
-        public
-        pure
-        returns (DeltaInstanceInputs[] memory truncatedDeltaInputs)
-    {
-        truncatedDeltaInputs = new DeltaInstanceInputs[](length);
-        for (uint256 i = 0; i < length; i++) {
-            truncatedDeltaInputs[i] = deltaInputs[i];
-        }
-    }
-
     /// @notice Convert a int256 exponent to an equivalent uin256 assuming an order of SECP256K1_ORDER
     function _canonicalizeQuantity(int256 quantity) internal pure returns (uint256 canonicalized) {
         // If positive, leave the number unchanged
@@ -146,6 +134,8 @@ contract DeltaProofGen is Test {
 }
 
 contract DeltaProofTest is DeltaProofGen {
+    using Delta for uint256[2];
+
     /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
     function testFuzz_verify_delta_succeeds(uint256 kind, uint256 rcv, bytes32 verifyingKey) public {
         kind = bound(kind, 1, type(uint256).max); // vm.assume(input.kind != 0);
@@ -266,25 +256,37 @@ contract DeltaProofTest is DeltaProofGen {
     }
 
     /// @notice Check that a balanced transaction does pass verification
-    function testFuzz_verify_balanced_delta_succeeds(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey)
+    function testFuzz_verify_balanced_delta_succeeds(DeltaInstanceInputs[] memory instances, bytes32 verifyingKey)
         public
     {
-        uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
+        // Constrain fuzzer inputs
+        {
+            uint256 newLen = bound(instances.length, 1, 10);
+            assembly {
+                mstore(instances, newLen)
+            }
+            for (uint256 i = 0; i < instances.length; ++i) {
+                instances[i] = DeltaInstanceInputs({
+                    kind: bound(instances[i].kind, 1, SECP256K1_ORDER - 1),
+                    quantity: instances[i].quantity,
+                    rcv: bound(instances[i].rcv, 1, SECP256K1_ORDER - 1)
+                });
+            }
+        }
 
-        // Truncate the delta inputs to improve test performance
-        uint256 maxDeltaLen = 10;
-        deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
         // Make sure that the delta quantities balance out
-        (DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
+        (DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(instances);
 
         // Adjust the last delta so that the full sum is zero
         if (quantity != 0) {
             wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity -= quantity;
         }
+
+        uint256[2] memory sum = [uint256(0), uint256(0)];
         for (uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
             uint256[2] memory instance = generateDeltaInstance(wrappedDeltaInputs[i]);
-            deltaAcc = Delta.add(deltaAcc, instance);
+            sum = sum.add(instance);
         }
 
         // Compute the proof for the balanced transaction
@@ -292,28 +294,39 @@ contract DeltaProofTest is DeltaProofGen {
         bytes memory proof = generateDeltaProof(sumDeltaInputs);
 
         // Verify that the balanced transaction proof succeeds
-        Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
+        Delta.verify({proof: proof, instance: sum, verifyingKey: verifyingKey});
     }
 
     /// @notice Check that an imbalanced transaction fails verification
-    function testFuzz_verify_imbalanced_delta_fails(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey)
+    function testFuzz_verify_imbalanced_delta_fails(DeltaInstanceInputs[] memory instances, bytes32 verifyingKey)
         public
     {
-        uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
-
-        // Truncate the delta inputs to improve test performance
-        uint256 maxDeltaLen = 10;
-        deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
+        // Constrain fuzzer inputs
+        {
+            uint256 newLen = bound(instances.length, 1, 10);
+            assembly {
+                mstore(instances, newLen)
+            }
+            for (uint256 i = 0; i < instances.length; ++i) {
+                instances[i] = DeltaInstanceInputs({
+                    kind: bound(instances[i].kind, 1, SECP256K1_ORDER - 1),
+                    quantity: instances[i].quantity,
+                    rcv: bound(instances[i].rcv, 1, SECP256K1_ORDER - 1)
+                });
+            }
+        }
 
         // Accumulate the total quantity and randomness commitment
-        (DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
+        (DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(instances);
 
         // Assume that the deltas are imbalanced
         vm.assume(_canonicalizeQuantity(quantity) != 0);
+
+        uint256[2] memory sum = [uint256(0), uint256(0)];
         for (uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
             uint256[2] memory instance = generateDeltaInstance(wrappedDeltaInputs[i]);
-            deltaAcc = Delta.add(deltaAcc, instance);
+            sum = sum.add(instance);
         }
 
         // Compute the proof for the balanced transaction
@@ -322,7 +335,7 @@ contract DeltaProofTest is DeltaProofGen {
 
         // Verify that the imbalanced transaction proof fails
         vm.expectPartialRevert(Delta.DeltaMismatch.selector); // TODO: Can we use a more explicit revert?
-        Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
+        Delta.verify({proof: proof, instance: sum, verifyingKey: verifyingKey});
     }
 
     function test_verify_example_delta_proof() public pure {
