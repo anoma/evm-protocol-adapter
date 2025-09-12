@@ -168,11 +168,12 @@ contract DeltaProofTest is DeltaProofGen {
         uint256 rcv1,
         uint256 rcv2
     ) public {
-        vm.assume(kind != 0);
-        vm.assume(rcv1 != 0);
-        vm.assume(rcv2 != 0);
+        kind = bound(kind, 1, type(uint256).max);
+        rcv1 = bound(rcv1, 1, SECP256K1_ORDER - 1);
+        rcv2 = bound(rcv2, 1, SECP256K1_ORDER - 1);
 
         // Filter out overflows
+        // TODO! Simplify by using `uint128`
         vm.assume(quantity1 < 0 || quantity2 <= type(int256).max - quantity1);
         vm.assume(quantity1 >= 0 || type(int256).min - quantity1 <= quantity2);
         vm.assume(0 < rcv2 && rcv2 <= type(uint256).max - rcv1);
@@ -198,22 +199,22 @@ contract DeltaProofTest is DeltaProofGen {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function testFuzz_verify_inconsistent_delta_fails1(
-        DeltaInstanceInputs memory deltaInstanceInputs,
-        DeltaProofInputs memory deltaProofInputs
-    ) public {
+    function testFuzz_verify_inconsistent_delta_fails1(uint256 kind, int256 quantity, uint256 rcv, bytes32 verifyingKey)
+        public
+    {
         // Filter out inadmissible private keys or equal keys
-        deltaProofInputs.rcv = deltaInstanceInputs.rcv;
-        vm.assume(deltaInstanceInputs.kind % SECP256K1_ORDER != 0);
-        vm.assume(_canonicalizeQuantity(deltaInstanceInputs.quantity) != 0);
+        kind = bound(kind, 1, SECP256K1_ORDER - 1);
+        vm.assume(_canonicalizeQuantity(quantity) != 0);
+        rcv = bound(rcv, 1, type(uint256).max);
 
         // Generate a delta proof and instance from the above tags and preimage
-        uint256[2] memory instance = generateDeltaInstance(deltaInstanceInputs);
-        bytes memory proof = generateDeltaProof(deltaProofInputs);
+        uint256[2] memory instance =
+            generateDeltaInstance({deltaInputs: DeltaInstanceInputs({kind: kind, quantity: quantity, rcv: rcv})});
+        bytes memory proof = generateDeltaProof({deltaInputs: DeltaProofInputs({rcv: rcv, verifyingKey: verifyingKey})});
 
         // Verify that the mixing deltas is invalid
-        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
+        vm.expectPartialRevert(Delta.DeltaMismatch.selector); // TODO: Can we use a more explicit revert?
+        Delta.verify({proof: proof, instance: instance, verifyingKey: verifyingKey});
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
@@ -225,10 +226,12 @@ contract DeltaProofTest is DeltaProofGen {
         // Filter out inadmissible private keys or equal keys
         vm.assume((deltaInputs1.rcv % SECP256K1_ORDER) != (deltaInputs2.rcv % SECP256K1_ORDER));
         // Generate a delta proof and instance from the above tags and preimage
+
         bytes memory proof1 = generateDeltaProof(deltaInputs1);
         uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
+
         // Verify that the mixing deltas is invalid
-        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
+        vm.expectPartialRevert(Delta.DeltaMismatch.selector); // TODO: Can we use a more explicit revert?
         Delta.verify({proof: proof1, instance: instance2, verifyingKey: deltaInputs1.verifyingKey});
     }
 
@@ -240,13 +243,16 @@ contract DeltaProofTest is DeltaProofGen {
     ) public {
         deltaInputs2.rcv = deltaInputs1.rcv;
         deltaInputs2.quantity = 0;
+
         // Filter out inadmissible private keys or equal keys
         vm.assume(deltaInputs1.verifyingKey != verifyingKey);
+
         // Generate a delta proof and instance from the above tags and preimage
         bytes memory proof1 = generateDeltaProof(deltaInputs1);
         uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
+
         // Verify that the mixing deltas is invalid
-        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
+        vm.expectPartialRevert(Delta.DeltaMismatch.selector); // TODO: Can we use a more explicit revert?
         Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey});
     }
 
@@ -255,11 +261,13 @@ contract DeltaProofTest is DeltaProofGen {
         public
     {
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
+
         // Truncate the delta inputs to improve test performance
         uint256 maxDeltaLen = 10;
         deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
         // Make sure that the delta quantities balance out
         (DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
+
         // Adjust the last delta so that the full sum is zero
         if (quantity != 0) {
             wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity -= quantity;
@@ -269,9 +277,11 @@ contract DeltaProofTest is DeltaProofGen {
             uint256[2] memory instance = generateDeltaInstance(wrappedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
         }
+
         // Compute the proof for the balanced transaction
         DeltaProofInputs memory sumDeltaInputs = DeltaProofInputs({rcv: rcv, verifyingKey: verifyingKey});
         bytes memory proof = generateDeltaProof(sumDeltaInputs);
+
         // Verify that the balanced transaction proof succeeds
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
@@ -300,8 +310,9 @@ contract DeltaProofTest is DeltaProofGen {
         // Compute the proof for the balanced transaction
         DeltaProofInputs memory sumDeltaInputs = DeltaProofInputs({rcv: rcv, verifyingKey: verifyingKey});
         bytes memory proof = generateDeltaProof(sumDeltaInputs);
+
         // Verify that the imbalanced transaction proof fails
-        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
+        vm.expectPartialRevert(Delta.DeltaMismatch.selector); // TODO: Can we use a more explicit revert?
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
