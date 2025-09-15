@@ -21,7 +21,6 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
 
     MerkleTree.Tree internal _merkleTree;
     EnumerableSet.Bytes32Set internal _roots;
-    bytes32 internal _updatedRoot;
 
     error EmptyCommitment();
     error NonExistingCommitment(bytes32 commitment);
@@ -36,7 +35,7 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
 
     /// @notice Initializes the commitment accumulator by setting up a Merkle tree.
     constructor() {
-        _updatedRoot = _merkleTree.setup();
+        _merkleTree.setup();
         _storeRoot();
     }
 
@@ -62,17 +61,16 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     /// @notice Adds a commitment to to the set, if it does not exist already and returns the new root.
     /// @param commitment The commitment to add.
     function _addCommitment(bytes32 commitment) internal {
-        uint256 index;
-        (index, _updatedRoot) = _merkleTree.push(commitment);
+        _merkleTree.push(commitment);
     }
 
     /// @notice Stores a root in the set of historical roots.
     function _storeRoot() internal {
-        if (!_roots.add(_updatedRoot)) {
-            revert PreExistingRoot(_updatedRoot);
+        if (!_roots.add(_merkleTree._root)) {
+            revert PreExistingRoot(_merkleTree._root);
         }
 
-        _updatedRoot = 0;
+        delete _merkleTree._root;
     }
 
     /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.

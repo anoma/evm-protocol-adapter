@@ -16,6 +16,7 @@ import {SHA256} from "../libs/SHA256.sol";
 library MerkleTree {
     struct Tree {
         uint256 _nextLeafIndex;
+        bytes32 _root;
         bytes32[] _sides;
         bytes32[] _zeros;
     }
@@ -40,23 +41,19 @@ library MerkleTree {
             currentZero = SHA256.hash(currentZero, currentZero);
         }
 
+        self._root = initialRoot;
         self._nextLeafIndex = 0;
     }
 
     /// @notice Pushes a leaf to the tree.
     /// @param self The tree data structure.
     /// @param leaf The leaf to add.
-    /// @return index The index of the leaf.
-    /// @return newRoot The new root of the tree.
-    function push(Tree storage self, bytes32 leaf) internal returns (uint256 index, bytes32 newRoot) {
+    function push(Tree storage self, bytes32 leaf) internal {
         // Cache the tree depth read.
         uint256 treeDepth = depth(self);
 
-        // Get the next leaf index and increment it after assignment.
-        index = self._nextLeafIndex++;
-
         // Rebuild the branch from leaf to root.
-        uint256 currentIndex = index;
+        uint256 currentIndex = self._nextLeafIndex++;
         bytes32 currentLevelHash = leaf;
         for (uint256 i = 0; i < treeDepth; ++i) {
             // Compute the next level hash for depth `i+1`.
@@ -84,7 +81,7 @@ library MerkleTree {
             currentLevelHash = SHA256.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, treeDepth).value);
         }
 
-        newRoot = currentLevelHash;
+        self._root = currentLevelHash;
     }
 
     /// @notice Returns the tree depth.
