@@ -1,36 +1,100 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
-
-import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-
-import {Test} from "forge-std/Test.sol";
-
-import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {TransactionExample} from "./examples/Transaction.e.sol";
-import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
-import {Transaction, Action} from "../src/Types.sol";
-import {Compliance} from "../src/proving/Compliance.sol";
-import {Logic} from "../src/proving/Logic.sol";
-import {TxGen} from "./examples/TxGen.sol";
-import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
-import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
-import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
-import {ForwarderExample} from "./examples/Forwarder.e.sol";
-import {ProtocolAdapterMockTest} from "./ProtocolAdapterMock.t.sol";
-import {RiscZeroUtils} from "../src/libs/RiscZeroUtils.sol";
-import {MerkleTree} from "../src/libs/MerkleTree.sol";
+import { Pausable } from "@openzeppelin-contracts/utils/Pausable.sol";
+import { RiscZeroVerifierEmergencyStop } from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
+import { RiscZeroVerifierRouter } from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
+import { RiscZeroMockVerifier } from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import { Test } from "forge-std/Test.sol";
+import { MerkleTree } from "./../src/libs/MerkleTree.sol";
+import { RiscZeroUtils } from "./../src/libs/RiscZeroUtils.sol";
+import { ProtocolAdapter } from "./../src/ProtocolAdapter.sol";
+import { Compliance } from "./../src/proving/Compliance.sol";
+import { Logic } from "./../src/proving/Logic.sol";
+import { Transaction, Action } from "./../src/Types.sol";
+import { ForwarderExample } from "./examples/Forwarder.e.sol";
+import { TxGen } from "./examples/TxGen.sol";
+import { ProtocolAdapterMock } from "./mocks/ProtocolAdapter.m.sol";
+import { ProtocolAdapterMockTest } from "./ProtocolAdapterMock.t.sol";
+import { DeployRiscZeroContractsMock } from "./script/DeployRiscZeroContractsMock.s.sol";
 
 contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
+    using TxGen for RiscZeroMockVerifier;
+    using RiscZeroUtils for Logic.VerifierInput;
+    using MerkleTree for bytes32[];
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct NonExistingRootFailsParams {
+        // The index of the action to mutate
+        uint256 actionIdx;
+        // The index of the compliance verifier input of the action to mutate
+        uint256 inputIdx;
+        // The value to mutate the action tree root to
+        bytes32 commitmentTreeRoot;
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct ShortProofFailsParams {
+        // The index of the action to mutate
+        uint256 actionIdx;
+        // The index of the compliance verifier input of the action to mutate
+        uint256 inputIdx;
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct UnknownSelectorFailsParams {
+        // The index of the action to mutate
+        uint256 actionIdx;
+        // The index of the compliance verifier input of the action to mutate
+        uint256 inputIdx;
+        // The proof to overwrite with
+        bytes proof;
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct UnknownTagFailsParams {
+        // The index of the action to mutate
+        uint256 actionIdx;
+        // The index of the compliance verifier input of the action to mutate
+        uint256 inputIdx;
+        // The tag to overwrite with
+        bytes32 tag;
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct MismatchingResourcesFailParams {
+        // The index of the action to mutate
+        uint256 actionIdx;
+        // The index of the compliance verifier input of the action to mutate
+        uint256 inputIdx;
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct MismatchingLogicRefsFailParams {
+        // The index of the action to mutate
+        uint256 actionIdx;
+        // The index of the logic verifier input of the action to mutate
+        uint256 inputIdx;
+        // The logic reference to overwrite with
+        bytes32 logicRef;
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct MismatchingForwarderCallOutputsFailParams {
+        // The index of the action to mutate
+        uint256 actionIdx;
+        // The index of the logic verifier input of the action to mutate
+        uint256 inputIdx;
+        // The index of the external payload to mutate
+        uint256 payloadIdx;
+        // The output to overwrite with
+        bytes output;
+    }
+
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
     RiscZeroMockVerifier internal _mockVerifier;
-    using TxGen for RiscZeroMockVerifier;
-    using RiscZeroUtils for Logic.VerifierInput;
-    using MerkleTree for bytes32[];
 
     constructor() ProtocolAdapterMock(riscZeroVerifierRouter()) {}
 
@@ -53,11 +117,11 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         new ProtocolAdapterMock(_router);
     }
 
-    function test_execute_reverts_on_vulnerable_risc_zero_verifier(uint8 nActions, uint8 nCUs, UnknownTagFailsParams memory params) public {
+    function test_execute_reverts_on_vulnerable_risc_zero_verifier(uint8 nActions, uint8 nCUs) public {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory txn, ) = _mockVerifier.transaction({nonce: 0, configs: configs});
 
         vm.prank(_emergencyStop.owner());
         _emergencyStop.estop();
@@ -70,24 +134,8 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory txn, ) = _mockVerifier.transaction({nonce: 0, configs: configs});
         _pa.execute(txn);
-    }
-
-    // solhint-disable-next-line no-empty-blocks
-    function test_tx_with_cu_mismatch_fails() public view {
-        // TODO: create a transaction with no compliance units and two trivial resources
-        //       in the action
-    }
-
-    /// @notice The parameters necessary to make a failing mutation to a transaction
-    struct NonExistingRootFailsParams {
-        // The index of the action to mutate
-        uint256 actionIdx;
-        // The index of the compliance verifier input of the action to mutate
-        uint256 inputIdx;
-        // The value to mutate the action tree root to
-        bytes32 commitmentTreeRoot;
     }
 
     /// @notice Take a transaction that would execute successfully and make it
@@ -118,23 +166,15 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
-        mutation_test_execute_non_existing_root_fails(TransactionExample.transaction(), params);
-    }
-
-    /// @notice The parameters necessary to make a failing mutation to a transaction
-    struct ShortProofFailsParams {
-        // The index of the action to mutate
-        uint256 actionIdx;
-        // The index of the compliance verifier input of the action to mutate
-        uint256 inputIdx;
+        (Transaction memory txn, ) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        mutation_test_execute_non_existing_root_fails(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
     /// fail by giving one of its compliance verifier inputs a proof that's too
     /// short.
     function mutation_test_execute_short_proof_fails(Transaction memory transaction, ShortProofFailsParams memory params) public {
-        uint256 MIN_PROOF_LEN = 4;
+        uint256 minProofLen = 4;
         // Cannot do mutation if the transaction has no actions
         vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
@@ -146,7 +186,7 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         // Finally truncate the compliance proof to below the minimum
         bytes memory proof = complianceVerifierInputs[params.inputIdx].proof;
-        bytes memory truncatedProof = new bytes(proof.length % MIN_PROOF_LEN);
+        bytes memory truncatedProof = new bytes(proof.length % minProofLen);
         for (uint256 k = 0; k < truncatedProof.length; k++) {
             truncatedProof[k] = proof[k];
         }
@@ -162,18 +202,8 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
-        mutation_test_execute_short_proof_fails(TransactionExample.transaction(), params);
-    }
-
-    /// @notice The parameters necessary to make a failing mutation to a transaction
-    struct UnknownSelectorFailsParams {
-        // The index of the action to mutate
-        uint256 actionIdx;
-        // The index of the compliance verifier input of the action to mutate
-        uint256 inputIdx;
-        // The proof to overwrite with
-        bytes proof;
+        (Transaction memory txn, ) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        mutation_test_execute_short_proof_fails(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
@@ -181,8 +211,8 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
     /// unknown selector.
     function mutation_test_execute_unknown_selector_fails(Transaction memory transaction, UnknownSelectorFailsParams memory params) public {
         // Make sure that the chosen verifier selector does not exist
-        uint256 MIN_PROOF_LEN = 4;
-        vm.assume(params.proof.length >= MIN_PROOF_LEN);
+        uint256 minProofLen = 4;
+        vm.assume(params.proof.length >= minProofLen);
         vm.assume(address(_router.verifiers(bytes4(params.proof))) == address(0));
         // Cannot do mutation if the transaction has no actions
         vm.assume(transaction.actions.length > 0);
@@ -206,18 +236,8 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
-        mutation_test_execute_unknown_selector_fails(TransactionExample.transaction(), params);
-    }
-
-    /// @notice The parameters necessary to make a failing mutation to a transaction
-    struct UnknownTagFailsParams {
-        // The index of the action to mutate
-        uint256 actionIdx;
-        // The index of the compliance verifier input of the action to mutate
-        uint256 inputIdx;
-        // The tag to overwrite with
-        bytes32 tag;
+        (Transaction memory txn, ) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        mutation_test_execute_unknown_selector_fails(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
@@ -254,7 +274,7 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory txn, ) = _mockVerifier.transaction({nonce: 0, configs: configs});
         mutation_test_execute_unknown_nullifier_tag_fails(txn, params);
     }
 
@@ -292,16 +312,8 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory txn, ) = _mockVerifier.transaction({nonce: 0, configs: configs});
         mutation_test_execute_unknown_commitment_tag_fails(txn, params);
-    }
-
-    /// @notice The parameters necessary to make a failing mutation to a transaction
-    struct MismatchingResourcesFailParams {
-        // The index of the action to mutate
-        uint256 actionIdx;
-        // The index of the compliance verifier input of the action to mutate
-        uint256 inputIdx;
     }
 
     /// @notice Take a transaction that would execute successfully and make it
@@ -338,7 +350,7 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory txn, ) = _mockVerifier.transaction({nonce: 0, configs: configs});
         mutate_test_execute_missing_compliance_verifier_input_fail(txn, params);
     }
 
@@ -376,18 +388,8 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory txn, ) = _mockVerifier.transaction({nonce: 0, configs: configs});
         mutate_test_execute_missing_logic_verifier_input_fail(txn, params);
-    }
-
-    /// @notice The parameters necessary to make a failing mutation to a transaction
-    struct MismatchingLogicRefsFailParams {
-        // The index of the action to mutate
-        uint256 actionIdx;
-        // The index of the logic verifier input of the action to mutate
-        uint256 inputIdx;
-        // The logic reference to overwrite with
-        bytes32 logicRef;
     }
 
     /// @notice Take a transaction that would execute successfully and make it
@@ -417,20 +419,8 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory txn, ) = _mockVerifier.transaction({nonce: 0, configs: configs});
         mutate_test_execute_mismatching_logic_refs_fail(txn, params);
-    }
-
-    /// @notice The parameters necessary to make a failing mutation to a transaction
-    struct MismatchingForwarderCallOutputsFailParams {
-        // The index of the action to mutate
-        uint256 actionIdx;
-        // The index of the logic verifier input of the action to mutate
-        uint256 inputIdx;
-        // The index of the external payload to mutate
-        uint256 payloadIdx;
-        // The output to overwrite with
-        bytes output;
     }
 
     /// @notice Take a transaction that would execute successfully and make it
@@ -481,6 +471,38 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         this.execute(transaction);
     }
 
+    /// @notice Test that transactions with mismatching forwarder call outputs fails
+    function test_execute_mismatching_forwarder_call_outputs_fail(MismatchingForwarderCallOutputsFailParams memory params) public {
+        bytes32 carrierLogicRef = bytes32(uint256(123));
+        address _fwd = address(
+            new ForwarderExample({protocolAdapter: address(this), calldataCarrierLogicRef: carrierLogicRef})
+        );
+        address fwd2 = address(
+            new ForwarderExample({protocolAdapter: address(this), calldataCarrierLogicRef: carrierLogicRef})
+        );
+        assertNotEq(_fwd, fwd2);
+
+        address[] memory fwdList = new address[](2);
+        fwdList[0] = _fwd;
+        fwdList[1] = fwd2;
+        ProtocolAdapterMockTest test = new ProtocolAdapterMockTest();
+
+        TxGen.ResourceAndAppData[] memory consumed = test.exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created =
+            test.exampleCarrierResourceAndAppData({nonce: 1, fwdList: fwdList});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = _mockVerifier.transaction(resourceLists);
+        mutate_test_execute_mismatching_forwarder_call_outputs_fail(txn, params);
+    }
+
+    // solhint-disable-next-line no-empty-blocks
+    function test_tx_with_cu_mismatch_fails() public view {
+        // TODO: create a transaction with no compliance units and two trivial resources
+        //       in the action
+    }
+
     /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
     /// @param action The action whose root we compute.
     /// @param nCUs The number of compliance units in the action.
@@ -497,31 +519,5 @@ contract ProtocolAdapterTest is Test, ProtocolAdapterMock {
         }
 
         root = actionTreeTags.computeRoot();
-    }
-
-    /// @notice Test that transactions with mismatching forwarder call outputs fails
-    function test_execute_mismatching_forwarder_call_outputs_fail(uint8 nActions, uint8 nCUs, MismatchingForwarderCallOutputsFailParams memory params) public {
-        bytes32 _CARRIER_LOGIC_REF = bytes32(uint256(123));
-        address _fwd = address(
-            new ForwarderExample({protocolAdapter: address(this), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
-        );
-        address fwd2 = address(
-            new ForwarderExample({protocolAdapter: address(this), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
-        );
-        assertNotEq(_fwd, fwd2);
-
-        address[] memory fwdList = new address[](2);
-        fwdList[0] = _fwd;
-        fwdList[1] = fwd2;
-        ProtocolAdapterMockTest test = new ProtocolAdapterMockTest();
-
-        TxGen.ResourceAndAppData[] memory consumed = test._exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created =
-            test._exampleCarrierResourceAndAppData({nonce: 1, fwdList: fwdList});
-
-        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
-        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-        Transaction memory txn = _mockVerifier.transaction(resourceLists);
-        mutate_test_execute_mismatching_forwarder_call_outputs_fail(txn, params);
     }
 }
