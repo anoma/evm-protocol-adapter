@@ -133,14 +133,10 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 mod tests {
     use super::*;
     use crate::conversion::ProtocolAdapter;
-    use std::env;
 
     #[test]
     #[ignore]
     fn print_tx() {
-        env::var("BONSAI_API_KEY").expect("Couldn't read BONSAI_API_KEY");
-        env::var("BONSAI_API_URL").expect("Couldn't read BONSAI_API_URL");
-
         println!(
             "{:?}",
             B256::from_slice(arm_risc0::constants::COMPLIANCE_VK.as_bytes())
