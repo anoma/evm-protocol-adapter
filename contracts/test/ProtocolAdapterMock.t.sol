@@ -92,8 +92,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource() public {
-        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
+        TxGen.ResourceAndAppData[] memory consumed = exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -109,8 +109,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
-        TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList});
-        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
+        TxGen.ResourceAndAppData[] memory consumed = exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList});
+        TxGen.ResourceAndAppData[] memory created = exampleResourceAndEmptyAppData({nonce: 1});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -136,8 +136,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         fwdList[0] = _fwd;
         fwdList[1] = fwd2;
 
-        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: fwdList});
+        TxGen.ResourceAndAppData[] memory consumed = exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = exampleCarrierResourceAndAppData({nonce: 1, fwdList: fwdList});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -206,7 +206,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(tx2);
     }
 
-    function _exampleResourceAndEmptyAppData(uint256 nonce)
+    function exampleResourceAndEmptyAppData(uint256 nonce)
         public
         view
         returns (TxGen.ResourceAndAppData[] memory data)
@@ -229,7 +229,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
     }
 
-    function _exampleCarrierResourceAndAppData(uint256 nonce, address[] memory fwdList)
+    function exampleCarrierResourceAndAppData(uint256 nonce, address[] memory fwdList)
         public
         view
         returns (TxGen.ResourceAndAppData[] memory data)
