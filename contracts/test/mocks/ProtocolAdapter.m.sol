@@ -7,7 +7,6 @@ import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {Compliance} from "../../src/proving/Compliance.sol";
 import {Delta} from "../../src/proving/Delta.sol";
-import {Logic} from "../../src/proving/Logic.sol";
 
 import {_MOCK_VERIFIER_SELECTOR} from "../script/DeployRiscZeroContractsMock.s.sol";
 

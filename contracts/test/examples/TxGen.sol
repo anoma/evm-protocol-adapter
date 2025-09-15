@@ -80,26 +80,6 @@ library TxGen {
         });
     }
 
-    function logicVerifierInput(
-        RiscZeroMockVerifier mockVerifier,
-        bytes32 actionTreeRoot,
-        Resource memory resource,
-        bool isConsumed,
-        Logic.AppData memory appData
-    ) internal view returns (Logic.VerifierInput memory input) {
-        input = Logic.VerifierInput({
-            tag: isConsumed ? resource.nullifier({nullifierKey: 0}) : resource.commitment(),
-            verifyingKey: resource.logicRef,
-            appData: appData,
-            proof: ""
-        });
-
-        input.proof = mockVerifier.mockProve({
-            imageId: resource.logicRef,
-            journalDigest: input.toJournalDigest(actionTreeRoot, isConsumed)
-        }).seal;
-    }
-
     function createAction(
         RiscZeroMockVerifier mockVerifier,
         ResourceAndAppData[] memory consumed,
@@ -249,6 +229,26 @@ library TxGen {
                 verifyingKey: Delta.computeVerifyingKey(tags)
         }));
         txn = Transaction({actions: actions, deltaProof: proof});
+    }
+
+    function logicVerifierInput(
+        RiscZeroMockVerifier mockVerifier,
+        bytes32 actionTreeRoot,
+        Resource memory resource,
+        bool isConsumed,
+        Logic.AppData memory appData
+    ) internal view returns (Logic.VerifierInput memory input) {
+        input = Logic.VerifierInput({
+            tag: isConsumed ? resource.nullifier({nullifierKey: 0}) : resource.commitment(),
+            verifyingKey: resource.logicRef,
+            appData: appData,
+            proof: ""
+        });
+
+        input.proof = mockVerifier.mockProve({
+            imageId: resource.logicRef,
+            journalDigest: input.toJournalDigest(actionTreeRoot, isConsumed)
+        }).seal;
     }
 
     function generateActionConfigs(uint256 nActions, uint256 nCUs)

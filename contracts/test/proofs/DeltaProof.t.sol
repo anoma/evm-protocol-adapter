@@ -27,12 +27,6 @@ contract DeltaProofTest is Test {
         bytes32 verifyingKey;
     }
 
-    /// @notice Convert a int256 exponent to an equivalent uin256 assuming an order of SECP256K1_ORDER
-    function canonize_quantity(int256 quantity) public pure returns (uint256 quantityu) {
-        // If positive, leave the number unchanged
-        quantityu = quantity >= 0 ? uint256(quantity) : (SECP256K1_ORDER - 1 - (uint256(-(quantity + 1)) % SECP256K1_ORDER));
-    }
-
     /// @notice Generates a transaction delta proof by signing verifyingKey with
     /// rcv, and a delta instance by computing a(kind)^quantity * b^rcv
     function generateDeltaInstance(DeltaInstanceInputs memory deltaInputs) public returns (uint256[2] memory instance) {
@@ -187,6 +181,12 @@ contract DeltaProofTest is Test {
         // Verify that the imbalanced transaction proof fails
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
+    }
+
+    /// @notice Convert a int256 exponent to an equivalent uin256 assuming an order of SECP256K1_ORDER
+    function canonize_quantity(int256 quantity) public pure returns (uint256 quantityu) {
+        // If positive, leave the number unchanged
+        quantityu = quantity >= 0 ? uint256(quantity) : (SECP256K1_ORDER - 1 - (uint256(-(quantity + 1)) % SECP256K1_ORDER));
     }
 
     /// @notice Wrap the delta inputs in such a way that they can be balanced
