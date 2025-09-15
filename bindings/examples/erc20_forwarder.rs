@@ -1,11 +1,11 @@
 use alloy::hex;
-use alloy::primitives::{address, Address, B256, U256};
+use alloy::primitives::{Address, B256, U256, address};
 use alloy::signers::local::PrivateKeySigner;
 use alloy::sol_types::SolValue;
 use arm_risc0::action_tree::MerkleTree;
 use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
 use arm_risc0::compliance::INITIAL_ROOT;
-use arm_risc0::encryption::{random_keypair, AffinePoint, SecretKey};
+use arm_risc0::encryption::{AffinePoint, SecretKey, random_keypair};
 use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
