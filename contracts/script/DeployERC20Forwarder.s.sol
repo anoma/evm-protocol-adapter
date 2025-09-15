@@ -22,4 +22,3 @@ contract DeployERC20Forwarder is Script {
         vm.stopBroadcast();
     }
 }
-// forge script script/DeployERC20Forwarder.s.sol:DeployERC20Forwarder --rpc-url sepolia --broadcast --verify --slow --account dev-wallet --resume
