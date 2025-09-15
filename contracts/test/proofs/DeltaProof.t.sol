@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import { ECDSA } from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
 import { Test } from "forge-std/Test.sol";
 import { VmSafe } from "forge-std/Vm.sol";
 import { Delta } from "./../../src/proving/Delta.sol";
 import { Transaction } from "./../../src/Types.sol";
 import {TransactionExample} from "../examples/Transaction.e.sol";
 import {TxGen} from "../examples/TxGen.sol";
-import {VmSafe} from "forge-std/Vm.sol";
 
 contract DeltaProofTest is Test {
     /// @notice Generates a transaction delta proof and delta
