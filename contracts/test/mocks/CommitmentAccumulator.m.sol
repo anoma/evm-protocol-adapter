@@ -12,12 +12,12 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
 
     constructor() CommitmentAccumulator() {}
 
-    function addCommitment(bytes32 commitment) external returns (bytes32 newRoot) {
-        newRoot = _addCommitment(commitment);
+    function addCommitment(bytes32 commitment) external {
+        _addCommitment(commitment);
     }
 
-    function storeRoot(bytes32 root) external {
-        _storeRoot(root);
+    function storeRoot() external {
+        _storeRoot();
     }
 
     function merkleTreeZero(uint8 level) external view returns (bytes32 zeroHash) {

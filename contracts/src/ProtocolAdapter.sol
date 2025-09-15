@@ -62,7 +62,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant {
-        bytes32 newRoot = 0;
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
         uint256 nActions = transaction.actions.length;
@@ -100,8 +99,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
                 // Process the tags and provided root against global state
-                newRoot =
-                    _processState({nf: nf, cm: cm, root: complianceVerifierInput.instance.consumed.commitmentTreeRoot});
+                _processState({nf: nf, cm: cm, root: complianceVerifierInput.instance.consumed.commitmentTreeRoot});
 
                 // Verify the proof against a hardcoded compliance circuit
                 _verifyComplianceProof(complianceVerifierInput);
@@ -145,10 +143,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
             // Store the final root
-            _storeRoot(newRoot);
+            _storeRoot();
 
             // Emit the event containing the transaction and new root
-            emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
+            emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: _latestRoot()});
         }
     }
     // slither-disable-end reentrancy-no-eth
@@ -192,15 +190,14 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @notice The function processing the state checks and updates
     /// @param nf The nullifier of a compliance unit
     /// @param cm The commitment of a compliance unit
-    /// @param root The current commitment tree root
-    /// @return newRoot The root after potentially adding the commitment in the compliance unit
-    function _processState(bytes32 nf, bytes32 cm, bytes32 root) internal returns (bytes32 newRoot) {
+    /// @param root The compliance-provided commitment tree root
+    function _processState(bytes32 nf, bytes32 cm, bytes32 root) internal {
         // Check root in the compliance unit is an actually existing root
         _checkRootPreExistence(root);
         // Nullifier addition reverts if it was present in the set before
         _addNullifier(nf);
-        // Compute the root after adding the commitment
-        newRoot = _addCommitment(cm);
+        // Add commitment to the tree
+        _addCommitment(cm);
     }
 
     /// @notice Processes a resource by

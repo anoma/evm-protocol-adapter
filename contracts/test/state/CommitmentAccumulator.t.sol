@@ -31,7 +31,9 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         assertEq(initialRoot, _cmAcc.initialRoot());
 
         for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            assertEq(_cmAcc.addCommitment(_a[i + 1][i]), _roots[i + 1]);
+            _cmAcc.addCommitment(_a[i + 1][i]);
+            _cmAcc.storeRoot();
+            assertEq(_cmAcc.latestRoot(), _roots[i + 1]);
         }
     }
 
@@ -60,7 +62,9 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
 
         for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            bytes32 root = _cmAcc.addCommitment(_a[i + 1][i]);
+            _cmAcc.addCommitment(_a[i + 1][i]);
+            _cmAcc.storeRoot();
+            bytes32 root = _cmAcc.latestRoot();
 
             for (uint256 j = 0; j <= i; ++j) {
                 bytes32 computedRoot = MerkleTree.processProof({
@@ -86,14 +90,15 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
     function test_verifyMerkleProof_reverts_on_non_existent_commitment() public {
         /*
           (1)
-           R   
-         /  \  
+           R
+         /  \
         1   []
         */
 
         bytes32 commitment = bytes32(uint256(1));
-        bytes32 newRoot = _cmAcc.addCommitment(commitment);
-        _cmAcc.storeRoot(newRoot);
+        _cmAcc.addCommitment(commitment);
+        _cmAcc.storeRoot();
+        bytes32 newRoot = _cmAcc.latestRoot();
 
         bytes32 nonExistingCommitment = bytes32(uint256(2));
         bytes32 nonExistingRoot = SHA256.hash(commitment, nonExistingCommitment);
@@ -114,7 +119,8 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
     }
 
     function test_verifyMerkleProof_reverts_on_wrong_path_length() public {
-        _cmAcc.storeRoot(_cmAcc.addCommitment(0));
+        _cmAcc.addCommitment(0);
+        _cmAcc.storeRoot();
         bytes32[] memory wrongPath = new bytes32[](3);
 
         vm.expectRevert(
@@ -126,8 +132,9 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
 
     function test_verifyMerkleProof_reverts_on_wrong_path() public {
         bytes32 commitment = sha256("SOMETHING");
-        bytes32 newRoot = _cmAcc.addCommitment(commitment);
-        _cmAcc.storeRoot(newRoot);
+        _cmAcc.addCommitment(commitment);
+        _cmAcc.storeRoot();
+        bytes32 newRoot = _cmAcc.latestRoot();
 
         bytes32[] memory wrongPath = new bytes32[](_cmAcc.depth());
 
