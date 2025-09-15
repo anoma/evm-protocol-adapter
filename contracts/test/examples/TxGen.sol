@@ -48,8 +48,8 @@ library TxGen {
         bytes32 unitDeltaX;
         bytes32 unitDeltaY;
         unchecked {
-            unitDeltaX = bytes32(uint256(sha256(abi.encode(consumed.logicRef, consumed.labelRef))) * consumed.quantity);
-            unitDeltaY = bytes32(uint256(sha256(abi.encode(created.logicRef, created.labelRef))) * created.quantity);
+            unitDeltaX = bytes32(kind(consumed) * consumed.quantity);
+            unitDeltaY = bytes32(kind(created) * created.quantity);
         }
 
         Compliance.Instance memory instance = Compliance.Instance({
@@ -284,6 +284,10 @@ library TxGen {
 
     function nullifier(Resource memory resource, bytes32 nullifierKey) internal pure returns (bytes32 hash) {
         hash = sha256(abi.encode(resource, nullifierKey));
+    }
+
+    function kind(Resource memory resource) internal pure returns (uint256 hash) {
+        hash = uint256(sha256(abi.encode(resource.logicRef, resource.labelRef)));
     }
 
     function expirableBlobs() internal pure returns (Logic.ExpirableBlob[] memory blobs) {
