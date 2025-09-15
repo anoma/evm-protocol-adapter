@@ -145,16 +145,16 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         }
 
         // Check if the transaction induced a state change and the state root has changed
-        if (newRoot != bytes32(0)) {
+        if (resCounter != 0) {
             // Check the delta proof
             _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
             // Store the final root
             _storeRoot(newRoot);
-        }
 
-        // Emit the event containing the transaction and new root
-        emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
+            // Emit the event containing the transaction and new root
+            emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
+        }
     }
     // slither-disable-end reentrancy-no-eth
 
