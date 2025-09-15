@@ -72,12 +72,13 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource() public {
-        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory consumed = exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created =
-            _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList, isConsumed: false});
+            exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList, isConsumed: false});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = _mockVerifier.transaction(resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -85,16 +86,17 @@ contract ProtocolAdapterMockTest is Test {
             input: INPUT,
             output: EXPECTED_OUTPUT
         });
-        _mockPa.execute(_mockVerifier.transaction(resourceLists));
+        _mockPa.execute(txn);
     }
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
         TxGen.ResourceAndAppData[] memory consumed =
-            _exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList, isConsumed: true});
-        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
+            exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList, isConsumed: true});
+        TxGen.ResourceAndAppData[] memory created = exampleResourceAndEmptyAppData({nonce: 1});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = _mockVerifier.transaction(resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -103,7 +105,7 @@ contract ProtocolAdapterMockTest is Test {
             output: EXPECTED_OUTPUT
         });
 
-        _mockPa.execute(_mockVerifier.transaction(resourceLists));
+        _mockPa.execute(txn);
     }
 
     function test_execute_emits_all_ForwarderCallExecuted_events() public {
@@ -116,12 +118,13 @@ contract ProtocolAdapterMockTest is Test {
         fwdList[0] = _fwd;
         fwdList[1] = fwd2;
 
-        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory consumed = exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created =
-            _exampleCarrierResourceAndAppData({nonce: 1, fwdList: fwdList, isConsumed: false});
+            exampleCarrierResourceAndAppData({nonce: 1, fwdList: fwdList, isConsumed: false});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = _mockVerifier.transaction(resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -137,12 +140,6 @@ contract ProtocolAdapterMockTest is Test {
             output: EXPECTED_OUTPUT
         });
 
-        _mockPa.execute(_mockVerifier.transaction(resourceLists));
-    }
-
-    function test_execute_1_txn_with_1_action_and_0_cus() public {
-        (Transaction memory txn,) =
-            _mockVerifier.transaction({nonce: 0, configs: TxGen.generateActionConfigs({nActions: 1, nCUs: 0})});
         _mockPa.execute(txn);
     }
 
@@ -191,9 +188,9 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_reverts_on_incorrect_commitment_computation_because_of_wrong_resource() public {
-        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory consumed = exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created =
-            _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList, isConsumed: false});
+            exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList, isConsumed: false});
 
         // Alter the resource blob so that it results in a different commitment.
         (Resource memory originalResource) = abi.decode(created[0].appData.resourcePayload[0].blob, (Resource));
@@ -219,8 +216,8 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_execute_reverts_on_incorrect_nullifier_computation_because_of_wrong_resource() public {
         TxGen.ResourceAndAppData[] memory consumed =
-            _exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList, isConsumed: true});
-        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
+            exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList, isConsumed: true});
+        TxGen.ResourceAndAppData[] memory created = exampleResourceAndEmptyAppData({nonce: 1});
 
         // Alter the nullifier key blob so that it results in a different commitment.
         (Resource memory originalResource, bytes32 originalNullifierKey) =
@@ -247,8 +244,8 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_execute_reverts_on_incorrect_nullifier_computation_because_of_wrong_nullifierKey() public {
         TxGen.ResourceAndAppData[] memory consumed =
-            _exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList, isConsumed: true});
-        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
+            exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList, isConsumed: true});
+        TxGen.ResourceAndAppData[] memory created = exampleResourceAndEmptyAppData({nonce: 1});
 
         // Alter the nullifier key blob so that it results in a different nullifier.
         (Resource memory originalResource, bytes32 originalNullifierKey) =
@@ -273,8 +270,8 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(txn);
     }
 
-    function _exampleResourceAndEmptyAppData(uint256 nonce)
-        private
+    function exampleResourceAndEmptyAppData(uint256 nonce)
+        public
         view
         returns (TxGen.ResourceAndAppData[] memory data)
     {
@@ -296,8 +293,8 @@ contract ProtocolAdapterMockTest is Test {
         });
     }
 
-    function _exampleCarrierResourceAndAppData(uint256 nonce, address[] memory fwdList, bool isConsumed)
-        private
+    function exampleCarrierResourceAndAppData(uint256 nonce, address[] memory fwdList, bool isConsumed)
+        public
         view
         returns (TxGen.ResourceAndAppData[] memory data)
     {
