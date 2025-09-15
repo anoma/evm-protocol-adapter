@@ -269,8 +269,6 @@ fn sha256(a: &[u8], b: &[u8]) -> B256 {
 }
 
 fn main() {
-    env::var("BONSAI_API_KEY").expect("Couldn't read BONSAI_API_KEY");
-    env::var("BONSAI_API_URL").expect("Couldn't read BONSAI_API_URL");
     env::var("PRIVATE_KEY").expect("Couldn't read PRIVATE_KEY");
 
     let data = default_values();
