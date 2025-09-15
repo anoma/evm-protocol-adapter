@@ -9,6 +9,7 @@ import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
 
 import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
 import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulator.m.sol";
+import {console} from "forge-std/console.sol";
 
 contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
     using MerkleTree for bytes32[];
@@ -158,5 +159,16 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
             path: new bytes32[](0),
             directionBits: 0
         });
+    }
+
+    function test_a_lot_of_cms() public {
+        bytes32 newRoot = "";
+        uint256 nCms = 1000000;
+        for (uint256 i = 0; i < nCms; ++i) {
+          newRoot =  _cmAcc.addCommitment(bytes32(abi.encode(i)));
+        }
+
+        console.logBytes32(newRoot);
+        console.logUint(nCms);
     }
 }
