@@ -97,15 +97,13 @@ jobs:
       - name: Show Rust version
         run: rustc --version
 
-      - name: Cache Rust toolchain and dependencies
+      - name: Restore dependencies cache
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo
-            ./bindings/target
-          key: rust-build-${{ hashFiles('bindings/Cargo.toml') }}
-          restore-keys: |
-            rust-build-
+            bindings/target
+          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build Bindings
         run: cargo build --release
