@@ -132,6 +132,7 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 #[cfg(test)]
 mod tests {
     use crate::conversion::ProtocolAdapter;
+    use alloy::primitives::B256;
 
     #[test]
     #[ignore]
