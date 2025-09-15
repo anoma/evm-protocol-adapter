@@ -5,8 +5,6 @@ use alloy::signers::{local::PrivateKeySigner, Signer};
 use alloy::sol;
 use alloy::sol_types::SolValue;
 
-// const CANONICAL_PERMIT2_ADDRESS: Address = address!("0x000000000022D473030F116dDEE9F6B43aC78BA3");
-
 sol!(
     #[allow(missing_docs)]
     #[sol(rpc)]
