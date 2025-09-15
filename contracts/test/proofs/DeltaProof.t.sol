@@ -7,6 +7,7 @@ import { Delta } from "./../../src/proving/Delta.sol";
 import { Transaction } from "./../../src/Types.sol";
 import {TransactionExample} from "../examples/Transaction.e.sol";
 import {TxGen} from "../examples/TxGen.sol";
+import {EllipticCurveK256} from "../../src/libs/EllipticCurveK256.sol";
 
 contract DeltaProofTest is Test {
     // The parameters required to generate a delta instance
@@ -38,10 +39,10 @@ contract DeltaProofTest is Test {
         uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
         vm.assume(preDelta != 0);
         // Derive address and public key from transaction delta
-        VmSafe.Wallet memory valueWallet = vm.createWallet(preDelta);
+        (uint256 qx, uint256 qy) = EllipticCurveK256.derivePubKey(preDelta);
         // Extract the transaction delta from the wallet
-        instance[0] = valueWallet.publicKeyX;
-        instance[1] = valueWallet.publicKeyY;
+        instance[0] = qx;
+        instance[1] = qy;
     }
 
     function generateDeltaProof(DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
