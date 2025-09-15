@@ -43,4 +43,14 @@ library EllipticCurveK256 {
     function ecAdd(uint256 x1, uint256 y1, uint256 x2, uint256 y2) internal pure returns (uint256 x3, uint256 y3) {
         (x3, y3) = EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: AA, _pp: PP});
     }
+
+    /// @notice Multiply point (x, y) times k and returns the result.
+    /// @param k scalar to multiply
+    /// @param x coordinate x of P
+    /// @param y coordinate y of P
+    /// @return x1 The x-coordinate of k*P
+    /// @return y1 The y-coordinate of k*P
+    function ecMul(uint256 k, uint256 x, uint256 y) internal pure returns (uint256 x1, uint256 y1) {
+        (x1, y1) = EllipticCurve.ecMul({_k: k, _x: x, _y: y, _aa: AA, _pp: PP});
+    }
 }

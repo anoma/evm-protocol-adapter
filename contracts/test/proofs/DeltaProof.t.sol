@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Test } from "forge-std/Test.sol";
 import { VmSafe } from "forge-std/Vm.sol";
+import { EllipticCurveK256 } from "./../../src/libs/EllipticCurveK256.sol";
 import { Delta } from "./../../src/proving/Delta.sol";
 import { Transaction } from "./../../src/Types.sol";
-import {TransactionExample} from "../examples/Transaction.e.sol";
-import {TxGen} from "../examples/TxGen.sol";
-import {EllipticCurveK256} from "../../src/libs/EllipticCurveK256.sol";
+import { TransactionExample } from "./../examples/Transaction.e.sol";
+import { TxGen } from "./../examples/TxGen.sol";
 
 contract DeltaProofTest is Test {
     // The parameters required to generate a delta instance
@@ -45,7 +46,37 @@ contract DeltaProofTest is Test {
         instance[1] = qy;
     }
 
+    /// @notice Generate a delta proof without using vm.sign
     function generateDeltaProof(DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
+        deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
+        vm.assume(deltaInputs.rcv != 0);
+        for (uint256 k = 1; k < SECP256K1_ORDER; k++) {
+            // secp256k1 base point
+            uint256 gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
+            uint256 gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
+            // Compute kG
+            (uint256 x1, uint256 y1) = EllipticCurveK256.ecMul(k, gx, gy);
+            uint256 r = x1 % SECP256K1_ORDER;
+            if (r == 0) { continue; }
+            // Compute k^-1 (verifyingKey + r*rcv) mod N
+            uint256 s = mulmod(Math.invMod(k, SECP256K1_ORDER), addmod(uint256(deltaInputs.verifyingKey), mulmod(r, deltaInputs.rcv, SECP256K1_ORDER), SECP256K1_ORDER), SECP256K1_ORDER) % SECP256K1_ORDER;
+            if (s == 0) { continue; }
+            // Compute the recovery ID
+            uint8 v = uint8(y1 & 1);
+            if (s > SECP256K1_ORDER/2) {
+                v = v ^ 1;
+                // Flip to canonical (r, -s mod n)
+                s = SECP256K1_ORDER - s;
+            }
+            v += 27;
+            // Finally compute the transaction delta proof
+            return abi.encodePacked(r, s, v);
+        }
+        fail();
+    }
+
+    /// @notice Generate a delta proof
+    function generateDeltaProof2(DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         vm.assume(deltaInputs.rcv != 0);
         // Compute the components of the transaction delta proof
