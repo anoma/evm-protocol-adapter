@@ -233,6 +233,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @param verifierInput The logic verifier input of a resource making the call.
     function _processForwarderCalls(Logic.VerifierInput calldata verifierInput) internal {
         uint256 nCalls = verifierInput.appData.externalPayload.length;
+
         for (uint256 i = 0; i < nCalls; ++i) {
             _executeForwarderCall({
                 carrierLogicRef: verifierInput.verifyingKey,

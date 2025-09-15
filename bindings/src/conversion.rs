@@ -1,12 +1,12 @@
-use alloy::primitives::{B256, Bytes};
+use alloy::primitives::{Bytes, B256};
 use alloy::sol;
-
 use arm_risc0::action::Action;
 use arm_risc0::compliance::ComplianceInstance;
 use arm_risc0::compliance_unit::ComplianceUnit;
 use arm_risc0::logic_instance::{AppData, ExpirableBlob};
 use arm_risc0::logic_proof::LogicVerifierInputs;
 use arm_risc0::proving_system::encode_seal;
+
 use arm_risc0::transaction::{Delta, Transaction};
 use arm_risc0::utils::words_to_bytes;
 
@@ -131,8 +131,8 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::conversion::ProtocolAdapter;
+    use alloy::primitives::B256;
 
     #[test]
     #[ignore]
@@ -148,7 +148,7 @@ mod tests {
         println!("{:?}", raw_tx);
         let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
 
-        use alloy_sol_types::SolValue; // Import the trait for abi_encode
+        use alloy::sol_types::SolValue;
         let encoded_tx = evm_tx.abi_encode();
         let decoded_tx: ProtocolAdapter::Transaction =
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
