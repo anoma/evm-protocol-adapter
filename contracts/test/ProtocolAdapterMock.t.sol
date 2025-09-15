@@ -8,7 +8,6 @@ import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.so
 import {Test} from "forge-std/Test.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
-import {ComputableComponents} from "../src/libs/ComputableComponents.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
 import {RiscZeroUtils} from "../src/libs/RiscZeroUtils.sol";
 
@@ -24,10 +23,10 @@ import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.
 
 contract ProtocolAdapterMockTest is Test {
     using MerkleTree for bytes32[];
-    using ComputableComponents for Resource;
     using RiscZeroUtils for Logic.VerifierInput;
     using TxGen for RiscZeroMockVerifier;
     using TxGen for Transaction;
+    using TxGen for Resource;
 
     bytes32 internal constant _CARRIER_LOGIC_REF = bytes32(uint256(123));
 
