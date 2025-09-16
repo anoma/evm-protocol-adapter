@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Arrays} from "@openzeppelin-contracts/utils/Arrays.sol";
 import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
+import {TransientSlot} from "@openzeppelin-contracts/utils/TransientSlot.sol";
 
 import {ICommitmentAccumulator} from "../interfaces/ICommitmentAccumulator.sol";
 import {MerkleTree} from "../libs/MerkleTree.sol";
@@ -16,12 +17,19 @@ import {MerkleTree} from "../libs/MerkleTree.sol";
 contract CommitmentAccumulator is ICommitmentAccumulator {
     using MerkleTree for MerkleTree.Tree;
     using MerkleTree for bytes32[];
+    using TransientSlot for TransientSlot.Bytes32Slot;
+    using TransientSlot for bytes32;
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using Arrays for bytes32[];
 
+    /// @notice The ERC-7201 storage location of the Xan V1 contract (see https://eips.ethereum.org/EIPS/eip-7201).
+    // solhint-disable-next-line max-line-length
+    /// @dev Obtained from `keccak256(abi.encode(uint256(keccak256("anoma.storage.MerkleTree.v1.currentRoot")) - 1)) & ~bytes32(uint256(0xff))`.
+    bytes32 private constant _CURRENT_ROOT_TRANSIENT_STORAGE =
+        0x36332f0934cf7f4e10e62c4c446116395e0d782bbbe111b9b0de6d9f16fc0200;
+
     MerkleTree.Tree internal _merkleTree;
     EnumerableSet.Bytes32Set internal _roots;
-    bytes32 internal _updatedRoot;
 
     error EmptyCommitment();
     error NonExistingCommitment(bytes32 commitment);
@@ -36,7 +44,8 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
 
     /// @notice Initializes the commitment accumulator by setting up a Merkle tree.
     constructor() {
-        _updatedRoot = _merkleTree.setup();
+        bytes32 initialRoot = _merkleTree.setup();
+        _CURRENT_ROOT_TRANSIENT_STORAGE.asBytes32().tstore(initialRoot);
         _storeRoot();
     }
 
@@ -62,17 +71,18 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     /// @notice Adds a commitment to to the set, if it does not exist already and returns the new root.
     /// @param commitment The commitment to add.
     function _addCommitment(bytes32 commitment) internal {
-        uint256 index;
-        (index, _updatedRoot) = _merkleTree.push(commitment);
+        // slither-disable-next-line unused-return
+        (, bytes32 updatedRoot) = _merkleTree.push(commitment);
+
+        _CURRENT_ROOT_TRANSIENT_STORAGE.asBytes32().tstore(updatedRoot);
     }
 
     /// @notice Stores a root in the set of historical roots.
     function _storeRoot() internal {
-        if (!_roots.add(_updatedRoot)) {
-            revert PreExistingRoot(_updatedRoot);
+        bytes32 currentRoot = _CURRENT_ROOT_TRANSIENT_STORAGE.asBytes32().tload();
+        if (!_roots.add(currentRoot)) {
+            revert PreExistingRoot(currentRoot);
         }
-
-        _updatedRoot = 0;
     }
 
     /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.
