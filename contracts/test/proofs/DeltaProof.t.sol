@@ -9,7 +9,6 @@ import { Delta } from "./../../src/proving/Delta.sol";
 import { Transaction } from "./../../src/Types.sol";
 import { TransactionExample } from "./../examples/Transaction.e.sol";
 import { TxGen } from "./../examples/TxGen.sol";
-import {console} from "forge-std/console.sol";
 
 library DeltaGen {
     // The order of the secp256k1 curve.
@@ -25,8 +24,10 @@ library DeltaGen {
     struct DeltaInstanceInputs {
         // The identifier of the asset
         uint256 kind;
+        // Whether this input is being consumed or not
+        bool consumed;
         // The quantity of the asset
-        int256 quantity;
+        uint128 quantity;
         // Value commitment randomness
         uint256 rcv;
     }
@@ -50,7 +51,7 @@ library DeltaGen {
         deltaInputs.kind = deltaInputs.kind % SECP256K1_ORDER;
         require(deltaInputs.kind != 0, "resource kind must be non-zero");
         // The exponent must be non-zero modulo the base point order
-        uint256 quantity = canonize_quantity(deltaInputs.quantity);
+        uint256 quantity = canonize_quantity(deltaInputs.consumed, deltaInputs.quantity);
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
         assert(preDelta != 0);
@@ -88,9 +89,9 @@ library DeltaGen {
     }
 
     /// @notice Convert a int256 exponent to an equivalent uin256 assuming an order of SECP256K1_ORDER
-    function canonize_quantity(int256 quantity) public pure returns (uint256 quantityu) {
+    function canonize_quantity(bool consumed, uint128 quantity) public pure returns (uint256 quantityu) {
         // If positive, leave the number unchanged
-        quantityu = quantity >= 0 ? uint256(quantity) : (SECP256K1_ORDER - 1 - (uint256(-(quantity + 1)) % SECP256K1_ORDER));
+        quantityu = consumed ? ((SECP256K1_ORDER - uint256(quantity)) % SECP256K1_ORDER) : uint256(quantity);
     }
 }
 
@@ -106,7 +107,7 @@ contract DeltaProofTest is Test {
         deltaInputs.kind = deltaInputs.kind % SECP256K1_ORDER;
         vm.assume(deltaInputs.kind != 0);
         // The exponent must be non-zero modulo the base point order
-        uint256 quantity = DeltaGen.canonize_quantity(deltaInputs.quantity);
+        uint256 quantity = DeltaGen.canonize_quantity(deltaInputs.consumed, deltaInputs.quantity);
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
         vm.assume(preDelta != 0);
@@ -125,7 +126,7 @@ contract DeltaProofTest is Test {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         vm.assume(deltaInputs.rcv != 0);
         vm.assume(deltaInputs.kind != 0);
-        uint256 quantity = DeltaGen.canonize_quantity(deltaInputs.quantity);
+        uint256 quantity = DeltaGen.canonize_quantity(deltaInputs.consumed, deltaInputs.quantity);
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
         vm.assume(preDelta != 0);
@@ -165,13 +166,26 @@ contract DeltaProofTest is Test {
         // Ensure that we're adding assets of the same kind over the same verifying key
         deltaInputs2.kind = deltaInputs1.kind;
         // Filter out overflows
-        vm.assume(deltaInputs1.quantity < 0 || deltaInputs2.quantity <= type(int256).max - deltaInputs1.quantity);
-        vm.assume(deltaInputs1.quantity >= 0 || type(int256).min - deltaInputs1.quantity <= deltaInputs2.quantity);
+        vm.assume(deltaInputs1.consumed != deltaInputs2.consumed || deltaInputs2.quantity <= type(uint128).max - deltaInputs1.quantity);
         vm.assume(0 < deltaInputs2.rcv && deltaInputs2.rcv <= type(uint256).max - deltaInputs1.rcv);
+        // Add the deltas
+        uint128 quantity;
+        bool consumed;
+        if (deltaInputs1.consumed == deltaInputs2.consumed) {
+            consumed = deltaInputs1.consumed;
+            quantity = deltaInputs1.quantity + deltaInputs2.quantity;
+        } else if(deltaInputs1.quantity >= deltaInputs2.quantity) {
+            quantity = deltaInputs1.quantity - deltaInputs2.quantity;
+            consumed = deltaInputs1.consumed;
+        } else {
+            quantity = deltaInputs2.quantity - deltaInputs1.quantity;
+            consumed = deltaInputs2.consumed;
+        }
         // Compute the inputs corresponding to the sum of deltas
         DeltaGen.DeltaInstanceInputs memory deltaInputs3 = DeltaGen.DeltaInstanceInputs({
             kind: deltaInputs1.kind,
-            quantity: deltaInputs1.quantity + deltaInputs2.quantity,
+            quantity: quantity,
+            consumed: consumed,
             rcv: deltaInputs1.rcv + deltaInputs2.rcv
         });
         assumeDeltaInstance(deltaInputs1);
@@ -192,7 +206,7 @@ contract DeltaProofTest is Test {
         // Filter out inadmissible private keys or equal keys
         deltaProofInputs.rcv = deltaInstanceInputs.rcv;
         vm.assume(deltaInstanceInputs.kind % SECP256K1_ORDER != 0);
-        vm.assume(DeltaGen.canonize_quantity(deltaInstanceInputs.quantity) != 0);
+        vm.assume(DeltaGen.canonize_quantity(deltaInstanceInputs.consumed, deltaInstanceInputs.quantity) != 0);
         assumeDeltaInstance(deltaInstanceInputs);
         assumeDeltaProof(deltaProofInputs);
         // Generate a delta proof and instance from the above tags and preimage
@@ -241,10 +255,17 @@ contract DeltaProofTest is Test {
         uint256 maxDeltaLen = 10;
         deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
         // Make sure that the delta quantities balance out
-        (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
+        (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, bool consumed, uint128 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
         // Adjust the last delta so that the full sum is zero
         if(quantity != 0) {
-            wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity -= quantity;
+            if(wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed != consumed) {
+                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity += quantity;
+            } else if(wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity >= quantity) {
+                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity -= quantity;
+            } else {
+                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity = quantity - wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity;
+                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed = !consumed;
+            }
         }
         for(uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
@@ -270,9 +291,9 @@ contract DeltaProofTest is Test {
         uint256 maxDeltaLen = 10;
         deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
         // Accumulate the total quantity and randomness commitment
-        (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
+        (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, bool consumed, uint128 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
         // Assume that the deltas are imbalanced
-        vm.assume(DeltaGen.canonize_quantity(quantity) != 0);
+        vm.assume(DeltaGen.canonize_quantity(consumed, quantity) != 0);
         for(uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
             assumeDeltaInstance(wrappedDeltaInputs[i]);
@@ -293,15 +314,17 @@ contract DeltaProofTest is Test {
 
     /// @notice Wrap the delta inputs in such a way that they can be balanced
     /// and also return the total quantity and value commitment randomness
-    function wrapDeltaInputs(DeltaGen.DeltaInstanceInputs[] memory deltaInputs) public pure returns (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantityAcc, uint256 rcvAcc) {
+    function wrapDeltaInputs(DeltaGen.DeltaInstanceInputs[] memory deltaInputs) public pure returns (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, bool consumedAcc, uint128 quantityMagAcc, uint256 rcvAcc) {
         // Compute the window into which the deltas should sum
-        int256 halfMax = type(int256).max >> 1;
-        int256 halfMin = type(int256).min >> 1;
+        int256 halfMax = int256(uint256(type(uint128).max >> 1));
+        int256 halfMin = -halfMax;
         // Track the current quantity and value commitment randomness
-        quantityAcc = 0;
+        int256 quantityAcc = 0;
+        quantityMagAcc = 0;
+        consumedAcc = false;
         rcvAcc = 0;
         if (deltaInputs.length == 0) {
-            return (deltaInputs, quantityAcc, rcvAcc);
+            return (deltaInputs, consumedAcc, quantityMagAcc, rcvAcc);
         }
         // Grab the kind to use for all deltas
         uint256 kind = deltaInputs[0].kind;
@@ -312,19 +335,35 @@ contract DeltaProofTest is Test {
             deltaInputs[i].kind = kind;
             // Accumulate the randomness commitments modulo SECP256K1_ORDER
             rcvAcc = addmod(rcvAcc, deltaInputs[i].rcv, SECP256K1_ORDER);
+            int256 currentQuantityMag = int256(uint256(deltaInputs[i].quantity));
+            int256 currentQuantity = deltaInputs[i].consumed ? -currentQuantityMag : currentQuantityMag;
             // Adjust the delta inputs so that the sum remains in a specific range
-            if(deltaInputs[i].quantity >= 0 && quantityAcc > halfMax - deltaInputs[i].quantity) {
-                int256 overflow = quantityAcc - (halfMax - deltaInputs[i].quantity);
-                deltaInputs[i].quantity = halfMin + overflow - 1 - quantityAcc;
-            } else if(deltaInputs[i].quantity < 0 && quantityAcc < halfMin - deltaInputs[i].quantity) {
-                int256 underflow = (halfMin - deltaInputs[i].quantity) - quantityAcc;
-                deltaInputs[i].quantity = halfMax + 1 - underflow - quantityAcc;
+            if(currentQuantity >= 0 && quantityAcc > halfMax - currentQuantity) {
+                int256 overflow = quantityAcc - (halfMax - currentQuantity);
+                currentQuantity = halfMin + overflow - 1 - quantityAcc;
+            } else if(currentQuantity < 0 && quantityAcc < halfMin - currentQuantity) {
+                int256 underflow = (halfMin - currentQuantity) - quantityAcc;
+                currentQuantity = halfMax + 1 - underflow - quantityAcc;
             }
             // Finally, accumulate the adjusted quantity
-            quantityAcc += deltaInputs[i].quantity;
+            quantityAcc += currentQuantity;
+            if (currentQuantity >= 0) {
+                deltaInputs[i].quantity = uint128(uint256(currentQuantity));
+                deltaInputs[i].consumed = false;
+            } else {
+                deltaInputs[i].quantity = uint128(uint256(-currentQuantity));
+                deltaInputs[i].consumed = true;
+            }
         }
         // Finally, return tbe wrapped deltas
         wrappedDeltaInputs = deltaInputs;
+        if (quantityAcc >= 0) {
+            quantityMagAcc = uint128(uint256(quantityAcc));
+            consumedAcc = false;
+        } else {
+            quantityMagAcc = uint128(uint256(-quantityAcc));
+            consumedAcc = true;
+        }
     }
 
     /// @notice Grab the first length elements from deltaInputs

@@ -50,13 +50,15 @@ library TxGen {
         // Construct the delta for consumption based on kind and quantity
         uint256[2] memory unitDelta = deltaProofTest.genInstance(DeltaGen.DeltaInstanceInputs({
                 kind: kind(consumed),
-                quantity: -int256(uint256(consumed.quantity)),
+                quantity: consumed.quantity,
+                consumed: true,
                 rcv: 1
         }));
         // Construct the delta for creation based on kind and quantity
         unitDelta = Delta.add(unitDelta, deltaProofTest.genInstance(DeltaGen.DeltaInstanceInputs({
                 kind: kind(created),
-                quantity: int256(uint256(created.quantity)),
+                quantity: created.quantity,
+                consumed: false,
                 rcv: 1
         })));
 
