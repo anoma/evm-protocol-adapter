@@ -48,14 +48,14 @@ library TxGen {
 
         DeltaProofTest deltaProofTest = new DeltaProofTest();
         // Construct the delta for consumption based on kind and quantity
-        uint256[2] memory unitDelta = deltaProofTest.genInstance(DeltaGen.DeltaInstanceInputs({
+        uint256[2] memory unitDelta = deltaProofTest.genInstance(DeltaGen.InstanceInputs({
                 kind: kind(consumed),
                 quantity: consumed.quantity,
                 consumed: true,
                 rcv: 1
         }));
         // Construct the delta for creation based on kind and quantity
-        unitDelta = Delta.add(unitDelta, deltaProofTest.genInstance(DeltaGen.DeltaInstanceInputs({
+        unitDelta = Delta.add(unitDelta, deltaProofTest.genInstance(DeltaGen.InstanceInputs({
                 kind: kind(created),
                 quantity: created.quantity,
                 consumed: false,
@@ -201,7 +201,7 @@ library TxGen {
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
         // Generate a proof over the tags where rcv value is the expected total
-        bytes memory proof = deltaProofTest.genProof(DeltaGen.DeltaProofInputs({
+        bytes memory proof = deltaProofTest.genProof(DeltaGen.ProofInputs({
                 rcv: tags.length,
                 verifyingKey: Delta.computeVerifyingKey(tags)
         }));
@@ -224,7 +224,7 @@ library TxGen {
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
         // Generate a proof over the tags where rcv value is the expected total
-        bytes memory proof = deltaProofTest.genProof(DeltaGen.DeltaProofInputs({
+        bytes memory proof = deltaProofTest.genProof(DeltaGen.ProofInputs({
                 rcv: tags.length,
                 verifyingKey: Delta.computeVerifyingKey(tags)
         }));

@@ -21,7 +21,7 @@ library DeltaGen {
         0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
     
     // The parameters required to generate a delta instance
-    struct DeltaInstanceInputs {
+    struct InstanceInputs {
         // The identifier of the asset
         uint256 kind;
         // Whether this input is being consumed or not
@@ -33,7 +33,7 @@ library DeltaGen {
     }
 
     // The parameters required to generate a delta proof
-    struct DeltaProofInputs {
+    struct ProofInputs {
         // Value commitment randomness
         uint256 rcv;
         // The hash being signed over
@@ -42,7 +42,7 @@ library DeltaGen {
 
     /// @notice Generates a transaction delta proof by signing verifyingKey with
     /// rcv, and a delta instance by computing a(kind)^quantity * b^rcv
-    function genInstance(DeltaInstanceInputs memory deltaInputs) public returns (uint256[2] memory instance) {
+    function genInstance(InstanceInputs memory deltaInputs) public returns (uint256[2] memory instance) {
         // The value commitment randomness must be non-zero modulo the base
         // point order
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
@@ -63,7 +63,7 @@ library DeltaGen {
     }
 
     /// @notice Generate a delta proof without using vm.sign
-    function genProof(DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
+    function genProof(ProofInputs memory deltaInputs) public returns (bytes memory proof) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         require(deltaInputs.rcv != 0, "value commitment randomness must be non-zero");
         for (uint256 k = 1; k < SECP256K1_ORDER; k++) {
@@ -98,7 +98,7 @@ library DeltaGen {
 contract DeltaProofTest is Test {
     /// @notice Assume that the delta instance inputs are well-formed. I.e. the
     /// value commitment randomness and resource kind are both non-zero.
-    function assumeDeltaInstance(DeltaGen.DeltaInstanceInputs memory deltaInputs) internal {
+    function assumeDeltaInstance(DeltaGen.InstanceInputs memory deltaInputs) internal {
         // The value commitment randomness must be non-zero modulo the base
         // point order
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
@@ -115,14 +115,14 @@ contract DeltaProofTest is Test {
 
     /// @notice Assume that the delta proof inputs are well-formed. I.e. the
     /// value commitment randomness is non-zero.
-    function assumeDeltaProof(DeltaGen.DeltaProofInputs memory deltaInputs) internal {
+    function assumeDeltaProof(DeltaGen.ProofInputs memory deltaInputs) internal {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         vm.assume(deltaInputs.rcv != 0);
     }
 
     /// @notice Generates a transaction delta proof by signing verifyingKey with
     /// rcv, and a delta instance by computing a(kind)^quantity * b^rcv
-    function genInstance(DeltaGen.DeltaInstanceInputs memory deltaInputs) public returns (uint256[2] memory instance) {
+    function genInstance(DeltaGen.InstanceInputs memory deltaInputs) public returns (uint256[2] memory instance) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         vm.assume(deltaInputs.rcv != 0);
         vm.assume(deltaInputs.kind != 0);
@@ -138,7 +138,7 @@ contract DeltaProofTest is Test {
     }
     
     /// @notice Generate a delta proof
-    function genProof(DeltaGen.DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
+    function genProof(DeltaGen.ProofInputs memory deltaInputs) public returns (bytes memory proof) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         vm.assume(deltaInputs.rcv != 0);
         // Compute the components of the transaction delta proof
@@ -149,7 +149,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
-    function test_verify_delta_succeeds(DeltaGen.DeltaInstanceInputs memory deltaInstanceInputs, DeltaGen.DeltaProofInputs memory deltaProofInputs) public {
+    function test_verify_delta_succeeds(DeltaGen.InstanceInputs memory deltaInstanceInputs, DeltaGen.ProofInputs memory deltaProofInputs) public {
         // Generate a delta proof and instance from the above tags and preimage
         deltaInstanceInputs.quantity = 0;
         deltaProofInputs.rcv = deltaInstanceInputs.rcv;
@@ -162,27 +162,16 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.add correctly adds deltas
-    function test_add_delta_correctness(DeltaGen.DeltaInstanceInputs memory deltaInputs1, DeltaGen.DeltaInstanceInputs memory deltaInputs2) public {
+    function test_add_delta_correctness(DeltaGen.InstanceInputs memory deltaInputs1, DeltaGen.InstanceInputs memory deltaInputs2) public {
         // Ensure that we're adding assets of the same kind over the same verifying key
         deltaInputs2.kind = deltaInputs1.kind;
         // Filter out overflows
         vm.assume(deltaInputs1.consumed != deltaInputs2.consumed || deltaInputs2.quantity <= type(uint128).max - deltaInputs1.quantity);
         vm.assume(0 < deltaInputs2.rcv && deltaInputs2.rcv <= type(uint256).max - deltaInputs1.rcv);
         // Add the deltas
-        uint128 quantity;
-        bool consumed;
-        if (deltaInputs1.consumed == deltaInputs2.consumed) {
-            consumed = deltaInputs1.consumed;
-            quantity = deltaInputs1.quantity + deltaInputs2.quantity;
-        } else if(deltaInputs1.quantity >= deltaInputs2.quantity) {
-            quantity = deltaInputs1.quantity - deltaInputs2.quantity;
-            consumed = deltaInputs1.consumed;
-        } else {
-            quantity = deltaInputs2.quantity - deltaInputs1.quantity;
-            consumed = deltaInputs2.consumed;
-        }
+        (bool consumed, uint128 quantity) = signMagAdd(deltaInputs1.consumed, deltaInputs1.quantity, deltaInputs2.consumed, deltaInputs2.quantity);
         // Compute the inputs corresponding to the sum of deltas
-        DeltaGen.DeltaInstanceInputs memory deltaInputs3 = DeltaGen.DeltaInstanceInputs({
+        DeltaGen.InstanceInputs memory deltaInputs3 = DeltaGen.InstanceInputs({
             kind: deltaInputs1.kind,
             quantity: quantity,
             consumed: consumed,
@@ -202,7 +191,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails1(DeltaGen.DeltaInstanceInputs memory deltaInstanceInputs, DeltaGen.DeltaProofInputs memory deltaProofInputs) public {
+    function test_verify_inconsistent_delta_fails1(DeltaGen.InstanceInputs memory deltaInstanceInputs, DeltaGen.ProofInputs memory deltaProofInputs) public {
         // Filter out inadmissible private keys or equal keys
         deltaProofInputs.rcv = deltaInstanceInputs.rcv;
         vm.assume(deltaInstanceInputs.kind % SECP256K1_ORDER != 0);
@@ -218,7 +207,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails2(DeltaGen.DeltaProofInputs memory deltaInputs1, DeltaGen.DeltaInstanceInputs memory deltaInputs2) public {
+    function test_verify_inconsistent_delta_fails2(DeltaGen.ProofInputs memory deltaInputs1, DeltaGen.InstanceInputs memory deltaInputs2) public {
         deltaInputs2.quantity = 0;
         // Filter out inadmissible private keys or equal keys
         vm.assume((deltaInputs1.rcv % SECP256K1_ORDER) != (deltaInputs2.rcv % SECP256K1_ORDER));
@@ -233,7 +222,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
-    function test_verify_inconsistent_delta_fails3(DeltaGen.DeltaProofInputs memory deltaInputs1, DeltaGen.DeltaInstanceInputs memory deltaInputs2, bytes32 verifyingKey) public {
+    function test_verify_inconsistent_delta_fails3(DeltaGen.ProofInputs memory deltaInputs1, DeltaGen.InstanceInputs memory deltaInputs2, bytes32 verifyingKey) public {
         deltaInputs2.rcv = deltaInputs1.rcv;
         deltaInputs2.quantity = 0;
         // Filter out inadmissible private keys or equal keys
@@ -248,24 +237,43 @@ contract DeltaProofTest is Test {
         Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey});
     }
 
+    /// @notice Add two numbers in sign magnitude representation. Positive
+    /// numbers are represented with a false sign and negative numbers with a
+    /// true sign.
+    function signMagAdd(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
+        if (s1 == s2) {
+            return (s1, m1 + m2);
+        } else if (m1 >= m2) {
+            return (s1, m1 - m2);
+        } else if (m2 > m1) {
+            return (s2, m2 - m1);
+        }
+    }
+
+    /// @notice Subtract two numbers in sign magnitude representation. Positive
+    /// numbers are represented with a false sign and negative numbers with a
+    /// true sign.
+    function signMagSub(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
+        if (s1 != s2) {
+            return (s1, m1 + m2);
+        } else if (m1 >= m2) {
+            return (s1, m1 - m2);
+        } else if (m2 > m1) {
+            return (!s1, m2 - m1);
+        }
+    }
+
     /// @notice Check that a balanced transaction does pass verification
-    function test_verify_balanced_delta_succeeds(DeltaGen.DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
+    function test_verify_balanced_delta_succeeds(DeltaGen.InstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
         // Truncate the delta inputs to improve test performance
         uint256 maxDeltaLen = 10;
         deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
         // Make sure that the delta quantities balance out
-        (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, bool consumed, uint128 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
+        (DeltaGen.InstanceInputs[] memory wrappedDeltaInputs, bool consumed, uint128 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
         // Adjust the last delta so that the full sum is zero
         if(quantity != 0) {
-            if(wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed != consumed) {
-                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity += quantity;
-            } else if(wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity >= quantity) {
-                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity -= quantity;
-            } else {
-                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity = quantity - wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity;
-                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed = !consumed;
-            }
+            (wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed, wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity) = signMagSub(wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed, wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity, consumed, quantity);
         }
         for(uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
@@ -274,7 +282,7 @@ contract DeltaProofTest is Test {
             deltaAcc = Delta.add(deltaAcc, instance);
         }
         // Compute the proof for the balanced transaction
-        DeltaGen.DeltaProofInputs memory sumDeltaInputs = DeltaGen.DeltaProofInputs({
+        DeltaGen.ProofInputs memory sumDeltaInputs = DeltaGen.ProofInputs({
             rcv: rcv,
             verifyingKey: verifyingKey
             });
@@ -285,13 +293,13 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Check that an imbalanced transaction fails verification
-    function test_verify_imbalanced_delta_fails(DeltaGen.DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
+    function test_verify_imbalanced_delta_fails(DeltaGen.InstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
         // Truncate the delta inputs to improve test performance
         uint256 maxDeltaLen = 10;
         deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
         // Accumulate the total quantity and randomness commitment
-        (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, bool consumed, uint128 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
+        (DeltaGen.InstanceInputs[] memory wrappedDeltaInputs, bool consumed, uint128 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
         // Assume that the deltas are imbalanced
         vm.assume(DeltaGen.canonize_quantity(consumed, quantity) != 0);
         for(uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
@@ -301,7 +309,7 @@ contract DeltaProofTest is Test {
             deltaAcc = Delta.add(deltaAcc, instance);
         }
         // Compute the proof for the balanced transaction
-        DeltaGen.DeltaProofInputs memory sumDeltaInputs = DeltaGen.DeltaProofInputs({
+        DeltaGen.ProofInputs memory sumDeltaInputs = DeltaGen.ProofInputs({
             rcv: rcv,
             verifyingKey: verifyingKey
             });
@@ -312,9 +320,22 @@ contract DeltaProofTest is Test {
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
+    /// @notice Convert the signed quantity whose magnitude fits into a uint128
+    /// into a sign-magnitude representation. Positive numbers are represented
+    /// with a false sign and negative numbers with a true sign.
+    function toSignMag(int256 quantity) internal pure returns (bool sign, uint128 magnitude) {
+        if (quantity >= 0) {
+            magnitude = uint128(uint256(quantity));
+            sign = false;
+        } else {
+            magnitude = uint128(uint256(-quantity));
+            sign = true;
+        }
+    }
+
     /// @notice Wrap the delta inputs in such a way that they can be balanced
     /// and also return the total quantity and value commitment randomness
-    function wrapDeltaInputs(DeltaGen.DeltaInstanceInputs[] memory deltaInputs) public pure returns (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, bool consumedAcc, uint128 quantityMagAcc, uint256 rcvAcc) {
+    function wrapDeltaInputs(DeltaGen.InstanceInputs[] memory deltaInputs) public pure returns (DeltaGen.InstanceInputs[] memory wrappedDeltaInputs, bool consumedAcc, uint128 quantityMagAcc, uint256 rcvAcc) {
         // Compute the window into which the deltas should sum
         int256 halfMax = int256(uint256(type(uint128).max >> 1));
         int256 halfMin = -halfMax;
@@ -347,28 +368,16 @@ contract DeltaProofTest is Test {
             }
             // Finally, accumulate the adjusted quantity
             quantityAcc += currentQuantity;
-            if (currentQuantity >= 0) {
-                deltaInputs[i].quantity = uint128(uint256(currentQuantity));
-                deltaInputs[i].consumed = false;
-            } else {
-                deltaInputs[i].quantity = uint128(uint256(-currentQuantity));
-                deltaInputs[i].consumed = true;
-            }
+            (deltaInputs[i].consumed, deltaInputs[i].quantity) = toSignMag(currentQuantity);
         }
         // Finally, return tbe wrapped deltas
         wrappedDeltaInputs = deltaInputs;
-        if (quantityAcc >= 0) {
-            quantityMagAcc = uint128(uint256(quantityAcc));
-            consumedAcc = false;
-        } else {
-            quantityMagAcc = uint128(uint256(-quantityAcc));
-            consumedAcc = true;
-        }
+        (consumedAcc, quantityMagAcc) = toSignMag(quantityAcc);
     }
 
     /// @notice Grab the first length elements from deltaInputs
-    function truncateDeltaInputs(DeltaGen.DeltaInstanceInputs[] memory deltaInputs, uint256 length) public pure returns (DeltaGen.DeltaInstanceInputs[] memory truncatedDeltaInputs) {
-        truncatedDeltaInputs = new DeltaGen.DeltaInstanceInputs[](length);
+    function truncateDeltaInputs(DeltaGen.InstanceInputs[] memory deltaInputs, uint256 length) public pure returns (DeltaGen.InstanceInputs[] memory truncatedDeltaInputs) {
+        truncatedDeltaInputs = new DeltaGen.InstanceInputs[](length);
         for(uint256 i = 0; i < length; i++) {
             truncatedDeltaInputs[i] = deltaInputs[i];
         }
