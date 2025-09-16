@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
+import {ICommitmentAccumulator} from "../../src/interfaces/ICommitmentAccumulator.sol";
 import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
 
 import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
@@ -46,6 +47,27 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
             assertEq(newCount, ++prevCount);
             prevCount = newCount;
         }
+    }
+
+    function test_storeRoot_stores_the_root() public {
+        bytes32 rootToStore = bytes32(type(uint256).max);
+
+        assertEq(_cmAcc.latestRoot(), _cmAcc.initialRoot());
+        assertEq(_cmAcc.containsRoot(rootToStore), false);
+
+        _cmAcc.storeRoot(rootToStore);
+
+        assertEq(_cmAcc.latestRoot(), rootToStore);
+        assertEq(_cmAcc.containsRoot(rootToStore), true);
+    }
+
+    function test_storeRoot_emits_the_CommitmentTreeRootStored_event() public {
+        bytes32 rootToStore = bytes32(type(uint256).max);
+
+        vm.expectEmit(address(_cmAcc));
+        emit ICommitmentAccumulator.CommitmentTreeRootStored({root: rootToStore});
+
+        _cmAcc.storeRoot(rootToStore);
     }
 
     function test_addCommitment_allows_adding_the_same_commitment_multiple_times() public {

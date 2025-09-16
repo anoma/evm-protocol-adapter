@@ -147,10 +147,9 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
             // Store the final root
             _storeRoot(newRoot);
-
-            // Emit the event containing the transaction and new root
-            emit TransactionExecuted({tags: tags, logicRefs: logicRefs, newRoot: newRoot});
         }
+
+        emit TransactionExecuted({tags: tags, logicRefs: logicRefs});
     }
     // slither-disable-end reentrancy-no-eth
 

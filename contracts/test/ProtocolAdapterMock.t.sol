@@ -54,21 +54,19 @@ contract ProtocolAdapterMockTest is Test {
         _carrierLabelRef = sha256(abi.encode(_fwd));
     }
 
-    function test_execute_emits_the_TransactionExecuted_event() public {
-        (Transaction memory txn,) =
-            _mockVerifier.transaction({nonce: 0, configs: TxGen.generateActionConfigs({nActions: 1, nCUs: 1})});
+    function testFuzz_execute_emits_the_TransactionExecuted_event(uint8 nActions, uint8 nCUs) public {
+        nActions = uint8(bound(nActions, 0, 10));
+        nCUs = uint8(bound(nCUs, 0, 10));
 
-        bytes32[] memory cms = new bytes32[](1);
-        cms[0] = txn.actions[0].complianceVerifierInputs[0].instance.created.commitment;
-
-        // Compute the expected root considering the expansion.
-        bytes32 expectedRoot = cms.computeRoot({treeDepth: MerkleTree.computeMinimalTreeDepth(cms.length) + 1});
+        (Transaction memory txn,) = _mockVerifier.transaction({
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({nActions: nActions, nCUs: nCUs})
+        });
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.TransactionExecuted({
             tags: txn.actions.collectTags(),
-            logicRefs: txn.actions.collectLogicRefs(),
-            newRoot: expectedRoot
+            logicRefs: txn.actions.collectLogicRefs()
         });
         _mockPa.execute(txn);
     }

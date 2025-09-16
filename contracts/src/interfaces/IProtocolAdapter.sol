@@ -11,8 +11,8 @@ interface IProtocolAdapter {
     /// @notice Emitted when a transaction is executed.
     /// @param tags The tags of resources being consumed and created in this transaction in alternating order.
     /// @param logicRefs The logic references of resources being consumed and created in this transaction.
-    /// @param newRoot The new commitment tree root.
-    event TransactionExecuted(bytes32[] tags, bytes32[] logicRefs, bytes32 newRoot);
+    event TransactionExecuted(bytes32[] tags, bytes32[] logicRefs);
+
 
     /// @notice Emitted when a forwarder call is executed.
     /// @param untrustedForwarder The forwarder contract forwarding the call.
