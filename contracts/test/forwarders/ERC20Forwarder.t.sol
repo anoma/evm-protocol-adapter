@@ -6,19 +6,18 @@ import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol
 import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {stdError} from "forge-std/Test.sol";
+import {Test, Vm, stdError} from "forge-std/Test.sol";
 
-import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
+import {ERC20Forwarder} from "../../src/forwarders/ERC20Forwarder.sol";
+import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
+import {Transaction} from "../../src/Types.sol";
+import {ERC20Example} from "../../test/examples/ERC20.e.sol";
+import {Parsing} from "../libs/Parsing.sol";
+import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
-import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Transaction} from "../src/Types.sol";
-import {ERC20Example} from "../test/examples/ERC20.e.sol";
+contract ERC20ForwarderTest is Test {
+    using Parsing for Vm;
 
-import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
-
-import {TransactionParsingBaseTest} from "./transactions/TransactionParsingBase.t.sol";
-
-contract ERC20ForwarderTest is TransactionParsingBaseTest {
     uint128 internal constant _TRANSFER_AMOUNT = 1000;
     bytes internal constant _EXPECTED_OUTPUT = "";
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(uint256(0));
@@ -85,7 +84,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
 
         // Mint
         {
-            Transaction memory mintTx = _parseTransaction("/test/transactions/mint.bin");
+            Transaction memory mintTx = vm.parseTransaction("/test/transactions/mint.bin");
             ProtocolAdapter(_pa).execute(mintTx);
 
             assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
@@ -94,7 +93,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
 
         // Transfer
         {
-            Transaction memory transferTx = _parseTransaction("/test/transactions/transfer.bin");
+            Transaction memory transferTx = vm.parseTransaction("/test/transactions/transfer.bin");
             ProtocolAdapter(_pa).execute(transferTx);
 
             assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
@@ -103,7 +102,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
 
         // Burn
         {
-            Transaction memory burnTx = _parseTransaction("/test/transactions/burn.bin");
+            Transaction memory burnTx = vm.parseTransaction("/test/transactions/burn.bin");
             ProtocolAdapter(_pa).execute(burnTx);
 
             assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore);
