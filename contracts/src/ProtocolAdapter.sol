@@ -94,7 +94,7 @@ contract ProtocolAdapter is
         tagCount = 0;
 
         // Allocate variable for the root update.
-        bytes32 updatedRoot = 0;
+        bytes32 updatedCommitmentTreeRoot = 0;
 
         // Start with the zero point on the curve for delta-computation.
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
@@ -121,8 +121,8 @@ contract ProtocolAdapter is
                 bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
                 // Process the tags and provided root against global state.
-                updatedRoot =
-                    _processState({nf: nf, cm: cm, root: complianceVerifierInput.instance.consumed.commitmentTreeRoot});
+                // Process the tags and provided root against global state
+                _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
 
                 // Verify the proof against a hardcoded compliance circuit.
                 _verifyComplianceProof(complianceVerifierInput);
@@ -145,7 +145,11 @@ contract ProtocolAdapter is
                     consumed: false
                 });
 
-                // Populate the tags and logic reference arrays.
+                // Transition the resource machine state.
+                _addNullifier(nf);
+                updatedCommitmentTreeRoot = _addCommitment(cm);
+
+                // Populate the tags
                 tags[tagCount] = nf;
                 logicRefs[tagCount++] = complianceVerifierInput.instance.consumed.logicRef;
                 tags[tagCount] = cm;
@@ -168,10 +172,11 @@ contract ProtocolAdapter is
             // Check the delta proof.
             _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
-            // Store the final root.
-            _storeRoot(updatedRoot);
+            // Store the final commitment tree root
+            _storeRoot(updatedCommitmentTreeRoot);
         }
 
+        // Emit the event containing the transaction and new root
         emit TransactionExecuted({tags: tags, logicRefs: logicRefs});
     }
     // slither-disable-end reentrancy-no-eth
@@ -217,23 +222,6 @@ contract ProtocolAdapter is
 
         // solhint-disable-next-line max-line-length
         emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
-    }
-
-    /// @notice The function processing the state checks and updates.
-    /// @param nf The nullifier of a compliance unit.
-    /// @param cm The commitment of a compliance unit.
-    /// @param root The current commitment tree root.
-    /// @return newRoot The root after potentially adding the commitment in the compliance unit.
-    function _processState(bytes32 nf, bytes32 cm, bytes32 root) internal returns (bytes32 newRoot) {
-        // Check root in the compliance unit is an actually existing root.
-        _checkRootPreExistence(root);
-
-        // Nullifier addition reverts if it was present in the set before.
-        _addNullifier(nf);
-
-        // Compute the root after adding the commitment. Note, that the compliance circuit ensures the uniqueness of the
-        // commitment given a unique nullifier in the same compliance unit.
-        newRoot = _addCommitment(cm);
     }
 
     /// @notice Processes a resource by

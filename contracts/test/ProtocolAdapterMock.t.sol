@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import {RiscZeroMockVerifier, VerificationFailed} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
 import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
@@ -13,7 +13,6 @@ import {MerkleTree} from "../src/libs/MerkleTree.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Logic} from "../src/proving/Logic.sol";
-import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {Transaction, Action} from "../src/Types.sol";
 
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
@@ -209,9 +208,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         (Transaction memory tx2,) = vm.transaction({mockVerifier: _mockVerifier, nonce: updatedNonce, configs: configs});
         tx2.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier = preExistingNf;
-        vm.expectRevert(
-            abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, preExistingNf), address(_mockPa)
-        );
+        vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
         _mockPa.execute(tx2);
     }
 
