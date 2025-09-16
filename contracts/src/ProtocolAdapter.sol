@@ -60,7 +60,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant {
-        bytes32 newRoot = 0;
+        bytes32 updatedRoot = 0;
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
         uint256 nActions = transaction.actions.length;
@@ -99,7 +99,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
                 // Process the tags and provided root against global state
-                newRoot =
+                updatedRoot =
                     _processState({nf: nf, cm: cm, root: complianceVerifierInput.instance.consumed.commitmentTreeRoot});
 
                 // Verify the proof against a hardcoded compliance circuit
@@ -148,7 +148,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
             // Store the final root
-            _storeRoot(newRoot);
+            _storeRoot(updatedRoot);
         }
 
         emit TransactionExecuted({tags: tags, logicRefs: logicRefs});
