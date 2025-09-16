@@ -48,13 +48,13 @@ library TxGen {
 
         DeltaProofTest deltaProofTest = new DeltaProofTest();
         // Construct the delta for consumption based on kind and quantity
-        uint256[2] memory unitDelta = DeltaGen.genInstance(DeltaGen.DeltaInstanceInputs({
+        uint256[2] memory unitDelta = deltaProofTest.genInstance(DeltaGen.DeltaInstanceInputs({
                 kind: kind(consumed),
                 quantity: -int256(uint256(consumed.quantity)),
                 rcv: 1
         }));
         // Construct the delta for creation based on kind and quantity
-        unitDelta = Delta.add(unitDelta, DeltaGen.genInstance(DeltaGen.DeltaInstanceInputs({
+        unitDelta = Delta.add(unitDelta, deltaProofTest.genInstance(DeltaGen.DeltaInstanceInputs({
                 kind: kind(created),
                 quantity: int256(uint256(created.quantity)),
                 rcv: 1
