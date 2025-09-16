@@ -28,25 +28,25 @@ interface IProtocolAdapter {
     /// @param tag The tag of the resource this blob belongs to.
     /// @param index The index of the blob in the payload array.
     /// @param blob The blob.
-    event ResourcePayload(bytes32 indexed tag, uint256 indexed index, bytes blob);
+    event ResourcePayload(bytes32 indexed tag, uint256 index, bytes blob);
 
     /// @notice Emitted to store a discovery payload blob persistently.
     /// @param tag The tag of the resource this blob belongs to.
     /// @param index The index of the blob in the payload array.
     /// @param blob The blob.
-    event DiscoveryPayload(bytes32 indexed tag, uint256 indexed index, bytes blob);
+    event DiscoveryPayload(bytes32 indexed tag, uint256 index, bytes blob);
 
     /// @notice Emitted to store a external payload blob persistently.
     /// @param tag The tag of the resource this blob belongs to.
     /// @param index The index of the blob in the payload array.
     /// @param blob The blob.
-    event ExternalPayload(bytes32 indexed tag, uint256 indexed index, bytes blob);
+    event ExternalPayload(bytes32 indexed tag, uint256 index, bytes blob);
 
     /// @notice Emitted to store an application payload blob persistently.
     /// @param tag The tag of the resource this blob belongs to.
     /// @param index The index of the blob in the payload array.
     /// @param blob The blob.
-    event ApplicationPayload(bytes32 indexed tag, uint256 indexed index, bytes blob);
+    event ApplicationPayload(bytes32 indexed tag, uint256 index, bytes blob);
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
