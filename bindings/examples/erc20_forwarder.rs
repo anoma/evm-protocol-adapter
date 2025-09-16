@@ -42,9 +42,9 @@ pub fn default_values() -> SetUp {
             .parse()
             .expect("should parse private key"),
         erc20: address!("0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f"),
-        amount: U256::from(1000),
+        amount: U256::from(10),
         nonce: U256::from(0),
-        deadline: U256::from(1789040701),
+        deadline: U256::from(1893456000), // Tue Jan 01 2030 00:00:00 GMT+0000
         spender: address!("0xA4AD4f68d0b91CFD19687c881e50f3A00242828c"),
     }
 }

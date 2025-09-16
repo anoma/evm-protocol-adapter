@@ -6,18 +6,12 @@ import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 contract DeployERC20Forwarder is Script {
-    ProtocolAdapter internal constant _PROTOCOL_ADAPTER = ProtocolAdapter(address(0));
-
-    address internal constant _EMERGENCY_COMMITTEE = address(0);
-
-    bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(0);
-
-    function run() public {
+    function run(address protocolAdapter, address emergencyCommittee, bytes32 carrierLogicRef) public {
         vm.startBroadcast();
         new ERC20Forwarder{salt: sha256("ERC20ForwarderExample")}({
-            protocolAdapter: address(_PROTOCOL_ADAPTER),
-            emergencyCommittee: _EMERGENCY_COMMITTEE,
-            calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
+            protocolAdapter: protocolAdapter,
+            emergencyCommittee: emergencyCommittee,
+            calldataCarrierLogicRef: carrierLogicRef
         });
         vm.stopBroadcast();
     }
