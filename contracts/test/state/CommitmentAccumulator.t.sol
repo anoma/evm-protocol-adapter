@@ -3,11 +3,10 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
 
+import {ICommitmentAccumulator} from "../../src/interfaces/ICommitmentAccumulator.sol";
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
-import {ICommitmentAccumulator} from "../../src/interfaces/ICommitmentAccumulator.sol";
 import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
-
 import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
 import {CommitmentAccumulatorMock} from "../mocks/CommitmentAccumulator.m.sol";
 
