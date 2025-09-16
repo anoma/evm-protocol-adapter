@@ -261,6 +261,17 @@ library TxGen {
         }
     }
 
+    function collectTags(Action memory action) internal pure returns (bytes32[] memory tags) {
+        uint256 nCUs = action.complianceVerifierInputs.length;
+
+        tags = new bytes32[](nCUs * 2);
+
+        for (uint256 i = 0; i < nCUs; ++i) {
+            tags[i * 2] = action.complianceVerifierInputs[i].instance.consumed.nullifier;
+            tags[(i * 2) + 1] = action.complianceVerifierInputs[i].instance.created.commitment;
+        }
+    }
+
     function collectLogicRefs(Action[] memory actions) internal pure returns (bytes32[] memory logicRefs) {
         logicRefs = new bytes32[](countComplianceUnits(actions) * 2);
 

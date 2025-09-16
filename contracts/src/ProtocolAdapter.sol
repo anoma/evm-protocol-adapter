@@ -138,6 +138,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     ]
                 });
             }
+
+            emit ActionExecuted({actionTreeRoot: actionTreeRoot, tagsCount: nResources});
         }
 
         // Check if the transaction induced a state change and the state root has changed

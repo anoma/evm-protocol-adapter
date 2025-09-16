@@ -27,6 +27,7 @@ contract ProtocolAdapterMockTest is Test {
     using TxGen for RiscZeroMockVerifier;
     using TxGen for Transaction;
     using TxGen for Action[];
+    using TxGen for Action;
 
     bytes32 internal constant _CARRIER_LOGIC_REF = bytes32(uint256(123));
 
@@ -68,6 +69,25 @@ contract ProtocolAdapterMockTest is Test {
             tags: txn.actions.collectTags(),
             logicRefs: txn.actions.collectLogicRefs()
         });
+        _mockPa.execute(txn);
+    }
+
+    function testFuzz_execute_emits_ActionExecuted_events_for_each_action(uint8 nActions, uint8 nCUs) public {
+        nActions = uint8(bound(nActions, 0, 10));
+        nCUs = uint8(bound(nCUs, 0, 10));
+
+        (Transaction memory txn,) = _mockVerifier.transaction({
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({nActions: nActions, nCUs: nCUs})
+        });
+
+        for (uint256 i = 0; i < nActions; ++i) {
+            vm.expectEmit(address(_mockPa));
+            emit IProtocolAdapter.ActionExecuted({
+                actionTreeRoot: txn.actions[i].collectTags().computeRoot(),
+                tagsCount: nCUs * 2
+            });
+        }
         _mockPa.execute(txn);
     }
 
