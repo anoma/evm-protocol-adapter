@@ -14,7 +14,6 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 import {Transaction, Action} from "../src/Types.sol";
 import {TransactionExample} from "./examples/transactions/Transaction.e.sol";
-
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract ProtocolAdapterTest is Test {
