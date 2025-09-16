@@ -84,7 +84,7 @@ contract ERC20ForwarderTest is Test {
 
         // Mint
         {
-            Transaction memory mintTx = vm.parseTransaction("/test/transactions/mint.bin");
+            Transaction memory mintTx = vm.parseTransaction("/test/examples/transactions/mint.bin");
             ProtocolAdapter(_pa).execute(mintTx);
 
             assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
@@ -93,7 +93,7 @@ contract ERC20ForwarderTest is Test {
 
         // Transfer
         {
-            Transaction memory transferTx = vm.parseTransaction("/test/transactions/transfer.bin");
+            Transaction memory transferTx = vm.parseTransaction("/test/examples/transactions/transfer.bin");
             ProtocolAdapter(_pa).execute(transferTx);
 
             assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore - _TRANSFER_AMOUNT);
@@ -102,7 +102,7 @@ contract ERC20ForwarderTest is Test {
 
         // Burn
         {
-            Transaction memory burnTx = vm.parseTransaction("/test/transactions/burn.bin");
+            Transaction memory burnTx = vm.parseTransaction("/test/examples/transactions/burn.bin");
             ProtocolAdapter(_pa).execute(burnTx);
 
             assertEq(_erc20.balanceOf(_alice), aliceBalanceBefore);

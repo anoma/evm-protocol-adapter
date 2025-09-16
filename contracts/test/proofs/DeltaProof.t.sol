@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 
 import {Delta} from "../../src/proving/Delta.sol";
 import {Transaction} from "../../src/Types.sol";
-import {TransactionExample} from "../examples/Transaction.e.sol";
+import {TransactionExample} from "../examples/transactions/Transaction.e.sol";
 import {TxGen} from "../libs/TxGen.sol";
 
 contract DeltaProofTest is Test {

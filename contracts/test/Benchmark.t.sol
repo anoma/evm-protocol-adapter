@@ -22,10 +22,10 @@ contract Benchmark is Test {
 
     function setUp() public {
         string[4] memory paths = [
-            "../transactions/test_tx01.bin",
-            "../transactions/test_tx05.bin",
-            "../transactions/test_tx10.bin",
-            "../transactions/test_tx15.bin"
+            "../examples/transactions/test_tx01.bin",
+            "../examples/transactions/test_tx05.bin",
+            "../examples/transactions/test_tx10.bin",
+            "../examples/transactions/test_tx15.bin"
         ];
 
         for (uint256 i = 0; i < paths.length; ++i) {

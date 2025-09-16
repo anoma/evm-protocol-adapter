@@ -11,8 +11,10 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {ICommitmentAccumulator} from "../src/interfaces/ICommitmentAccumulator.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+
 import {Transaction, Action} from "../src/Types.sol";
-import {TransactionExample} from "./examples/Transaction.e.sol";
+import {TransactionExample} from "./examples/transactions/Transaction.e.sol";
+
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract ProtocolAdapterTest is Test {

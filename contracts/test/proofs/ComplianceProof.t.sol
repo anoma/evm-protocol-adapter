@@ -8,7 +8,7 @@ import {Test} from "forge-std/Test.sol";
 
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {Compliance} from "../../src/proving/Compliance.sol";
-import {TransactionExample} from "../examples/Transaction.e.sol";
+import {TransactionExample} from "../examples/transactions/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
 contract ComplianceProofTest is Test {
