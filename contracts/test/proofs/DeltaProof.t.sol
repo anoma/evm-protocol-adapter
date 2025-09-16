@@ -11,15 +11,6 @@ import { TransactionExample } from "./../examples/Transaction.e.sol";
 import { TxGen } from "./../examples/TxGen.sol";
 
 library DeltaGen {
-    // The order of the secp256k1 curve.
-    uint256 internal constant SECP256K1_ORDER =
-        115792089237316195423570985008687907852837564279074904382605163141518161494337;
-    // secp256k1 base point
-    uint256 internal constant GX =
-        0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
-    uint256 internal constant GY =
-        0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
-    
     // The parameters required to generate a delta instance
     struct InstanceInputs {
         // The identifier of the asset
@@ -40,16 +31,38 @@ library DeltaGen {
         bytes32 verifyingKey;
     }
 
+    // The order of the secp256k1 curve.
+    uint256 internal constant SECP256K1_ORDER =
+        115792089237316195423570985008687907852837564279074904382605163141518161494337;
+    // secp256k1 base point
+    uint256 internal constant GX =
+        0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
+    uint256 internal constant GY =
+        0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
+
+    // Resource kind must be non-zero
+    error KindZero();
+    // Value commitment randomness must be non-zero
+    error RcvZero();
+    // Private key corresponding to delta instance must be non-zero
+    error PreDeltaZero();
+    // Unable to find integer k to generate signature
+    error SigGenFailure();
+
     /// @notice Generates a transaction delta proof by signing verifyingKey with
     /// rcv, and a delta instance by computing a(kind)^quantity * b^rcv
     function genInstance(InstanceInputs memory deltaInputs) public returns (uint256[2] memory instance) {
         // The value commitment randomness must be non-zero modulo the base
         // point order
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
-        require(deltaInputs.rcv != 0, "value commitment randomness must be non-zero");
+        if(deltaInputs.rcv == 0) {
+            revert RcvZero();
+        }
         // The kind must be non-zero modulo the base point order
         deltaInputs.kind = deltaInputs.kind % SECP256K1_ORDER;
-        require(deltaInputs.kind != 0, "resource kind must be non-zero");
+        if(deltaInputs.kind == 0) {
+            revert KindZero();
+        }
         // The exponent must be non-zero modulo the base point order
         uint256 quantity = canonize_quantity(deltaInputs.consumed, deltaInputs.quantity);
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
@@ -65,7 +78,9 @@ library DeltaGen {
     /// @notice Generate a delta proof without using vm.sign
     function genProof(ProofInputs memory deltaInputs) public returns (bytes memory proof) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
-        require(deltaInputs.rcv != 0, "value commitment randomness must be non-zero");
+        if(deltaInputs.rcv == 0) {
+            revert RcvZero();
+        }
         for (uint256 k = 1; k < SECP256K1_ORDER; k++) {
             // Compute kG
             (uint256 x1, uint256 y1) = EllipticCurveK256.ecMul(k, GX, GY);
@@ -85,7 +100,7 @@ library DeltaGen {
             // Finally compute the transaction delta proof
             return abi.encodePacked(r, s, v);
         }
-        require(false, "unable to find integer k to generate signature");
+        revert SigGenFailure();
     }
 
     /// @notice Convert a int256 exponent to an equivalent uin256 assuming an order of SECP256K1_ORDER
@@ -96,40 +111,23 @@ library DeltaGen {
 }
 
 contract DeltaProofTest is Test {
-    /// @notice Assume that the delta instance inputs are well-formed. I.e. the
-    /// value commitment randomness and resource kind are both non-zero.
-    function assumeDeltaInstance(DeltaGen.InstanceInputs memory deltaInputs) internal {
-        // The value commitment randomness must be non-zero modulo the base
-        // point order
-        deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
-        vm.assume(deltaInputs.rcv != 0);
-        // The kind must be non-zero modulo the base point order
-        deltaInputs.kind = deltaInputs.kind % SECP256K1_ORDER;
-        vm.assume(deltaInputs.kind != 0);
-        // The exponent must be non-zero modulo the base point order
-        uint256 quantity = DeltaGen.canonize_quantity(deltaInputs.consumed, deltaInputs.quantity);
-        uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
-        uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
-        vm.assume(preDelta != 0);
-    }
-
-    /// @notice Assume that the delta proof inputs are well-formed. I.e. the
-    /// value commitment randomness is non-zero.
-    function assumeDeltaProof(DeltaGen.ProofInputs memory deltaInputs) internal {
-        deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
-        vm.assume(deltaInputs.rcv != 0);
-    }
-
     /// @notice Generates a transaction delta proof by signing verifyingKey with
     /// rcv, and a delta instance by computing a(kind)^quantity * b^rcv
     function genInstance(DeltaGen.InstanceInputs memory deltaInputs) public returns (uint256[2] memory instance) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
-        vm.assume(deltaInputs.rcv != 0);
-        vm.assume(deltaInputs.kind != 0);
+        if(deltaInputs.rcv == 0) {
+            revert DeltaGen.RcvZero();
+        }
+        deltaInputs.kind = deltaInputs.kind % SECP256K1_ORDER;
+        if(deltaInputs.kind == 0) {
+            revert DeltaGen.KindZero();
+        }
         uint256 quantity = DeltaGen.canonize_quantity(deltaInputs.consumed, deltaInputs.quantity);
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
-        vm.assume(preDelta != 0);
+        if(preDelta == 0) {
+            revert DeltaGen.PreDeltaZero();
+        }
         // Derive address and public key from transaction delta
         VmSafe.Wallet memory valueWallet = vm.createWallet(preDelta);
         // Extract the transaction delta from the wallet
@@ -140,7 +138,9 @@ contract DeltaProofTest is Test {
     /// @notice Generate a delta proof
     function genProof(DeltaGen.ProofInputs memory deltaInputs) public returns (bytes memory proof) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
-        vm.assume(deltaInputs.rcv != 0);
+        if(deltaInputs.rcv == 0) {
+            revert DeltaGen.RcvZero();
+        }
         // Compute the components of the transaction delta proof
         VmSafe.Wallet memory randomWallet = vm.createWallet(deltaInputs.rcv);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(randomWallet, deltaInputs.verifyingKey);
@@ -153,8 +153,8 @@ contract DeltaProofTest is Test {
         // Generate a delta proof and instance from the above tags and preimage
         deltaInstanceInputs.quantity = 0;
         deltaProofInputs.rcv = deltaInstanceInputs.rcv;
-        assumeDeltaInstance(deltaInstanceInputs);
-        assumeDeltaProof(deltaProofInputs);
+        _assumeDeltaInstance(deltaInstanceInputs);
+        _assumeDeltaProof(deltaProofInputs);
         uint256[2] memory instance = genInstance(deltaInstanceInputs);
         bytes memory proof = genProof(deltaProofInputs);
         // Verify that the generated delta proof is valid
@@ -169,7 +169,7 @@ contract DeltaProofTest is Test {
         vm.assume(deltaInputs1.consumed != deltaInputs2.consumed || deltaInputs2.quantity <= type(uint128).max - deltaInputs1.quantity);
         vm.assume(0 < deltaInputs2.rcv && deltaInputs2.rcv <= type(uint256).max - deltaInputs1.rcv);
         // Add the deltas
-        (bool consumed, uint128 quantity) = signMagAdd(deltaInputs1.consumed, deltaInputs1.quantity, deltaInputs2.consumed, deltaInputs2.quantity);
+        (bool consumed, uint128 quantity) = _signMagAdd(deltaInputs1.consumed, deltaInputs1.quantity, deltaInputs2.consumed, deltaInputs2.quantity);
         // Compute the inputs corresponding to the sum of deltas
         DeltaGen.InstanceInputs memory deltaInputs3 = DeltaGen.InstanceInputs({
             kind: deltaInputs1.kind,
@@ -177,9 +177,9 @@ contract DeltaProofTest is Test {
             consumed: consumed,
             rcv: deltaInputs1.rcv + deltaInputs2.rcv
         });
-        assumeDeltaInstance(deltaInputs1);
-        assumeDeltaInstance(deltaInputs2);
-        assumeDeltaInstance(deltaInputs3);
+        _assumeDeltaInstance(deltaInputs1);
+        _assumeDeltaInstance(deltaInputs2);
+        _assumeDeltaInstance(deltaInputs3);
         // Generate a delta proof and instance from the above tags and preimage
         uint256[2] memory instance1 = genInstance(deltaInputs1);
         uint256[2] memory instance2 = genInstance(deltaInputs2);
@@ -196,8 +196,8 @@ contract DeltaProofTest is Test {
         deltaProofInputs.rcv = deltaInstanceInputs.rcv;
         vm.assume(deltaInstanceInputs.kind % SECP256K1_ORDER != 0);
         vm.assume(DeltaGen.canonize_quantity(deltaInstanceInputs.consumed, deltaInstanceInputs.quantity) != 0);
-        assumeDeltaInstance(deltaInstanceInputs);
-        assumeDeltaProof(deltaProofInputs);
+        _assumeDeltaInstance(deltaInstanceInputs);
+        _assumeDeltaProof(deltaProofInputs);
         // Generate a delta proof and instance from the above tags and preimage
         uint256[2] memory instance = genInstance(deltaInstanceInputs);
         bytes memory proof = genProof(deltaProofInputs);
@@ -211,8 +211,8 @@ contract DeltaProofTest is Test {
         deltaInputs2.quantity = 0;
         // Filter out inadmissible private keys or equal keys
         vm.assume((deltaInputs1.rcv % SECP256K1_ORDER) != (deltaInputs2.rcv % SECP256K1_ORDER));
-        assumeDeltaInstance(deltaInputs2);
-        assumeDeltaProof(deltaInputs1);
+        _assumeDeltaInstance(deltaInputs2);
+        _assumeDeltaProof(deltaInputs1);
         // Generate a delta proof and instance from the above tags and preimage
         bytes memory proof1 = genProof(deltaInputs1);
         uint256[2] memory instance2 = genInstance(deltaInputs2);
@@ -227,40 +227,14 @@ contract DeltaProofTest is Test {
         deltaInputs2.quantity = 0;
         // Filter out inadmissible private keys or equal keys
         vm.assume(deltaInputs1.verifyingKey != verifyingKey);
-        assumeDeltaInstance(deltaInputs2);
-        assumeDeltaProof(deltaInputs1);
+        _assumeDeltaInstance(deltaInputs2);
+        _assumeDeltaProof(deltaInputs1);
         // Generate a delta proof and instance from the above tags and preimage
         bytes memory proof1 = genProof(deltaInputs1);
         uint256[2] memory instance2 = genInstance(deltaInputs2);
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey});
-    }
-
-    /// @notice Add two numbers in sign magnitude representation. Positive
-    /// numbers are represented with a false sign and negative numbers with a
-    /// true sign.
-    function signMagAdd(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
-        if (s1 == s2) {
-            return (s1, m1 + m2);
-        } else if (m1 >= m2) {
-            return (s1, m1 - m2);
-        } else if (m2 > m1) {
-            return (s2, m2 - m1);
-        }
-    }
-
-    /// @notice Subtract two numbers in sign magnitude representation. Positive
-    /// numbers are represented with a false sign and negative numbers with a
-    /// true sign.
-    function signMagSub(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
-        if (s1 != s2) {
-            return (s1, m1 + m2);
-        } else if (m1 >= m2) {
-            return (s1, m1 - m2);
-        } else if (m2 > m1) {
-            return (!s1, m2 - m1);
-        }
     }
 
     /// @notice Check that a balanced transaction does pass verification
@@ -273,11 +247,11 @@ contract DeltaProofTest is Test {
         (DeltaGen.InstanceInputs[] memory wrappedDeltaInputs, bool consumed, uint128 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
         // Adjust the last delta so that the full sum is zero
         if(quantity != 0) {
-            (wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed, wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity) = signMagSub(wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed, wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity, consumed, quantity);
+            (wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed, wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity) = _signMagSub(wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed, wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity, consumed, quantity);
         }
         for(uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
-            assumeDeltaInstance(wrappedDeltaInputs[i]);
+            _assumeDeltaInstance(wrappedDeltaInputs[i]);
             uint256[2] memory instance = genInstance(wrappedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
         }
@@ -286,7 +260,7 @@ contract DeltaProofTest is Test {
             rcv: rcv,
             verifyingKey: verifyingKey
             });
-        assumeDeltaProof(sumDeltaInputs);
+        _assumeDeltaProof(sumDeltaInputs);
         bytes memory proof = genProof(sumDeltaInputs);
         // Verify that the balanced transaction proof succeeds
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
@@ -304,7 +278,7 @@ contract DeltaProofTest is Test {
         vm.assume(DeltaGen.canonize_quantity(consumed, quantity) != 0);
         for(uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
-            assumeDeltaInstance(wrappedDeltaInputs[i]);
+            _assumeDeltaInstance(wrappedDeltaInputs[i]);
             uint256[2] memory instance = genInstance(wrappedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
         }
@@ -313,24 +287,11 @@ contract DeltaProofTest is Test {
             rcv: rcv,
             verifyingKey: verifyingKey
             });
-        assumeDeltaProof(sumDeltaInputs);
+        _assumeDeltaProof(sumDeltaInputs);
         bytes memory proof = genProof(sumDeltaInputs);
         // Verify that the imbalanced transaction proof fails
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
-    }
-
-    /// @notice Convert the signed quantity whose magnitude fits into a uint128
-    /// into a sign-magnitude representation. Positive numbers are represented
-    /// with a false sign and negative numbers with a true sign.
-    function toSignMag(int256 quantity) internal pure returns (bool sign, uint128 magnitude) {
-        if (quantity >= 0) {
-            magnitude = uint128(uint256(quantity));
-            sign = false;
-        } else {
-            magnitude = uint128(uint256(-quantity));
-            sign = true;
-        }
     }
 
     /// @notice Wrap the delta inputs in such a way that they can be balanced
@@ -368,11 +329,11 @@ contract DeltaProofTest is Test {
             }
             // Finally, accumulate the adjusted quantity
             quantityAcc += currentQuantity;
-            (deltaInputs[i].consumed, deltaInputs[i].quantity) = toSignMag(currentQuantity);
+            (deltaInputs[i].consumed, deltaInputs[i].quantity) = _toSignMag(currentQuantity);
         }
         // Finally, return tbe wrapped deltas
         wrappedDeltaInputs = deltaInputs;
-        (consumedAcc, quantityMagAcc) = toSignMag(quantityAcc);
+        (consumedAcc, quantityMagAcc) = _toSignMag(quantityAcc);
     }
 
     /// @notice Grab the first length elements from deltaInputs
@@ -394,5 +355,68 @@ contract DeltaProofTest is Test {
             ],
             verifyingKey: Delta.computeVerifyingKey(TxGen.collectTags(txn.actions))
         });
+    }
+
+    /// @notice Assume that the delta instance inputs are well-formed. I.e. the
+    /// value commitment randomness and resource kind are both non-zero.
+    function _assumeDeltaInstance(DeltaGen.InstanceInputs memory deltaInputs) internal {
+        // The value commitment randomness must be non-zero modulo the base
+        // point order
+        deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
+        vm.assume(deltaInputs.rcv != 0);
+        // The kind must be non-zero modulo the base point order
+        deltaInputs.kind = deltaInputs.kind % SECP256K1_ORDER;
+        vm.assume(deltaInputs.kind != 0);
+        // The exponent must be non-zero modulo the base point order
+        uint256 quantity = DeltaGen.canonize_quantity(deltaInputs.consumed, deltaInputs.quantity);
+        uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
+        uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
+        vm.assume(preDelta != 0);
+    }
+
+    /// @notice Assume that the delta proof inputs are well-formed. I.e. the
+    /// value commitment randomness is non-zero.
+    function _assumeDeltaProof(DeltaGen.ProofInputs memory deltaInputs) internal {
+        deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
+        vm.assume(deltaInputs.rcv != 0);
+    }
+
+    /// @notice Add two numbers in sign magnitude representation. Positive
+    /// numbers are represented with a false sign and negative numbers with a
+    /// true sign.
+    function _signMagAdd(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
+        if (s1 == s2) {
+            return (s1, m1 + m2);
+        } else if (m1 >= m2) {
+            return (s1, m1 - m2);
+        } else if (m2 > m1) {
+            return (s2, m2 - m1);
+        }
+    }
+
+    /// @notice Subtract two numbers in sign magnitude representation. Positive
+    /// numbers are represented with a false sign and negative numbers with a
+    /// true sign.
+    function _signMagSub(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
+        if (s1 != s2) {
+            return (s1, m1 + m2);
+        } else if (m1 >= m2) {
+            return (s1, m1 - m2);
+        } else if (m2 > m1) {
+            return (!s1, m2 - m1);
+        }
+    }
+
+    /// @notice Convert the signed quantity whose magnitude fits into a uint128
+    /// into a sign-magnitude representation. Positive numbers are represented
+    /// with a false sign and negative numbers with a true sign.
+    function _toSignMag(int256 quantity) internal pure returns (bool sign, uint128 magnitude) {
+        if (quantity >= 0) {
+            magnitude = uint128(uint256(quantity));
+            sign = false;
+        } else {
+            magnitude = uint128(uint256(-quantity));
+            sign = true;
+        }
     }
 }

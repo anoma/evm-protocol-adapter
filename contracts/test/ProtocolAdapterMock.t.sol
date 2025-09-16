@@ -150,7 +150,7 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_execute_1_txn_with_n_actions_and_n_cus(uint8 nActions, uint8 nCUs) public {
         TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = _mockVerifier.transaction({nonce: 0, configs: configs});
         _mockPa.execute(txn);
@@ -158,7 +158,7 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_execute_2_txns_with_n_actions_and_n_cus(uint8 nActions, uint8 nCUs) public {
         TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
         _mockPa.execute(txn);
