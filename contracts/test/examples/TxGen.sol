@@ -12,7 +12,7 @@ import {Compliance} from "../../src/proving/Compliance.sol";
 import {Delta} from "../../src/proving/Delta.sol";
 import {Logic} from "../../src/proving/Logic.sol";
 import {Transaction, Action, Resource} from "../../src/Types.sol";
-import {DeltaProofTest} from "../proofs/DeltaProof.t.sol";
+import {DeltaGen, DeltaProofTest} from "../proofs/DeltaProof.t.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
@@ -48,13 +48,13 @@ library TxGen {
 
         DeltaProofTest deltaProofTest = new DeltaProofTest();
         // Construct the delta for consumption based on kind and quantity
-        uint256[2] memory unitDelta = deltaProofTest.generateDeltaInstance(DeltaProofTest.DeltaInstanceInputs({
+        uint256[2] memory unitDelta = DeltaGen.genInstance(DeltaGen.DeltaInstanceInputs({
                 kind: kind(consumed),
                 quantity: -int256(uint256(consumed.quantity)),
                 rcv: 1
         }));
         // Construct the delta for creation based on kind and quantity
-        unitDelta = Delta.add(unitDelta, deltaProofTest.generateDeltaInstance(DeltaProofTest.DeltaInstanceInputs({
+        unitDelta = Delta.add(unitDelta, DeltaGen.genInstance(DeltaGen.DeltaInstanceInputs({
                 kind: kind(created),
                 quantity: int256(uint256(created.quantity)),
                 rcv: 1
@@ -199,7 +199,7 @@ library TxGen {
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
         // Generate a proof over the tags where rcv value is the expected total
-        bytes memory proof = deltaProofTest.generateDeltaProof(DeltaProofTest.DeltaProofInputs({
+        bytes memory proof = deltaProofTest.genProof(DeltaGen.DeltaProofInputs({
                 rcv: tags.length,
                 verifyingKey: Delta.computeVerifyingKey(tags)
         }));
@@ -222,7 +222,7 @@ library TxGen {
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
         // Generate a proof over the tags where rcv value is the expected total
-        bytes memory proof = deltaProofTest.generateDeltaProof(DeltaProofTest.DeltaProofInputs({
+        bytes memory proof = deltaProofTest.genProof(DeltaGen.DeltaProofInputs({
                 rcv: tags.length,
                 verifyingKey: Delta.computeVerifyingKey(tags)
         }));

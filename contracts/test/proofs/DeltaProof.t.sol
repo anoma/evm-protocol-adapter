@@ -9,8 +9,18 @@ import { Delta } from "./../../src/proving/Delta.sol";
 import { Transaction } from "./../../src/Types.sol";
 import { TransactionExample } from "./../examples/Transaction.e.sol";
 import { TxGen } from "./../examples/TxGen.sol";
+import {console} from "forge-std/console.sol";
 
-contract DeltaProofTest is Test {
+library DeltaGen {
+    // The order of the secp256k1 curve.
+    uint256 internal constant SECP256K1_ORDER =
+        115792089237316195423570985008687907852837564279074904382605163141518161494337;
+    // secp256k1 base point
+    uint256 internal constant GX =
+        0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
+    uint256 internal constant GY =
+        0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
+    
     // The parameters required to generate a delta instance
     struct DeltaInstanceInputs {
         // The identifier of the asset
@@ -31,14 +41,19 @@ contract DeltaProofTest is Test {
 
     /// @notice Generates a transaction delta proof by signing verifyingKey with
     /// rcv, and a delta instance by computing a(kind)^quantity * b^rcv
-    function generateDeltaInstance(DeltaInstanceInputs memory deltaInputs) public returns (uint256[2] memory instance) {
+    function genInstance(DeltaInstanceInputs memory deltaInputs) public returns (uint256[2] memory instance) {
+        // The value commitment randomness must be non-zero modulo the base
+        // point order
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
-        vm.assume(deltaInputs.rcv != 0);
-        vm.assume(deltaInputs.kind != 0);
+        require(deltaInputs.rcv != 0, "value commitment randomness must be non-zero");
+        // The kind must be non-zero modulo the base point order
+        deltaInputs.kind = deltaInputs.kind % SECP256K1_ORDER;
+        require(deltaInputs.kind != 0, "resource kind must be non-zero");
+        // The exponent must be non-zero modulo the base point order
         uint256 quantity = canonize_quantity(deltaInputs.quantity);
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
-        vm.assume(preDelta != 0);
+        assert(preDelta != 0);
         // Derive address and public key from transaction delta
         (uint256 qx, uint256 qy) = EllipticCurveK256.derivePubKey(preDelta);
         // Extract the transaction delta from the wallet
@@ -47,15 +62,12 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Generate a delta proof without using vm.sign
-    function generateDeltaProof(DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
+    function genProof(DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
-        vm.assume(deltaInputs.rcv != 0);
+        require(deltaInputs.rcv != 0, "value commitment randomness must be non-zero");
         for (uint256 k = 1; k < SECP256K1_ORDER; k++) {
-            // secp256k1 base point
-            uint256 gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
-            uint256 gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
             // Compute kG
-            (uint256 x1, uint256 y1) = EllipticCurveK256.ecMul(k, gx, gy);
+            (uint256 x1, uint256 y1) = EllipticCurveK256.ecMul(k, GX, GY);
             uint256 r = x1 % SECP256K1_ORDER;
             if (r == 0) { continue; }
             // Compute k^-1 (verifyingKey + r*rcv) mod N
@@ -72,11 +84,43 @@ contract DeltaProofTest is Test {
             // Finally compute the transaction delta proof
             return abi.encodePacked(r, s, v);
         }
-        fail();
+        require(false, "unable to find integer k to generate signature");
     }
 
+    /// @notice Convert a int256 exponent to an equivalent uin256 assuming an order of SECP256K1_ORDER
+    function canonize_quantity(int256 quantity) public pure returns (uint256 quantityu) {
+        // If positive, leave the number unchanged
+        quantityu = quantity >= 0 ? uint256(quantity) : (SECP256K1_ORDER - 1 - (uint256(-(quantity + 1)) % SECP256K1_ORDER));
+    }
+}
+
+contract DeltaProofTest is Test {
+    /// @notice Assume that the delta instance inputs are well-formed. I.e. the
+    /// value commitment randomness and resource kind are both non-zero.
+    function assumeDeltaInstance(DeltaGen.DeltaInstanceInputs memory deltaInputs) internal {
+        // The value commitment randomness must be non-zero modulo the base
+        // point order
+        deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
+        vm.assume(deltaInputs.rcv != 0);
+        // The kind must be non-zero modulo the base point order
+        deltaInputs.kind = deltaInputs.kind % SECP256K1_ORDER;
+        vm.assume(deltaInputs.kind != 0);
+        // The exponent must be non-zero modulo the base point order
+        uint256 quantity = DeltaGen.canonize_quantity(deltaInputs.quantity);
+        uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
+        uint256 preDelta = addmod(prod, deltaInputs.rcv, SECP256K1_ORDER);
+        vm.assume(preDelta != 0);
+    }
+
+    /// @notice Assume that the delta proof inputs are well-formed. I.e. the
+    /// value commitment randomness is non-zero.
+    function assumeDeltaProof(DeltaGen.DeltaProofInputs memory deltaInputs) internal {
+        deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
+        vm.assume(deltaInputs.rcv != 0);
+    }
+    
     /// @notice Generate a delta proof
-    function generateDeltaProof2(DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
+    function genProof(DeltaGen.DeltaProofInputs memory deltaInputs) public returns (bytes memory proof) {
         deltaInputs.rcv = deltaInputs.rcv % SECP256K1_ORDER;
         vm.assume(deltaInputs.rcv != 0);
         // Compute the components of the transaction delta proof
@@ -87,18 +131,20 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
-    function test_verify_delta_succeeds(DeltaInstanceInputs memory deltaInstanceInputs, DeltaProofInputs memory deltaProofInputs) public {
+    function test_verify_delta_succeeds(DeltaGen.DeltaInstanceInputs memory deltaInstanceInputs, DeltaGen.DeltaProofInputs memory deltaProofInputs) public {
         // Generate a delta proof and instance from the above tags and preimage
         deltaInstanceInputs.quantity = 0;
         deltaProofInputs.rcv = deltaInstanceInputs.rcv;
-        uint256[2] memory instance = generateDeltaInstance(deltaInstanceInputs);
-        bytes memory proof = generateDeltaProof(deltaProofInputs);
+        assumeDeltaInstance(deltaInstanceInputs);
+        assumeDeltaProof(deltaProofInputs);
+        uint256[2] memory instance = DeltaGen.genInstance(deltaInstanceInputs);
+        bytes memory proof = genProof(deltaProofInputs);
         // Verify that the generated delta proof is valid
         Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
 
     /// @notice Test that Delta.add correctly adds deltas
-    function test_add_delta_correctness(DeltaInstanceInputs memory deltaInputs1, DeltaInstanceInputs memory deltaInputs2) public {
+    function test_add_delta_correctness(DeltaGen.DeltaInstanceInputs memory deltaInputs1, DeltaGen.DeltaInstanceInputs memory deltaInputs2) public {
         // Ensure that we're adding assets of the same kind over the same verifying key
         deltaInputs2.kind = deltaInputs1.kind;
         // Filter out overflows
@@ -106,15 +152,18 @@ contract DeltaProofTest is Test {
         vm.assume(deltaInputs1.quantity >= 0 || type(int256).min - deltaInputs1.quantity <= deltaInputs2.quantity);
         vm.assume(0 < deltaInputs2.rcv && deltaInputs2.rcv <= type(uint256).max - deltaInputs1.rcv);
         // Compute the inputs corresponding to the sum of deltas
-        DeltaInstanceInputs memory deltaInputs3 = DeltaInstanceInputs({
+        DeltaGen.DeltaInstanceInputs memory deltaInputs3 = DeltaGen.DeltaInstanceInputs({
             kind: deltaInputs1.kind,
             quantity: deltaInputs1.quantity + deltaInputs2.quantity,
             rcv: deltaInputs1.rcv + deltaInputs2.rcv
         });
+        assumeDeltaInstance(deltaInputs1);
+        assumeDeltaInstance(deltaInputs2);
+        assumeDeltaInstance(deltaInputs3);
         // Generate a delta proof and instance from the above tags and preimage
-        uint256[2] memory instance1 = generateDeltaInstance(deltaInputs1);
-        uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
-        uint256[2] memory instance3 = generateDeltaInstance(deltaInputs3);
+        uint256[2] memory instance1 = DeltaGen.genInstance(deltaInputs1);
+        uint256[2] memory instance2 = DeltaGen.genInstance(deltaInputs2);
+        uint256[2] memory instance3 = DeltaGen.genInstance(deltaInputs3);
         // Verify that the deltas add correctly
         uint256[2] memory instance4 = Delta.add(instance1, instance2);
         assertEq(instance3[0], instance4[0]);
@@ -122,108 +171,112 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails1(DeltaInstanceInputs memory deltaInstanceInputs, DeltaProofInputs memory deltaProofInputs) public {
+    function test_verify_inconsistent_delta_fails1(DeltaGen.DeltaInstanceInputs memory deltaInstanceInputs, DeltaGen.DeltaProofInputs memory deltaProofInputs) public {
         // Filter out inadmissible private keys or equal keys
         deltaProofInputs.rcv = deltaInstanceInputs.rcv;
         vm.assume(deltaInstanceInputs.kind % SECP256K1_ORDER != 0);
-        vm.assume(canonize_quantity(deltaInstanceInputs.quantity) != 0);
+        vm.assume(DeltaGen.canonize_quantity(deltaInstanceInputs.quantity) != 0);
+        assumeDeltaInstance(deltaInstanceInputs);
+        assumeDeltaProof(deltaProofInputs);
         // Generate a delta proof and instance from the above tags and preimage
-        uint256[2] memory instance = generateDeltaInstance(deltaInstanceInputs);
-        bytes memory proof = generateDeltaProof(deltaProofInputs);
+        uint256[2] memory instance = DeltaGen.genInstance(deltaInstanceInputs);
+        bytes memory proof = genProof(deltaProofInputs);
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails2(DeltaProofInputs memory deltaInputs1, DeltaInstanceInputs memory deltaInputs2) public {
+    function test_verify_inconsistent_delta_fails2(DeltaGen.DeltaProofInputs memory deltaInputs1, DeltaGen.DeltaInstanceInputs memory deltaInputs2) public {
         deltaInputs2.quantity = 0;
         // Filter out inadmissible private keys or equal keys
         vm.assume((deltaInputs1.rcv % SECP256K1_ORDER) != (deltaInputs2.rcv % SECP256K1_ORDER));
+        assumeDeltaInstance(deltaInputs2);
+        assumeDeltaProof(deltaInputs1);
         // Generate a delta proof and instance from the above tags and preimage
-        bytes memory proof1 = generateDeltaProof(deltaInputs1);
-        uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
+        bytes memory proof1 = genProof(deltaInputs1);
+        uint256[2] memory instance2 = DeltaGen.genInstance(deltaInputs2);
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof1, instance: instance2, verifyingKey: deltaInputs1.verifyingKey});
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
-    function test_verify_inconsistent_delta_fails3(DeltaProofInputs memory deltaInputs1, DeltaInstanceInputs memory deltaInputs2, bytes32 verifyingKey) public {
+    function test_verify_inconsistent_delta_fails3(DeltaGen.DeltaProofInputs memory deltaInputs1, DeltaGen.DeltaInstanceInputs memory deltaInputs2, bytes32 verifyingKey) public {
         deltaInputs2.rcv = deltaInputs1.rcv;
         deltaInputs2.quantity = 0;
         // Filter out inadmissible private keys or equal keys
         vm.assume(deltaInputs1.verifyingKey != verifyingKey);
+        assumeDeltaInstance(deltaInputs2);
+        assumeDeltaProof(deltaInputs1);
         // Generate a delta proof and instance from the above tags and preimage
-        bytes memory proof1 = generateDeltaProof(deltaInputs1);
-        uint256[2] memory instance2 = generateDeltaInstance(deltaInputs2);
+        bytes memory proof1 = genProof(deltaInputs1);
+        uint256[2] memory instance2 = DeltaGen.genInstance(deltaInputs2);
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey});
     }
 
     /// @notice Check that a balanced transaction does pass verification
-    function test_verify_balanced_delta_succeeds(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
+    function test_verify_balanced_delta_succeeds(DeltaGen.DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
         // Truncate the delta inputs to improve test performance
         uint256 maxDeltaLen = 10;
         deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
         // Make sure that the delta quantities balance out
-        (DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
+        (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
         // Adjust the last delta so that the full sum is zero
         if(quantity != 0) {
             wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity -= quantity;
         }
         for(uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
-            uint256[2] memory instance = generateDeltaInstance(wrappedDeltaInputs[i]);
+            assumeDeltaInstance(wrappedDeltaInputs[i]);
+            uint256[2] memory instance = DeltaGen.genInstance(wrappedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
         }
         // Compute the proof for the balanced transaction
-        DeltaProofInputs memory sumDeltaInputs = DeltaProofInputs({
+        DeltaGen.DeltaProofInputs memory sumDeltaInputs = DeltaGen.DeltaProofInputs({
             rcv: rcv,
             verifyingKey: verifyingKey
             });
-        bytes memory proof = generateDeltaProof(sumDeltaInputs);
+        assumeDeltaProof(sumDeltaInputs);
+        bytes memory proof = genProof(sumDeltaInputs);
         // Verify that the balanced transaction proof succeeds
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
     /// @notice Check that an imbalanced transaction fails verification
-    function test_verify_imbalanced_delta_fails(DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
+    function test_verify_imbalanced_delta_fails(DeltaGen.DeltaInstanceInputs[] memory deltaInputs, bytes32 verifyingKey) public {
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
         // Truncate the delta inputs to improve test performance
         uint256 maxDeltaLen = 10;
         deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
         // Accumulate the total quantity and randomness commitment
-        (DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
+        (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantity, uint256 rcv) = wrapDeltaInputs(deltaInputs);
         // Assume that the deltas are imbalanced
-        vm.assume(canonize_quantity(quantity) != 0);
+        vm.assume(DeltaGen.canonize_quantity(quantity) != 0);
         for(uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
-            uint256[2] memory instance = generateDeltaInstance(wrappedDeltaInputs[i]);
+            assumeDeltaInstance(wrappedDeltaInputs[i]);
+            uint256[2] memory instance = DeltaGen.genInstance(wrappedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
         }
         // Compute the proof for the balanced transaction
-        DeltaProofInputs memory sumDeltaInputs = DeltaProofInputs({
+        DeltaGen.DeltaProofInputs memory sumDeltaInputs = DeltaGen.DeltaProofInputs({
             rcv: rcv,
             verifyingKey: verifyingKey
             });
-        bytes memory proof = generateDeltaProof(sumDeltaInputs);
+        assumeDeltaProof(sumDeltaInputs);
+        bytes memory proof = genProof(sumDeltaInputs);
         // Verify that the imbalanced transaction proof fails
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
-    /// @notice Convert a int256 exponent to an equivalent uin256 assuming an order of SECP256K1_ORDER
-    function canonize_quantity(int256 quantity) public pure returns (uint256 quantityu) {
-        // If positive, leave the number unchanged
-        quantityu = quantity >= 0 ? uint256(quantity) : (SECP256K1_ORDER - 1 - (uint256(-(quantity + 1)) % SECP256K1_ORDER));
-    }
-
     /// @notice Wrap the delta inputs in such a way that they can be balanced
     /// and also return the total quantity and value commitment randomness
-    function wrapDeltaInputs(DeltaInstanceInputs[] memory deltaInputs) public pure returns (DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantityAcc, uint256 rcvAcc) {
+    function wrapDeltaInputs(DeltaGen.DeltaInstanceInputs[] memory deltaInputs) public pure returns (DeltaGen.DeltaInstanceInputs[] memory wrappedDeltaInputs, int256 quantityAcc, uint256 rcvAcc) {
         // Compute the window into which the deltas should sum
         int256 halfMax = type(int256).max >> 1;
         int256 halfMin = type(int256).min >> 1;
@@ -258,8 +311,8 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Grab the first length elements from deltaInputs
-    function truncateDeltaInputs(DeltaInstanceInputs[] memory deltaInputs, uint256 length) public pure returns (DeltaInstanceInputs[] memory truncatedDeltaInputs) {
-        truncatedDeltaInputs = new DeltaInstanceInputs[](length);
+    function truncateDeltaInputs(DeltaGen.DeltaInstanceInputs[] memory deltaInputs, uint256 length) public pure returns (DeltaGen.DeltaInstanceInputs[] memory truncatedDeltaInputs) {
+        truncatedDeltaInputs = new DeltaGen.DeltaInstanceInputs[](length);
         for(uint256 i = 0; i < length; i++) {
             truncatedDeltaInputs[i] = deltaInputs[i];
         }
