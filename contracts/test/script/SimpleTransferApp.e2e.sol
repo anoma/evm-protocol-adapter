@@ -18,7 +18,7 @@ contract MintTransferBurnTransaction is Script {
     address internal constant _SEPOLIA_EURC = address(0x08210F9170F89Ab7658F0B5E3fF39b0E03C594D4);
     address internal constant _SEPOLIA_USDC = address(0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238);
 
-    address internal constant _EXPECTED_DEPLOYER = address(0x990c1773C28B985c2cf32C0a920192bD8717C871);
+    address internal constant _EXPECTED_SENDER = address(0x990c1773C28B985c2cf32C0a920192bD8717C871);
 
     error WrongDeployer(address expected, address actual);
 
@@ -26,12 +26,16 @@ contract MintTransferBurnTransaction is Script {
     /// `export SENDER_ADDRESS=$(cast wallet address --account deployment-wallet)`
     /// `forge script test/script/SimpleTransferApp.e2e.sol:MintTransferBurnTransaction --sig "run(address)" $TOKEN_ADDRESS  --rpc-url sepolia --account dev-wallet --sender $SENDER_ADDRESS`
     function run(ProtocolAdapter pa) public {
-        if (msg.sender != _EXPECTED_DEPLOYER) {
-            revert WrongDeployer({expected: _EXPECTED_DEPLOYER, actual: msg.sender});
+        if (msg.sender != _EXPECTED_SENDER) {
+            revert WrongDeployer({expected: _EXPECTED_SENDER, actual: msg.sender});
         }
 
         IERC20 erc20 = IERC20(_SEPOLIA_USDC);
         address permit2 = address(Permit2Lib.PERMIT2);
+
+        Transaction memory mintTx = vm.parseTransaction("/test/examples/transactions/mint.bin");
+        Transaction memory transferTx = vm.parseTransaction("/test/examples/transactions/transfer.bin");
+        Transaction memory burnTx = vm.parseTransaction("/test/examples/transactions/burn.bin");
 
         vm.startBroadcast();
         {
@@ -39,20 +43,13 @@ contract MintTransferBurnTransaction is Script {
             erc20.approve(permit2, type(uint256).max);
 
             // Mint
-            {
-                Transaction memory mintTx = vm.parseTransaction("/test/examples/transactions/mint.bin");
-                ProtocolAdapter(pa).execute(mintTx);
-            }
+            ProtocolAdapter(pa).execute(mintTx);
+
             // Transfer
-            {
-                Transaction memory transferTx = vm.parseTransaction("/test/examples/transactions/transfer.bin");
-                ProtocolAdapter(pa).execute(transferTx);
-            }
+            ProtocolAdapter(pa).execute(transferTx);
+
             // Burn
-            {
-                Transaction memory burnTx = vm.parseTransaction("/test/examples/transactions/burn.bin");
-                ProtocolAdapter(pa).execute(burnTx);
-            }
+            ProtocolAdapter(pa).execute(burnTx);
         }
         vm.stopBroadcast();
     }
