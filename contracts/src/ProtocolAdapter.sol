@@ -62,7 +62,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant {
-        bytes32 newRoot = 0;
+        bytes32 updatedCommitmentTreeRoot = 0;
+
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
         uint256 nActions = transaction.actions.length;
@@ -99,9 +100,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
                 bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
-                // Process the tags and provided root against global state
-                newRoot =
-                    _processState({nf: nf, cm: cm, root: complianceVerifierInput.instance.consumed.commitmentTreeRoot});
+                // Check root in the compliance unit is an actually existing root
+                _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
 
                 // Verify the proof against a hardcoded compliance circuit
                 _verifyComplianceProof(complianceVerifierInput);
@@ -124,6 +124,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     consumed: false
                 });
 
+                // Transition the resource machine state.
+                _addNullifier(nf);
+                updatedCommitmentTreeRoot = _addCommitment(cm);
+
                 // Populate the tags
                 tags[resCounter++] = nf;
                 tags[resCounter++] = cm;
@@ -144,11 +148,11 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             // Check the delta proof
             _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
-            // Store the final root
-            _storeRoot(newRoot);
+            // Store the final commitment tree root
+            _storeRoot(updatedCommitmentTreeRoot);
 
             // Emit the event containing the transaction and new root
-            emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
+            emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: updatedCommitmentTreeRoot});
         }
     }
     // slither-disable-end reentrancy-no-eth
@@ -187,20 +191,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
         // solhint-disable-next-line max-line-length
         emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
-    }
-
-    /// @notice The function processing the state checks and updates
-    /// @param nf The nullifier of a compliance unit
-    /// @param cm The commitment of a compliance unit
-    /// @param root The current commitment tree root
-    /// @return newRoot The root after potentially adding the commitment in the compliance unit
-    function _processState(bytes32 nf, bytes32 cm, bytes32 root) internal returns (bytes32 newRoot) {
-        // Check root in the compliance unit is an actually existing root
-        _checkRootPreExistence(root);
-        // Nullifier addition reverts if it was present in the set before
-        _addNullifier(nf);
-        // Compute the root after adding the commitment
-        newRoot = _addCommitment(cm);
     }
 
     /// @notice Processes a resource by
