@@ -1,13 +1,11 @@
 use alloy::hex;
-use alloy::primitives::{address, Address, B256, U256};
+use alloy::primitives::{Address, B256, U256, address};
 use alloy::signers::local::PrivateKeySigner;
 use alloy::sol_types::SolValue;
 use arm_risc0::action_tree::MerkleTree;
-use arm_risc0::authorization::{
-    AuthorizationSigningKey, AuthorizationVerifyingKey,
-};
+use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
 use arm_risc0::compliance::INITIAL_ROOT;
-use arm_risc0::encryption::{random_keypair, AffinePoint, SecretKey};
+use arm_risc0::encryption::{AffinePoint, SecretKey, random_keypair};
 use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
@@ -135,7 +133,6 @@ fn mint_tx(
         consumed_resource,
         latest_cm_tree_root,
         keychain.nf_key.clone(),
-        keychain.discovery_pk,
         data.spender.to_vec(),
         data.erc20.to_vec(),
         data.signer.address().to_vec(),
@@ -187,7 +184,6 @@ fn transfer_tx(
         keychain.nf_key.clone(),
         keychain.auth_verifying_key(),
         auth_sig,
-        keychain.discovery_pk,
         created_resource.clone(),
         keychain.discovery_pk,
         keychain.encryption_pk,
@@ -249,9 +245,7 @@ fn burn_tx(
         keychain.nf_key.clone(),
         keychain.auth_verifying_key(),
         auth_sig,
-        keychain.discovery_pk,
         created_resource,
-        keychain.discovery_pk,
         data.spender.to_vec(),
         data.erc20.to_vec(),
         data.signer.address().to_vec(),

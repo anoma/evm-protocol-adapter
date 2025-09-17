@@ -24,7 +24,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(uint256(0));
 
     bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF =
-        bytes32(0xae03f135923840f44122041f797c5567e72bcdb02f5f0f8ced1b7bcca929502f);
+        bytes32(0x9859e84a361004def602871e3092bba3b66a833e2a3c23028ad56efe16ce1bd8);
 
     address internal _pa;
 
@@ -42,7 +42,7 @@ contract ERC20ForwarderTest is TransactionParsingBaseTest {
     error InvalidNonce();
 
     function setUp() public {
-        _alicePrivateKey = uint256(vm.envBytes32("PRIVATE_KEY"));
+        _alicePrivateKey = 0xc522337787f3037e9d0dcba4dc4c0e3d4eb7b1c65598d51c425574e8ce64d140;
         _alice = vm.addr(_alicePrivateKey);
 
         vm.selectFork(vm.createFork("sepolia"));
