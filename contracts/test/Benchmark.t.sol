@@ -18,14 +18,15 @@ contract Benchmark is Test {
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
-    Transaction[4] internal _txns;
+    Transaction[5] internal _txns;
 
     function setUp() public {
-        string[4] memory paths = [
+        string[5] memory paths = [
             "../examples/transactions/test_tx01.bin",
             "../examples/transactions/test_tx05.bin",
             "../examples/transactions/test_tx10.bin",
-            "../examples/transactions/test_tx15.bin"
+            "../examples/transactions/test_tx15.bin",
+            "../examples/transactions/test_tx20.bin"
         ];
 
         for (uint256 i = 0; i < paths.length; ++i) {
@@ -52,6 +53,10 @@ contract Benchmark is Test {
 
     function test_execute_15() public {
         _pa.execute(_txns[3]);
+    }
+
+    function test_execute_20() public {
+        _pa.execute(_txns[4]);
     }
 
     function test_print_calldata() public view {
