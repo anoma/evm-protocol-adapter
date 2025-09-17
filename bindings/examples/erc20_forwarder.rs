@@ -1,11 +1,14 @@
+extern crate core;
+
 use alloy::hex;
-use alloy::primitives::{Address, B256, U256, address};
+use alloy::primitives::{address, Address, B256, U256};
+use alloy::signers::k256::elliptic_curve::group::GroupEncoding;
 use alloy::signers::local::PrivateKeySigner;
 use alloy::sol_types::SolValue;
 use arm_risc0::action_tree::MerkleTree;
 use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
 use arm_risc0::compliance::INITIAL_ROOT;
-use arm_risc0::encryption::{AffinePoint, SecretKey, random_keypair};
+use arm_risc0::encryption::{random_keypair, AffinePoint, SecretKey};
 use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
@@ -73,14 +76,35 @@ fn example_keychain() -> KeyChain {
     let (discovery_sk, discovery_pk) = random_keypair();
     let (encryption_sk, encryption_pk) = random_keypair();
 
-    KeyChain {
+    let keychain = KeyChain {
         auth_signing_key: AuthorizationSigningKey::from_bytes(&vec![15u8; 32]),
         nf_key: NullifierKey::from_bytes(&vec![13u8; 32]),
         discovery_sk,
         discovery_pk,
         encryption_sk,
         encryption_pk,
-    }
+    };
+
+    println!(
+        "auth_signing_key: {:?}",
+        hex::encode_prefixed(keychain.auth_signing_key.to_bytes().as_slice())
+    );
+    println!(
+        "nf_key: {:?}",
+        hex::encode_prefixed(keychain.nf_key.inner())
+    );
+    println!("discovery_sk: {:?}", keychain.discovery_sk);
+    println!(
+        "discovery_pk: {:?}",
+        hex::encode_prefixed(keychain.discovery_pk.to_bytes())
+    );
+    println!("encryption_sk: {:?}", keychain.encryption_sk);
+    println!(
+        "encryption_pk: {:?}",
+        hex::encode_prefixed(keychain.encryption_pk.to_bytes())
+    );
+
+    keychain
 }
 
 fn mint_tx(
