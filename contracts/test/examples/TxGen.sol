@@ -252,11 +252,10 @@ library TxGen {
 
         uint256 n = 0;
         for (uint256 i = 0; i < actions.length; ++i) {
-            uint256 nCUs = actions[i].complianceVerifierInputs.length;
+            bytes32[] memory actionTags = collectTags(actions[i]);
 
-            for (uint256 j = 0; j < nCUs; ++j) {
-                tags[n++] = actions[i].complianceVerifierInputs[j].instance.consumed.nullifier;
-                tags[n++] = actions[i].complianceVerifierInputs[j].instance.created.commitment;
+            for (uint256 j = 0; j < actionTags.length; ++j) {
+                tags[n++] = actionTags[j];
             }
         }
     }
