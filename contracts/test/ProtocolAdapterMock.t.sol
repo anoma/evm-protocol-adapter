@@ -56,7 +56,7 @@ contract ProtocolAdapterMockTest is Test {
 
     function test_execute_emits_the_TransactionExecuted_event() public {
         (Transaction memory txn,) =
-            _mockVerifier.transaction({nonce: 0, configs: TxGen.generateActionConfigs({nActions: 1, nCUs: 1})});
+            _mockVerifier.transaction({vm: vm, nonce: 0, configs: TxGen.generateActionConfigs({nActions: 1, nCUs: 1})});
 
         bytes32[] memory cms = new bytes32[](1);
         cms[0] = txn.actions[0].complianceVerifierInputs[0].instance.created.commitment;
@@ -75,7 +75,7 @@ contract ProtocolAdapterMockTest is Test {
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-        Transaction memory txn = _mockVerifier.transaction(resourceLists);
+        Transaction memory txn = _mockVerifier.transaction(vm, resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -92,7 +92,7 @@ contract ProtocolAdapterMockTest is Test {
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-        Transaction memory txn = _mockVerifier.transaction(resourceLists);
+        Transaction memory txn = _mockVerifier.transaction(vm, resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -119,7 +119,7 @@ contract ProtocolAdapterMockTest is Test {
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-        Transaction memory txn = _mockVerifier.transaction(resourceLists);
+        Transaction memory txn = _mockVerifier.transaction(vm, resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -143,7 +143,7 @@ contract ProtocolAdapterMockTest is Test {
         configs[0] = TxGen.ActionConfig({nCUs: 1});
         configs[1] = TxGen.ActionConfig({nCUs: 0});
 
-        (Transaction memory txn,) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory txn,) = _mockVerifier.transaction({vm: vm, nonce: 0, configs: configs});
 
         _mockPa.execute(txn);
     }
@@ -152,7 +152,7 @@ contract ProtocolAdapterMockTest is Test {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
-        (Transaction memory txn,) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory txn,) = _mockVerifier.transaction({vm: vm, nonce: 0, configs: configs});
         _mockPa.execute(txn);
     }
 
@@ -160,21 +160,21 @@ contract ProtocolAdapterMockTest is Test {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory txn, bytes32 updatedNonce) = _mockVerifier.transaction({vm: vm, nonce: 0, configs: configs});
         _mockPa.execute(txn);
 
-        (txn,) = _mockVerifier.transaction({nonce: updatedNonce, configs: configs});
+        (txn,) = _mockVerifier.transaction({vm: vm, nonce: updatedNonce, configs: configs});
         _mockPa.execute(txn);
     }
 
     function test_execute_reverts_on_pre_existing_nullifier() public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 1});
 
-        (Transaction memory tx1, bytes32 updatedNonce) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory tx1, bytes32 updatedNonce) = _mockVerifier.transaction({vm: vm, nonce: 0, configs: configs});
         bytes32 preExistingNf = tx1.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
         _mockPa.execute(tx1);
 
-        (Transaction memory tx2,) = _mockVerifier.transaction({nonce: updatedNonce, configs: configs});
+        (Transaction memory tx2,) = _mockVerifier.transaction({vm: vm, nonce: updatedNonce, configs: configs});
         tx2.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier = preExistingNf;
         vm.expectRevert(
             abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, preExistingNf), address(_mockPa)

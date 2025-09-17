@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
-
-import {MerkleTree} from "../../src/libs/MerkleTree.sol";
-
-import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
-import {SHA256} from "../../src/libs/SHA256.sol";
-import {Compliance} from "../../src/proving/Compliance.sol";
-
-import {Delta} from "../../src/proving/Delta.sol";
-import {Logic} from "../../src/proving/Logic.sol";
-import {Transaction, Action, Resource} from "../../src/Types.sol";
-import {DeltaGen, DeltaProofTest} from "../proofs/DeltaProof.t.sol";
+import { RiscZeroMockVerifier } from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import { VmSafe } from "forge-std/Vm.sol";
+import { MerkleTree } from "./../../src/libs/MerkleTree.sol";
+import { RiscZeroUtils } from "./../../src/libs/RiscZeroUtils.sol";
+import { SHA256 } from "./../../src/libs/SHA256.sol";
+import { Compliance } from "./../../src/proving/Compliance.sol";
+import { Delta } from "./../../src/proving/Delta.sol";
+import { Logic } from "./../../src/proving/Logic.sol";
+import { Transaction, Action, Resource } from "./../../src/Types.sol";
+import { DeltaGen } from "./../proofs/DeltaProof.t.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
@@ -38,6 +36,7 @@ library TxGen {
     error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
 
     function complianceVerifierInput(
+        VmSafe vm,
         RiscZeroMockVerifier mockVerifier,
         bytes32 commitmentTreeRoot, // historical root
         Resource memory consumed,
@@ -46,16 +45,15 @@ library TxGen {
         bytes32 nf = nullifier(consumed, 0);
         bytes32 cm = commitment(created);
 
-        DeltaProofTest deltaProofTest = new DeltaProofTest();
         // Construct the delta for consumption based on kind and quantity
-        uint256[2] memory unitDelta = deltaProofTest.genInstance(DeltaGen.InstanceInputs({
+        uint256[2] memory unitDelta = DeltaGen.genInstance(vm, DeltaGen.InstanceInputs({
                 kind: kind(consumed),
                 quantity: consumed.quantity,
                 consumed: true,
                 rcv: 1
         }));
         // Construct the delta for creation based on kind and quantity
-        unitDelta = Delta.add(unitDelta, deltaProofTest.genInstance(DeltaGen.InstanceInputs({
+        unitDelta = Delta.add(unitDelta, DeltaGen.genInstance(vm, DeltaGen.InstanceInputs({
                 kind: kind(created),
                 quantity: created.quantity,
                 consumed: false,
@@ -81,6 +79,7 @@ library TxGen {
     }
 
     function createAction(
+        VmSafe vm,
         RiscZeroMockVerifier mockVerifier,
         ResourceAndAppData[] memory consumed,
         ResourceAndAppData[] memory created
@@ -123,6 +122,7 @@ library TxGen {
             });
 
             complianceVerifierInputs[i] = complianceVerifierInput({
+                vm: vm,
                 mockVerifier: mockVerifier,
                 commitmentTreeRoot: initialRoot(),
                 consumed: consumed[i].resource,
@@ -132,7 +132,7 @@ library TxGen {
         action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
     }
 
-    function createDefaultAction(RiscZeroMockVerifier mockVerifier, bytes32 nonce, uint256 nCUs)
+    function createDefaultAction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, uint256 nCUs)
         internal
         returns (Action memory action, bytes32 updatedNonce)
     {
@@ -174,10 +174,10 @@ library TxGen {
             updatedNonce = bytes32(uint256(updatedNonce) + 1);
         }
 
-        action = createAction({mockVerifier: mockVerifier, consumed: consumed, created: created});
+        action = createAction({vm: vm, mockVerifier: mockVerifier, consumed: consumed, created: created});
     }
 
-    function transaction(RiscZeroMockVerifier mockVerifier, ResourceLists[] memory actionResources)
+    function transaction(RiscZeroMockVerifier mockVerifier, VmSafe vm, ResourceLists[] memory actionResources)
         internal
         returns (Transaction memory txn)
     {
@@ -191,24 +191,24 @@ library TxGen {
             }
 
             actions[i] = createAction({
+                vm: vm,
                 mockVerifier: mockVerifier,
                 consumed: actionResources[i].consumed,
                 created: actionResources[i].created
             });
         }
 
-        DeltaProofTest deltaProofTest = new DeltaProofTest();
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
         // Generate a proof over the tags where rcv value is the expected total
-        bytes memory proof = deltaProofTest.genProof(DeltaGen.ProofInputs({
+        bytes memory proof = DeltaGen.genProof(vm, DeltaGen.ProofInputs({
                 rcv: tags.length,
                 verifyingKey: Delta.computeVerifyingKey(tags)
         }));
         txn = Transaction({actions: actions, deltaProof: proof});
     }
 
-    function transaction(RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
+    function transaction(RiscZeroMockVerifier mockVerifier, VmSafe vm, bytes32 nonce, ActionConfig[] memory configs)
         internal
         returns (Transaction memory txn, bytes32 updatedNonce)
     {
@@ -217,14 +217,13 @@ library TxGen {
         Action[] memory actions = new Action[](configs.length);
         for (uint256 i = 0; i < configs.length; ++i) {
             (actions[i], updatedNonce) =
-                createDefaultAction({mockVerifier: mockVerifier, nonce: updatedNonce, nCUs: configs[i].nCUs});
+                createDefaultAction({vm: vm, mockVerifier: mockVerifier, nonce: updatedNonce, nCUs: configs[i].nCUs});
         }
 
-        DeltaProofTest deltaProofTest = new DeltaProofTest();
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
         // Generate a proof over the tags where rcv value is the expected total
-        bytes memory proof = deltaProofTest.genProof(DeltaGen.ProofInputs({
+        bytes memory proof = DeltaGen.genProof(vm, DeltaGen.ProofInputs({
                 rcv: tags.length,
                 verifyingKey: Delta.computeVerifyingKey(tags)
         }));
