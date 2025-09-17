@@ -1,23 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-
 import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 import {Permit2Lib} from "@permit2/src/libraries/Permit2Lib.sol";
-import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Script} from "forge-std/Script.sol";
 import {Vm} from "forge-std/Vm.sol";
 
-import {ERC20Forwarder} from "../../src/forwarders/ERC20Forwarder.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {Transaction} from "../../src/Types.sol";
-import {ERC20Example} from "../../test/examples/ERC20.e.sol";
 import {Parsing} from "../libs/Parsing.sol";
-import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
 contract MintTransferBurnTransaction is Script {
     using Parsing for Vm;
