@@ -5,15 +5,16 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
-import {console} from "forge-std/Test.sol";
+import {Test, Vm, console} from "forge-std/Test.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Transaction} from "../src/Types.sol";
-
+import {Parsing} from "./libs/Parsing.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
-import {TransactionParsingBaseTest} from "./transactions/TransactionParsingBase.t.sol";
 
-contract Benchmark is TransactionParsingBaseTest {
+contract Benchmark is Test {
+    using Parsing for Vm;
+
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
@@ -21,14 +22,14 @@ contract Benchmark is TransactionParsingBaseTest {
 
     function setUp() public {
         string[4] memory paths = [
-            "../transactions/test_tx01.bin",
-            "../transactions/test_tx05.bin",
-            "../transactions/test_tx10.bin",
-            "../transactions/test_tx15.bin"
+            "../examples/transactions/test_tx01.bin",
+            "../examples/transactions/test_tx05.bin",
+            "../examples/transactions/test_tx10.bin",
+            "../examples/transactions/test_tx15.bin"
         ];
 
         for (uint256 i = 0; i < paths.length; ++i) {
-            _txns[i] = _parseTransaction(string.concat("/test/benchmark/", paths[i]));
+            _txns[i] = vm.parseTransaction(string.concat("/test/benchmark/", paths[i]));
         }
         {
             (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();

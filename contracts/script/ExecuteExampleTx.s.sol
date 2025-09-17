@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Script} from "forge-std/Script.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {TransactionExample} from "../test/examples/Transaction.e.sol";
+import {TransactionExample} from "../test/examples/transactions/Transaction.e.sol";
 
 contract ExecuteExampleTx is Script {
     function run() public {
