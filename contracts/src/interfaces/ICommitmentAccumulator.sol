@@ -6,6 +6,10 @@ pragma solidity ^0.8.30;
 /// @notice The interface of the commitment accumulator contract.
 /// @custom:security-contact security@anoma.foundation
 interface ICommitmentAccumulator {
+    /// @notice Emitted when a commitment tree root is stored in the set of historical roots.
+    /// @param root The root that was stored.
+    event CommitmentTreeRootStored(bytes32 root);
+
     /// @notice Returns the latest  commitment tree state root.
     /// @return root The latest commitment tree state root.
     function latestRoot() external view returns (bytes32 root);

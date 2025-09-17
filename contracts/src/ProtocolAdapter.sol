@@ -35,8 +35,6 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
 
-    uint256 internal _txCount;
-
     error ZeroNotAllowed();
 
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
@@ -62,7 +60,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant {
-        bytes32 newRoot = 0;
+        bytes32 updatedRoot = 0;
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
         uint256 nActions = transaction.actions.length;
@@ -75,6 +73,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
         // Allocate the array.
         bytes32[] memory tags = new bytes32[](resCounter);
+        bytes32[] memory logicRefs = new bytes32[](resCounter);
 
         // Reset the resource counter.
         resCounter = 0;
@@ -100,7 +99,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
                 // Process the tags and provided root against global state
-                newRoot =
+                updatedRoot =
                     _processState({nf: nf, cm: cm, root: complianceVerifierInput.instance.consumed.commitmentTreeRoot});
 
                 // Verify the proof against a hardcoded compliance circuit
@@ -125,8 +124,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 });
 
                 // Populate the tags
-                tags[resCounter++] = nf;
-                tags[resCounter++] = cm;
+                tags[resCounter] = nf;
+                logicRefs[resCounter++] = complianceVerifierInput.instance.consumed.logicRef;
+                tags[resCounter] = cm;
+                logicRefs[resCounter++] = complianceVerifierInput.instance.created.logicRef;
 
                 // Compute transaction delta
                 transactionDelta = _addUnitDelta({
@@ -137,6 +138,8 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                     ]
                 });
             }
+
+            emit ActionExecuted({actionTreeRoot: actionTreeRoot, tagsCount: nResources});
         }
 
         // Check if the transaction induced a state change and the state root has changed
@@ -145,11 +148,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
             // Store the final root
-            _storeRoot(newRoot);
-
-            // Emit the event containing the transaction and new root
-            emit TransactionExecuted({id: _txCount++, transaction: transaction, newRoot: newRoot});
+            _storeRoot(updatedRoot);
         }
+
+        emit TransactionExecuted({tags: tags, logicRefs: logicRefs});
     }
     // slither-disable-end reentrancy-no-eth
 
@@ -227,6 +229,44 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
         // Perform external calls
         _processForwarderCalls(input);
+
+        _emitBlobs(input);
+    }
+
+    /// @notice Emits app data blobs.
+    /// @param input The logic verifier input containing the app data.
+    function _emitBlobs(Logic.VerifierInput calldata input) internal {
+        Logic.ExpirableBlob[] calldata payload = input.appData.resourcePayload;
+        uint256 n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ResourcePayload({tag: input.tag, index: i, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.discoveryPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit DiscoveryPayload({tag: input.tag, index: i, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.externalPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ExternalPayload({tag: input.tag, index: i, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.applicationPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ApplicationPayload({tag: input.tag, index: i, blob: payload[i].blob});
+            }
+        }
     }
 
     /// @notice Processes forwarder calls by verifying and executing them.
