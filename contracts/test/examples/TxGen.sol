@@ -46,18 +46,18 @@ library TxGen {
         bytes32 cm = commitment(created);
 
         // Construct the delta for consumption based on kind and quantity
-        uint256[2] memory unitDelta = DeltaGen.genInstance(vm, DeltaGen.InstanceInputs({
+        uint256[2] memory unitDelta = DeltaGen.generateInstance(vm, DeltaGen.InstanceInputs({
                 kind: kind(consumed),
                 quantity: consumed.quantity,
                 consumed: true,
-                rcv: 1
+                valueCommitmentRandomness: 1
         }));
         // Construct the delta for creation based on kind and quantity
-        unitDelta = Delta.add(unitDelta, DeltaGen.genInstance(vm, DeltaGen.InstanceInputs({
+        unitDelta = Delta.add(unitDelta, DeltaGen.generateInstance(vm, DeltaGen.InstanceInputs({
                 kind: kind(created),
                 quantity: created.quantity,
                 consumed: false,
-                rcv: 1
+                valueCommitmentRandomness: 1
         })));
 
         Compliance.Instance memory instance = Compliance.Instance({
@@ -177,7 +177,7 @@ library TxGen {
         action = createAction({vm: vm, mockVerifier: mockVerifier, consumed: consumed, created: created});
     }
 
-    function transaction(RiscZeroMockVerifier mockVerifier, VmSafe vm, ResourceLists[] memory actionResources)
+    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, ResourceLists[] memory actionResources)
         internal
         returns (Transaction memory txn)
     {
@@ -200,18 +200,18 @@ library TxGen {
 
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
-        // Generate a proof over the tags where rcv value is the expected total
+        // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
         bytes memory proof = "";
         if (tags.length != 0) {
-            proof = DeltaGen.genProof(vm, DeltaGen.ProofInputs({
-                rcv: tags.length,
+            proof = DeltaGen.generateProof(vm, DeltaGen.ProofInputs({
+                valueCommitmentRandomness: tags.length,
                 verifyingKey: Delta.computeVerifyingKey(tags)
             }));
         }
         txn = Transaction({actions: actions, deltaProof: proof});
     }
 
-    function transaction(RiscZeroMockVerifier mockVerifier, VmSafe vm, bytes32 nonce, ActionConfig[] memory configs)
+    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
         internal
         returns (Transaction memory txn, bytes32 updatedNonce)
     {
@@ -225,11 +225,11 @@ library TxGen {
 
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
-        // Generate a proof over the tags where rcv value is the expected total
+        // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
         bytes memory proof = "";
         if (tags.length != 0) {
-            proof = DeltaGen.genProof(vm, DeltaGen.ProofInputs({
-                rcv: tags.length,
+            proof = DeltaGen.generateProof(vm, DeltaGen.ProofInputs({
+                valueCommitmentRandomness: tags.length,
                 verifyingKey: Delta.computeVerifyingKey(tags)
             }));
         }
