@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
+
 import {EmergencyMigratableForwarderBase} from "../../src/forwarders/EmergencyMigratableForwarderBase.sol";
 import {ForwarderBase} from "../../src/forwarders/ForwarderBase.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
@@ -24,10 +26,11 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
     EmergencyMigratableForwarderExample internal _emrgFwd;
 
     function setUp() public override {
-        (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
+        RiscZeroGroth16Verifier verifier;
+        (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts().run();
         _riscZeroAdmin = _emergencyStop.owner();
 
-        _pa = address(new ProtocolAdapter(_router));
+        _pa = address(new ProtocolAdapter(_router, verifier.SELECTOR()));
 
         _emrgFwd = new EmergencyMigratableForwarderExample({
             protocolAdapter: _pa,

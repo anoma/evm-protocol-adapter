@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
 import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 import {PermitHash} from "@permit2/src/libraries/PermitHash.sol";
+import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Test, Vm, stdError} from "forge-std/Test.sol";
@@ -53,10 +54,10 @@ contract ERC20ForwarderTest is Test {
         _permit2 = IPermit2(address(0x000000000022D473030F116dDEE9F6B43aC78BA3)); //new DeployPermit2().run();
 
         // Deploy RISC Zero contracts
-        (RiscZeroVerifierRouter _router,,) = new DeployRiscZeroContracts().run();
+        (RiscZeroVerifierRouter router,, RiscZeroGroth16Verifier verifier) = new DeployRiscZeroContracts().run();
 
         // Deploy the protocol adapter
-        _pa = address(new ProtocolAdapter({riscZeroVerifierRouter: _router}));
+        _pa = address(new ProtocolAdapter(router, verifier.SELECTOR()));
 
         // Deploy the ERC20 forwarder
         _fwd = address(
