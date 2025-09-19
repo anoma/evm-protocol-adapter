@@ -68,11 +68,8 @@ contract DeltaProofTest is Test {
         FuzzerInstanceInputsExceptKind memory input2
     ) public {
         kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
-
-        input1.valueCommitmentRandomness = input1.valueCommitmentRandomness.modOrder();
-        input2.valueCommitmentRandomness = input2.valueCommitmentRandomness.modOrder();
-        vm.assume(input1.valueCommitmentRandomness != 0);
-        vm.assume(input2.valueCommitmentRandomness != 0);
+        input1.valueCommitmentRandomness = bound(input1.valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
+        input2.valueCommitmentRandomness = bound(input2.valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
 
         vm.assume(input1.consumed != input2.consumed || input2.quantity <= type(uint128).max - input1.quantity);
         vm.assume(
@@ -130,9 +127,9 @@ contract DeltaProofTest is Test {
         bytes32 fuzzedVerifyingKey
     ) public {
         deltaInstanceInputs.kind = bound(deltaInstanceInputs.kind, 1, EllipticCurveK256.ORDER - 1);
+        deltaInstanceInputs.valueCommitmentRandomness =
+            bound(deltaInstanceInputs.valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
 
-        deltaInstanceInputs.valueCommitmentRandomness = deltaInstanceInputs.valueCommitmentRandomness.modOrder();
-        vm.assume(deltaInstanceInputs.valueCommitmentRandomness != 0);
         vm.assume(DeltaGen.canonicalizeQuantity(deltaInstanceInputs.consumed, deltaInstanceInputs.quantity) != 0);
 
         vm.assume(_computePreDelta(deltaInstanceInputs) != 0);
@@ -160,12 +157,9 @@ contract DeltaProofTest is Test {
     ) public {
         kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
 
-        valueCommitmentRandomness1 = valueCommitmentRandomness1.modOrder();
-        vm.assume(valueCommitmentRandomness1 != 0);
+        valueCommitmentRandomness1 = bound(valueCommitmentRandomness1, 1, EllipticCurveK256.ORDER - 1);
+        valueCommitmentRandomness2 = bound(valueCommitmentRandomness2, 1, EllipticCurveK256.ORDER - 1);
         vm.assume(valueCommitmentRandomness1.modOrder() != valueCommitmentRandomness2.modOrder());
-
-        valueCommitmentRandomness2 = valueCommitmentRandomness2.modOrder();
-        vm.assume(valueCommitmentRandomness2 != 0);
 
         // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaInputs1 =
@@ -196,10 +190,7 @@ contract DeltaProofTest is Test {
         bytes32 verifyingKey2
     ) public {
         kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
-
-        valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
-        vm.assume(valueCommitmentRandomness != 0);
-
+        valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
         vm.assume(verifyingKey1 != verifyingKey2);
 
         DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
