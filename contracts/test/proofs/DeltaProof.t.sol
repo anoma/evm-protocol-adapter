@@ -49,8 +49,10 @@ contract DeltaProofTest is Test {
 
         // Generate a delta instance from the above inputs
         uint256[2] memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
+
         // Generate a delta proof from the above inputs
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
+
         // Verify that the generated delta proof is valid
         Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
@@ -202,6 +204,7 @@ contract DeltaProofTest is Test {
         // Generate a delta proof and instance from the above tags and preimage
         bytes memory proof1 = DeltaGen.generateProof(vm, deltaInputs1);
         uint256[2] memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
+
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey2});
@@ -317,10 +320,14 @@ contract DeltaProofTest is Test {
         deltaInputs.kind = deltaInputs.kind.modOrder();
         vm.assume(deltaInputs.kind != 0);
         // The exponent must be non-zero modulo the base point order
-        uint256 quantity = DeltaGen.canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
-        uint256 prod = mulmod(deltaInputs.kind, quantity, EllipticCurveK256.ORDER);
-        uint256 preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, EllipticCurveK256.ORDER);
-        vm.assume(preDelta != 0);
+
+        vm.assume(computePreDelta(deltaInputs) != 0);
+    }
+
+    function computePreDelta(DeltaGen.InstanceInputs memory deltaInputs) internal pure returns (uint256 preDelta) {
+        uint256 canonicalizedQuantity = DeltaGen.canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
+        uint256 prod = mulmod(deltaInputs.kind, canonicalizedQuantity, EllipticCurveK256.ORDER);
+        preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, EllipticCurveK256.ORDER);
     }
 
     function _getBoundedDeltaInstances(uint256 kind, FuzzerInstanceInputsExceptKind[] memory fuzzerInputs)
