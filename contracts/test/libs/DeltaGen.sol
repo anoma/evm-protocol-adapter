@@ -103,6 +103,12 @@ library DeltaGen {
             consumed ? ((EllipticCurveK256.ORDER - uint256(quantity)).modOrder()) : uint256(quantity);
     }
 
+    function computePreDelta(DeltaGen.InstanceInputs memory deltaInputs) internal pure returns (uint256 preDelta) {
+        uint256 canonicalizedQuantity = canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
+        uint256 prod = mulmod(deltaInputs.kind, canonicalizedQuantity, EllipticCurveK256.ORDER);
+        preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, EllipticCurveK256.ORDER);
+    }
+
     /// @notice Wrap the delta inputs in such a way that they can be balanced
     /// and also return the total quantity and value commitment randomness
     /// * Adjusts the delta inputs so that the sum is within the range [halfMin, halfMax].
