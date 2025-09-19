@@ -109,9 +109,10 @@ library DeltaGen {
         preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, EllipticCurveK256.ORDER);
     }
 
-    /// @notice Wrap the delta inputs in such a way that they can be balanced
-    /// and also return the total quantity and value commitment randomness
-    /// * Adjusts the delta inputs so that the sum is within the range [halfMin, halfMax].
+    /// @notice Balances an array of delta inputs by adjusting the inputs so that the sum is within the range
+    /// [halfMin, halfMax]. Moreover, it returns the total quantity and value commitment randomness.
+    /// TODO This code and its usage must be refactored. Instead of balancing a set of `n` random values, we should take
+    /// TODO `n/2` random values and negate them. This will reduce the code complexity in this function and tests.
     function createBalancedDeltaInputArray(DeltaGen.InstanceInputs[] memory deltaInputs)
         public
         pure
