@@ -46,7 +46,7 @@ library DeltaGen {
     /// @param deltaInputs Parameters required to determine a delta instance
     /// @return instance The delta instance corresponding to the parameters
     function generateInstance(VmSafe vm, InstanceInputs memory deltaInputs)
-        public
+        internal
         returns (uint256[2] memory instance)
     {
         deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
@@ -65,6 +65,7 @@ library DeltaGen {
         }
         // Derive address and public key from transaction delta
         VmSafe.Wallet memory valueWallet = vm.createWallet(preDelta);
+
         // Extract the transaction delta from the wallet
         instance[0] = valueWallet.publicKeyX;
         instance[1] = valueWallet.publicKeyY;
@@ -75,7 +76,7 @@ library DeltaGen {
     /// @param vm VmSafe instance with which to sign verifyingKey
     /// @param deltaInputs Parameters required to construct a delta proof
     /// @return proof The delta proof corresponding to the parameters
-    function generateProof(VmSafe vm, ProofInputs memory deltaInputs) public returns (bytes memory proof) {
+    function generateProof(VmSafe vm, ProofInputs memory deltaInputs) internal returns (bytes memory proof) {
         deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
         if (deltaInputs.valueCommitmentRandomness == 0) {
             revert DeltaGen.ValueCommitmentRandomnessZero();
@@ -94,7 +95,7 @@ library DeltaGen {
     /// @return quantityRepresentative The non-negative number less than SECP256K1_ORDER
     /// that's equivalent to the exponent modulo SECP256K1_ORDER
     function canonicalizeQuantity(bool consumed, uint128 quantity)
-        public
+        internal
         pure
         returns (uint256 quantityRepresentative)
     {
@@ -114,7 +115,7 @@ library DeltaGen {
     /// TODO This code and its usage must be refactored. Instead of balancing a set of `n` random values, we should take
     /// TODO `n/2` random values and negate them. This will reduce the code complexity in this function and tests.
     function createBalancedDeltaInputArray(DeltaGen.InstanceInputs[] memory deltaInputs)
-        public
+        internal
         pure
         returns (
             DeltaGen.InstanceInputs[] memory wrappedDeltaInputs,
@@ -148,8 +149,6 @@ library DeltaGen {
 
         int256 quantityAcc = 0;
         for (uint256 i = 0; i < deltaInputs.length; i++) {
-            // TODO! MOVE THIS // Ensure that all the deltas have the same kind
-            // TODO! MOVE THIS deltaInputs[i].kind = kind;
             // Accumulate the randomness commitments modulo SECP256K1_ORDER
             valueCommitmentRandomnessAcc =
                 addmod(valueCommitmentRandomnessAcc, deltaInputs[i].valueCommitmentRandomness, EllipticCurveK256.ORDER);
