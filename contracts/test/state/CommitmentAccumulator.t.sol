@@ -163,6 +163,27 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         _cmAcc.verifyMerkleProof({root: newRoot, commitment: commitment, path: wrongPath, directionBits: 0});
     }
 
+    function test_verifyMerkleProof_verifies_path_for_roots() public {
+        // Fix old root
+        bytes32 oldRoot = _cmAcc.latestRoot();
+
+        // Update the tree with some commitment
+        bytes32 commitment = sha256("SOMETHING");
+        bytes32 newRoot = _cmAcc.addCommitment(commitment);
+        _cmAcc.storeRoot(newRoot);
+
+        // Assert that the new root is different
+        assert(_cmAcc.latestRoot() != oldRoot);
+
+        // Check merkle path verification for initial root works
+        _cmAcc.verifyMerkleProof({
+            root: oldRoot,
+            commitment: SHA256.EMPTY_HASH,
+            path: new bytes32[](0),
+            directionBits: 0
+        });
+    }
+
     function test_should_produce_an_invalid_root_for_a_non_existent_leaf_in_the_empty_tree() public view {
         bytes32 root = _cmAcc.initialRoot();
 
