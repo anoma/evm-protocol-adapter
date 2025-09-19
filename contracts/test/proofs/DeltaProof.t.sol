@@ -9,6 +9,41 @@ import {Transaction} from "./../../src/Types.sol";
 import {TransactionExample} from "./../examples/Transaction.e.sol";
 import {TxGen} from "./../examples/TxGen.sol";
 
+library SignMagnitude {
+    /// @notice Add two numbers in sign magnitude representation. Positive
+    /// numbers are represented with a false sign and negative numbers with a
+    /// true sign.
+    function add(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
+        if (s1 == s2) {
+            return (s1, m1 + m2);
+        } else if (m1 >= m2) {
+            return (s1, m1 - m2);
+        } else if (m2 > m1) {
+            return (s2, m2 - m1);
+        }
+    }
+
+    /// @notice Subtract two numbers in sign magnitude representation. Positive
+    /// numbers are represented with a false sign and negative numbers with a
+    /// true sign.
+    function sub(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
+        (s3, m3) = add(s1, m1, !s2, m2);
+    }
+
+    /// @notice Convert the signed quantity whose magnitude fits into a uint128
+    /// into a sign-magnitude representation. Positive numbers are represented
+    /// with a false sign and negative numbers with a true sign.
+    function fromInt256(int256 quantity) internal pure returns (bool sign, uint128 magnitude) {
+        if (quantity >= 0) {
+            magnitude = uint128(uint256(quantity));
+            sign = false;
+        } else {
+            magnitude = uint128(uint256(-quantity));
+            sign = true;
+        }
+    }
+}
+
 library DeltaGen {
     /// @notice The parameters required to generate a mock delta instance for a .
     /// @param valueCommitmentRandomness The value commitment randomness.
@@ -164,8 +199,9 @@ contract DeltaProofTest is Test {
                 && deltaInputs2.valueCommitmentRandomness <= type(uint256).max - deltaInputs1.valueCommitmentRandomness
         );
         // Add the deltas
-        (bool consumed, uint128 quantity) =
-            _signMagAdd(deltaInputs1.consumed, deltaInputs1.quantity, deltaInputs2.consumed, deltaInputs2.quantity);
+        (bool consumed, uint128 quantity) = SignMagnitude.add(
+            deltaInputs1.consumed, deltaInputs1.quantity, deltaInputs2.consumed, deltaInputs2.quantity
+        );
         // Compute the inputs corresponding to the sum of deltas
         DeltaGen.InstanceInputs memory deltaInputs3 = DeltaGen.InstanceInputs({
             kind: deltaInputs1.kind,
@@ -301,7 +337,7 @@ contract DeltaProofTest is Test {
             (
                 wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed,
                 wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity
-            ) = _signMagSub(
+            ) = SignMagnitude.sub(
                 wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed,
                 wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity,
                 consumed,
@@ -401,11 +437,11 @@ contract DeltaProofTest is Test {
             }
             // Finally, accumulate the adjusted quantity
             quantityAcc += currentQuantity;
-            (deltaInputs[i].consumed, deltaInputs[i].quantity) = _toSignMag(currentQuantity);
+            (deltaInputs[i].consumed, deltaInputs[i].quantity) = SignMagnitude.fromInt256(currentQuantity);
         }
         // Finally, return tbe wrapped deltas
         wrappedDeltaInputs = deltaInputs;
-        (consumedAcc, quantityMagAcc) = _toSignMag(quantityAcc);
+        (consumedAcc, quantityMagAcc) = SignMagnitude.fromInt256(quantityAcc);
     }
 
     /// @notice Grab the first length elements from deltaInputs
@@ -455,44 +491,5 @@ contract DeltaProofTest is Test {
     function _assumeDeltaProof(DeltaGen.ProofInputs memory deltaInputs) internal pure {
         deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness % SECP256K1_ORDER;
         vm.assume(deltaInputs.valueCommitmentRandomness != 0);
-    }
-
-    /// @notice Add two numbers in sign magnitude representation. Positive
-    /// numbers are represented with a false sign and negative numbers with a
-    /// true sign.
-    function _signMagAdd(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
-        if (s1 == s2) {
-            return (s1, m1 + m2);
-        } else if (m1 >= m2) {
-            return (s1, m1 - m2);
-        } else if (m2 > m1) {
-            return (s2, m2 - m1);
-        }
-    }
-
-    /// @notice Subtract two numbers in sign magnitude representation. Positive
-    /// numbers are represented with a false sign and negative numbers with a
-    /// true sign.
-    function _signMagSub(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
-        if (s1 != s2) {
-            return (s1, m1 + m2);
-        } else if (m1 >= m2) {
-            return (s1, m1 - m2);
-        } else if (m2 > m1) {
-            return (!s1, m2 - m1);
-        }
-    }
-
-    /// @notice Convert the signed quantity whose magnitude fits into a uint128
-    /// into a sign-magnitude representation. Positive numbers are represented
-    /// with a false sign and negative numbers with a true sign.
-    function _toSignMag(int256 quantity) internal pure returns (bool sign, uint128 magnitude) {
-        if (quantity >= 0) {
-            magnitude = uint128(uint256(quantity));
-            sign = false;
-        } else {
-            magnitude = uint128(uint256(-quantity));
-            sign = true;
-        }
     }
 }
