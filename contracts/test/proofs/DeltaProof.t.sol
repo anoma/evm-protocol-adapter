@@ -161,10 +161,9 @@ contract DeltaProofTest is Test {
         valueCommitmentRandomness2 = bound(valueCommitmentRandomness2, 1, EllipticCurveK256.ORDER - 1);
         vm.assume(valueCommitmentRandomness1.modOrder() != valueCommitmentRandomness2.modOrder());
 
-        // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaInputs1 =
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness1, verifyingKey: verifyingKey});
-        // Construct delta instance inputs from the above parameters
+
         DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
             kind: kind,
             quantity: 0,
