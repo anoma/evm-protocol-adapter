@@ -13,17 +13,24 @@ import {DeltaGen} from "../libs/DeltaGen.sol";
 import {SignMagnitude} from "../libs/SignMagnitude.sol";
 import {TxGen} from "../libs/TxGen.sol";
 
+library DeltaFuzzing {
+    /// @dev This function exposes `Delta.verify` for the fuzzer.
+    function verify(bytes memory proof, uint256[2] memory instance, bytes32 verifyingKey) public pure {
+        Delta.verify({proof: proof, instance: instance, verifyingKey: verifyingKey});
+    }
+
+    struct InstanceInputsExceptKind {
+        uint256 valueCommitmentRandomness;
+        uint128 quantity;
+        bool consumed;
+    }
+}
+
 contract DeltaProofTest is Test {
     using SignMagnitude for SignMagnitude.Number;
     using EllipticCurveK256 for uint256;
     using DeltaGen for DeltaGen.InstanceInputs[];
     using DeltaGen for DeltaGen.InstanceInputs;
-
-    struct FuzzerInstanceInputsExceptKind {
-        uint256 valueCommitmentRandomness;
-        uint128 quantity;
-        bool consumed;
-    }
 
     function testFuzz_verify_delta_succeeds(
         uint256 kind,
@@ -54,14 +61,14 @@ contract DeltaProofTest is Test {
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
 
         // Verify that the generated delta proof is valid
-        Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
+        DeltaFuzzing.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
 
     /// @notice Test that Delta.add correctly adds deltas
     function testFuzz_add_delta_correctness(
         uint256 kind,
-        FuzzerInstanceInputsExceptKind memory input1,
-        FuzzerInstanceInputsExceptKind memory input2
+        DeltaFuzzing.InstanceInputsExceptKind memory input1,
+        DeltaFuzzing.InstanceInputsExceptKind memory input2
     ) public {
         kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
         input1.valueCommitmentRandomness = bound(input1.valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
@@ -140,7 +147,7 @@ contract DeltaProofTest is Test {
         uint256[2] memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
+        DeltaFuzzing.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
@@ -175,7 +182,7 @@ contract DeltaProofTest is Test {
         }
 
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proofRcv1, instance: instanceRcv2, verifyingKey: verifyingKey});
+        DeltaFuzzing.verify({proof: proofRcv1, instance: instanceRcv2, verifyingKey: verifyingKey});
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
@@ -209,13 +216,13 @@ contract DeltaProofTest is Test {
         }
 
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proofForVk1, instance: instance, verifyingKey: verifyingKey2});
+        DeltaFuzzing.verify({proof: proofForVk1, instance: instance, verifyingKey: verifyingKey2});
     }
 
     /// @notice Check that a balanced transaction does pass verification
     function testFuzz_verify_balanced_delta_succeeds(
         uint256 kind,
-        FuzzerInstanceInputsExceptKind[] memory fuzzerInputs,
+        DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs,
         bytes32 verifyingKey
     ) public {
         kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
@@ -261,13 +268,13 @@ contract DeltaProofTest is Test {
 
         bytes memory proof = DeltaGen.generateProof(vm, sumDeltaInputs);
         // Verify that the balanced transaction proof succeeds
-        Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
+        DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
     /// @notice Check that an imbalanced transaction fails verification
     function testFuzz_verify_imbalanced_delta_fails(
         uint256 kind,
-        FuzzerInstanceInputsExceptKind[] memory fuzzerInputs,
+        DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs,
         bytes32 verifyingKey
     ) public {
         kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
@@ -302,13 +309,13 @@ contract DeltaProofTest is Test {
         bytes memory proof = DeltaGen.generateProof(vm, sumDeltaInputs);
         // Verify that the imbalanced transaction proof fails
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
+        DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
     function test_verify_example_delta_proof() public pure {
         Transaction memory txn = TransactionExample.transaction();
 
-        Delta.verify({
+        DeltaFuzzing.verify({
             proof: txn.deltaProof,
             instance: [
                 uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaX),
@@ -318,7 +325,7 @@ contract DeltaProofTest is Test {
         });
     }
 
-    function _getBoundedDeltaInstances(uint256 kind, FuzzerInstanceInputsExceptKind[] memory fuzzerInputs)
+    function _getBoundedDeltaInstances(uint256 kind, DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs)
         internal
         pure
         returns (DeltaGen.InstanceInputs[] memory deltaInputs)
