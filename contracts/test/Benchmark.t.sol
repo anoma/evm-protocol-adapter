@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
@@ -33,9 +34,11 @@ contract Benchmark is Test {
             _txns[i] = vm.parseTransaction(string.concat("/test/benchmark/", paths[i]));
         }
         {
-            (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
+            RiscZeroGroth16Verifier verifier;
 
-            _pa = new ProtocolAdapter({riscZeroVerifierRouter: _router});
+            (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts().run();
+
+            _pa = new ProtocolAdapter(_router, verifier.SELECTOR());
         }
     }
 

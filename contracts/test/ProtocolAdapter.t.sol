@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
 
+import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
@@ -21,11 +22,15 @@ contract ProtocolAdapterTest is Test {
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
+    bytes4 internal _verifierSelector;
 
     function setUp() public {
-        (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
+        RiscZeroGroth16Verifier verifier;
+        (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts().run();
 
-        _pa = new ProtocolAdapter(_router);
+        _verifierSelector = verifier.SELECTOR();
+
+        _pa = new ProtocolAdapter(_router, _verifierSelector);
     }
 
     function test_constructor_reverts_on_vulnerable_risc_zero_verifier() public {
@@ -33,7 +38,7 @@ contract ProtocolAdapterTest is Test {
         _emergencyStop.estop();
 
         vm.expectRevert(ProtocolAdapter.RiscZeroVerifierStopped.selector);
-        new ProtocolAdapter(_router);
+        new ProtocolAdapter(_router, _verifierSelector);
     }
 
     function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {

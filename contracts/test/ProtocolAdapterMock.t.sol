@@ -11,6 +11,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
 
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Logic} from "../src/proving/Logic.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {Transaction, Action} from "../src/Types.sol";
@@ -18,10 +19,9 @@ import {Transaction, Action} from "../src/Types.sol";
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
 import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./libs/TxGen.sol";
-import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
 
-contract ProtocolAdapterMockTest is Test {
+contract ProtocolAdapterMockVerifierTest is Test {
     using MerkleTree for bytes32[];
     using TxGen for Action[];
     using TxGen for Action;
@@ -32,7 +32,7 @@ contract ProtocolAdapterMockTest is Test {
     RiscZeroVerifierRouter internal _router;
     RiscZeroMockVerifier internal _mockVerifier;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
-    ProtocolAdapterMock internal _mockPa;
+    ProtocolAdapter internal _mockPa;
     address internal _fwd;
     address[] internal _fwdList;
 
@@ -41,7 +41,7 @@ contract ProtocolAdapterMockTest is Test {
     function setUp() public {
         (_router, _emergencyStop, _mockVerifier) = new DeployRiscZeroContractsMock().run();
 
-        _mockPa = new ProtocolAdapterMock(_router);
+        _mockPa = new ProtocolAdapter(_router, _mockVerifier.SELECTOR());
 
         _fwd = address(
             new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
