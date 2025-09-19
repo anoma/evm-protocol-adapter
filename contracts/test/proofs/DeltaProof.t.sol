@@ -94,23 +94,44 @@ library DeltaGen {
 }
 
 contract DeltaProofTest is Test {
-    /// @notice Test that Delta.verify accepts a well-formed delta proof and instance
-    function test_verify_delta_succeeds(DeltaGen.InstanceInputs memory deltaInstanceInputs, DeltaGen.ProofInputs memory deltaProofInputs) public {
-        // Generate a delta proof and instance from the above tags and preimage
-        deltaInstanceInputs.quantity = 0;
-        deltaProofInputs.valueCommitmentRandomness = deltaInstanceInputs.valueCommitmentRandomness;
+    function test_verify_delta_succeeds(uint256 kind, uint256 valueCommitmentRandomness, bool consumed, bytes32 verifyingKey) public {
+        // Construct delta instance inputs from the above parameters
+        DeltaGen.InstanceInputs memory deltaInstanceInputs = DeltaGen.InstanceInputs({
+            kind: kind,
+            quantity: 0,
+            consumed: consumed,
+            valueCommitmentRandomness: valueCommitmentRandomness
+        });
         _assumeDeltaInstance(deltaInstanceInputs);
+        // Construct delta proof inputs from the above parameters
+        DeltaGen.ProofInputs memory deltaProofInputs = DeltaGen.ProofInputs({
+            valueCommitmentRandomness: valueCommitmentRandomness,
+            verifyingKey: verifyingKey
+        });
         _assumeDeltaProof(deltaProofInputs);
+        // Generate a delta instance from the above inputs
         uint256[2] memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
+        // Generate a delta proof from the above inputs
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
         // Verify that the generated delta proof is valid
         Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
 
     /// @notice Test that Delta.add correctly adds deltas
-    function test_add_delta_correctness(DeltaGen.InstanceInputs memory deltaInputs1, DeltaGen.InstanceInputs memory deltaInputs2) public {
-        // Ensure that we're adding assets of the same kind over the same verifying key
-        deltaInputs2.kind = deltaInputs1.kind;
+    function test_add_delta_correctness(uint256 kind, uint256 valueCommitmentRandomness1, uint128 quantity1, bool consumed1, uint256 valueCommitmentRandomness2, uint128 quantity2, bool consumed2) public {
+        // Construct delta instance inputs from the above parameters
+        DeltaGen.InstanceInputs memory deltaInputs1 = DeltaGen.InstanceInputs({
+            kind: kind,
+            quantity: quantity1,
+            consumed: consumed1,
+            valueCommitmentRandomness: valueCommitmentRandomness1
+        });
+        DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
+            kind: kind,
+            quantity: quantity2,
+            consumed: consumed2,
+            valueCommitmentRandomness: valueCommitmentRandomness2
+        });
         // Filter out overflows
         vm.assume(deltaInputs1.consumed != deltaInputs2.consumed || deltaInputs2.quantity <= type(uint128).max - deltaInputs1.quantity);
         vm.assume(0 < deltaInputs2.valueCommitmentRandomness && deltaInputs2.valueCommitmentRandomness <= type(uint256).max - deltaInputs1.valueCommitmentRandomness);
@@ -137,7 +158,19 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails1(DeltaGen.InstanceInputs memory deltaInstanceInputs, DeltaGen.ProofInputs memory deltaProofInputs) public {
+    function test_verify_inconsistent_delta_fails1(uint256 kind, uint256 valueCommitmentRandomness, uint128 quantity, bool consumed, bytes32 verifyingKey) public {
+        // Construct delta instance inputs from the above parameters
+        DeltaGen.InstanceInputs memory deltaInstanceInputs = DeltaGen.InstanceInputs({
+            kind: kind,
+            quantity: quantity,
+            consumed: consumed,
+            valueCommitmentRandomness: valueCommitmentRandomness
+        });
+        // Construct delta proof inputs from the above parameters
+        DeltaGen.ProofInputs memory deltaProofInputs = DeltaGen.ProofInputs({
+            valueCommitmentRandomness: valueCommitmentRandomness,
+            verifyingKey: verifyingKey
+        });
         // Filter out inadmissible private keys or equal keys
         deltaProofInputs.valueCommitmentRandomness = deltaInstanceInputs.valueCommitmentRandomness;
         vm.assume(deltaInstanceInputs.kind % SECP256K1_ORDER != 0);
@@ -153,8 +186,19 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails2(DeltaGen.ProofInputs memory deltaInputs1, DeltaGen.InstanceInputs memory deltaInputs2) public {
-        deltaInputs2.quantity = 0;
+    function test_verify_inconsistent_delta_fails2(uint256 kind, bool consumed, bytes32 verifyingKey, uint256 valueCommitmentRandomness1, uint256 valueCommitmentRandomness2) public {
+        // Construct delta proof inputs from the above parameters
+        DeltaGen.ProofInputs memory deltaInputs1 = DeltaGen.ProofInputs({
+            valueCommitmentRandomness: valueCommitmentRandomness1,
+            verifyingKey: verifyingKey
+        });
+        // Construct delta instance inputs from the above parameters
+        DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
+            kind: kind,
+            quantity: 0,
+            consumed: consumed,
+            valueCommitmentRandomness: valueCommitmentRandomness2
+        });
         // Filter out inadmissible private keys or equal keys
         vm.assume((deltaInputs1.valueCommitmentRandomness % SECP256K1_ORDER) != (deltaInputs2.valueCommitmentRandomness % SECP256K1_ORDER));
         _assumeDeltaInstance(deltaInputs2);
@@ -168,11 +212,21 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
-    function test_verify_inconsistent_delta_fails3(DeltaGen.ProofInputs memory deltaInputs1, DeltaGen.InstanceInputs memory deltaInputs2, bytes32 verifyingKey) public {
-        deltaInputs2.valueCommitmentRandomness = deltaInputs1.valueCommitmentRandomness;
-        deltaInputs2.quantity = 0;
+    function test_verify_inconsistent_delta_fails3(uint256 kind, uint256 valueCommitmentRandomness, bool consumed, bytes32 verifyingKey1, bytes32 verifyingKey2) public {
+        // Construct delta proof inputs from the above parameters
+        DeltaGen.ProofInputs memory deltaInputs1 = DeltaGen.ProofInputs({
+            valueCommitmentRandomness: valueCommitmentRandomness,
+            verifyingKey: verifyingKey1
+        });
+        // Construct delta instance inputs from the above parameters
+        DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
+            kind: kind,
+            quantity: 0,
+            consumed: consumed,
+            valueCommitmentRandomness: valueCommitmentRandomness
+        });
         // Filter out inadmissible private keys or equal keys
-        vm.assume(deltaInputs1.verifyingKey != verifyingKey);
+        vm.assume(deltaInputs1.verifyingKey != verifyingKey2);
         _assumeDeltaInstance(deltaInputs2);
         _assumeDeltaProof(deltaInputs1);
         // Generate a delta proof and instance from the above tags and preimage
@@ -180,7 +234,7 @@ contract DeltaProofTest is Test {
         uint256[2] memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
         // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey});
+        Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey2});
     }
 
     /// @notice Check that a balanced transaction does pass verification
