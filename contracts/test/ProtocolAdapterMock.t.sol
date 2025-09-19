@@ -11,6 +11,7 @@ import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
 import {RiscZeroUtils} from "../src/libs/RiscZeroUtils.sol";
 
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Logic} from "../src/proving/Logic.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {Transaction, Action} from "../src/Types.sol";
@@ -205,6 +206,24 @@ contract ProtocolAdapterMockTest is Test {
             abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, preExistingNf), address(_mockPa)
         );
         _mockPa.execute(tx2);
+    }
+
+    function test_execute_reverts_txn_on_exact_resource_mismatch(uint8 nCUs) public {
+        nCUs = uint8(bound(nCUs, 1, 5));
+        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: uint8(bound(nCUs, 1, 5))});
+
+        (Transaction memory txn,) = _mockVerifier.transaction({nonce: 0, configs: configs});
+
+        txn.actions[0].logicVerifierInputs = new Logic.VerifierInput[](0);
+
+        // Make sure that all the CUs are in the first action to expect the correct revert.
+        assertEq(txn.actions[0].complianceVerifierInputs.length, nCUs);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.ResourceCountMismatch.selector, 0, nCUs * 2), address(_mockPa)
+        );
+
+        _mockPa.execute(txn);
     }
 
     function _exampleResourceAndEmptyAppData(uint256 nonce)
