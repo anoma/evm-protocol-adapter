@@ -110,7 +110,7 @@ library DeltaGen {
     }
 
     /// @notice Balances an array of delta inputs by adjusting the inputs so that the sum is within the range
-    /// [halfMin, halfMax]. Moreover, it returns the total quantity and value commitment randomness.
+    /// [halfMin, halfMax]. Moreover, it returns the accumulated quantity and value commitment randomness.
     /// TODO This code and its usage must be refactored. Instead of balancing a set of `n` random values, we should take
     /// TODO `n/2` random values and negate them. This will reduce the code complexity in this function and tests.
     function createBalancedDeltaInputArray(DeltaGen.InstanceInputs[] memory deltaInputs)
@@ -135,10 +135,6 @@ library DeltaGen {
         int256 halfMax = int256(uint256(type(uint128).max >> 1));
         int256 halfMin = -halfMax;
 
-        // Track the current quantity and value commitment randomness
-        int256 quantityAcc = 0;
-
-        // TODO! check that all kinds in deltaInputs are the same
         uint256 expectedKind = deltaInputs[0].kind;
         for (uint256 i = 0; i < deltaInputs.length; i++) {
             if (deltaInputs[i].kind != expectedKind) {
@@ -150,7 +146,7 @@ library DeltaGen {
             revert KindZero();
         }
 
-        // Wrap the deltas
+        int256 quantityAcc = 0;
         for (uint256 i = 0; i < deltaInputs.length; i++) {
             // TODO! MOVE THIS // Ensure that all the deltas have the same kind
             // TODO! MOVE THIS deltaInputs[i].kind = kind;
@@ -160,6 +156,7 @@ library DeltaGen {
             int256 currentQuantityMag = int256(uint256(deltaInputs[i].quantity));
 
             int256 currentQuantity = deltaInputs[i].consumed ? -currentQuantityMag : currentQuantityMag;
+
             // Adjust the delta inputs so that the sum remains in a specific range
             if (currentQuantity >= 0 && quantityAcc > halfMax - currentQuantity) {
                 int256 overflow = quantityAcc - (halfMax - currentQuantity);
@@ -173,7 +170,7 @@ library DeltaGen {
             quantityAcc += currentQuantity;
             (deltaInputs[i].consumed, deltaInputs[i].quantity) = SignMagnitude.fromInt256(currentQuantity);
         }
-        // Finally, return tbe wrapped deltas
+        // Finally, return tbe balanced deltas
         wrappedDeltaInputs = deltaInputs;
         (consumedAcc, quantityMagAcc) = SignMagnitude.fromInt256(quantityAcc);
     }
