@@ -10,24 +10,41 @@ import {TransactionExample} from "./../examples/Transaction.e.sol";
 import {TxGen} from "./../examples/TxGen.sol";
 
 library SignMagnitude {
-    /// @notice Add two numbers in sign magnitude representation. Positive
-    /// numbers are represented with a false sign and negative numbers with a
-    /// true sign.
-    function add(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
-        if (s1 == s2) {
-            return (s1, m1 + m2);
-        } else if (m1 >= m2) {
-            return (s1, m1 - m2);
-        } else if (m2 > m1) {
-            return (s2, m2 - m1);
+    /// Positive  numbers are represented with a false sign and negative numbers with a true sign.
+    /// @param isNegative Whether the number is negative or not.
+    /// @param magnitude The magnitude of the number.
+    struct Number {
+        bool isNegative;
+        uint128 magnitude;
+    }
+
+    /// @notice Adds two numbers in sign magnitude representation.
+    /// @param lhs The left-hand side number.
+    /// @param lhs The right-hand side number to add.
+    /// @return sum The resulting sum.
+    function add(Number memory lhs, Number memory rhs) internal pure returns (Number memory sum) {
+        if (lhs.isNegative == rhs.isNegative) {
+            sum = Number(lhs.isNegative, lhs.magnitude + rhs.magnitude);
+        } else if (lhs.magnitude >= rhs.magnitude) {
+            sum = Number(lhs.isNegative, lhs.magnitude - rhs.magnitude);
+        } else if (lhs.magnitude < rhs.magnitude) {
+            sum = Number(rhs.isNegative, rhs.magnitude - lhs.magnitude);
         }
     }
 
-    /// @notice Subtract two numbers in sign magnitude representation. Positive
-    /// numbers are represented with a false sign and negative numbers with a
-    /// true sign.
-    function sub(bool s1, uint128 m1, bool s2, uint128 m2) internal pure returns (bool s3, uint128 m3) {
-        (s3, m3) = add(s1, m1, !s2, m2);
+    /// @notice Subtracts two numbers in sign magnitude representation.
+    /// @param lhs The left-hand side number.
+    /// @param lhs The right-hand side number to subtract.
+    /// @return difference The difference.
+    function sub(Number memory lhs, Number memory rhs) internal pure returns (Number memory difference) {
+        difference = add(lhs, negate(rhs));
+    }
+
+    /// @notice Negate a number in sign magnitude representation.
+    /// @param number The number to negate.
+    /// @return negated The negated number.
+    function negate(Number memory number) internal pure returns (Number memory negated) {
+        negated = Number(!number.isNegative, number.magnitude);
     }
 
     /// @notice Convert the signed quantity whose magnitude fits into a uint128
@@ -209,6 +226,7 @@ library DeltaGen {
 }
 
 contract DeltaProofTest is Test {
+    using SignMagnitude for SignMagnitude.Number;
     using EllipticCurveK256 for uint256;
     using DeltaGen for DeltaGen.InstanceInputs[];
     using DeltaGen for DeltaGen.InstanceInputs;
@@ -271,15 +289,17 @@ contract DeltaProofTest is Test {
             0 < deltaInputs2.valueCommitmentRandomness
                 && deltaInputs2.valueCommitmentRandomness <= type(uint256).max - deltaInputs1.valueCommitmentRandomness
         );
+
         // Add the deltas
-        (bool consumed, uint128 quantity) = SignMagnitude.add(
-            deltaInputs1.consumed, deltaInputs1.quantity, deltaInputs2.consumed, deltaInputs2.quantity
+        SignMagnitude.Number memory sum = SignMagnitude.Number(deltaInputs1.consumed, deltaInputs1.quantity).add(
+            SignMagnitude.Number(deltaInputs2.consumed, deltaInputs2.quantity)
         );
+
         // Compute the inputs corresponding to the sum of deltas
         DeltaGen.InstanceInputs memory deltaInputs3 = DeltaGen.InstanceInputs({
             kind: deltaInputs1.kind,
-            quantity: quantity,
-            consumed: consumed,
+            quantity: sum.magnitude,
+            consumed: sum.isNegative,
             valueCommitmentRandomness: deltaInputs1.valueCommitmentRandomness + deltaInputs2.valueCommitmentRandomness
         });
         _assumeDeltaInstance(deltaInputs1);
@@ -430,23 +450,24 @@ contract DeltaProofTest is Test {
             uint256 valueCommitmentRandomness
         ) = deltaInputs.createBalancedDeltaInputArray();
         // Adjust the last delta so that the full sum is zero
+
         if (quantity != 0) {
-            (
+            SignMagnitude.Number memory diff = SignMagnitude.Number(
                 wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed,
                 wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity
-            ) = SignMagnitude.sub(
-                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed,
-                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity,
-                consumed,
-                quantity
-            );
+            ).sub(SignMagnitude.Number(consumed, quantity));
+
+            wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed = diff.isNegative;
+            wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity = diff.magnitude;
         }
+
         for (uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
             // Compute the delta instance and accumulate it
             _assumeDeltaInstance(wrappedDeltaInputs[i]);
             uint256[2] memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
         }
+
         // Compute the proof for the balanced transaction
         DeltaGen.ProofInputs memory sumDeltaInputs =
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
