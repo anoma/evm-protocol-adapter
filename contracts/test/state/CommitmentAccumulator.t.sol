@@ -139,7 +139,9 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         bytes32[] memory wrongPath = new bytes32[](3);
 
         vm.expectRevert(
-            abi.encodeWithSelector(CommitmentAccumulator.InvalidPathLength.selector, _cmAcc.depth(), wrongPath.length),
+            abi.encodeWithSelector(
+                CommitmentAccumulator.PathLengthExceedsLatestDepth.selector, _cmAcc.depth(), wrongPath.length
+            ),
             address(_cmAcc)
         );
         _cmAcc.verifyMerkleProof({root: 0, commitment: 0, path: wrongPath, directionBits: 0});
