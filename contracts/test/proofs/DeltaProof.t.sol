@@ -32,10 +32,8 @@ contract DeltaProofTest is Test {
         bool consumed,
         bytes32 verifyingKey
     ) public {
-        valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
-        vm.assume(valueCommitmentRandomness != 0);
-        kind = kind.modOrder();
-        vm.assume(kind != 0);
+        kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
+        valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
 
         // Construct delta instance inputs from the above parameters
         DeltaGen.InstanceInputs memory deltaInstanceInputs = DeltaGen.InstanceInputs({
