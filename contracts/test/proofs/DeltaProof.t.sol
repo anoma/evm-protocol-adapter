@@ -32,6 +32,9 @@ contract DeltaProofTest is Test {
         bool consumed,
         bytes32 verifyingKey
     ) public {
+        valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
+        vm.assume(valueCommitmentRandomness != 0);
+
         // Construct delta instance inputs from the above parameters
         DeltaGen.InstanceInputs memory deltaInstanceInputs = DeltaGen.InstanceInputs({
             kind: kind,
@@ -43,7 +46,7 @@ contract DeltaProofTest is Test {
         // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaProofInputs =
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
-        _assumeDeltaProof(deltaProofInputs);
+
         // Generate a delta instance from the above inputs
         uint256[2] memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
         // Generate a delta proof from the above inputs
@@ -114,6 +117,9 @@ contract DeltaProofTest is Test {
         DeltaGen.InstanceInputs memory deltaInstanceInputs,
         bytes32 fuzzedVerifyingKey
     ) public {
+        deltaInstanceInputs.valueCommitmentRandomness = deltaInstanceInputs.valueCommitmentRandomness.modOrder();
+        vm.assume(deltaInstanceInputs.valueCommitmentRandomness != 0);
+
         // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaProofInputs = DeltaGen.ProofInputs({
             valueCommitmentRandomness: deltaInstanceInputs.valueCommitmentRandomness,
@@ -124,7 +130,7 @@ contract DeltaProofTest is Test {
         vm.assume(deltaInstanceInputs.kind.modOrder() != 0);
         vm.assume(DeltaGen.canonicalizeQuantity(deltaInstanceInputs.consumed, deltaInstanceInputs.quantity) != 0);
         _assumeDeltaInstance(deltaInstanceInputs);
-        _assumeDeltaProof(deltaProofInputs);
+
         // Generate a delta proof and instance from the above tags and preimage
         uint256[2] memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
@@ -141,6 +147,9 @@ contract DeltaProofTest is Test {
         uint256 valueCommitmentRandomness1,
         uint256 valueCommitmentRandomness2
     ) public {
+        valueCommitmentRandomness1 = valueCommitmentRandomness1.modOrder();
+        vm.assume(valueCommitmentRandomness1 != 0);
+
         // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaInputs1 =
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness1, verifyingKey: verifyingKey});
@@ -156,7 +165,7 @@ contract DeltaProofTest is Test {
             deltaInputs1.valueCommitmentRandomness.modOrder() != deltaInputs2.valueCommitmentRandomness.modOrder()
         );
         _assumeDeltaInstance(deltaInputs2);
-        _assumeDeltaProof(deltaInputs1);
+
         // Generate a delta proof and instance from the above tags and preimage
         bytes memory proof1 = DeltaGen.generateProof(vm, deltaInputs1);
         uint256[2] memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
@@ -173,6 +182,9 @@ contract DeltaProofTest is Test {
         bytes32 verifyingKey1,
         bytes32 verifyingKey2
     ) public {
+        valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
+        vm.assume(valueCommitmentRandomness != 0);
+
         // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaInputs1 =
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey1});
@@ -186,7 +198,7 @@ contract DeltaProofTest is Test {
         // Filter out inadmissible private keys or equal keys
         vm.assume(deltaInputs1.verifyingKey != verifyingKey2);
         _assumeDeltaInstance(deltaInputs2);
-        _assumeDeltaProof(deltaInputs1);
+
         // Generate a delta proof and instance from the above tags and preimage
         bytes memory proof1 = DeltaGen.generateProof(vm, deltaInputs1);
         uint256[2] memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
@@ -212,6 +224,9 @@ contract DeltaProofTest is Test {
             uint128 quantity,
             uint256 valueCommitmentRandomness
         ) = deltaInputs.createBalancedDeltaInputArray();
+        valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
+        vm.assume(valueCommitmentRandomness != 0);
+
         // Adjust the last delta so that the full sum is zero
 
         if (quantity != 0) {
@@ -234,7 +249,7 @@ contract DeltaProofTest is Test {
         // Compute the proof for the balanced transaction
         DeltaGen.ProofInputs memory sumDeltaInputs =
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
-        _assumeDeltaProof(sumDeltaInputs);
+
         bytes memory proof = DeltaGen.generateProof(vm, sumDeltaInputs);
         // Verify that the balanced transaction proof succeeds
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
@@ -257,6 +272,9 @@ contract DeltaProofTest is Test {
             uint128 quantity,
             uint256 valueCommitmentRandomness
         ) = deltaInputs.createBalancedDeltaInputArray();
+        valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
+        vm.assume(valueCommitmentRandomness != 0);
+
         // Assume that the deltas are imbalanced
         vm.assume(DeltaGen.canonicalizeQuantity(consumed, quantity) != 0);
         for (uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
@@ -268,7 +286,7 @@ contract DeltaProofTest is Test {
         // Compute the proof for the balanced transaction
         DeltaGen.ProofInputs memory sumDeltaInputs =
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
-        _assumeDeltaProof(sumDeltaInputs);
+
         bytes memory proof = DeltaGen.generateProof(vm, sumDeltaInputs);
         // Verify that the imbalanced transaction proof fails
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
@@ -303,13 +321,6 @@ contract DeltaProofTest is Test {
         uint256 prod = mulmod(deltaInputs.kind, quantity, EllipticCurveK256.ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, EllipticCurveK256.ORDER);
         vm.assume(preDelta != 0);
-    }
-
-    /// @notice Assume that the delta proof inputs are well-formed. I.e. the
-    /// value commitment randomness is non-zero.
-    function _assumeDeltaProof(DeltaGen.ProofInputs memory deltaInputs) internal pure {
-        deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
-        vm.assume(deltaInputs.valueCommitmentRandomness != 0);
     }
 
     function _getBoundedDeltaInstances(uint256 kind, FuzzerInstanceInputsExceptKind[] memory fuzzerInputs)
