@@ -160,8 +160,16 @@ contract DeltaProofTest is Test {
         uint256 valueCommitmentRandomness1,
         uint256 valueCommitmentRandomness2
     ) public {
+        // TODO simplify
+        kind = kind.modOrder();
+        vm.assume(kind != 0);
+
         valueCommitmentRandomness1 = valueCommitmentRandomness1.modOrder();
         vm.assume(valueCommitmentRandomness1 != 0);
+        vm.assume(valueCommitmentRandomness1.modOrder() != valueCommitmentRandomness2.modOrder());
+
+        valueCommitmentRandomness2 = valueCommitmentRandomness2.modOrder();
+        vm.assume(valueCommitmentRandomness2 != 0);
 
         // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaInputs1 =
@@ -173,11 +181,7 @@ contract DeltaProofTest is Test {
             consumed: consumed,
             valueCommitmentRandomness: valueCommitmentRandomness2
         });
-        // Filter out inadmissible private keys or equal keys
-        vm.assume(
-            deltaInputs1.valueCommitmentRandomness.modOrder() != deltaInputs2.valueCommitmentRandomness.modOrder()
-        );
-        _assumeDeltaInstance(deltaInputs2);
+        vm.assume(computePreDelta(deltaInputs2) != 0); // TODO move?
 
         // Generate a delta proof and instance from the above tags and preimage
         bytes memory proof1 = DeltaGen.generateProof(vm, deltaInputs1);
