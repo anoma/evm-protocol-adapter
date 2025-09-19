@@ -86,7 +86,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
             // Check that the resource counts in the action and compliance units match
             if (nResources != nCUs * 2) {
-                revert ResourceCountMismatch({expected: nResources, actual: nCUs});
+                revert ResourceCountMismatch({expected: nResources, actual: (nCUs * 2)});
             }
 
             // Compute the action tree root
