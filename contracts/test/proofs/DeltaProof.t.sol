@@ -55,26 +55,25 @@ contract DeltaProofTest is Test {
     /// @notice Test that Delta.add correctly adds deltas
     function test_add_delta_correctness(
         uint256 kind,
-        uint256 valueCommitmentRandomness1,
-        uint128 quantity1,
-        bool consumed1,
-        uint256 valueCommitmentRandomness2,
-        uint128 quantity2,
-        bool consumed2
+        FuzzerInstanceInputsExceptKind memory input1,
+        FuzzerInstanceInputsExceptKind memory input2
     ) public {
         // Construct delta instance inputs from the above parameters
         DeltaGen.InstanceInputs memory deltaInputs1 = DeltaGen.InstanceInputs({
             kind: kind,
-            quantity: quantity1,
-            consumed: consumed1,
-            valueCommitmentRandomness: valueCommitmentRandomness1
+            quantity: input1.quantity,
+            consumed: input1.consumed,
+            valueCommitmentRandomness: input1.valueCommitmentRandomness
         });
         DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
             kind: kind,
-            quantity: quantity2,
-            consumed: consumed2,
-            valueCommitmentRandomness: valueCommitmentRandomness2
+            quantity: input2.quantity,
+            consumed: input2.consumed,
+            valueCommitmentRandomness: input2.valueCommitmentRandomness
         });
+        _assumeDeltaInstance(deltaInputs1);
+        _assumeDeltaInstance(deltaInputs2);
+
         // Filter out overflows
         vm.assume(
             deltaInputs1.consumed != deltaInputs2.consumed
@@ -86,48 +85,40 @@ contract DeltaProofTest is Test {
         );
 
         // Add the deltas
-        SignMagnitude.Number memory sum = SignMagnitude.Number(deltaInputs1.consumed, deltaInputs1.quantity).add(
-            SignMagnitude.Number(deltaInputs2.consumed, deltaInputs2.quantity)
-        );
+        SignMagnitude.Number memory summedNumber = SignMagnitude.Number(deltaInputs1.consumed, deltaInputs1.quantity)
+            .add(SignMagnitude.Number(deltaInputs2.consumed, deltaInputs2.quantity));
 
         // Compute the inputs corresponding to the sum of deltas
-        DeltaGen.InstanceInputs memory deltaInputs3 = DeltaGen.InstanceInputs({
+        DeltaGen.InstanceInputs memory summedDeltaInputs = DeltaGen.InstanceInputs({
             kind: deltaInputs1.kind,
-            quantity: sum.magnitude,
-            consumed: sum.isNegative,
+            quantity: summedNumber.magnitude,
+            consumed: summedNumber.isNegative,
             valueCommitmentRandomness: deltaInputs1.valueCommitmentRandomness + deltaInputs2.valueCommitmentRandomness
         });
-        _assumeDeltaInstance(deltaInputs1);
-        _assumeDeltaInstance(deltaInputs2);
-        _assumeDeltaInstance(deltaInputs3);
+        _assumeDeltaInstance(summedDeltaInputs);
+
         // Generate a delta proof and instance from the above tags and preimage
         uint256[2] memory instance1 = DeltaGen.generateInstance(vm, deltaInputs1);
         uint256[2] memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
-        uint256[2] memory instance3 = DeltaGen.generateInstance(vm, deltaInputs3);
+        uint256[2] memory expectedDelta = DeltaGen.generateInstance(vm, summedDeltaInputs);
+
         // Verify that the deltas add correctly
-        uint256[2] memory instance4 = Delta.add(instance1, instance2);
-        assertEq(instance3[0], instance4[0]);
-        assertEq(instance3[1], instance4[1]);
+        uint256[2] memory computedDelta = Delta.add(instance1, instance2);
+
+        assertEq(computedDelta[0], expectedDelta[0]);
+        assertEq(computedDelta[1], expectedDelta[1]);
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
     function test_verify_inconsistent_delta_fails1(
-        uint256 kind,
-        uint256 valueCommitmentRandomness,
-        uint128 quantity,
-        bool consumed,
-        bytes32 verifyingKey
+        DeltaGen.InstanceInputs memory deltaInstanceInputs,
+        bytes32 fuzzedVerifyingKey
     ) public {
-        // Construct delta instance inputs from the above parameters
-        DeltaGen.InstanceInputs memory deltaInstanceInputs = DeltaGen.InstanceInputs({
-            kind: kind,
-            quantity: quantity,
-            consumed: consumed,
-            valueCommitmentRandomness: valueCommitmentRandomness
-        });
         // Construct delta proof inputs from the above parameters
-        DeltaGen.ProofInputs memory deltaProofInputs =
-            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
+        DeltaGen.ProofInputs memory deltaProofInputs = DeltaGen.ProofInputs({
+            valueCommitmentRandomness: deltaInstanceInputs.valueCommitmentRandomness,
+            verifyingKey: fuzzedVerifyingKey
+        });
         // Filter out inadmissible private keys or equal keys
         deltaProofInputs.valueCommitmentRandomness = deltaInstanceInputs.valueCommitmentRandomness;
         vm.assume(deltaInstanceInputs.kind.modOrder() != 0);
