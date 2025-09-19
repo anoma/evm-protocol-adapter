@@ -14,15 +14,15 @@ import {SignMagnitude} from "../libs/SignMagnitude.sol";
 import {TxGen} from "../libs/TxGen.sol";
 
 library DeltaFuzzing {
-    /// @dev This function exposes `Delta.verify` for the fuzzer.
-    function verify(bytes memory proof, uint256[2] memory instance, bytes32 verifyingKey) public pure {
-        Delta.verify({proof: proof, instance: instance, verifyingKey: verifyingKey});
-    }
-
     struct InstanceInputsExceptKind {
         uint256 valueCommitmentRandomness;
         uint128 quantity;
         bool consumed;
+    }
+
+    /// @dev This function exposes `Delta.verify` for the fuzzer.
+    function verify(bytes memory proof, uint256[2] memory instance, bytes32 verifyingKey) public pure {
+        Delta.verify({proof: proof, instance: instance, verifyingKey: verifyingKey});
     }
 }
 
