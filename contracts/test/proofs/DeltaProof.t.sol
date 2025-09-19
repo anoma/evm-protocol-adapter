@@ -128,24 +128,26 @@ contract DeltaProofTest is Test {
         DeltaGen.InstanceInputs memory deltaInstanceInputs,
         bytes32 fuzzedVerifyingKey
     ) public {
+        // TODO Simplify
+        vm.assume(deltaInstanceInputs.kind.modOrder() != 0);
+        vm.assume(deltaInstanceInputs.kind != 0);
+        deltaInstanceInputs.kind = deltaInstanceInputs.kind.modOrder();
+
         deltaInstanceInputs.valueCommitmentRandomness = deltaInstanceInputs.valueCommitmentRandomness.modOrder();
         vm.assume(deltaInstanceInputs.valueCommitmentRandomness != 0);
+        vm.assume(DeltaGen.canonicalizeQuantity(deltaInstanceInputs.consumed, deltaInstanceInputs.quantity) != 0);
+
+        vm.assume(computePreDelta(deltaInstanceInputs) != 0);
 
         // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaProofInputs = DeltaGen.ProofInputs({
             valueCommitmentRandomness: deltaInstanceInputs.valueCommitmentRandomness,
             verifyingKey: fuzzedVerifyingKey
         });
-        // Filter out inadmissible private keys or equal keys
-        deltaProofInputs.valueCommitmentRandomness = deltaInstanceInputs.valueCommitmentRandomness;
-        vm.assume(deltaInstanceInputs.kind.modOrder() != 0);
-        vm.assume(DeltaGen.canonicalizeQuantity(deltaInstanceInputs.consumed, deltaInstanceInputs.quantity) != 0);
-        _assumeDeltaInstance(deltaInstanceInputs);
 
         // Generate a delta proof and instance from the above tags and preimage
         uint256[2] memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
-        // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
