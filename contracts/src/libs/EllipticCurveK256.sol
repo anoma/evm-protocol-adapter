@@ -24,6 +24,9 @@ library EllipticCurveK256 {
     /// @notice The modulus.
     uint256 internal constant PP = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
 
+    /// @notice The curve order.
+    uint256 internal constant ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
+
     /// @notice Derives a public key from a private key as an elliptic curve point.
     /// @param privateKey The private key to derive the public key from.
     /// @return qx The x-coordinate of the public key.
@@ -42,5 +45,12 @@ library EllipticCurveK256 {
     /// @return y3 The y-coordinate of the public key.
     function ecAdd(uint256 x1, uint256 y1, uint256 x2, uint256 y2) internal pure returns (uint256 x3, uint256 y3) {
         (x3, y3) = EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: AA, _pp: PP});
+    }
+
+    /// @notice Computes the modulo of a value and returns the remainder.
+    /// @param value The value to compute the module for.
+    /// @return remainder The remainder.
+    function modOrder(uint256 value) internal pure returns (uint256 remainder) {
+        remainder = value % ORDER;
     }
 }

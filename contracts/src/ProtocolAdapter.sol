@@ -130,13 +130,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 logicRefs[resCounter++] = complianceVerifierInput.instance.created.logicRef;
 
                 // Compute transaction delta
-                transactionDelta = _addUnitDelta({
-                    transactionDelta: transactionDelta,
-                    unitDelta: [
+                transactionDelta = transactionDelta.add(
+                    [
                         uint256(complianceVerifierInput.instance.unitDeltaX),
                         uint256(complianceVerifierInput.instance.unitDeltaY)
                     ]
-                });
+                );
             }
 
             emit ActionExecuted({actionTreeRoot: actionTreeRoot, tagsCount: nResources});
@@ -337,19 +336,5 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         }
 
         root = actionTreeTags.computeRoot();
-    }
-
-    /// @notice An internal function adding a unit delta to the transactionDelta.
-    /// @param transactionDelta The transaction delta.
-    /// @param unitDelta The unit delta to add.
-    /// @return sum The sum of the transaction delta and the unit delta.
-    /// @dev This function is virtual to allow for it to be overridden, e.g., to mock delta proofs.
-    function _addUnitDelta(uint256[2] memory transactionDelta, uint256[2] memory unitDelta)
-        internal
-        pure
-        virtual
-        returns (uint256[2] memory sum)
-    {
-        sum = transactionDelta.add(unitDelta);
     }
 }

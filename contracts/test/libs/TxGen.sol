@@ -2,16 +2,15 @@
 pragma solidity ^0.8.30;
 
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
-
-import {MerkleTree} from "../../src/libs/MerkleTree.sol";
-
-import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
-import {SHA256} from "../../src/libs/SHA256.sol";
-import {Compliance} from "../../src/proving/Compliance.sol";
-
-import {Delta} from "../../src/proving/Delta.sol";
-import {Logic} from "../../src/proving/Logic.sol";
-import {Transaction, Action, Resource} from "../../src/Types.sol";
+import {VmSafe} from "forge-std/Vm.sol";
+import {MerkleTree} from "./../../src/libs/MerkleTree.sol";
+import {RiscZeroUtils} from "./../../src/libs/RiscZeroUtils.sol";
+import {SHA256} from "./../../src/libs/SHA256.sol";
+import {Compliance} from "./../../src/proving/Compliance.sol";
+import {Delta} from "./../../src/proving/Delta.sol";
+import {Logic} from "./../../src/proving/Logic.sol";
+import {Transaction, Action, Resource} from "./../../src/Types.sol";
+import {DeltaGen} from "./../proofs/DeltaProof.t.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
@@ -37,20 +36,38 @@ library TxGen {
     error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
 
     function complianceVerifierInput(
+        VmSafe vm,
         RiscZeroMockVerifier mockVerifier,
         bytes32 commitmentTreeRoot, // historical root
         Resource memory consumed,
         Resource memory created
-    ) internal view returns (Compliance.VerifierInput memory unit) {
+    ) internal returns (Compliance.VerifierInput memory unit) {
         bytes32 nf = nullifier(consumed, 0);
         bytes32 cm = commitment(created);
 
-        bytes32 unitDeltaX;
-        bytes32 unitDeltaY;
-        unchecked {
-            unitDeltaX = bytes32(kind(consumed) * consumed.quantity);
-            unitDeltaY = bytes32(kind(created) * created.quantity);
-        }
+        // Construct the delta for consumption based on kind and quantity
+        uint256[2] memory unitDelta = DeltaGen.generateInstance(
+            vm,
+            DeltaGen.InstanceInputs({
+                kind: kind(consumed),
+                quantity: consumed.quantity,
+                consumed: true,
+                valueCommitmentRandomness: 1
+            })
+        );
+        // Construct the delta for creation based on kind and quantity
+        unitDelta = Delta.add(
+            unitDelta,
+            DeltaGen.generateInstance(
+                vm,
+                DeltaGen.InstanceInputs({
+                    kind: kind(created),
+                    quantity: created.quantity,
+                    consumed: false,
+                    valueCommitmentRandomness: 1
+                })
+            )
+        );
 
         Compliance.Instance memory instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
@@ -59,8 +76,8 @@ library TxGen {
                 logicRef: consumed.logicRef
             }),
             created: Compliance.CreatedRefs({commitment: cm, logicRef: created.logicRef}),
-            unitDeltaX: unitDeltaX,
-            unitDeltaY: unitDeltaY
+            unitDeltaX: bytes32(unitDelta[0]),
+            unitDeltaY: bytes32(unitDelta[1])
         });
 
         unit = Compliance.VerifierInput({
@@ -70,31 +87,12 @@ library TxGen {
         });
     }
 
-    function logicVerifierInput(
-        RiscZeroMockVerifier mockVerifier,
-        bytes32 actionTreeRoot,
-        Resource memory resource,
-        bool isConsumed,
-        Logic.AppData memory appData
-    ) internal view returns (Logic.VerifierInput memory input) {
-        input = Logic.VerifierInput({
-            tag: isConsumed ? nullifier(resource, 0) : commitment(resource),
-            verifyingKey: resource.logicRef,
-            appData: appData,
-            proof: ""
-        });
-
-        input.proof = mockVerifier.mockProve({
-            imageId: resource.logicRef,
-            journalDigest: input.toJournalDigest(actionTreeRoot, isConsumed)
-        }).seal;
-    }
-
     function createAction(
+        VmSafe vm,
         RiscZeroMockVerifier mockVerifier,
         ResourceAndAppData[] memory consumed,
         ResourceAndAppData[] memory created
-    ) internal view returns (Action memory action) {
+    ) internal returns (Action memory action) {
         if (consumed.length != created.length) {
             revert ConsumedCreatedCountMismatch({nConsumed: consumed.length, nCreated: created.length});
         }
@@ -133,6 +131,7 @@ library TxGen {
             });
 
             complianceVerifierInputs[i] = complianceVerifierInput({
+                vm: vm,
                 mockVerifier: mockVerifier,
                 commitmentTreeRoot: initialRoot(),
                 consumed: consumed[i].resource,
@@ -142,9 +141,8 @@ library TxGen {
         action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
     }
 
-    function createDefaultAction(RiscZeroMockVerifier mockVerifier, bytes32 nonce, uint256 nCUs)
+    function createDefaultAction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, uint256 nCUs)
         internal
-        view
         returns (Action memory action, bytes32 updatedNonce)
     {
         updatedNonce = nonce;
@@ -185,12 +183,11 @@ library TxGen {
             updatedNonce = bytes32(uint256(updatedNonce) + 1);
         }
 
-        action = createAction({mockVerifier: mockVerifier, consumed: consumed, created: created});
+        action = createAction({vm: vm, mockVerifier: mockVerifier, consumed: consumed, created: created});
     }
 
-    function transaction(RiscZeroMockVerifier mockVerifier, ResourceLists[] memory actionResources)
+    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, ResourceLists[] memory actionResources)
         internal
-        view
         returns (Transaction memory txn)
     {
         Action[] memory actions = new Action[](actionResources.length);
@@ -203,18 +200,31 @@ library TxGen {
             }
 
             actions[i] = createAction({
+                vm: vm,
                 mockVerifier: mockVerifier,
                 consumed: actionResources[i].consumed,
                 created: actionResources[i].created
             });
         }
 
-        txn = Transaction({actions: actions, deltaProof: abi.encodePacked(collectTags(actions))});
+        // Grab the tags that will be signed over
+        bytes32[] memory tags = TxGen.collectTags(actions);
+        // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
+        bytes memory proof = "";
+        if (tags.length != 0) {
+            proof = DeltaGen.generateProof(
+                vm,
+                DeltaGen.ProofInputs({
+                    valueCommitmentRandomness: tags.length,
+                    verifyingKey: Delta.computeVerifyingKey(tags)
+                })
+            );
+        }
+        txn = Transaction({actions: actions, deltaProof: proof});
     }
 
-    function transaction(RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
+    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
         internal
-        view
         returns (Transaction memory txn, bytes32 updatedNonce)
     {
         updatedNonce = nonce;
@@ -222,10 +232,43 @@ library TxGen {
         Action[] memory actions = new Action[](configs.length);
         for (uint256 i = 0; i < configs.length; ++i) {
             (actions[i], updatedNonce) =
-                createDefaultAction({mockVerifier: mockVerifier, nonce: updatedNonce, nCUs: configs[i].nCUs});
+                createDefaultAction({vm: vm, mockVerifier: mockVerifier, nonce: updatedNonce, nCUs: configs[i].nCUs});
         }
 
-        txn = Transaction({actions: actions, deltaProof: abi.encodePacked(collectTags(actions))});
+        // Grab the tags that will be signed over
+        bytes32[] memory tags = TxGen.collectTags(actions);
+        // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
+        bytes memory proof = "";
+        if (tags.length != 0) {
+            proof = DeltaGen.generateProof(
+                vm,
+                DeltaGen.ProofInputs({
+                    valueCommitmentRandomness: tags.length,
+                    verifyingKey: Delta.computeVerifyingKey(tags)
+                })
+            );
+        }
+        txn = Transaction({actions: actions, deltaProof: proof});
+    }
+
+    function logicVerifierInput(
+        RiscZeroMockVerifier mockVerifier,
+        bytes32 actionTreeRoot,
+        Resource memory resource,
+        bool isConsumed,
+        Logic.AppData memory appData
+    ) internal view returns (Logic.VerifierInput memory input) {
+        input = Logic.VerifierInput({
+            tag: isConsumed ? nullifier(resource, 0) : commitment(resource),
+            verifyingKey: resource.logicRef,
+            appData: appData,
+            proof: ""
+        });
+
+        input.proof = mockVerifier.mockProve({
+            imageId: resource.logicRef,
+            journalDigest: input.toJournalDigest(actionTreeRoot, isConsumed)
+        }).seal;
     }
 
     function generateActionConfigs(uint256 nActions, uint256 nCUs)

@@ -32,7 +32,6 @@ bytecode_hash = "none"
 solc = "0.8.30"
 auto_detect_solc = false
 evm_version = "prague"
-fuzz = { runs = 1_000 }
 gas_reports = [
     "ProtocolAdapter",
     "CommitmentAccumulatorMock",
@@ -50,8 +49,11 @@ script = "script"
 test = "test"
 allow_internal_expect_revert = true
 
+[fuzz]
+runs = 1_000
+
 [profile.ci]
-fuzz = { runs = 10_000 }
+fuzz = { runs = 1_000 }
 verbosity = 4
 
 [etherscan]
