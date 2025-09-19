@@ -250,8 +250,8 @@ contract DeltaProofTest is Test {
         valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
         vm.assume(valueCommitmentRandomness != 0);
 
+        // TODO REFACTOR
         // Adjust the last delta so that the full sum is zero
-
         if (quantity != 0) {
             SignMagnitude.Number memory diff = SignMagnitude.Number(
                 wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed,
@@ -262,9 +262,12 @@ contract DeltaProofTest is Test {
             wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity = diff.magnitude;
         }
 
+        // Compute the delta instance and accumulate it
         for (uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
-            // Compute the delta instance and accumulate it
-            _assumeDeltaInstance(wrappedDeltaInputs[i]);
+            wrappedDeltaInputs[i].valueCommitmentRandomness = wrappedDeltaInputs[i].valueCommitmentRandomness.modOrder();
+            vm.assume(wrappedDeltaInputs[i].valueCommitmentRandomness != 0);
+            vm.assume(computePreDelta(wrappedDeltaInputs[i]) != 0);
+
             uint256[2] memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
         }
@@ -298,11 +301,13 @@ contract DeltaProofTest is Test {
         valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
         vm.assume(valueCommitmentRandomness != 0);
 
-        // Assume that the deltas are imbalanced
+        // Compute the delta instance and accumulate it
         vm.assume(DeltaGen.canonicalizeQuantity(consumed, quantity) != 0);
         for (uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
-            // Compute the delta instance and accumulate it
-            _assumeDeltaInstance(wrappedDeltaInputs[i]);
+            wrappedDeltaInputs[i].valueCommitmentRandomness = wrappedDeltaInputs[i].valueCommitmentRandomness.modOrder();
+            vm.assume(wrappedDeltaInputs[i].valueCommitmentRandomness != 0);
+            vm.assume(computePreDelta(wrappedDeltaInputs[i]) != 0);
+
             uint256[2] memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
             deltaAcc = Delta.add(deltaAcc, instance);
         }
@@ -327,21 +332,6 @@ contract DeltaProofTest is Test {
             ],
             verifyingKey: Delta.computeVerifyingKey(TxGen.collectTags(txn.actions))
         });
-    }
-
-    /// @notice Assume that the delta instance inputs are well-formed. I.e. the
-    /// value commitment randomness and resource kind are both non-zero.
-    function _assumeDeltaInstance(DeltaGen.InstanceInputs memory deltaInputs) internal pure {
-        // The value commitment randomness must be non-zero modulo the base
-        // point order
-        deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
-        vm.assume(deltaInputs.valueCommitmentRandomness != 0);
-        // The kind must be non-zero modulo the base point order
-        deltaInputs.kind = deltaInputs.kind.modOrder();
-        vm.assume(deltaInputs.kind != 0);
-        // The exponent must be non-zero modulo the base point order
-
-        vm.assume(computePreDelta(deltaInputs) != 0);
     }
 
     function computePreDelta(DeltaGen.InstanceInputs memory deltaInputs) internal pure returns (uint256 preDelta) {
