@@ -45,6 +45,8 @@ library SignMagnitude {
 }
 
 library DeltaGen {
+    using EllipticCurveK256 for uint256;
+
     /// @notice The parameters required to generate a mock delta instance for a .
     /// @param valueCommitmentRandomness The value commitment randomness.
     /// @param kind The resource kind that this delta instance mocks.
@@ -83,18 +85,17 @@ library DeltaGen {
         public
         returns (uint256[2] memory instance)
     {
-        deltaInputs.valueCommitmentRandomness =
-            deltaInputs.valueCommitmentRandomness % EllipticCurveK256.SECP256K1_ORDER;
+        deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
         if (deltaInputs.valueCommitmentRandomness == 0) {
             revert DeltaGen.ValueCommitmentRandomnessZero();
         }
-        deltaInputs.kind = deltaInputs.kind % EllipticCurveK256.SECP256K1_ORDER;
+        deltaInputs.kind = deltaInputs.kind.modOrder();
         if (deltaInputs.kind == 0) {
             revert DeltaGen.KindZero();
         }
         uint256 quantity = canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
-        uint256 prod = mulmod(deltaInputs.kind, quantity, EllipticCurveK256.SECP256K1_ORDER);
-        uint256 preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, EllipticCurveK256.SECP256K1_ORDER);
+        uint256 prod = mulmod(deltaInputs.kind, quantity, EllipticCurveK256.ORDER);
+        uint256 preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, EllipticCurveK256.ORDER);
         if (preDelta == 0) {
             revert DeltaGen.PreDeltaZero();
         }
@@ -111,8 +112,7 @@ library DeltaGen {
     /// @param deltaInputs Parameters required to construct a delta proof
     /// @return proof The delta proof corresponding to the parameters
     function generateProof(VmSafe vm, ProofInputs memory deltaInputs) public returns (bytes memory proof) {
-        deltaInputs.valueCommitmentRandomness =
-            deltaInputs.valueCommitmentRandomness % EllipticCurveK256.SECP256K1_ORDER;
+        deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
         if (deltaInputs.valueCommitmentRandomness == 0) {
             revert DeltaGen.ValueCommitmentRandomnessZero();
         }
@@ -135,9 +135,8 @@ library DeltaGen {
         returns (uint256 quantityRepresentative)
     {
         // If positive, leave the number unchanged
-        quantityRepresentative = consumed
-            ? ((EllipticCurveK256.SECP256K1_ORDER - uint256(quantity)) % EllipticCurveK256.SECP256K1_ORDER)
-            : uint256(quantity);
+        quantityRepresentative =
+            consumed ? ((EllipticCurveK256.ORDER - uint256(quantity)).modOrder()) : uint256(quantity);
     }
 
     /// @notice Wrap the delta inputs in such a way that they can be balanced
@@ -176,7 +175,7 @@ library DeltaGen {
             }
         }
 
-        if (deltaInputs[0].kind % EllipticCurveK256.SECP256K1_ORDER == 0) {
+        if (deltaInputs[0].kind.modOrder() == 0) {
             revert KindZero();
         }
 
@@ -185,11 +184,8 @@ library DeltaGen {
             // TODO! MOVE THIS // Ensure that all the deltas have the same kind
             // TODO! MOVE THIS deltaInputs[i].kind = kind;
             // Accumulate the randomness commitments modulo SECP256K1_ORDER
-            valueCommitmentRandomnessAcc = addmod(
-                valueCommitmentRandomnessAcc,
-                deltaInputs[i].valueCommitmentRandomness,
-                EllipticCurveK256.SECP256K1_ORDER
-            );
+            valueCommitmentRandomnessAcc =
+                addmod(valueCommitmentRandomnessAcc, deltaInputs[i].valueCommitmentRandomness, EllipticCurveK256.ORDER);
             int256 currentQuantityMag = int256(uint256(deltaInputs[i].quantity));
 
             int256 currentQuantity = deltaInputs[i].consumed ? -currentQuantityMag : currentQuantityMag;
@@ -213,6 +209,7 @@ library DeltaGen {
 }
 
 contract DeltaProofTest is Test {
+    using EllipticCurveK256 for uint256;
     using DeltaGen for DeltaGen.InstanceInputs[];
     using DeltaGen for DeltaGen.InstanceInputs;
 
@@ -318,7 +315,7 @@ contract DeltaProofTest is Test {
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
         // Filter out inadmissible private keys or equal keys
         deltaProofInputs.valueCommitmentRandomness = deltaInstanceInputs.valueCommitmentRandomness;
-        vm.assume(deltaInstanceInputs.kind % SECP256K1_ORDER != 0);
+        vm.assume(deltaInstanceInputs.kind.modOrder() != 0);
         vm.assume(DeltaGen.canonicalizeQuantity(deltaInstanceInputs.consumed, deltaInstanceInputs.quantity) != 0);
         _assumeDeltaInstance(deltaInstanceInputs);
         _assumeDeltaProof(deltaProofInputs);
@@ -350,8 +347,7 @@ contract DeltaProofTest is Test {
         });
         // Filter out inadmissible private keys or equal keys
         vm.assume(
-            (deltaInputs1.valueCommitmentRandomness % SECP256K1_ORDER)
-                != (deltaInputs2.valueCommitmentRandomness % SECP256K1_ORDER)
+            deltaInputs1.valueCommitmentRandomness.modOrder() != deltaInputs2.valueCommitmentRandomness.modOrder()
         );
         _assumeDeltaInstance(deltaInputs2);
         _assumeDeltaProof(deltaInputs1);
@@ -404,7 +400,7 @@ contract DeltaProofTest is Test {
     function test_verify_balanced_delta_succeeds(uint256 kind, FuzzedInput[] memory fuzzedInputs, bytes32 verifyingKey)
         public
     {
-        vm.assume(kind % SECP256K1_ORDER != 0);
+        vm.assume(kind.modOrder() != 0);
 
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
 
@@ -464,7 +460,7 @@ contract DeltaProofTest is Test {
     function test_verify_imbalanced_delta_fails(uint256 kind, FuzzedInput[] memory fuzzedInputs, bytes32 verifyingKey)
         public
     {
-        vm.assume(kind % SECP256K1_ORDER != 0); //
+        vm.assume(kind.modOrder() != 0);
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
 
         // TODO! Move after delta truncation
@@ -507,7 +503,6 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Grab the first length elements from deltaInputs
-    /// Murisi:
     function truncateDeltaInputs(DeltaGen.InstanceInputs[] memory deltaInputs, uint256 length)
         public
         pure
@@ -537,22 +532,22 @@ contract DeltaProofTest is Test {
     function _assumeDeltaInstance(DeltaGen.InstanceInputs memory deltaInputs) internal pure {
         // The value commitment randomness must be non-zero modulo the base
         // point order
-        deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness % SECP256K1_ORDER;
+        deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
         vm.assume(deltaInputs.valueCommitmentRandomness != 0);
         // The kind must be non-zero modulo the base point order
-        deltaInputs.kind = deltaInputs.kind % SECP256K1_ORDER;
+        deltaInputs.kind = deltaInputs.kind.modOrder();
         vm.assume(deltaInputs.kind != 0);
         // The exponent must be non-zero modulo the base point order
         uint256 quantity = DeltaGen.canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
-        uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
-        uint256 preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, SECP256K1_ORDER);
+        uint256 prod = mulmod(deltaInputs.kind, quantity, EllipticCurveK256.ORDER);
+        uint256 preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, EllipticCurveK256.ORDER);
         vm.assume(preDelta != 0);
     }
 
     /// @notice Assume that the delta proof inputs are well-formed. I.e. the
     /// value commitment randomness is non-zero.
     function _assumeDeltaProof(DeltaGen.ProofInputs memory deltaInputs) internal pure {
-        deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness % SECP256K1_ORDER;
+        deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
         vm.assume(deltaInputs.valueCommitmentRandomness != 0);
     }
 }
