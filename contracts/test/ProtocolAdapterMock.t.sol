@@ -219,8 +219,12 @@ contract ProtocolAdapterMockTest is Test {
         // Make sure that all the CUs are in the first action to expect the correct revert.
         assertEq(txn.actions[0].complianceVerifierInputs.length, nCUs);
 
+        // You expect the twice number of compliance units to be the expected resource count.
+        uint256 expectedNumberOfResources = txn.actions[0].complianceVerifierInputs.length * 2;
+
         vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.ResourceCountMismatch.selector, 0, nCUs * 2), address(_mockPa)
+            abi.encodeWithSelector(ProtocolAdapter.ResourceCountMismatch.selector, 0, expectedNumberOfResources),
+            address(_mockPa)
         );
 
         _mockPa.execute(txn);
