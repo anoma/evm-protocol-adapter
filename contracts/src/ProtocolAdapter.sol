@@ -129,10 +129,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 tags[resCounter++] = cm;
 
                 // Compute transaction delta
-                transactionDelta = transactionDelta.add([
-                    uint256(complianceVerifierInput.instance.unitDeltaX),
-                    uint256(complianceVerifierInput.instance.unitDeltaY)
-                ]);
+                transactionDelta = transactionDelta.add(
+                    [
+                        uint256(complianceVerifierInput.instance.unitDeltaX),
+                        uint256(complianceVerifierInput.instance.unitDeltaY)
+                    ]
+                );
             }
         }
 

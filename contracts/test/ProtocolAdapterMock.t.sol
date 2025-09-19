@@ -20,7 +20,7 @@ import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./examples/TxGen.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
-import { Vm } from "forge-std/Vm.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 contract ProtocolAdapterMockTest is Test {
     using MerkleTree for bytes32[];
@@ -54,8 +54,11 @@ contract ProtocolAdapterMockTest is Test {
     }
 
     function test_execute_emits_the_TransactionExecuted_event() public {
-        (Transaction memory txn,) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: TxGen.generateActionConfigs({nActions: 1, nCUs: 1})});
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({nActions: 1, nCUs: 1})
+        });
 
         bytes32[] memory cms = new bytes32[](1);
         cms[0] = txn.actions[0].complianceVerifierInputs[0].instance.created.commitment;
@@ -159,7 +162,8 @@ contract ProtocolAdapterMockTest is Test {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, bytes32 updatedNonce) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn, bytes32 updatedNonce) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         _mockPa.execute(txn);
 
         (txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: updatedNonce, configs: configs});
@@ -169,7 +173,8 @@ contract ProtocolAdapterMockTest is Test {
     function test_execute_reverts_on_pre_existing_nullifier() public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 1});
 
-        (Transaction memory tx1, bytes32 updatedNonce) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory tx1, bytes32 updatedNonce) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         bytes32 preExistingNf = tx1.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
         _mockPa.execute(tx1);
 

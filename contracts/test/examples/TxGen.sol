@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import { RiscZeroMockVerifier } from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
-import { VmSafe } from "forge-std/Vm.sol";
-import { MerkleTree } from "./../../src/libs/MerkleTree.sol";
-import { RiscZeroUtils } from "./../../src/libs/RiscZeroUtils.sol";
-import { SHA256 } from "./../../src/libs/SHA256.sol";
-import { Compliance } from "./../../src/proving/Compliance.sol";
-import { Delta } from "./../../src/proving/Delta.sol";
-import { Logic } from "./../../src/proving/Logic.sol";
-import { Transaction, Action, Resource } from "./../../src/Types.sol";
-import { DeltaGen } from "./../proofs/DeltaProof.t.sol";
+import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import {VmSafe} from "forge-std/Vm.sol";
+import {MerkleTree} from "./../../src/libs/MerkleTree.sol";
+import {RiscZeroUtils} from "./../../src/libs/RiscZeroUtils.sol";
+import {SHA256} from "./../../src/libs/SHA256.sol";
+import {Compliance} from "./../../src/proving/Compliance.sol";
+import {Delta} from "./../../src/proving/Delta.sol";
+import {Logic} from "./../../src/proving/Logic.sol";
+import {Transaction, Action, Resource} from "./../../src/Types.sol";
+import {DeltaGen} from "./../proofs/DeltaProof.t.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
@@ -46,19 +46,28 @@ library TxGen {
         bytes32 cm = commitment(created);
 
         // Construct the delta for consumption based on kind and quantity
-        uint256[2] memory unitDelta = DeltaGen.generateInstance(vm, DeltaGen.InstanceInputs({
+        uint256[2] memory unitDelta = DeltaGen.generateInstance(
+            vm,
+            DeltaGen.InstanceInputs({
                 kind: kind(consumed),
                 quantity: consumed.quantity,
                 consumed: true,
                 valueCommitmentRandomness: 1
-        }));
+            })
+        );
         // Construct the delta for creation based on kind and quantity
-        unitDelta = Delta.add(unitDelta, DeltaGen.generateInstance(vm, DeltaGen.InstanceInputs({
-                kind: kind(created),
-                quantity: created.quantity,
-                consumed: false,
-                valueCommitmentRandomness: 1
-        })));
+        unitDelta = Delta.add(
+            unitDelta,
+            DeltaGen.generateInstance(
+                vm,
+                DeltaGen.InstanceInputs({
+                    kind: kind(created),
+                    quantity: created.quantity,
+                    consumed: false,
+                    valueCommitmentRandomness: 1
+                })
+            )
+        );
 
         Compliance.Instance memory instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
@@ -203,10 +212,13 @@ library TxGen {
         // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
         bytes memory proof = "";
         if (tags.length != 0) {
-            proof = DeltaGen.generateProof(vm, DeltaGen.ProofInputs({
-                valueCommitmentRandomness: tags.length,
-                verifyingKey: Delta.computeVerifyingKey(tags)
-            }));
+            proof = DeltaGen.generateProof(
+                vm,
+                DeltaGen.ProofInputs({
+                    valueCommitmentRandomness: tags.length,
+                    verifyingKey: Delta.computeVerifyingKey(tags)
+                })
+            );
         }
         txn = Transaction({actions: actions, deltaProof: proof});
     }
@@ -228,10 +240,13 @@ library TxGen {
         // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
         bytes memory proof = "";
         if (tags.length != 0) {
-            proof = DeltaGen.generateProof(vm, DeltaGen.ProofInputs({
-                valueCommitmentRandomness: tags.length,
-                verifyingKey: Delta.computeVerifyingKey(tags)
-            }));
+            proof = DeltaGen.generateProof(
+                vm,
+                DeltaGen.ProofInputs({
+                    valueCommitmentRandomness: tags.length,
+                    verifyingKey: Delta.computeVerifyingKey(tags)
+                })
+            );
         }
         txn = Transaction({actions: actions, deltaProof: proof});
     }

@@ -25,8 +25,7 @@ library EllipticCurveK256 {
     uint256 internal constant PP = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
 
     /// @notice Order of curve.
-    uint256 internal constant SECP256K1_ORDER =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
+    uint256 internal constant SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
 
     /// @notice Derives a public key from a private key as an elliptic curve point.
     /// @param privateKey The private key to derive the public key from.
