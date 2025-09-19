@@ -20,7 +20,7 @@ contract DeltaProofTest is Test {
     using DeltaGen for DeltaGen.InstanceInputs[];
     using DeltaGen for DeltaGen.InstanceInputs;
 
-    struct FuzzedInstanceInputsExceptKind {
+    struct FuzzerInstanceInputsExceptKind {
         uint256 valueCommitmentRandomness;
         uint128 quantity;
         bool consumed;
@@ -207,27 +207,12 @@ contract DeltaProofTest is Test {
     /// @notice Check that a balanced transaction does pass verification
     function test_verify_balanced_delta_succeeds(
         uint256 kind,
-        FuzzedInstanceInputsExceptKind[] memory fuzzedInputs,
+        FuzzerInstanceInputsExceptKind[] memory fuzzerInputs,
         bytes32 verifyingKey
     ) public {
-        vm.assume(kind.modOrder() != 0);
+        DeltaGen.InstanceInputs[] memory deltaInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
 
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
-
-        // TODO! Move after delta truncation
-        DeltaGen.InstanceInputs[] memory deltaInputs = new DeltaGen.InstanceInputs[](fuzzedInputs.length);
-        for (uint256 i = 0; i < fuzzedInputs.length; i++) {
-            deltaInputs[i] = DeltaGen.InstanceInputs({
-                kind: kind,
-                valueCommitmentRandomness: fuzzedInputs[i].valueCommitmentRandomness,
-                quantity: fuzzedInputs[i].quantity,
-                consumed: fuzzedInputs[i].consumed
-            });
-        }
-
-        // Truncate the delta inputs to improve test performance
-        uint256 maxDeltaLen = 10;
-        deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
 
         // Make sure that the delta quantities balance out
         (
@@ -267,25 +252,12 @@ contract DeltaProofTest is Test {
     /// @notice Check that an imbalanced transaction fails verification
     function test_verify_imbalanced_delta_fails(
         uint256 kind,
-        FuzzedInstanceInputsExceptKind[] memory fuzzedInputs,
+        FuzzerInstanceInputsExceptKind[] memory fuzzerInputs,
         bytes32 verifyingKey
     ) public {
-        vm.assume(kind.modOrder() != 0);
-        uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
+        DeltaGen.InstanceInputs[] memory deltaInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
 
-        // TODO! Move after delta truncation
-        DeltaGen.InstanceInputs[] memory deltaInputs = new DeltaGen.InstanceInputs[](fuzzedInputs.length);
-        for (uint256 i = 0; i < fuzzedInputs.length; i++) {
-            deltaInputs[i] = DeltaGen.InstanceInputs({
-                kind: kind,
-                valueCommitmentRandomness: fuzzedInputs[i].valueCommitmentRandomness,
-                quantity: fuzzedInputs[i].quantity,
-                consumed: fuzzedInputs[i].consumed
-            });
-        }
-        // Truncate the delta inputs to improve test performance
-        uint256 maxDeltaLen = 10;
-        deltaInputs = truncateDeltaInputs(deltaInputs, deltaInputs.length % maxDeltaLen);
+        uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
 
         // Accumulate the total quantity and randomness commitment
         (
@@ -310,18 +282,6 @@ contract DeltaProofTest is Test {
         // Verify that the imbalanced transaction proof fails
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         Delta.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
-    }
-
-    /// @notice Grab the first length elements from deltaInputs
-    function truncateDeltaInputs(DeltaGen.InstanceInputs[] memory deltaInputs, uint256 length)
-        public
-        pure
-        returns (DeltaGen.InstanceInputs[] memory truncatedDeltaInputs)
-    {
-        truncatedDeltaInputs = new DeltaGen.InstanceInputs[](length);
-        for (uint256 i = 0; i < length; i++) {
-            truncatedDeltaInputs[i] = deltaInputs[i];
-        }
     }
 
     function test_verify_example_delta_proof() public pure {
@@ -359,5 +319,32 @@ contract DeltaProofTest is Test {
     function _assumeDeltaProof(DeltaGen.ProofInputs memory deltaInputs) internal pure {
         deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
         vm.assume(deltaInputs.valueCommitmentRandomness != 0);
+    }
+
+    function _getBoundedDeltaInstances(uint256 kind, FuzzerInstanceInputsExceptKind[] memory fuzzerInputs)
+        internal
+        pure
+        returns (DeltaGen.InstanceInputs[] memory deltaInputs)
+    {
+        // Kind
+        vm.assume(kind.modOrder() != 0);
+
+        // Array length
+        uint256 boundedLength = bound(fuzzerInputs.length, 0, 10);
+
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            mstore(fuzzerInputs, boundedLength)
+        }
+
+        deltaInputs = new DeltaGen.InstanceInputs[](fuzzerInputs.length);
+        for (uint256 i = 0; i < fuzzerInputs.length; i++) {
+            deltaInputs[i] = DeltaGen.InstanceInputs({
+                kind: kind,
+                valueCommitmentRandomness: fuzzerInputs[i].valueCommitmentRandomness,
+                quantity: fuzzerInputs[i].quantity,
+                consumed: fuzzerInputs[i].consumed
+            });
+        }
     }
 }
