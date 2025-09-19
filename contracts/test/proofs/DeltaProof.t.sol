@@ -42,7 +42,6 @@ contract DeltaProofTest is Test {
             consumed: consumed,
             valueCommitmentRandomness: valueCommitmentRandomness
         });
-
         vm.assume(_computePreDelta(deltaInstanceInputs) != 0);
 
         // Construct delta proof inputs from the above parameters
@@ -146,7 +145,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails2(
+    function test_verify_inconsistent_delta_fails2( // TODO Improve name
         uint256 kind,
         bool consumed,
         bytes32 verifyingKey,
@@ -159,27 +158,29 @@ contract DeltaProofTest is Test {
         valueCommitmentRandomness2 = bound(valueCommitmentRandomness2, 1, EllipticCurveK256.ORDER - 1);
         vm.assume(valueCommitmentRandomness1.modOrder() != valueCommitmentRandomness2.modOrder());
 
-        DeltaGen.ProofInputs memory deltaInputs1 =
-            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness1, verifyingKey: verifyingKey});
+        bytes memory proofRcv1 = DeltaGen.generateProof(
+            vm,
+            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness1, verifyingKey: verifyingKey})
+        );
 
-        DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
-            kind: kind,
-            quantity: 0,
-            consumed: consumed,
-            valueCommitmentRandomness: valueCommitmentRandomness2
-        });
-        vm.assume(_computePreDelta(deltaInputs2) != 0); // TODO move?
+        uint256[2] memory instanceRcv2;
+        {
+            DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
+                kind: kind,
+                quantity: 0,
+                consumed: consumed,
+                valueCommitmentRandomness: valueCommitmentRandomness2
+            });
+            vm.assume(_computePreDelta(deltaInputs2) != 0); // TODO move?
+            instanceRcv2 = DeltaGen.generateInstance(vm, deltaInputs2);
+        }
 
-        // Generate a delta proof and instance from the above tags and preimage
-        bytes memory proof1 = DeltaGen.generateProof(vm, deltaInputs1);
-        uint256[2] memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
-        // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proof1, instance: instance2, verifyingKey: deltaInputs1.verifyingKey});
+        Delta.verify({proof: proofRcv1, instance: instanceRcv2, verifyingKey: verifyingKey});
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
-    function test_verify_inconsistent_delta_fails3(
+    function test_verify_fails_if_verifying_keys_of_instance_and_proof_mismatch(
         uint256 kind,
         uint256 valueCommitmentRandomness,
         bool consumed,
@@ -190,24 +191,26 @@ contract DeltaProofTest is Test {
         valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
         vm.assume(verifyingKey1 != verifyingKey2);
 
-        DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
-            kind: kind,
-            quantity: 0,
-            consumed: consumed,
-            valueCommitmentRandomness: valueCommitmentRandomness
-        });
+        bytes memory proofForVk1 = DeltaGen.generateProof(
+            vm,
+            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey1})
+        );
 
-        vm.assume(_computePreDelta(deltaInputs2) != 0);
-        DeltaGen.ProofInputs memory deltaInputs1 =
-            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey1});
+        uint256[2] memory instance;
+        {
+            DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
+                kind: kind,
+                quantity: 0,
+                consumed: consumed,
+                valueCommitmentRandomness: valueCommitmentRandomness
+            });
+            vm.assume(_computePreDelta(deltaInputs2) != 0);
 
-        // Generate a delta proof and instance from the above tags and preimage
-        bytes memory proof1 = DeltaGen.generateProof(vm, deltaInputs1);
-        uint256[2] memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
+            instance = DeltaGen.generateInstance(vm, deltaInputs2);
+        }
 
-        // Verify that the mixing deltas is invalid
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        Delta.verify({proof: proof1, instance: instance2, verifyingKey: verifyingKey2});
+        Delta.verify({proof: proofForVk1, instance: instance, verifyingKey: verifyingKey2});
     }
 
     /// @notice Check that a balanced transaction does pass verification
