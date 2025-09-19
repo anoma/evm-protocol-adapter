@@ -25,7 +25,7 @@ contract DeltaProofTest is Test {
         bool consumed;
     }
 
-    function test_verify_delta_succeeds(
+    function testFuzz_verify_delta_succeeds(
         uint256 kind,
         uint256 valueCommitmentRandomness,
         bool consumed,
@@ -58,7 +58,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.add correctly adds deltas
-    function test_add_delta_correctness(
+    function testFuzz_add_delta_correctness(
         uint256 kind,
         FuzzerInstanceInputsExceptKind memory input1,
         FuzzerInstanceInputsExceptKind memory input2
@@ -118,7 +118,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails1(
+    function testFuzz_verify_inconsistent_delta_fails1(
         DeltaGen.InstanceInputs memory deltaInstanceInputs,
         bytes32 fuzzedVerifyingKey
     ) public {
@@ -144,7 +144,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function test_verify_inconsistent_delta_fails2( // TODO Improve name
+    function testFuzz_verify_inconsistent_delta_fails2( // TODO Improve name
         uint256 kind,
         bool consumed,
         bytes32 verifyingKey,
@@ -179,7 +179,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
-    function test_verify_fails_if_verifying_keys_of_instance_and_proof_mismatch(
+    function testFuzz_verify_fails_if_verifying_keys_of_instance_and_proof_mismatch(
         uint256 kind,
         uint256 valueCommitmentRandomness,
         bool consumed,
@@ -213,7 +213,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Check that a balanced transaction does pass verification
-    function test_verify_balanced_delta_succeeds(
+    function testFuzz_verify_balanced_delta_succeeds(
         uint256 kind,
         FuzzerInstanceInputsExceptKind[] memory fuzzerInputs,
         bytes32 verifyingKey
@@ -265,7 +265,7 @@ contract DeltaProofTest is Test {
     }
 
     /// @notice Check that an imbalanced transaction fails verification
-    function test_verify_imbalanced_delta_fails(
+    function testFuzz_verify_imbalanced_delta_fails(
         uint256 kind,
         FuzzerInstanceInputsExceptKind[] memory fuzzerInputs,
         bytes32 verifyingKey
