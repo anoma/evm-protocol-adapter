@@ -19,7 +19,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         Wrap
     }
 
-    /// @notice The canonical Uniswap Permit2 contract deployed at the same address on all supported chains
+    /// @notice The canonical Uniswap Permit2 contract deployed at the same address on all supported chains.
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
     IPermit2 internal constant _PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
@@ -47,9 +47,9 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         EmergencyMigratableForwarderBase(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee)
     {}
 
-    /// @notice Forwards calls.
-    /// @param input The `bytes` encoded input of the call.
-    /// @return output The `bytes` encoded output of the call.
+    /// @notice Wraps and unwraps the ERC20 token based on the provided inputs.
+    /// @param input Contains information to store or send out provided ERC20 tokens.
+    /// @return output The empty string signaling that the function call has succeeded.
     function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
         CallType callType = CallType(uint8(input[31]));
 
