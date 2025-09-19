@@ -234,9 +234,9 @@ contract DeltaProofTest is Test {
         valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
         vm.assume(valueCommitmentRandomness != 0);
 
-        // TODO REFACTOR
         // Adjust the last delta so that the full sum is zero
         if (quantity != 0) {
+            // TODO REFACTOR
             SignMagnitude.Number memory diff = SignMagnitude.Number(
                 wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed,
                 wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity
