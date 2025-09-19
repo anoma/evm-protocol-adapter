@@ -67,6 +67,21 @@ contract DeltaProofTest is Test {
         FuzzerInstanceInputsExceptKind memory input1,
         FuzzerInstanceInputsExceptKind memory input2
     ) public {
+        // The kind must be non-zero modulo the base point order
+        kind = kind.modOrder(); // ! TODO Use bound statement instead
+        vm.assume(kind != 0);
+
+        input1.valueCommitmentRandomness = input1.valueCommitmentRandomness.modOrder();
+        input2.valueCommitmentRandomness = input2.valueCommitmentRandomness.modOrder();
+        vm.assume(input1.valueCommitmentRandomness != 0);
+        vm.assume(input2.valueCommitmentRandomness != 0);
+
+        vm.assume(input1.consumed != input2.consumed || input2.quantity <= type(uint128).max - input1.quantity);
+        vm.assume(
+            0 < input1.valueCommitmentRandomness
+                && input2.valueCommitmentRandomness <= type(uint256).max - input1.valueCommitmentRandomness
+        );
+
         // Construct delta instance inputs from the above parameters
         DeltaGen.InstanceInputs memory deltaInputs1 = DeltaGen.InstanceInputs({
             kind: kind,
@@ -74,24 +89,14 @@ contract DeltaProofTest is Test {
             consumed: input1.consumed,
             valueCommitmentRandomness: input1.valueCommitmentRandomness
         });
+        vm.assume(computePreDelta(deltaInputs1) != 0);
         DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
             kind: kind,
             quantity: input2.quantity,
             consumed: input2.consumed,
             valueCommitmentRandomness: input2.valueCommitmentRandomness
         });
-        _assumeDeltaInstance(deltaInputs1);
-        _assumeDeltaInstance(deltaInputs2);
-
-        // Filter out overflows
-        vm.assume(
-            deltaInputs1.consumed != deltaInputs2.consumed
-                || deltaInputs2.quantity <= type(uint128).max - deltaInputs1.quantity
-        );
-        vm.assume(
-            0 < deltaInputs2.valueCommitmentRandomness
-                && deltaInputs2.valueCommitmentRandomness <= type(uint256).max - deltaInputs1.valueCommitmentRandomness
-        );
+        vm.assume(computePreDelta(deltaInputs2) != 0);
 
         // Add the deltas
         SignMagnitude.Number memory summedNumber = SignMagnitude.Number(deltaInputs1.consumed, deltaInputs1.quantity)
