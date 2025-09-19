@@ -4,15 +4,14 @@ pragma solidity ^0.8.30;
 import {Test} from "forge-std/Test.sol";
 
 import {EllipticCurveK256} from "../../src/libs/EllipticCurveK256.sol";
-
 import {Delta} from "../../src/proving/Delta.sol";
 import {Transaction} from "../../src/Types.sol";
 
-import {TransactionExample} from "../examples/Transaction.e.sol";
-import {TxGen} from "../examples/TxGen.sol";
+import {TransactionExample} from "../examples/transactions/Transaction.e.sol";
 
 import {DeltaGen} from "../libs/DeltaGen.sol";
 import {SignMagnitude} from "../libs/SignMagnitude.sol";
+import {TxGen} from "../libs/TxGen.sol";
 
 contract DeltaProofTest is Test {
     using SignMagnitude for SignMagnitude.Number;

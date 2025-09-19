@@ -7,7 +7,7 @@ on:
 jobs:
   contracts:
     name: Contracts
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     env:
       FOUNDRY_PROFILE: ci
 
@@ -71,7 +71,7 @@ jobs:
 
   bindings:
     name: Bindings
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: contracts
     env:
       PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: ${{ vars.PROTOCOL_ADAPTER_ADDRESS_SEPOLIA }}

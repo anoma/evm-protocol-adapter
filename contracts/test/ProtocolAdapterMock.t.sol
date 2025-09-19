@@ -10,21 +10,21 @@ import {Vm} from "forge-std/Vm.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
-import {RiscZeroUtils} from "../src/libs/RiscZeroUtils.sol";
 
 import {Logic} from "../src/proving/Logic.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
-import {Transaction} from "../src/Types.sol";
+import {Transaction, Action} from "../src/Types.sol";
 
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
 import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
-import {TxGen} from "./examples/TxGen.sol";
+import {TxGen} from "./libs/TxGen.sol";
 import {ProtocolAdapterMock} from "./mocks/ProtocolAdapter.m.sol";
 import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
 
 contract ProtocolAdapterMockTest is Test {
     using MerkleTree for bytes32[];
-    using RiscZeroUtils for Logic.VerifierInput;
+    using TxGen for Action[];
+    using TxGen for Action;
     using TxGen for Vm;
 
     bytes32 internal constant _CARRIER_LOGIC_REF = bytes32(uint256(123));
@@ -53,21 +53,41 @@ contract ProtocolAdapterMockTest is Test {
         _carrierLabelRef = sha256(abi.encode(_fwd));
     }
 
-    function test_execute_emits_the_TransactionExecuted_event() public {
+    function testFuzz_execute_emits_the_TransactionExecuted_event(uint8 nActions, uint8 nCUs) public {
+        nActions = uint8(bound(nActions, 0, 10));
+        nCUs = uint8(bound(nCUs, 0, 10));
+
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({nActions: 1, nCUs: 1})
+            configs: TxGen.generateActionConfigs({nActions: nActions, nCUs: nCUs})
         });
 
-        bytes32[] memory cms = new bytes32[](1);
-        cms[0] = txn.actions[0].complianceVerifierInputs[0].instance.created.commitment;
-
-        // Compute the expected root considering the expansion.
-        bytes32 expectedRoot = cms.computeRoot({treeDepth: MerkleTree.computeMinimalTreeDepth(cms.length) + 1});
-
         vm.expectEmit(address(_mockPa));
-        emit IProtocolAdapter.TransactionExecuted({id: 0, transaction: txn, newRoot: expectedRoot});
+        emit IProtocolAdapter.TransactionExecuted({
+            tags: txn.actions.collectTags(),
+            logicRefs: txn.actions.collectLogicRefs()
+        });
+        _mockPa.execute(txn);
+    }
+
+    function testFuzz_execute_emits_ActionExecuted_events_for_each_action(uint8 nActions, uint8 nCUs) public {
+        nActions = uint8(bound(nActions, 0, 10));
+        nCUs = uint8(bound(nCUs, 0, 10));
+
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({nActions: nActions, nCUs: nCUs})
+        });
+
+        for (uint256 i = 0; i < nActions; ++i) {
+            vm.expectEmit(address(_mockPa));
+            emit IProtocolAdapter.ActionExecuted({
+                actionTreeRoot: txn.actions[i].collectTags().computeRoot(),
+                tagsCount: nCUs * 2
+            });
+        }
         _mockPa.execute(txn);
     }
 

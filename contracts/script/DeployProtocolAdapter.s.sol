@@ -21,14 +21,18 @@ contract DeployProtocolAdapter is Script {
         _routers["base-sepolia"] = RiscZeroVerifierRouter(0x0b144E07A0826182B6b59788c34b32Bfa86Fb711);
     }
 
-    function run() public returns (address protocolAdapter) {
+    function run(bool isTestDeployment) public returns (address protocolAdapter) {
         vm.startBroadcast();
 
-        protocolAdapter = address(
-            new ProtocolAdapter{salt: sha256(bytes(string.concat("ProtocolAdapter", " ", PROTOCOL_ADAPTER_VERSION)))}({
-                riscZeroVerifierRouter: _routers[_networks[block.chainid]]
-            })
-        );
+        bytes32 salt;
+        if (isTestDeployment) {
+            salt = bytes32(block.prevrandao);
+        } else {
+            salt = keccak256(bytes(string.concat("ProtocolAdapter", " ", PROTOCOL_ADAPTER_VERSION)));
+        }
+
+        protocolAdapter =
+            address(new ProtocolAdapter{salt: salt}({riscZeroVerifierRouter: _routers[_networks[block.chainid]]}));
         vm.stopBroadcast();
     }
 }

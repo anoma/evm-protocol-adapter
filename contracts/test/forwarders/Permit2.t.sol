@@ -6,7 +6,7 @@ import {Permit2Lib} from "@permit2/src/libraries/Permit2Lib.sol";
 
 import {Test} from "forge-std/Test.sol";
 
-import {DeployPermit2} from "./script/DeployPermit2.s.sol";
+import {DeployPermit2} from "../script/DeployPermit2.s.sol";
 
 contract DeployPermit2Test is Test {
     IPermit2 internal _permit2;

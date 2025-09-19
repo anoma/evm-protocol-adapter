@@ -73,6 +73,7 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         if (!_roots.add(root)) {
             revert PreExistingRoot(root);
         }
+        emit CommitmentTreeRootStored(root);
     }
 
     /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.

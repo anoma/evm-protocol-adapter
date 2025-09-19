@@ -37,7 +37,7 @@
     "gas-indexed-events": "off",
     "gas-multitoken1155": "warn",
     "gas-named-return-values": "warn",
-    "gas-small-strings": "warn",
+    "gas-small-strings": "off",
     "gas-struct-packing": "warn",
 
     "quotes": "error",
