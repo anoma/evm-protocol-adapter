@@ -47,7 +47,10 @@ library EllipticCurveK256 {
         (x3, y3) = EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: AA, _pp: PP});
     }
 
-    function modOrder(uint256 v) internal pure returns (uint256 remainder) {
-        remainder = v % ORDER;
+    /// @notice Computes the modulo of a value and returns the remainder.
+    /// @param value The value to compute the module for.
+    /// @return remainder The remainder.
+    function modOrder(uint256 value) internal pure returns (uint256 remainder) {
+        remainder = value % ORDER;
     }
 }
