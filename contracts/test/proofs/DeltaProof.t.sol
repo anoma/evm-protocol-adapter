@@ -109,7 +109,10 @@ contract DeltaProofTest is Test {
             consumed: summedNumber.isNegative,
             valueCommitmentRandomness: deltaInputs1.valueCommitmentRandomness + deltaInputs2.valueCommitmentRandomness
         });
-        _assumeDeltaInstance(summedDeltaInputs);
+        // TODO refactor?
+        summedDeltaInputs.valueCommitmentRandomness = summedDeltaInputs.valueCommitmentRandomness.modOrder();
+        vm.assume(summedDeltaInputs.valueCommitmentRandomness != 0);
+        vm.assume(computePreDelta(summedDeltaInputs) != 0);
 
         // Generate a delta proof and instance from the above tags and preimage
         uint256[2] memory instance1 = DeltaGen.generateInstance(vm, deltaInputs1);
