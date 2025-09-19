@@ -34,6 +34,8 @@ contract DeltaProofTest is Test {
     ) public {
         valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
         vm.assume(valueCommitmentRandomness != 0);
+        kind = kind.modOrder();
+        vm.assume(kind != 0);
 
         // Construct delta instance inputs from the above parameters
         DeltaGen.InstanceInputs memory deltaInstanceInputs = DeltaGen.InstanceInputs({
@@ -42,7 +44,9 @@ contract DeltaProofTest is Test {
             consumed: consumed,
             valueCommitmentRandomness: valueCommitmentRandomness
         });
-        _assumeDeltaInstance(deltaInstanceInputs);
+
+        vm.assume(computePreDelta(deltaInstanceInputs) != 0);
+
         // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaProofInputs =
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
