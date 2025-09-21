@@ -51,12 +51,12 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     }
 
     /// @inheritdoc ICommitmentAccumulator
-    function verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path, uint256 directionBits)
+    function verifyMerkleProof(bytes32 commitment, bytes32[] calldata path, uint256 directionBits)
         external
         view
         override
     {
-        _verifyMerkleProof({root: root, commitment: commitment, path: path, directionBits: directionBits});
+        _verifyMerkleProof({commitment: commitment, path: path, directionBits: directionBits});
     }
 
     /// @notice Adds a commitment to to the set, if it does not exist already and returns the new root.
@@ -76,12 +76,11 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         emit CommitmentTreeRootStored(root);
     }
 
-    /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.
-    /// @param root The root to reproduce.
+    /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce the latest root.
     /// @param commitment The commitment leaf to proof inclusion in the tree for.
     /// @param path The siblings constituting the path from the leaf to the root.
     /// @param directionBits The direction bits indicating whether the siblings are left of right.
-    function _verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path, uint256 directionBits)
+    function _verifyMerkleProof(bytes32 commitment, bytes32[] calldata path, uint256 directionBits)
         internal
         view
     {
@@ -90,16 +89,12 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
             revert InvalidPathLength({expected: _merkleTree.depth(), actual: path.length});
         }
 
-        // Check root existence.
-        if (!_roots.contains(root)) {
-            revert NonExistingRoot(root);
-        }
-
         // Check that the commitment leaf and path reproduce the root.
         bytes32 computedRoot = path.processProof(directionBits, commitment);
 
-        if (root != computedRoot) {
-            revert InvalidRoot({expected: root, actual: computedRoot});
+        // Ensure that the computed root is the latest one.
+        if (_latestRoot() != computedRoot) {
+            revert InvalidRoot({expected: _latestRoot(), actual: computedRoot});
         }
     }
 
