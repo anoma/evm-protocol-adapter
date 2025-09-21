@@ -17,8 +17,6 @@ contract LogicProofTest is Test {
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
 
-    bytes32 internal _complianceCircuitID;
-
     function setUp() public {
         (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
     }
