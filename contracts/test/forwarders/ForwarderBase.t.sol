@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
@@ -34,10 +35,12 @@ contract ForwarderBaseTest is Test {
     ForwarderTargetExample internal _tgt;
 
     function setUp() public virtual {
-        (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
+        RiscZeroGroth16Verifier verifier;
+        (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts().run();
+
         _riscZeroAdmin = _emergencyStop.owner();
 
-        _pa = address(new ProtocolAdapter(_router));
+        _pa = address(new ProtocolAdapter(_router, verifier.SELECTOR()));
 
         _fwd = new ForwarderExample({protocolAdapter: _pa, calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
         _tgt = ForwarderTargetExample(_fwd.TARGET());

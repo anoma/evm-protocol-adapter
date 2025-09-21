@@ -20,7 +20,11 @@ import {NullifierSet} from "./state/NullifierSet.sol";
 
 import {Action, Transaction} from "./Types.sol";
 
+// The semantic version number of the Anoma protocol adapter.
 string constant PROTOCOL_ADAPTER_VERSION = "1.0.0-beta";
+
+// The RISC Zero verifier selector that the protocol adapter is associated with.
+bytes4 constant RISC_ZERO_VERIFIER_SELECTOR = 0x73c457ba;
 
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -34,6 +38,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     using Delta for uint256[2];
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
+    bytes4 internal immutable _RISC_ZERO_VERIFIER_SELECTOR;
 
     error ZeroNotAllowed();
 
@@ -44,12 +49,16 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
-    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter) CommitmentAccumulator() {
-        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
-
+    /// @param riscZeroVerifierSelector The RISC Zero verifier selector this protocol adapter is associated with.
+    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector)
+        CommitmentAccumulator()
+    {
         if (address(riscZeroVerifierRouter) == address(0)) {
             revert ZeroNotAllowed();
         }
+
+        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
+        _RISC_ZERO_VERIFIER_SELECTOR = riscZeroVerifierSelector;
 
         // Sanity check that the verifier has not been stopped already.
         if (isEmergencyStopped()) {
@@ -162,13 +171,13 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     }
 
     /// @inheritdoc IProtocolAdapter
-    function getProtocolAdapterVersion() public pure virtual override returns (string memory version) {
-        version = PROTOCOL_ADAPTER_VERSION;
+    function getRiscZeroVerifierSelector() public view override returns (bytes4 verifierSelector) {
+        verifierSelector = _RISC_ZERO_VERIFIER_SELECTOR;
     }
 
     /// @inheritdoc IProtocolAdapter
-    function getRiscZeroVerifierSelector() public pure virtual override returns (bytes4 verifierSelector) {
-        verifierSelector = 0x73c457ba;
+    function getProtocolAdapterVersion() public pure override returns (string memory version) {
+        version = PROTOCOL_ADAPTER_VERSION;
     }
 
     /// @notice Executes a call to a forwarder contracts.
