@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {LibString} from "@solady/utils/LibString.sol";
+
 import {Script} from "forge-std/Script.sol";
+
 import {ERC20Forwarder} from "../src/forwarders/ERC20Forwarder.sol";
-import {ProtocolAdapter, PROTOCOL_ADAPTER_VERSION} from "../src/ProtocolAdapter.sol";
+import {Versioning} from "../src/libs/Versioning.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 contract DeployERC20Forwarder is Script {
+    using LibString for bytes32;
+
     ProtocolAdapter internal constant _PROTOCOL_ADAPTER = ProtocolAdapter(address(0));
 
     address internal constant _EMERGENCY_COMMITTEE = address(0);
@@ -17,7 +23,9 @@ contract DeployERC20Forwarder is Script {
         if (isTestDeployment) {
             salt = bytes32(block.prevrandao);
         } else {
-            salt = keccak256(bytes(string.concat("ERC20Forwarder", " ", PROTOCOL_ADAPTER_VERSION)));
+            salt = keccak256(
+                bytes(string.concat("ERC20Forwarder", Versioning._PROTOCOL_ADAPTER_VERSION.fromSmallString()))
+            );
         }
 
         vm.startBroadcast();
