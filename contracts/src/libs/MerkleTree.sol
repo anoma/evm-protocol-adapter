@@ -90,8 +90,8 @@ library MerkleTree {
     /// @notice Returns the tree depth.
     /// @param self The tree data structure.
     /// @return treeDepth The depth of the tree.
-    function depth(Tree storage self) internal view returns (uint256 treeDepth) {
-        treeDepth = self._sides.length;
+    function depth(Tree storage self) internal view returns (uint8 treeDepth) {
+        treeDepth = uint8(self._sides.length);
     }
 
     /// @notice Returns the number of leaves that have been added to the tree.
@@ -105,7 +105,7 @@ library MerkleTree {
     /// @param self The tree data structure.
     /// @return treeCapacity The computed tree capacity.
     function capacity(Tree storage self) internal view returns (uint256 treeCapacity) {
-        treeCapacity = 1 << depth(self);
+        treeCapacity = uint256(1) << depth(self); // 2^treeDepth
     }
 
     /// @notice Checks whether a node is the left or right child according to its index.
@@ -154,7 +154,7 @@ library MerkleTree {
     /// @return root The computed root.
     /// @dev This method should only be used for trees with low depth.
     function computeRoot(bytes32[] memory leaves, uint8 treeDepth) internal pure returns (bytes32 root) {
-        uint256 treeCapacity = 1 << treeDepth; // 2^treeDepth
+        uint256 treeCapacity = uint256(1) << treeDepth; // 2^treeDepth
 
         // Create array of full leaf set with padding if necessary
         bytes32[] memory nodes = new bytes32[](treeCapacity);
