@@ -107,8 +107,8 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
     function test_verifyMerkleProof_reverts_on_non_existent_commitment() public {
         /*
           (1)
-           R   
-         /  \  
+           R
+         /  \
         1   []
         */
 
