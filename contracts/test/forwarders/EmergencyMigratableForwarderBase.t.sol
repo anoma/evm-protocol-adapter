@@ -30,7 +30,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts().run();
         _riscZeroAdmin = _emergencyStop.owner();
 
-        _pa = address(new ProtocolAdapter(_router, verifier.SELECTOR()));
+        _pa = address(new ProtocolAdapter(_router, verifier.SELECTOR(), _EMERGENCY_COMMITTEE));
 
         _emrgFwd = new EmergencyMigratableForwarderExample({
             protocolAdapter: _pa,

@@ -53,6 +53,9 @@ interface IProtocolAdapter {
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 
+    /// @notice Stops the protocol adapter permanently in case of an emergency.
+    function estop() external;
+
     /// @notice Returns the semantic version number of the protocol adapter.
     /// @return version The semantic version number.
     function getProtocolAdapterVersion() external view returns (string memory version);

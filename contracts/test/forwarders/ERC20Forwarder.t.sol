@@ -19,6 +19,7 @@ import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 contract ERC20ForwarderTest is Test {
     using Parsing for Vm;
 
+    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
     uint128 internal constant _TRANSFER_AMOUNT = 1000;
     bytes internal constant _EXPECTED_OUTPUT = "";
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(uint256(0));
@@ -57,13 +58,13 @@ contract ERC20ForwarderTest is Test {
         (RiscZeroVerifierRouter router,, RiscZeroGroth16Verifier verifier) = new DeployRiscZeroContracts().run();
 
         // Deploy the protocol adapter
-        _pa = address(new ProtocolAdapter(router, verifier.SELECTOR()));
+        _pa = address(new ProtocolAdapter(router, verifier.SELECTOR(), _EMERGENCY_COMMITTEE));
 
         // Deploy the ERC20 forwarder
         _fwd = address(
             new ERC20Forwarder({
                 protocolAdapter: _pa,
-                emergencyCommittee: address(uint160(1)),
+                emergencyCommittee: _EMERGENCY_COMMITTEE,
                 calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF
             })
         );

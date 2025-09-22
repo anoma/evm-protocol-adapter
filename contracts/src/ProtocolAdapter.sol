@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Ownable} from "@openzeppelin-contracts/access/Ownable.sol";
+import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
@@ -30,7 +32,14 @@ bytes4 constant RISC_ZERO_VERIFIER_SELECTOR = 0x73c457ba;
 /// @author Anoma Foundation, 2025
 /// @notice The protocol adapter contract verifying and executing resource machine transactions.
 /// @custom:security-contact security@anoma.foundation
-contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, CommitmentAccumulator, NullifierSet {
+contract ProtocolAdapter is
+    IProtocolAdapter,
+    ReentrancyGuardTransient,
+    Ownable,
+    Pausable,
+    CommitmentAccumulator,
+    NullifierSet
+{
     using MerkleTree for bytes32[];
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.VerifierInput;
@@ -50,7 +59,10 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
     /// @param riscZeroVerifierSelector The RISC Zero verifier selector this protocol adapter is associated with.
-    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector) {
+    /// @param owner The owner that can stop the protocol adapter in case of a vulnerability.
+    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector, address owner)
+        Ownable(owner)
+    {
         if (address(riscZeroVerifierRouter) == address(0)) {
             revert ZeroNotAllowed();
         }
@@ -66,7 +78,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
-    function execute(Transaction calldata transaction) external override nonReentrant {
+    function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
         uint256 actionCount = transaction.actions.length;
         uint256 tagCount = 0;
 
@@ -168,10 +180,17 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     // slither-disable-end reentrancy-no-eth
 
     /// @inheritdoc IProtocolAdapter
+    function estop() external override onlyOwner whenNotPaused {
+        _pause();
+    }
+
+    /// @inheritdoc IProtocolAdapter
     function isEmergencyStopped() public view override returns (bool isStopped) {
-        isStopped = RiscZeroVerifierEmergencyStop(
+        bool risc0Paused = RiscZeroVerifierEmergencyStop(
             address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))
         ).paused();
+
+        isStopped = paused() || risc0Paused;
     }
 
     /// @inheritdoc IProtocolAdapter
