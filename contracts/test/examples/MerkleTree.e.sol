@@ -347,7 +347,7 @@ contract MerkleTreeExample {
         }
     }
 
-    function _calculateNextLevel(bytes32[] memory x) internal pure returns (bytes32[] memory y) {
+    function _calculateNextLevel(bytes32[] memory x) internal view returns (bytes32[] memory y) {
         uint256 len = x.length / 2;
         y = new bytes32[](len);
         for (uint256 i = 0; i < len; ++i) {

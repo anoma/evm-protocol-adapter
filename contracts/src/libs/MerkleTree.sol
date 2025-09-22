@@ -108,13 +108,6 @@ library MerkleTree {
         treeCapacity = uint256(1) << depth(self); // 2^treeDepth
     }
 
-    /// @notice Checks whether a node is the left or right child according to its index.
-    /// @param index The index to check.
-    /// @return isLeft Whether this node is the left or right child.
-    function isLeftChild(uint256 index) internal pure returns (bool isLeft) {
-        isLeft = (index & 1) == 0;
-    }
-
     /// @notice Processes a Merkle proof consisting of siblings and direction bits and returns the resulting root.
     /// @param siblings The siblings.
     /// @param directionBits The direction bits indicating whether the siblings are left of right.
@@ -122,7 +115,7 @@ library MerkleTree {
     /// @return root The resulting root obtained by processing the leaf, siblings, and direction bits.
     function processProof(bytes32[] memory siblings, uint256 directionBits, bytes32 leaf)
         internal
-        pure
+        view
         returns (bytes32 root)
     {
         bytes32 computedHash = leaf;
@@ -140,20 +133,12 @@ library MerkleTree {
         root = computedHash;
     }
 
-    /// @notice Checks whether a direction bit encodes the left or right sibling.
-    /// @param directionBits The direction bits.
-    /// @param d The index of the bit to check.
-    /// @return isLeft Whether the sibling is left or right.
-    function isLeftSibling(uint256 directionBits, uint256 d) internal pure returns (bool isLeft) {
-        isLeft = (directionBits >> d) & 1 == 0;
-    }
-
     /// @notice Computes the root of a Merkle tree.
     /// @param leaves The leaves of the tree.
     /// @param treeDepth The depth of the tree.
     /// @return root The computed root.
     /// @dev This method should only be used for trees with low depth.
-    function computeRoot(bytes32[] memory leaves, uint8 treeDepth) internal pure returns (bytes32 root) {
+    function computeRoot(bytes32[] memory leaves, uint8 treeDepth) internal view returns (bytes32 root) {
         uint256 treeCapacity = uint256(1) << treeDepth; // 2^treeDepth
 
         // Create array of full leaf set with padding if necessary
@@ -183,8 +168,23 @@ library MerkleTree {
     /// @param leaves The leaves of the tree.
     /// @return root The computed root.
     /// @dev This method should only be used for trees with low depth.
-    function computeRoot(bytes32[] memory leaves) internal pure returns (bytes32 root) {
+    function computeRoot(bytes32[] memory leaves) internal view returns (bytes32 root) {
         root = MerkleTree.computeRoot({leaves: leaves, treeDepth: computeMinimalTreeDepth(leaves.length)});
+    }
+
+    /// @notice Checks whether a node is the left or right child according to its index.
+    /// @param index The index to check.
+    /// @return isLeft Whether this node is the left or right child.
+    function isLeftChild(uint256 index) internal pure returns (bool isLeft) {
+        isLeft = (index & 1) == 0;
+    }
+
+    /// @notice Checks whether a direction bit encodes the left or right sibling.
+    /// @param directionBits The direction bits.
+    /// @param d The index of the bit to check.
+    /// @return isLeft Whether the sibling is left or right.
+    function isLeftSibling(uint256 directionBits, uint256 d) internal pure returns (bool isLeft) {
+        isLeft = (directionBits >> d) & 1 == 0;
     }
 
     /// @notice Computes the minimal required tree depth for a number of leaves.

@@ -342,7 +342,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @return root The root of the corresponding tree.
     function _computeActionTreeRoot(Action calldata action, uint256 complianceUnitCount)
         internal
-        pure
+        view
         returns (bytes32 root)
     {
         bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * 2);

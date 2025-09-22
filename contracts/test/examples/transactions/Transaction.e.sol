@@ -30,6 +30,14 @@ library TransactionExample {
     bytes internal constant _DELTA_PROOF =
         hex"b91ec8ea76d57a4a370d4fcff04f8d6f178dc0e370dfd9573ba5638c10c06bb705cf39747cbefa0f2e14bd44d9b7b1542d033b5b6ecf6017fb08f0b7c5c1cbb41c";
 
+    function treeRoot() internal view returns (bytes32 root) {
+        bytes32[] memory leaves = new bytes32[](2);
+        leaves[0] = _CONSUMED_NULLIFIER;
+        leaves[1] = _CREATED_COMMITMENT;
+
+        root = leaves.computeRoot();
+    }
+
     function complianceInstance() internal pure returns (Compliance.Instance memory instance) {
         instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
@@ -104,13 +112,5 @@ library TransactionExample {
             Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
 
         txn = Transaction({actions: actions, deltaProof: _DELTA_PROOF});
-    }
-
-    function treeRoot() internal pure returns (bytes32 root) {
-        bytes32[] memory leaves = new bytes32[](2);
-        leaves[0] = _CONSUMED_NULLIFIER;
-        leaves[1] = _CREATED_COMMITMENT;
-
-        root = leaves.computeRoot();
     }
 }
