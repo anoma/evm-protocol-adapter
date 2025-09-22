@@ -208,7 +208,7 @@ contract ProtocolAdapterMockTest is Test {
         _mockPa.execute(tx2);
     }
 
-    function test_execute_reverts_txn_on_exact_resource_mismatch(uint8 nCUs) public {
+    function test_execute_reverts_on_resource_count_mismatch(uint8 nCUs) public {
         nCUs = uint8(bound(nCUs, 1, 5));
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: uint8(bound(nCUs, 1, 5))});
 
