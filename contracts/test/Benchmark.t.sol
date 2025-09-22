@@ -64,21 +64,21 @@ contract Benchmark is Test {
 
     function test_print_calldata() public view {
         for (uint256 i = 0; i < _txns.length; ++i) {
-            uint256 nCUs = 0;
+            uint256 complianceUnitCount = 0;
 
-            uint256 nActions = _txns[i].actions.length;
+            uint256 actionCount = _txns[i].actions.length;
 
-            for (uint256 j = 0; j < nActions; ++j) {
-                nCUs += _txns[i].actions[j].complianceVerifierInputs.length;
+            for (uint256 j = 0; j < actionCount; ++j) {
+                complianceUnitCount += _txns[i].actions[j].complianceVerifierInputs.length;
             }
 
             string memory output = string(
                 abi.encodePacked(
                     "Actions: ",
-                    Strings.toString(nActions),
+                    Strings.toString(actionCount),
                     ", ",
                     "CUs: ",
-                    Strings.toString(nCUs),
+                    Strings.toString(complianceUnitCount),
                     ", ",
                     "Calldata (bytes): ",
                     Strings.toString(abi.encodeCall(ProtocolAdapter.execute, _txns[i]).length)

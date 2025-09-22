@@ -20,7 +20,7 @@ library TxGen {
     using Delta for uint256[2];
 
     struct ActionConfig {
-        uint256 nCUs;
+        uint256 complianceUnitCount;
     }
 
     struct ResourceAndAppData {
@@ -96,13 +96,13 @@ library TxGen {
         if (consumed.length != created.length) {
             revert ConsumedCreatedCountMismatch({nConsumed: consumed.length, nCreated: created.length});
         }
-        uint256 nCUs = consumed.length;
+        uint256 complianceUnitCount = consumed.length;
 
-        Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2 * nCUs);
-        Compliance.VerifierInput[] memory complianceVerifierInputs = new Compliance.VerifierInput[](nCUs);
+        Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2 * complianceUnitCount);
+        Compliance.VerifierInput[] memory complianceVerifierInputs = new Compliance.VerifierInput[](complianceUnitCount);
 
-        bytes32[] memory actionTreeTags = new bytes32[](2 * nCUs);
-        for (uint256 i = 0; i < nCUs; ++i) {
+        bytes32[] memory actionTreeTags = new bytes32[](2 * complianceUnitCount);
+        for (uint256 i = 0; i < complianceUnitCount; ++i) {
             uint256 index = (i * 2);
 
             actionTreeTags[index] = nullifier(consumed[i].resource, 0);
@@ -111,7 +111,7 @@ library TxGen {
 
         bytes32 actionTreeRoot = actionTreeTags.computeRoot();
 
-        for (uint256 i = 0; i < nCUs; ++i) {
+        for (uint256 i = 0; i < complianceUnitCount; ++i) {
             uint256 index = i * 2;
 
             logicVerifierInputs[index] = logicVerifierInput({
@@ -141,16 +141,18 @@ library TxGen {
         action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
     }
 
-    function createDefaultAction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, uint256 nCUs)
-        internal
-        returns (Action memory action, bytes32 updatedNonce)
-    {
+    function createDefaultAction(
+        VmSafe vm,
+        RiscZeroMockVerifier mockVerifier,
+        bytes32 nonce,
+        uint256 complianceUnitCount
+    ) internal returns (Action memory action, bytes32 updatedNonce) {
         updatedNonce = nonce;
 
-        ResourceAndAppData[] memory consumed = new ResourceAndAppData[](nCUs);
-        ResourceAndAppData[] memory created = new ResourceAndAppData[](nCUs);
+        ResourceAndAppData[] memory consumed = new ResourceAndAppData[](complianceUnitCount);
+        ResourceAndAppData[] memory created = new ResourceAndAppData[](complianceUnitCount);
 
-        for (uint256 i = 0; i < nCUs; ++i) {
+        for (uint256 i = 0; i < complianceUnitCount; ++i) {
             consumed[i] = ResourceAndAppData({
                 resource: TxGen.mockResource({
                     nonce: updatedNonce,
@@ -231,8 +233,12 @@ library TxGen {
 
         Action[] memory actions = new Action[](configs.length);
         for (uint256 i = 0; i < configs.length; ++i) {
-            (actions[i], updatedNonce) =
-                createDefaultAction({vm: vm, mockVerifier: mockVerifier, nonce: updatedNonce, nCUs: configs[i].nCUs});
+            (actions[i], updatedNonce) = createDefaultAction({
+                vm: vm,
+                mockVerifier: mockVerifier,
+                nonce: updatedNonce,
+                complianceUnitCount: configs[i].complianceUnitCount
+            });
         }
 
         // Grab the tags that will be signed over
@@ -271,22 +277,22 @@ library TxGen {
         }).seal;
     }
 
-    function generateActionConfigs(uint256 nActions, uint256 nCUs)
+    function generateActionConfigs(uint256 actionCount, uint256 complianceUnitCount)
         internal
         pure
         returns (ActionConfig[] memory configs)
     {
-        configs = new TxGen.ActionConfig[](nActions);
-        for (uint256 i = 0; i < nActions; ++i) {
-            configs[i] = TxGen.ActionConfig({nCUs: nCUs});
+        configs = new TxGen.ActionConfig[](actionCount);
+        for (uint256 i = 0; i < actionCount; ++i) {
+            configs[i] = TxGen.ActionConfig({complianceUnitCount: complianceUnitCount});
         }
     }
 
-    function countComplianceUnits(Action[] memory actions) internal pure returns (uint256 nCUs) {
-        nCUs = 0;
+    function countComplianceUnits(Action[] memory actions) internal pure returns (uint256 complianceUnitCount) {
+        complianceUnitCount = 0;
 
         for (uint256 i = 0; i < actions.length; ++i) {
-            nCUs += actions[i].complianceVerifierInputs.length;
+            complianceUnitCount += actions[i].complianceVerifierInputs.length;
         }
     }
 
@@ -304,11 +310,11 @@ library TxGen {
     }
 
     function collectTags(Action memory action) internal pure returns (bytes32[] memory tags) {
-        uint256 nCUs = action.complianceVerifierInputs.length;
+        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
 
-        tags = new bytes32[](nCUs * 2);
+        tags = new bytes32[](complianceUnitCount * 2);
 
-        for (uint256 i = 0; i < nCUs; ++i) {
+        for (uint256 i = 0; i < complianceUnitCount; ++i) {
             tags[i * 2] = action.complianceVerifierInputs[i].instance.consumed.nullifier;
             tags[(i * 2) + 1] = action.complianceVerifierInputs[i].instance.created.commitment;
         }
@@ -319,9 +325,9 @@ library TxGen {
 
         uint256 n = 0;
         for (uint256 i = 0; i < actions.length; ++i) {
-            uint256 nCUs = actions[i].complianceVerifierInputs.length;
+            uint256 complianceUnitCount = actions[i].complianceVerifierInputs.length;
 
-            for (uint256 j = 0; j < nCUs; ++j) {
+            for (uint256 j = 0; j < complianceUnitCount; ++j) {
                 logicRefs[n++] = actions[i].complianceVerifierInputs[j].instance.consumed.logicRef;
                 logicRefs[n++] = actions[i].complianceVerifierInputs[j].instance.created.logicRef;
             }

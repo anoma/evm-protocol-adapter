@@ -53,14 +53,16 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _carrierLabelRef = sha256(abi.encode(_fwd));
     }
 
-    function testFuzz_execute_emits_the_TransactionExecuted_event(uint8 nActions, uint8 nCUs) public {
-        nActions = uint8(bound(nActions, 0, 10));
-        nCUs = uint8(bound(nCUs, 0, 10));
+    function testFuzz_execute_emits_the_TransactionExecuted_event(uint8 actionCount, uint8 complianceUnitCount)
+        public
+    {
+        actionCount = uint8(bound(actionCount, 0, 10));
+        complianceUnitCount = uint8(bound(complianceUnitCount, 0, 10));
 
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({nActions: nActions, nCUs: nCUs})
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
         });
 
         vm.expectEmit(address(_mockPa));
@@ -71,21 +73,23 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function testFuzz_execute_emits_ActionExecuted_events_for_each_action(uint8 nActions, uint8 nCUs) public {
-        nActions = uint8(bound(nActions, 0, 10));
-        nCUs = uint8(bound(nCUs, 0, 10));
+    function testFuzz_execute_emits_ActionExecuted_events_for_each_action(uint8 actionCount, uint8 complianceUnitCount)
+        public
+    {
+        actionCount = uint8(bound(actionCount, 0, 10));
+        complianceUnitCount = uint8(bound(complianceUnitCount, 0, 10));
 
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({nActions: nActions, nCUs: nCUs})
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
         });
 
-        for (uint256 i = 0; i < nActions; ++i) {
+        for (uint256 i = 0; i < actionCount; ++i) {
             vm.expectEmit(address(_mockPa));
             emit IProtocolAdapter.ActionExecuted({
                 actionTreeRoot: txn.actions[i].collectTags().computeRoot(),
-                actionTagCount: nCUs * 2
+                actionTagCount: complianceUnitCount * 2
             });
         }
         _mockPa.execute(txn);
@@ -162,25 +166,29 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     function test_execute_1_txn_with_2_action_with_1_and_0_cus() public {
         TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](2);
-        configs[0] = TxGen.ActionConfig({nCUs: 1});
-        configs[1] = TxGen.ActionConfig({nCUs: 0});
+        configs[0] = TxGen.ActionConfig({complianceUnitCount: 1});
+        configs[1] = TxGen.ActionConfig({complianceUnitCount: 0});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
         _mockPa.execute(txn);
     }
 
-    function test_execute_1_txn_with_n_actions_and_n_cus(uint8 nActions, uint8 nCUs) public {
-        TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+    function test_execute_1_txn_with_n_actions_and_n_cus(uint8 actionCount, uint8 complianceUnitCount) public {
+        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
+            actionCount: uint8(bound(actionCount, 0, 5)),
+            complianceUnitCount: uint8(bound(complianceUnitCount, 0, 5))
+        });
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         _mockPa.execute(txn);
     }
 
-    function test_execute_2_txns_with_n_actions_and_n_cus(uint8 nActions, uint8 nCUs) public {
-        TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+    function test_execute_2_txns_with_n_actions_and_n_cus(uint8 actionCount, uint8 complianceUnitCount) public {
+        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
+            actionCount: uint8(bound(actionCount, 0, 5)),
+            complianceUnitCount: uint8(bound(complianceUnitCount, 0, 5))
+        });
 
         (Transaction memory txn, bytes32 updatedNonce) =
             vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
@@ -191,7 +199,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_reverts_on_pre_existing_nullifier() public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: 1});
+        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1});
 
         (Transaction memory tx1, bytes32 updatedNonce) =
             vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
@@ -206,16 +214,17 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(tx2);
     }
 
-    function test_execute_reverts_on_resource_count_mismatch(uint8 nCUs) public {
-        nCUs = uint8(bound(nCUs, 1, 5));
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: uint8(bound(nCUs, 1, 5))});
+    function test_execute_reverts_on_resource_count_mismatch(uint8 complianceUnitCount) public {
+        complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: uint8(bound(complianceUnitCount, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
         txn.actions[0].logicVerifierInputs = new Logic.VerifierInput[](0);
 
         // Make sure that all the CUs are in the first action to expect the correct revert.
-        assertEq(txn.actions[0].complianceVerifierInputs.length, nCUs);
+        assertEq(txn.actions[0].complianceVerifierInputs.length, complianceUnitCount);
 
         // You expect the twice number of compliance units to be the expected resource count.
         uint256 expectedResourceCount = txn.actions[0].complianceVerifierInputs.length * 2;

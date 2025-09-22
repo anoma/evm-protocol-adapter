@@ -67,11 +67,11 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant {
-        uint256 nActions = transaction.actions.length;
+        uint256 actionCount = transaction.actions.length;
         uint256 tagCount = 0;
 
         // Count the total number of tags in the transaction.
-        for (uint256 i = 0; i < nActions; ++i) {
+        for (uint256 i = 0; i < actionCount; ++i) {
             tagCount += transaction.actions[i].logicVerifierInputs.length;
         }
 
@@ -90,22 +90,22 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
         // Start with the zero point on the curve for delta-computation.
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
 
-        for (uint256 i = 0; i < nActions; ++i) {
+        for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
 
-            uint256 nCUs = action.complianceVerifierInputs.length;
+            uint256 complianceUnitCount = action.complianceVerifierInputs.length;
             uint256 actionTagCount = action.logicVerifierInputs.length;
 
             // Check that the tag count in the action and compliance units matches which ensures that if the tags match,
             // the compliance units partition the action.
-            if (actionTagCount != nCUs * 2) {
-                revert TagCountMismatch({expected: actionTagCount, actual: nCUs * 2});
+            if (actionTagCount != complianceUnitCount * 2) {
+                revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
             }
 
             // Compute the action tree root.
-            bytes32 actionTreeRoot = _computeActionTreeRoot(action, nCUs);
+            bytes32 actionTreeRoot = _computeActionTreeRoot(action, complianceUnitCount);
 
-            for (uint256 j = 0; j < nCUs; ++j) {
+            for (uint256 j = 0; j < complianceUnitCount; ++j) {
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
                 bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
@@ -338,13 +338,17 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
 
     /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
     /// @param action The action whose root we compute.
-    /// @param nCUs The number of compliance units in the action.
+    /// @param complianceUnitCount The number of compliance units in the action.
     /// @return root The root of the corresponding tree.
-    function _computeActionTreeRoot(Action calldata action, uint256 nCUs) internal pure returns (bytes32 root) {
-        bytes32[] memory actionTreeTags = new bytes32[](nCUs * 2);
+    function _computeActionTreeRoot(Action calldata action, uint256 complianceUnitCount)
+        internal
+        pure
+        returns (bytes32 root)
+    {
+        bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * 2);
 
         // The order in which the tags are added to the tree is provided by the compliance units.
-        for (uint256 j = 0; j < nCUs; ++j) {
+        for (uint256 j = 0; j < complianceUnitCount; ++j) {
             Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
             actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
