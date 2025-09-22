@@ -221,7 +221,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint256 expectedResourceCount = txn.actions[0].complianceVerifierInputs.length * 2;
 
         vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.ResourceCountMismatch.selector, 0, expectedResourceCount),
+            abi.encodeWithSelector(ProtocolAdapter.TagCountMismatch.selector, 0, expectedResourceCount),
             address(_mockPa)
         );
 
