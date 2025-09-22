@@ -60,12 +60,7 @@ library RiscZeroUtils {
         bytes memory encodedAppData = abi.encodePacked(toRiscZero(nBlobs));
         {
             for (uint256 i = 0; i < nBlobs; ++i) {
-                bytes memory blobEncoded = abi.encodePacked(
-                    toRiscZero(uint32(input.appData.resourcePayload[i].blob.length / 4)),
-                    input.appData.resourcePayload[i].blob,
-                    toRiscZero(uint32(input.appData.resourcePayload[i].deletionCriterion))
-                );
-                encodedAppData = abi.encodePacked(encodedAppData, blobEncoded);
+                encodedAppData = appendBlob(encodedAppData, input.appData.resourcePayload[i]);
             }
         }
 
@@ -73,12 +68,7 @@ library RiscZeroUtils {
         encodedAppData = abi.encodePacked(encodedAppData, toRiscZero(nBlobs));
         {
             for (uint256 i = 0; i < nBlobs; ++i) {
-                bytes memory blobEncoded = abi.encodePacked(
-                    toRiscZero(uint32(input.appData.discoveryPayload[i].blob.length / 4)),
-                    input.appData.discoveryPayload[i].blob,
-                    toRiscZero(uint32(input.appData.discoveryPayload[i].deletionCriterion))
-                );
-                encodedAppData = abi.encodePacked(encodedAppData, blobEncoded);
+                encodedAppData = appendBlob(encodedAppData, input.appData.discoveryPayload[i]);
             }
         }
 
@@ -86,12 +76,7 @@ library RiscZeroUtils {
         encodedAppData = abi.encodePacked(encodedAppData, toRiscZero(nBlobs));
         {
             for (uint256 i = 0; i < nBlobs; ++i) {
-                bytes memory blobEncoded = abi.encodePacked(
-                    toRiscZero(uint32(input.appData.externalPayload[i].blob.length / 4)),
-                    input.appData.externalPayload[i].blob,
-                    toRiscZero(uint32(input.appData.externalPayload[i].deletionCriterion))
-                );
-                encodedAppData = abi.encodePacked(encodedAppData, blobEncoded);
+                encodedAppData = appendBlob(encodedAppData, input.appData.externalPayload[i]);
             }
         }
 
@@ -99,17 +84,31 @@ library RiscZeroUtils {
         encodedAppData = abi.encodePacked(encodedAppData, toRiscZero(nBlobs));
         {
             for (uint256 i = 0; i < nBlobs; ++i) {
-                bytes memory blobEncoded = abi.encodePacked(
-                    toRiscZero(uint32(input.appData.applicationPayload[i].blob.length / 4)),
-                    input.appData.applicationPayload[i].blob,
-                    toRiscZero(uint32(input.appData.applicationPayload[i].deletionCriterion))
-                );
-                encodedAppData = abi.encodePacked(encodedAppData, blobEncoded);
+                encodedAppData = appendBlob(encodedAppData, input.appData.applicationPayload[i]);
             }
         }
 
         bytes4 eight = hex"08000000";
         converted = abi.encodePacked(eight, input.tag, toRiscZero(consumed), eight, root, encodedAppData);
+    }
+
+    /// @notice Appends an expirable blob to the encodeded app data.
+    /// @param encodedAppData The app data to append the blob to.
+    /// @param expirableBlob The expirable blob to append.
+    /// @return updated The updated app data.
+    function appendBlob(bytes memory encodedAppData, Logic.ExpirableBlob memory expirableBlob)
+        internal
+        pure
+        returns (bytes memory updated)
+    {
+        updated = abi.encodePacked(
+            encodedAppData,
+            abi.encodePacked(
+                toRiscZero(uint32(expirableBlob.blob.length / 4)),
+                expirableBlob.blob,
+                toRiscZero(uint32(expirableBlob.deletionCriterion))
+            )
+        );
     }
 
     /// @notice Converts a `bool` to the RISC Zero format to `bytes4` by appending three zero bytes.
