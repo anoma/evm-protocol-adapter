@@ -206,6 +206,28 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(tx2);
     }
 
+    function test_execute_reverts_on_resource_count_mismatch(uint8 nCUs) public {
+        nCUs = uint8(bound(nCUs, 1, 5));
+        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: uint8(bound(nCUs, 1, 5))});
+
+        (Transaction memory txn,) = _mockVerifier.transaction({nonce: 0, configs: configs});
+
+        txn.actions[0].logicVerifierInputs = new Logic.VerifierInput[](0);
+
+        // Make sure that all the CUs are in the first action to expect the correct revert.
+        assertEq(txn.actions[0].complianceVerifierInputs.length, nCUs);
+
+        // You expect the twice number of compliance units to be the expected resource count.
+        uint256 expectedResourceCount = txn.actions[0].complianceVerifierInputs.length * 2;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.ResourceCountMismatch.selector, 0, expectedResourceCount),
+            address(_mockPa)
+        );
+
+        _mockPa.execute(txn);
+    }
+
     function _exampleResourceAndEmptyAppData(uint256 nonce)
         private
         view
