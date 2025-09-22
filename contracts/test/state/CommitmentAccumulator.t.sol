@@ -30,8 +30,8 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         assertEq(initialRoot, _roots[0]);
         assertEq(initialRoot, _cmAcc.initialRoot());
 
-        for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            assertEq(_cmAcc.addCommitment(_a[i + 1][i]), _roots[i + 1]);
+        for (uint256 i = 0; i < _N_LEAVES; ++i) {
+            assertEq(_cmAcc.addCommitment(_leaves[i + 1][i]), _roots[i + 1]);
         }
     }
 
@@ -39,8 +39,8 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         uint256 prevCount = 0;
         uint256 newCount = 0;
 
-        for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            _cmAcc.addCommitment(_a[i + 1][i]);
+        for (uint256 i = 0; i < _N_LEAVES; ++i) {
+            _cmAcc.addCommitment(_leaves[i + 1][i]);
             newCount = _cmAcc.commitmentCount();
 
             assertEq(newCount, ++prevCount);
@@ -80,8 +80,8 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
     function test_should_produce_an_invalid_root_for_a_non_existent_leaf() public {
         bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
 
-        for (uint256 i = 0; i < _N_LEAFS; ++i) {
-            bytes32 root = _cmAcc.addCommitment(_a[i + 1][i]);
+        for (uint256 i = 0; i < _N_LEAVES; ++i) {
+            bytes32 root = _cmAcc.addCommitment(_leaves[i + 1][i]);
 
             for (uint256 j = 0; j <= i; ++j) {
                 bytes32 computedRoot = MerkleTree.processProof({
