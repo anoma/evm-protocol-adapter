@@ -9,25 +9,29 @@ import {Logic} from "../proving/Logic.sol";
 /// @notice A library containing utility functions to convert and encode types for RISC Zero.
 /// @custom:security-contact security@anoma.foundation
 library RiscZeroUtils {
+    using RiscZeroUtils for bytes;
+
+    /// @notice The value `8` which is required on `arm-risc0` to encode vector types.
+    bytes4 internal constant _EIGHT = hex"08000000"; // TODO This will be refactored in the future..
+
     /// @notice Calculates the digest of the compliance instance (journal).
     /// @param instance The compliance instance.
     /// @return digest The journal digest.
     function toJournalDigest(Compliance.Instance memory instance) internal pure returns (bytes32 digest) {
-        bytes4 eight = hex"08000000";
         bytes memory encodedInstance = abi.encodePacked(
-            eight,
+            _EIGHT,
             instance.consumed.nullifier,
-            eight,
+            _EIGHT,
             instance.consumed.logicRef,
-            eight,
+            _EIGHT,
             instance.consumed.commitmentTreeRoot,
-            eight,
+            _EIGHT,
             instance.created.commitment,
-            eight,
+            _EIGHT,
             instance.created.logicRef,
-            eight,
+            _EIGHT,
             instance.unitDeltaX,
-            eight,
+            _EIGHT,
             instance.unitDeltaY
         );
         digest = sha256(encodedInstance);
@@ -88,7 +92,6 @@ library RiscZeroUtils {
             }
         }
 
-        bytes4 eight = hex"08000000";
         converted = abi.encodePacked(eight, input.tag, toRiscZero(consumed), eight, root, encodedAppData);
     }
 
