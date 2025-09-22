@@ -10,8 +10,6 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using MerkleTree for MerkleTree.Tree;
 
-    constructor() CommitmentAccumulator() {}
-
     function addCommitment(bytes32 commitment) external returns (bytes32 newRoot) {
         newRoot = _addCommitment(commitment);
     }

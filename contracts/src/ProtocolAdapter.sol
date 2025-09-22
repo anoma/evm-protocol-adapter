@@ -50,9 +50,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
     /// @param riscZeroVerifierSelector The RISC Zero verifier selector this protocol adapter is associated with.
-    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector)
-        CommitmentAccumulator()
-    {
+    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector) {
         if (address(riscZeroVerifierRouter) == address(0)) {
             revert ZeroNotAllowed();
         }

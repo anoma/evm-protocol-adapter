@@ -2,6 +2,8 @@
 pragma solidity ^0.8.30;
 
 import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
+import {EfficientHashLib} from "@solady/utils/EfficientHashLib.sol";
+
 import {EllipticCurveK256} from "../libs/EllipticCurveK256.sol";
 
 /// @title Delta
@@ -25,7 +27,7 @@ library Delta {
     /// @return account The associated account.
     function toAccount(uint256[2] memory delta) internal pure returns (address account) {
         // Hash the public key with Keccak-256
-        bytes32 hashedKey = keccak256(abi.encode(delta[0], delta[1]));
+        bytes32 hashedKey = EfficientHashLib.hash(delta[0], delta[1]);
 
         // Take the last 20 bytes to obtain an Ethereum address.
         account = address(uint160(uint256(hashedKey)));
@@ -38,7 +40,7 @@ library Delta {
     /// @dev The tags are encoded in packed form to remove the array header.
     /// Since all the tags are 32 bytes in size, tight variable packing will not occur.
     function computeVerifyingKey(bytes32[] memory tags) internal pure returns (bytes32 verifyingKey) {
-        verifyingKey = keccak256(abi.encodePacked(tags));
+        verifyingKey = EfficientHashLib.hash(tags);
     }
 
     /// @notice Verifies a delta proof.

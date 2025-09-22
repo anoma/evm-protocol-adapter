@@ -25,6 +25,10 @@ jobs:
       - name: Show Foundry version
         run: forge --version
 
+      - name: Run Forge Lint
+        run: forge lint --deny-warnings
+        working-directory: ./contracts
+
       - name: Install Bun
         uses: oven-sh/setup-bun@v1
 
