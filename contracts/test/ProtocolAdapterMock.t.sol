@@ -210,7 +210,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         nCUs = uint8(bound(nCUs, 1, 5));
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({nActions: 1, nCUs: uint8(bound(nCUs, 1, 5))});
 
-        (Transaction memory txn,) = _mockVerifier.transaction({nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
         txn.actions[0].logicVerifierInputs = new Logic.VerifierInput[](0);
 
