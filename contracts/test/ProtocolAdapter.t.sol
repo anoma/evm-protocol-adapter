@@ -127,8 +127,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
-        (Transaction memory txn, ) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
         vm.prank(_emergencyStop.owner());
         _emergencyStop.estop();
@@ -141,8 +140,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, ) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         _pa.execute(txn);
     }
 
@@ -190,7 +188,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         // Finally assign the proposed commitment tree root into the transaction
         complianceVerifierInputs[params.inputIdx].instance.consumed.commitmentTreeRoot = params.commitmentTreeRoot;
         // With an incorrect commitment tree root, we expect failure
-        vm.expectPartialRevert(NonExistingRoot.selector);
+        vm.expectRevert(abi.encodeWithSelector(NonExistingRoot.selector, params.commitmentTreeRoot));
         // Finally, execute the transaction to make sure that it fails
         this.execute(transaction);
     }
@@ -270,7 +268,10 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         // Finally, corrupt the verifier selector
         complianceVerifierInputs[params.inputIdx].proof = params.proof;
         // With an unknown selector, we expect failure
-        vm.expectPartialRevert(RiscZeroVerifierRouter.SelectorUnknown.selector, address(_router));
+        vm.expectRevert(
+            abi.encodeWithSelector(RiscZeroVerifierRouter.SelectorUnknown.selector, bytes4(params.proof)),
+            address(_router)
+        );
         // Finally, execute the transaction to make sure that it fails
         this.execute(transaction);
     }
@@ -303,18 +304,25 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         vm.assume(complianceVerifierInputs.length > 0);
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
+        Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
+        // Make sure that the planned corruption will change something
+        vm.assume(complianceVerifierInput.instance.consumed.nullifier != params.tag);
         // Finally, corrupt the corresponding logic verifier input tag
         Logic.VerifierInput[] memory logicVerifierInputs = transaction.actions[params.actionIdx].logicVerifierInputs;
         // Do a linear search to identify the corresponding logic verifier input
         for (uint256 i = 0; i < logicVerifierInputs.length; i++) {
             // Select the logic verifier input with a tag matching the nullifier
-            if (logicVerifierInputs[i].tag == complianceVerifierInputs[params.inputIdx].instance.consumed.nullifier) {
+            if (logicVerifierInputs[i].tag == complianceVerifierInput.instance.consumed.nullifier) {
                 // Finally, corrupt the logic verifier input tag so it can no longer be found
                 logicVerifierInputs[i].tag = params.tag;
             }
         }
         // With an unknown tag, we expect failure
-        vm.expectPartialRevert(Logic.TagNotFound.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Logic.TagNotFound.selector, complianceVerifierInputs[params.inputIdx].instance.consumed.nullifier
+            )
+        );
         // Finally, execute the transaction to make sure that it fails
         this.execute(transaction);
     }
@@ -326,8 +334,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, ) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutation_test_execute_unknown_nullifier_tag_fails(txn, params);
     }
 
@@ -348,18 +355,25 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         vm.assume(complianceVerifierInputs.length > 0);
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
+        Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
+        // Make sure that the planned corruption will change something
+        vm.assume(complianceVerifierInput.instance.created.commitment != params.tag);
         // Finally, corrupt the corresponding logic verifier input tag
         Logic.VerifierInput[] memory logicVerifierInputs = transaction.actions[params.actionIdx].logicVerifierInputs;
         // Do a linear search to identify the corresponding logic verifier input
         for (uint256 i = 0; i < logicVerifierInputs.length; i++) {
             // Select the logic verifier input with a tag matching the commitment
-            if (logicVerifierInputs[i].tag == complianceVerifierInputs[params.inputIdx].instance.created.commitment) {
+            if (logicVerifierInputs[i].tag == complianceVerifierInput.instance.created.commitment) {
                 // Finally, corrupt the logic verifier input tag so it can no longer be found
                 logicVerifierInputs[i].tag = params.tag;
             }
         }
         // With an unknown tag, we expect failure
-        vm.expectPartialRevert(Logic.TagNotFound.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Logic.TagNotFound.selector, complianceVerifierInputs[params.inputIdx].instance.created.commitment
+            )
+        );
         // Finally, execute the transaction to make sure that it fails
         this.execute(transaction);
     }
@@ -371,8 +385,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, ) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutation_test_execute_unknown_commitment_tag_fails(txn, params);
     }
 
@@ -387,8 +400,8 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
-        Compliance.VerifierInput[] memory complianceVerifierInputs =
-            transaction.actions[params.actionIdx].complianceVerifierInputs;
+        Action memory action = transaction.actions[params.actionIdx];
+        Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
         // Cannot do do mutation if transaction has no compliance verifier inputs
         vm.assume(complianceVerifierInputs.length > 0);
         // Wrap the compliance verifier input index into range
@@ -404,7 +417,9 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         // Finally, replace the compliance verifier inputs with the shorter array
         transaction.actions[params.actionIdx].complianceVerifierInputs = shorter;
         // With mismatching resource counts, we expect failure
-        vm.expectPartialRevert(ResourceCountMismatch.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(ResourceCountMismatch.selector, action.logicVerifierInputs.length, shorter.length)
+        );
         // Finally, execute the transaction to make sure that it fails
         this.execute(transaction);
     }
@@ -418,14 +433,13 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, ) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutate_test_execute_missing_compliance_verifier_input_fail(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
-    /// fail by ensuring that it has less logic verifier inputs double half the
-    /// compliance verifier inputs.
+    /// fail by ensuring that it has less logic verifier inputs than the number
+    /// of compliance verifier inputs doubled.
     function mutate_test_execute_missing_logic_verifier_input_fail(
         Transaction memory transaction,
         MismatchingResourcesFailParams memory params
@@ -434,7 +448,8 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
-        Logic.VerifierInput[] memory logicVerifierInputs = transaction.actions[params.actionIdx].logicVerifierInputs;
+        Action memory action = transaction.actions[params.actionIdx];
+        Logic.VerifierInput[] memory logicVerifierInputs = action.logicVerifierInputs;
         // Cannot do do mutation if transaction has no logic verifier inputs
         vm.assume(logicVerifierInputs.length > 0);
         // Wrap the logic verifier input index into range
@@ -450,7 +465,11 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         // Finally, replace the logic verifier inputs with the shorter array
         transaction.actions[params.actionIdx].logicVerifierInputs = shorter;
         // With mismatching resource counts, we expect failure
-        vm.expectPartialRevert(ResourceCountMismatch.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ResourceCountMismatch.selector, shorter.length, action.complianceVerifierInputs.length
+            )
+        );
         // Finally, execute the transaction to make sure that it fails
         this.execute(transaction);
     }
@@ -464,14 +483,14 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, ) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutate_test_execute_missing_logic_verifier_input_fail(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
-    /// fail by ensuring that it has less compliance verifier inputs than half
-    /// the logic verifier inputs.
+    /// fail by ensuring that the verifying key of one of its logic verifier
+    /// inputs does not match the nullifier or commitment in the corresponding
+    /// compliance verifier input.
     function mutate_test_execute_mismatching_logic_refs_fail(
         Transaction memory transaction,
         MismatchingLogicRefsFailParams memory params
@@ -503,8 +522,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
 
-        (Transaction memory txn, ) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutate_test_execute_mismatching_logic_refs_fail(txn, params);
     }
 
@@ -536,9 +554,8 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         vm.assume(
             expectedOutput.length != params.output.length || keccak256(expectedOutput) != keccak256(params.output)
         );
-        expectedOutput = params.output;
         // Re-encode the calldata and replace the value in the external payloads
-        externalPayloads[params.payloadIdx].blob = abi.encode(untrustedForwarder, input, expectedOutput);
+        externalPayloads[params.payloadIdx].blob = abi.encode(untrustedForwarder, input, params.output);
         // Now determine whether the current resource is being created or consumed
         Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
         bool isConsumed;
@@ -559,7 +576,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
             journalDigest: logicVerifierInputs[params.inputIdx].toJournalDigest(actionTreeRoot, isConsumed)
         }).seal;
         // With mismatching forwarder call outputs, we expect failure
-        vm.expectPartialRevert(ForwarderCallOutputMismatch.selector);
+        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOutputMismatch.selector, params.output, expectedOutput));
         // Finally, execute the transaction to make sure that it fails
         this.execute(transaction);
     }
