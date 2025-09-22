@@ -94,13 +94,12 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
             Action calldata action = transaction.actions[i];
 
             uint256 nCUs = action.complianceVerifierInputs.length;
-            uint256 nTags = action.logicVerifierInputs.length;
+            uint256 actionTagCount = action.logicVerifierInputs.length;
 
-            // Check that the tag counts in the action and compliance units match
-            // which ensures that if the tags match, the compliance units
-            // partition the action.
-            if (nTags != nCUs * 2) {
-                revert TagCountMismatch({expected: nTags, actual: nCUs * 2});
+            // Check that the tag count in the action and compliance units matches which ensures that if the tags match,
+            // the compliance units partition the action.
+            if (actionTagCount != nCUs * 2) {
+                revert TagCountMismatch({expected: actionTagCount, actual: nCUs * 2});
             }
 
             // Compute the action tree root.
@@ -152,7 +151,7 @@ contract ProtocolAdapter is IProtocolAdapter, ReentrancyGuardTransient, Commitme
                 );
             }
 
-            emit ActionExecuted({actionTreeRoot: actionTreeRoot, tagsCount: nTags});
+            emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: actionTagCount});
         }
 
         // Check if the transaction induces a state change.

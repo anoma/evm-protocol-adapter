@@ -85,7 +85,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
             vm.expectEmit(address(_mockPa));
             emit IProtocolAdapter.ActionExecuted({
                 actionTreeRoot: txn.actions[i].collectTags().computeRoot(),
-                tagsCount: nCUs * 2
+                actionTagCount: nCUs * 2
             });
         }
         _mockPa.execute(txn);
