@@ -9,7 +9,7 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 import {Test, Vm, console} from "forge-std/Test.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Transaction} from "../src/Types.sol";
+import {Transaction, Action} from "../src/Types.sol";
 import {Parsing} from "./libs/Parsing.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
@@ -19,7 +19,7 @@ contract Benchmark is Test {
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
-    Transaction[5] internal _txns;
+    Transaction[6] internal _txns;
 
     function setUp() public {
         string[5] memory paths = [
@@ -30,8 +30,10 @@ contract Benchmark is Test {
             "../examples/transactions/test_tx20.bin"
         ];
 
+        _txns[0] = Transaction({actions: new Action[](0), deltaProof: ""});
+
         for (uint256 i = 0; i < paths.length; ++i) {
-            _txns[i] = vm.parseTransaction(string.concat("/test/benchmark/", paths[i]));
+            _txns[i + 1] = vm.parseTransaction(string.concat("/test/benchmark/", paths[i]));
         }
         {
             RiscZeroGroth16Verifier verifier;
@@ -42,24 +44,28 @@ contract Benchmark is Test {
         }
     }
 
-    function test_execute_01() public {
+    function test_execute_00() public {
         _pa.execute(_txns[0]);
     }
 
-    function test_execute_05() public {
+    function test_execute_01() public {
         _pa.execute(_txns[1]);
     }
 
-    function test_execute_10() public {
+    function test_execute_05() public {
         _pa.execute(_txns[2]);
     }
 
-    function test_execute_15() public {
+    function test_execute_10() public {
         _pa.execute(_txns[3]);
     }
 
-    function test_execute_20() public {
+    function test_execute_15() public {
         _pa.execute(_txns[4]);
+    }
+
+    function test_execute_20() public {
+        _pa.execute(_txns[5]);
     }
 
     function test_print_calldata() public view {
