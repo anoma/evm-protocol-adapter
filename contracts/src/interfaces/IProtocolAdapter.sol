@@ -15,8 +15,8 @@ interface IProtocolAdapter {
 
     /// @notice Emitted when an action is executed.
     /// @param actionTreeRoot The action tree root.
-    /// @param tagsCount The number of tags in the action.
-    event ActionExecuted(bytes32 actionTreeRoot, uint256 tagsCount);
+    /// @param actionTagCount The number of tags in the action.
+    event ActionExecuted(bytes32 actionTreeRoot, uint256 actionTagCount);
 
     /// @notice Emitted when a forwarder call is executed.
     /// @param untrustedForwarder The forwarder contract forwarding the call.

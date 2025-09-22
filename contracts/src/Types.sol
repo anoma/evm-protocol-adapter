@@ -24,7 +24,7 @@ struct Resource {
     bool ephemeral;
 }
 
-/// @notice The transaction object containing all required data to conduct a RM state transition
+/// @notice The transaction object containing all required data to conduct a RM state transition.
 /// in which resource get consumed and created.
 /// @param actions The list of actions to be executed.
 /// @param deltaProof The proof for the transaction delta value.

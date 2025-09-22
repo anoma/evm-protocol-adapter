@@ -19,7 +19,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         Wrap
     }
 
-    /// @notice The canonical Uniswap Permit2 contract deployed at the same address on all supported chains
+    /// @notice The canonical Uniswap Permit2 contract being deployed at the same address on all supported chains.
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
     IPermit2 internal constant _PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
@@ -47,9 +47,10 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         EmergencyMigratableForwarderBase(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee)
     {}
 
-    /// @notice Forwards calls.
-    /// @param input The `bytes` encoded input of the call.
-    /// @return output The `bytes` encoded output of the call.
+    /// @notice Forwards a call wrapping or unwrapping ERC20 tokens based on the provided input.
+    /// @param input Contains data to withdraw or send ERC20 tokens from or to a user, respectively.
+    /// @return output The empty string signaling that the function call has succeeded.
+    /// @dev This function internally uses the `SafeERC20` library.
     function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
         CallType callType = CallType(uint8(input[31]));
 
@@ -102,9 +103,10 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         output = "";
     }
 
-    /// @notice Forwards emergency calls.
-    /// @param input The `bytes`  encoded input of the call.
-    /// @return output The `bytes` encoded output of the call.
+    /// @notice Forwards an emergency call wrapping or unwrapping ERC20 tokens based on the provided input.
+    /// @param input Contains data to withdraw or send ERC20 tokens from or to a user, respectively.
+    /// @return output The empty string signaling that the function call has succeeded.
+    /// @dev This function internally uses the `SafeERC20` library.
     function _forwardEmergencyCall(bytes calldata input) internal override returns (bytes memory output) {
         output = _forwardCall(input);
     }
