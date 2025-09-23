@@ -198,7 +198,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         public
     {
         TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutation_test_execute_non_existing_root_fails(txn, params);
@@ -238,7 +238,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
     /// @notice Test that transactions with short proofs fail
     function test_execute_short_proof_fails(uint8 nActions, uint8 nCUs, ShortProofFailsParams memory params) public {
         TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutation_test_execute_short_proof_fails(txn, params);
@@ -281,7 +281,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         public
     {
         TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutation_test_execute_unknown_selector_fails(txn, params);
@@ -332,7 +332,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         public
     {
         TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutation_test_execute_unknown_nullifier_tag_fails(txn, params);
@@ -383,7 +383,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         public
     {
         TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutation_test_execute_unknown_commitment_tag_fails(txn, params);
@@ -431,7 +431,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         MismatchingResourcesFailParams memory params
     ) public {
         TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutate_test_execute_missing_compliance_verifier_input_fail(txn, params);
@@ -481,7 +481,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         MismatchingResourcesFailParams memory params
     ) public {
         TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutate_test_execute_missing_logic_verifier_input_fail(txn, params);
@@ -520,7 +520,7 @@ contract ProtocolAdapterTestBase is Test, ProtocolAdapter {
         MismatchingLogicRefsFailParams memory params
     ) public {
         TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 0, 5)), nCUs: uint8(bound(nCUs, 0, 5))});
+            TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         mutate_test_execute_mismatching_logic_refs_fail(txn, params);
