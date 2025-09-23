@@ -40,7 +40,7 @@ contract Benchmark is Test {
 
             (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts().run();
 
-            _pa = new ProtocolAdapter(_router, verifier.SELECTOR());
+            _pa = new ProtocolAdapter(_router, verifier.SELECTOR(), msg.sender);
         }
     }
 

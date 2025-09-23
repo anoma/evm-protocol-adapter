@@ -23,12 +23,14 @@ import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 contract ForwarderBaseTest is Test {
     address internal constant _EMERGENCY_CALLER = address(uint160(1));
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
+    address internal constant _PA_OWNER = address(uint160(3));
 
     bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(type(uint256).max);
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     address internal _riscZeroAdmin;
+
     address internal _pa;
 
     ForwarderExample internal _fwd;
@@ -40,7 +42,7 @@ contract ForwarderBaseTest is Test {
 
         _riscZeroAdmin = _emergencyStop.owner();
 
-        _pa = address(new ProtocolAdapter(_router, verifier.SELECTOR()));
+        _pa = address(new ProtocolAdapter(_router, verifier.SELECTOR(), _PA_OWNER));
 
         _fwd = new ForwarderExample({protocolAdapter: _pa, calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
         _tgt = ForwarderTargetExample(_fwd.TARGET());

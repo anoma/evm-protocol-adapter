@@ -27,6 +27,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     using TxGen for Action;
     using TxGen for Vm;
 
+    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
     bytes32 internal constant _CARRIER_LOGIC_REF = bytes32(uint256(123));
 
     RiscZeroVerifierRouter internal _router;
@@ -41,7 +42,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function setUp() public {
         (_router, _emergencyStop, _mockVerifier) = new DeployRiscZeroContractsMock().run();
 
-        _mockPa = new ProtocolAdapter(_router, _mockVerifier.SELECTOR());
+        _mockPa = new ProtocolAdapter(_router, _mockVerifier.SELECTOR(), _EMERGENCY_COMMITTEE);
 
         _fwd = address(
             new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})

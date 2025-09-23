@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Ownable} from "@openzeppelin-contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
 
 import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
@@ -19,6 +20,9 @@ import {TransactionExample} from "./examples/transactions/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract ProtocolAdapterTest is Test {
+    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
+    address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
+
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
@@ -30,7 +34,7 @@ contract ProtocolAdapterTest is Test {
 
         _verifierSelector = verifier.SELECTOR();
 
-        _pa = new ProtocolAdapter(_router, _verifierSelector);
+        _pa = new ProtocolAdapter(_router, _verifierSelector, _EMERGENCY_COMMITTEE);
     }
 
     function test_constructor_reverts_on_vulnerable_risc_zero_verifier() public {
@@ -38,7 +42,15 @@ contract ProtocolAdapterTest is Test {
         _emergencyStop.estop();
 
         vm.expectRevert(ProtocolAdapter.RiscZeroVerifierStopped.selector);
-        new ProtocolAdapter(_router, _verifierSelector);
+        new ProtocolAdapter(_router, _verifierSelector, _EMERGENCY_COMMITTEE);
+    }
+
+    function test_execute_reverts_if_the_pa_has_been_stopped() public {
+        vm.prank(_pa.owner());
+        _pa.emergencyStop();
+
+        vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
+        _pa.execute(TransactionExample.transaction());
     }
 
     function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {
@@ -73,5 +85,30 @@ contract ProtocolAdapterTest is Test {
         for (uint256 i = 0; i < entries.length; i++) {
             assert(entries[i].topics[0] != ICommitmentAccumulator.CommitmentTreeRootStored.selector);
         }
+    }
+
+    function test_emergencyStop_reverts_if_the_caller_is_not_the_owner() public {
+        vm.prank(_UNAUTHORIZED_CALLER);
+        vm.expectRevert(
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _UNAUTHORIZED_CALLER), address(_pa)
+        );
+        _pa.emergencyStop();
+    }
+
+    function test_emergencyStop_pauses_the_protocol_adapter() public {
+        assertEq(_pa.paused(), false);
+
+        vm.prank(_EMERGENCY_COMMITTEE);
+        _pa.emergencyStop();
+
+        assertEq(_pa.paused(), true);
+    }
+
+    function test_emergencyStop_emits_the_Paused_event() public {
+        vm.prank(_EMERGENCY_COMMITTEE);
+
+        vm.expectEmit(address(_pa));
+        emit Pausable.Paused(_EMERGENCY_COMMITTEE);
+        _pa.emergencyStop();
     }
 }
