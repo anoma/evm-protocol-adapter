@@ -65,7 +65,7 @@ interface IProtocolAdapter {
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
 
     /// @notice Returns whether the protocol adapter has been stopped or not. This can have two reasons:
-    /// 1. The RISC Zero verifier associated with the protocol adapter has been stopped.abi
+    /// 1. The RISC Zero verifier associated with the protocol adapter has been stopped.
     /// 2. The protocol adapter itself was stopped by the owner.
     /// @return isStopped Whether the protocol adapter has been stopped or not.
     function isEmergencyStopped() external view returns (bool isStopped);
