@@ -730,7 +730,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
             }
         }
         // Compute the action tree root
-        bytes32 actionTreeRoot = computeActionTreeRootMemory(action, action.complianceVerifierInputs.length);
+        bytes32 actionTreeRoot = _computeActionTreeRootMemory(action, action.complianceVerifierInputs.length);
         // Recompute the logic verifier input proof
         logicVerifierInputs[params.inputIdx].proof = _mockVerifier.mockProve({
             imageId: logicVerifierInputs[params.inputIdx].verifyingKey,
@@ -770,7 +770,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     /// @param action The action whose root we compute.
     /// @param complianceUnitCount The number of compliance units in the action.
     /// @return root The root of the corresponding tree.
-    function computeActionTreeRootMemory(Action memory action, uint256 complianceUnitCount)
+    function _computeActionTreeRootMemory(Action memory action, uint256 complianceUnitCount)
         internal
         pure
         returns (bytes32 root)
