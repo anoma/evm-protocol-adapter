@@ -8,7 +8,7 @@ assignees: ""
 
 ## Context
 
-<!-- What is the context of this task? Why is it needed pr what previous worked has caused it? -->
+<!-- What is the context of this task? Why is it needed or what previous work has caused it? -->
 
 ## Scope
 
