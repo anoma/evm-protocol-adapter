@@ -136,7 +136,7 @@ contract ERC20ForwarderV2 is EmergencyMigratableForwarderBase, NullifierSet {
             _addNullifier(nf);
 
             // Check that the resource being upgraded has not been consumed.
-            if (INullifierSet(_ERC20_FORWARDER_V1).contains(nf)) {
+            if (INullifierSet(_OLD_PROTOCOL_ADAPTER).contains(nf)) {
                 revert ResourceConsumed(nf);
             }
 
