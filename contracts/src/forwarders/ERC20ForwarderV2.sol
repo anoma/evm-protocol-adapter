@@ -132,13 +132,13 @@ contract ERC20ForwarderV2 is EmergencyMigratableForwarderBase, NullifierSet {
                 uint256 value
             ) = abi.decode(input, (CallType, bytes32, address, uint128));
 
-            // Make sure that the nullifier has not been added before
-            _addNullifier(nf);
-
             // Check that the resource being upgraded has not been consumed.
             if (INullifierSet(_OLD_PROTOCOL_ADAPTER).contains(nf)) {
                 revert ResourceConsumed(nf);
             }
+
+            // Make sure that the nullifier has not been added before
+            _addNullifier(nf);
 
             // Move funds connected to the resource into the current forwarder.
             bytes memory emergencyInput = abi.encode(CallType.Unwrap, token, address(this), value);
