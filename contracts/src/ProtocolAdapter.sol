@@ -12,6 +12,7 @@ import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
+import {Versioning} from "./libs/Versioning.sol";
 
 import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
@@ -21,12 +22,6 @@ import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 
 import {Action, Transaction} from "./Types.sol";
-
-// The semantic version number of the Anoma protocol adapter.
-string constant PROTOCOL_ADAPTER_VERSION = "1.0.0-beta";
-
-// The RISC Zero verifier selector that the protocol adapter is associated with.
-bytes4 constant RISC_ZERO_VERIFIER_SELECTOR = 0x73c457ba;
 
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -201,8 +196,8 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
-    function getProtocolAdapterVersion() public pure override returns (string memory version) {
-        version = PROTOCOL_ADAPTER_VERSION;
+    function getProtocolAdapterVersion() public pure override returns (bytes32 version) {
+        version = Versioning._PROTOCOL_ADAPTER_VERSION;
     }
 
     /// @notice Executes a call to a forwarder contracts.

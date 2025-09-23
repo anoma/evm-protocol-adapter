@@ -58,7 +58,7 @@ interface IProtocolAdapter {
 
     /// @notice Returns the semantic version number of the protocol adapter.
     /// @return version The semantic version number.
-    function getProtocolAdapterVersion() external view returns (string memory version);
+    function getProtocolAdapterVersion() external view returns (bytes32 version);
 
     /// @notice Returns the RISC Zero verifier selector associated with the protocol adapter.
     /// @return verifierSelector The RISC Zero verifier selector.

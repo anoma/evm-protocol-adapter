@@ -2,12 +2,16 @@
 pragma solidity ^0.8.30;
 
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {LibString} from "@solady/utils/LibString.sol";
 
 import {Script} from "forge-std/Script.sol";
 
-import {ProtocolAdapter, PROTOCOL_ADAPTER_VERSION, RISC_ZERO_VERIFIER_SELECTOR} from "../src/ProtocolAdapter.sol";
+import {Versioning} from "../src/libs/Versioning.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 contract DeployProtocolAdapter is Script {
+    using LibString for bytes32;
+
     mapping(uint256 chainId => string network) internal _networks;
     mapping(string network => RiscZeroVerifierRouter router) internal _routers;
 
@@ -28,13 +32,15 @@ contract DeployProtocolAdapter is Script {
         if (isTestDeployment) {
             salt = bytes32(block.prevrandao);
         } else {
-            salt = keccak256(bytes(string.concat("ProtocolAdapter", " ", PROTOCOL_ADAPTER_VERSION)));
+            salt = keccak256(
+                bytes(string.concat("ProtocolAdapter", Versioning._PROTOCOL_ADAPTER_VERSION.fromSmallString()))
+            );
         }
 
         protocolAdapter = address(
             new ProtocolAdapter{salt: salt}({
                 riscZeroVerifierRouter: _routers[_networks[block.chainid]],
-                riscZeroVerifierSelector: RISC_ZERO_VERIFIER_SELECTOR,
+                riscZeroVerifierSelector: Versioning._RISC_ZERO_VERIFIER_SELECTOR,
                 emergencyStopCaller: emergencyStopCaller
             })
         );
