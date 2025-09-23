@@ -21,9 +21,9 @@ contract ERC20ForwarderV2 is EmergencyMigratableForwarderBase, NullifierSet {
     using SafeERC20 for IERC20;
 
     enum CallType {
-        Upgrade,
         Unwrap,
-        Wrap
+        Wrap,
+        Upgrade
     }
 
     /// @notice The canonical Uniswap Permit2 contract deployed at the same address on all supported chains
