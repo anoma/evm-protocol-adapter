@@ -180,7 +180,7 @@ contract ProtocolAdapter is
     // slither-disable-end reentrancy-no-eth
 
     /// @inheritdoc IProtocolAdapter
-    function estop() external override onlyOwner whenNotPaused {
+    function emergencyStop() external override onlyOwner whenNotPaused {
         _pause();
     }
 

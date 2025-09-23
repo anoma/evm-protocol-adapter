@@ -47,7 +47,7 @@ contract ProtocolAdapterTest is Test {
 
     function test_execute_reverts_if_the_pa_has_been_stopped() public {
         vm.prank(_pa.owner());
-        _pa.estop();
+        _pa.emergencyStop();
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
         _pa.execute(TransactionExample.transaction());
@@ -87,28 +87,28 @@ contract ProtocolAdapterTest is Test {
         }
     }
 
-    function test_estop_reverts_if_the_caller_is_not_the_owner() public {
+    function test_emergencyStop_reverts_if_the_caller_is_not_the_owner() public {
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(
             abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _UNAUTHORIZED_CALLER), address(_pa)
         );
-        _pa.estop();
+        _pa.emergencyStop();
     }
 
-    function test_estop_pauses_the_protocol_adapter() public {
+    function test_emergencyStop_pauses_the_protocol_adapter() public {
         assertEq(_pa.paused(), false);
 
         vm.prank(_EMERGENCY_COMMITTEE);
-        _pa.estop();
+        _pa.emergencyStop();
 
         assertEq(_pa.paused(), true);
     }
 
-    function test_estop_emits_the_Paused_event() public {
+    function test_emergencyStop_emits_the_Paused_event() public {
         vm.prank(_EMERGENCY_COMMITTEE);
 
         vm.expectEmit(address(_pa));
         emit Pausable.Paused(_EMERGENCY_COMMITTEE);
-        _pa.estop();
+        _pa.emergencyStop();
     }
 }
