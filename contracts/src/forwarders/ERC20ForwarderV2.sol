@@ -12,10 +12,10 @@ import {NullifierSet} from "../state/NullifierSet.sol";
 
 import {EmergencyMigratableForwarderBase} from "./EmergencyMigratableForwarderBase.sol";
 
-/// @title ERC20Forwarder
+/// @title ERC20ForwarderV2
 /// @author Anoma Foundation, 2025
-/// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources
-/// allowing to mint resources based on their state in a specified stopped protocol adapter.
+/// @notice Version 2 of the forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as
+/// resources allowing to mint resources based on their state in a specified stopped protocol adapter.
 /// @custom:security-contact security@anoma.foundation
 contract ERC20ForwarderV2 is EmergencyMigratableForwarderBase, NullifierSet {
     using SafeERC20 for IERC20;
