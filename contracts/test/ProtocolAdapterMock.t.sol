@@ -33,70 +33,70 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     using RiscZeroUtils for Logic.VerifierInput;
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
+    /// @param The index of the action to mutate
+    /// @param The index of the compliance verifier input of the action to mutate
+    /// @param The value to mutate the action tree root to
     struct NonExistingRootFailsParams {
-        // The index of the action to mutate
         uint256 actionIdx;
-        // The index of the compliance verifier input of the action to mutate
         uint256 inputIdx;
-        // The value to mutate the action tree root to
         bytes32 commitmentTreeRoot;
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
+    /// @param The index of the action to mutate
+    /// @param The index of the compliance verifier input of the action to mutate
     struct ShortProofFailsParams {
-        // The index of the action to mutate
         uint256 actionIdx;
-        // The index of the compliance verifier input of the action to mutate
         uint256 inputIdx;
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
+    /// @param The index of the action to mutate
+    /// @param The index of the compliance verifier input of the action to mutate
+    /// @param The proof to overwrite with
     struct UnknownSelectorFailsParams {
-        // The index of the action to mutate
         uint256 actionIdx;
-        // The index of the compliance verifier input of the action to mutate
         uint256 inputIdx;
-        // The proof to overwrite with
         bytes proof;
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
+    /// @param The index of the action to mutate
+    /// @param The index of the compliance verifier input of the action to mutate
+    /// @param The tag to overwrite with
     struct UnknownTagFailsParams {
-        // The index of the action to mutate
         uint256 actionIdx;
-        // The index of the compliance verifier input of the action to mutate
         uint256 inputIdx;
-        // The tag to overwrite with
         bytes32 tag;
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
+    /// @param The index of the action to mutate
+    /// @param The index of the compliance verifier input of the action to mutate
     struct MismatchingResourcesFailParams {
-        // The index of the action to mutate
         uint256 actionIdx;
-        // The index of the compliance verifier input of the action to mutate
         uint256 inputIdx;
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
+    /// @param The index of the action to mutate
+    /// @param The index of the logic verifier input of the action to mutate
+    /// @param The logic reference to overwrite with
     struct MismatchingLogicRefsFailParams {
-        // The index of the action to mutate
         uint256 actionIdx;
-        // The index of the logic verifier input of the action to mutate
         uint256 inputIdx;
-        // The logic reference to overwrite with
         bytes32 logicRef;
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
+    /// @param The index of the action to mutate
+    /// @param The index of the logic verifier input of the action to mutate
+    /// @param The index of the external payload to mutate
+    /// @param The output to overwrite with
     struct MismatchingForwarderCallOutputsFailParams {
-        // The index of the action to mutate
         uint256 actionIdx;
-        // The index of the logic verifier input of the action to mutate
         uint256 inputIdx;
-        // The index of the external payload to mutate
         uint256 payloadIdx;
-        // The output to overwrite with
         bytes output;
     }
 
@@ -287,7 +287,9 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     /// @notice Take a transaction that would execute successfully and make it
     /// fail by giving one of its compliance verifier inputs an incorrect
     /// commitment tree root.
-    function mutation_test_execute_non_existing_root_fails(
+    /// @param transaction A successful transaction
+    /// @param params A failure inducing modification
+    function mutationTestExecuteNonExistingRootFails(
         Transaction memory transaction,
         NonExistingRootFailsParams memory params
     ) public {
@@ -308,23 +310,26 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice Test that transactions with nonexistent rotts fail
-    function test_execute_non_existing_root_fails(uint8 nActions, uint8 nCUs, NonExistingRootFailsParams memory params)
-        public
-    {
+    function testFuzz_execute_non_existing_root_fails(
+        uint8 nActions,
+        uint8 nCUs,
+        NonExistingRootFailsParams memory params
+    ) public {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutation_test_execute_non_existing_root_fails(txn, params);
+        mutationTestExecuteNonExistingRootFails(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
     /// fail by giving one of its compliance verifier inputs a proof that's too
     /// short.
-    function mutation_test_execute_short_proof_fails(
-        Transaction memory transaction,
-        ShortProofFailsParams memory params
-    ) public {
+    /// @param transaction A successful transaction
+    /// @param params A failure inducing modification
+    function mutationTestExecuteShortProofFails(Transaction memory transaction, ShortProofFailsParams memory params)
+        public
+    {
         uint256 minProofLen = 4;
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
@@ -346,18 +351,22 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice Test that transactions with short proofs fail
-    function test_execute_short_proof_fails(uint8 nActions, uint8 nCUs, ShortProofFailsParams memory params) public {
+    function testFuzz_execute_short_proof_fails(uint8 nActions, uint8 nCUs, ShortProofFailsParams memory params)
+        public
+    {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutation_test_execute_short_proof_fails(txn, params);
+        mutationTestExecuteShortProofFails(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
     /// fail by giving one of its compliance verifier inputs a proof with an
     /// unknown selector.
-    function mutation_test_execute_unknown_selector_fails(
+    /// @param transaction A successful transaction
+    /// @param params A failure inducing modification
+    function mutationTestExecuteUnknownSelectorFails(
         Transaction memory transaction,
         UnknownSelectorFailsParams memory params
     ) public {
@@ -383,20 +392,24 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice Test that transactions with unknown selectors fail
-    function test_execute_unknown_selector_fails(uint8 nActions, uint8 nCUs, UnknownSelectorFailsParams memory params)
-        public
-    {
+    function testFuzz_execute_unknown_selector_fails(
+        uint8 nActions,
+        uint8 nCUs,
+        UnknownSelectorFailsParams memory params
+    ) public {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutation_test_execute_unknown_selector_fails(txn, params);
+        mutationTestExecuteUnknownSelectorFails(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
     /// fail by ensuring that the nullifier of one of its compliance verifier
     /// inputs is not found in the logic verifier inputs.
-    function mutation_test_execute_unknown_nullifier_tag_fails(
+    /// @param transaction A successful transaction
+    /// @param params A failure inducing modification
+    function mutationTestExecuteUnknownNullifierTagFails(
         Transaction memory transaction,
         UnknownTagFailsParams memory params
     ) public {
@@ -430,20 +443,24 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice Test that transactions with unknown nullifier tags fail
-    function test_execute_unknown_nullifier_tag_fails(uint8 nActions, uint8 nCUs, UnknownTagFailsParams memory params)
-        public
-    {
+    function testFuzz_execute_unknown_nullifier_tag_fails(
+        uint8 nActions,
+        uint8 nCUs,
+        UnknownTagFailsParams memory params
+    ) public {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutation_test_execute_unknown_nullifier_tag_fails(txn, params);
+        mutationTestExecuteUnknownNullifierTagFails(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
     /// fail by ensuring that the commitment of one of its compliance verifier
     /// inputs is not found in the logic verifier inputs.
-    function mutation_test_execute_unknown_commitment_tag_fails(
+    /// @param transaction A successful transaction
+    /// @param params A failure inducing modification
+    function mutationTestExecuteUnknownCommitmentTagFails(
         Transaction memory transaction,
         UnknownTagFailsParams memory params
     ) public {
@@ -477,20 +494,24 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice Test that transactions with unknown commitment tags fail
-    function test_execute_unknown_commitment_tag_fails(uint8 nActions, uint8 nCUs, UnknownTagFailsParams memory params)
-        public
-    {
+    function testFuzz_execute_unknown_commitment_tag_fails(
+        uint8 nActions,
+        uint8 nCUs,
+        UnknownTagFailsParams memory params
+    ) public {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutation_test_execute_unknown_commitment_tag_fails(txn, params);
+        mutationTestExecuteUnknownCommitmentTagFails(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
     /// fail by ensuring that it has less compliance verifier inputs than half
     /// the logic verifier inputs.
-    function mutate_test_execute_missing_compliance_verifier_input_fail(
+    /// @param transaction A successful transaction
+    /// @param params A failure inducing modification
+    function mutationTestExecuteMissingComplianceVerifierInputFail(
         Transaction memory transaction,
         MismatchingResourcesFailParams memory params
     ) public {
@@ -519,7 +540,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice Test that transactions with a missing compliance verifier input fail
-    function test_execute_missing_compliance_verifier_input_fail(
+    function testFuzz_execute_missing_compliance_verifier_input_fail(
         uint8 nActions,
         uint8 nCUs,
         MismatchingResourcesFailParams memory params
@@ -528,13 +549,15 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutate_test_execute_missing_compliance_verifier_input_fail(txn, params);
+        mutationTestExecuteMissingComplianceVerifierInputFail(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
     /// fail by ensuring that it has less logic verifier inputs than the number
     /// of compliance verifier inputs doubled.
-    function mutate_test_execute_missing_logic_verifier_input_fail(
+    /// @param transaction A successful transaction
+    /// @param params A failure inducing modification
+    function mutationTestExecuteMissingLogicVerifierInputFail(
         Transaction memory transaction,
         MismatchingResourcesFailParams memory params
     ) public {
@@ -565,7 +588,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice Test that transactions with a missing logic verifier input fail
-    function test_execute_missing_logic_verifier_input_fail(
+    function testFuzz_execute_missing_logic_verifier_input_fail(
         uint8 nActions,
         uint8 nCUs,
         MismatchingResourcesFailParams memory params
@@ -574,14 +597,16 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutate_test_execute_missing_logic_verifier_input_fail(txn, params);
+        mutationTestExecuteMissingLogicVerifierInputFail(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
     /// fail by ensuring that the verifying key of one of its logic verifier
     /// inputs does not match the nullifier or commitment in the corresponding
     /// compliance verifier input.
-    function mutate_test_execute_mismatching_logic_refs_fail(
+    /// @param transaction A successful transaction
+    /// @param params A failure inducing modification
+    function mutationTestExecuteMismatchingLogicRefsFail(
         Transaction memory transaction,
         MismatchingLogicRefsFailParams memory params
     ) public {
@@ -600,7 +625,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice Test that transactions with mismatching logic references fail
-    function test_execute_mismatching_logic_refs_fail(
+    function testFuzz_execute_mismatching_logic_refs_fail(
         uint8 nActions,
         uint8 nCUs,
         MismatchingLogicRefsFailParams memory params
@@ -609,12 +634,14 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
             TxGen.generateActionConfigs({nActions: uint8(bound(nActions, 1, 5)), nCUs: uint8(bound(nCUs, 1, 5))});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutate_test_execute_mismatching_logic_refs_fail(txn, params);
+        mutationTestExecuteMismatchingLogicRefsFail(txn, params);
     }
 
     /// @notice Take a transaction that would execute successfully and make it
     /// fail by ensuring that one of its forwarder call outputs mismatch.
-    function mutate_test_execute_mismatching_forwarder_call_outputs_fail(
+    /// @param transaction A successful transaction
+    /// @param params A failure inducing modification
+    function mutationTestExecuteMismatchingForwarderCallOutputsFail(
         Transaction memory transaction,
         MismatchingForwarderCallOutputsFailParams memory params
     ) public {
@@ -664,18 +691,18 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice Test that transactions with mismatching forwarder call outputs fails
-    function test_execute_mismatching_forwarder_call_outputs_fail(
+    function testFuzz_execute_mismatching_forwarder_call_outputs_fail(
         MismatchingForwarderCallOutputsFailParams memory params
     ) public {
         bytes32 carrierLogicRef = bytes32(uint256(123));
-        address _fwd =
+        address fwd =
             address(new ForwarderExample({protocolAdapter: address(this), calldataCarrierLogicRef: carrierLogicRef}));
         address fwd2 =
             address(new ForwarderExample({protocolAdapter: address(this), calldataCarrierLogicRef: carrierLogicRef}));
-        assertNotEq(_fwd, fwd2);
+        assertNotEq(fwd, fwd2);
 
         address[] memory fwdList = new address[](2);
-        fwdList[0] = _fwd;
+        fwdList[0] = fwd;
         fwdList[1] = fwd2;
 
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
@@ -684,7 +711,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
         Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
-        mutate_test_execute_mismatching_forwarder_call_outputs_fail(txn, params);
+        mutationTestExecuteMismatchingForwarderCallOutputsFail(txn, params);
     }
 
     /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
