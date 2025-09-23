@@ -77,6 +77,8 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     }
 
     /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.
+    /// @dev Before use, ensure that the commitment is a proper leaf and not an intermediary node to avoid
+    /// second-preimage attacks.
     /// @param root The root to reproduce.
     /// @param commitment The commitment leaf to proof inclusion in the tree for.
     /// @param path The siblings constituting the path from the leaf to the root.
