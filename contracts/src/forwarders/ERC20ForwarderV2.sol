@@ -53,7 +53,6 @@ contract ERC20ForwarderV2 is EmergencyMigratableForwarderBase, NullifierSet {
     // solhint-enable gas-indexed-events
 
     error CallTypeInvalid();
-    error ResourceConsumed(bytes32 nullifier);
     error TypeOverflow(uint256 limit, uint256 actual);
 
     /// @notice Initializes the ERC-20 forwarder contract.
@@ -134,7 +133,7 @@ contract ERC20ForwarderV2 is EmergencyMigratableForwarderBase, NullifierSet {
 
             // Check that the resource being upgraded has not been consumed.
             if (INullifierSet(_OLD_PROTOCOL_ADAPTER).contains(nf)) {
-                revert ResourceConsumed(nf);
+                revert NullifierSet.PreExistingNullifier(nf);
             }
 
             // Make sure that the nullifier has not been added before
