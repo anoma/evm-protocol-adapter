@@ -112,7 +112,7 @@ contract ERC20ForwarderTest is Test {
 
         vm.prank(address(_pa));
         vm.expectEmit(address(_fwd));
-        emit ERC20Forwarder.Unwrapped({token: address(_erc20), to: _alice, value: _TRANSFER_AMOUNT});
+        emit ERC20Forwarder.Unwrapped({token: address(_erc20), to: _alice, amount: _TRANSFER_AMOUNT});
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
@@ -284,7 +284,7 @@ contract ERC20ForwarderTest is Test {
 
         vm.prank(address(_pa));
         vm.expectEmit(address(_fwd));
-        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: _alice, value: _TRANSFER_AMOUNT});
+        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: _alice, amount: _TRANSFER_AMOUNT});
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
