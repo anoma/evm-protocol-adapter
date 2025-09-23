@@ -101,13 +101,19 @@ library RiscZeroUtils {
         converted = value ? bytes4(0x01000000) : bytes4(0x00000000);
     }
 
-    /// @notice Converts a `uint32` to the RISC Zero format to `bytes4` by appending three zero bytes.
-    /// @param value The value.
-    /// @return converted The converted value.
+    /// @notice Converts a `uint32` to RISC Zero's format (`bytes4`) by reversing the byte order (endianness).
+    /// @param value The 32-bit unsigned integer to convert.
+    /// @return converted The converted 4-byte value in little-endian order.
     function toRiscZero(uint32 value) internal pure returns (bytes4 converted) {
         converted = bytes4(
-            ((value & 0x000000FF) << 24) | ((value & 0x0000FF00) << 8) | ((value & 0x00FF0000) >> 8)
-                | ((value & 0xFF000000) >> 24)
+            // Extract the most significant byte and move it right to the least significant position.
+            (value >> 24)
+            // Extract the second-most significant byte and shift it right by one byte.
+            | ((value >> 8) & 0x0000FF00)
+            // Extract the second-least significant byte and shift it left by one byte.
+            | ((value << 8) & 0x00FF0000)
+            // Extract the least significant byte and move it left to the most significant position.
+            | (value << 24)
         );
     }
 }
