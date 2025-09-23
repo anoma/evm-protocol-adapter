@@ -291,16 +291,12 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         Transaction memory transaction,
         NonExistingRootFailsParams memory params
     ) public {
-        // Cannot do mutation if the transaction has no actions
-        vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
         Compliance.VerifierInput[] memory complianceVerifierInputs =
             transaction.actions[params.actionIdx].complianceVerifierInputs;
         // Assume the proposed commitment tree root is not already contained
         vm.assume(!_containsRoot(params.commitmentTreeRoot));
-        // Cannot do do mutation if transaction has no compliance verifier inputs
-        vm.assume(complianceVerifierInputs.length > 0);
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         // Finally assign the proposed commitment tree root into the transaction
@@ -330,14 +326,10 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         ShortProofFailsParams memory params
     ) public {
         uint256 minProofLen = 4;
-        // Cannot do mutation if the transaction has no actions
-        vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
         Compliance.VerifierInput[] memory complianceVerifierInputs =
             transaction.actions[params.actionIdx].complianceVerifierInputs;
-        // Cannot do do mutation if transaction has no compliance verifier inputs
-        vm.assume(complianceVerifierInputs.length > 0);
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         // Finally truncate the compliance proof to below the minimum
@@ -373,14 +365,10 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         uint256 minProofLen = 4;
         vm.assume(params.proof.length >= minProofLen);
         vm.assume(address(_router.verifiers(bytes4(params.proof))) == address(0));
-        // Cannot do mutation if the transaction has no actions
-        vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
         Compliance.VerifierInput[] memory complianceVerifierInputs =
             transaction.actions[params.actionIdx].complianceVerifierInputs;
-        // Cannot do do mutation if transaction has no compliance verifier inputs
-        vm.assume(complianceVerifierInputs.length > 0);
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         // Finally, corrupt the verifier selector
@@ -412,14 +400,10 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         Transaction memory transaction,
         UnknownTagFailsParams memory params
     ) public {
-        // Cannot do mutation if the transaction has no actions
-        vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
         Compliance.VerifierInput[] memory complianceVerifierInputs =
             transaction.actions[params.actionIdx].complianceVerifierInputs;
-        // Cannot do do mutation if transaction has no compliance verifier inputs
-        vm.assume(complianceVerifierInputs.length > 0);
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
@@ -463,14 +447,10 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         Transaction memory transaction,
         UnknownTagFailsParams memory params
     ) public {
-        // Cannot do mutation if the transaction has no actions
-        vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
         Compliance.VerifierInput[] memory complianceVerifierInputs =
             transaction.actions[params.actionIdx].complianceVerifierInputs;
-        // Cannot do do mutation if transaction has no compliance verifier inputs
-        vm.assume(complianceVerifierInputs.length > 0);
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
@@ -514,14 +494,10 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         Transaction memory transaction,
         MismatchingResourcesFailParams memory params
     ) public {
-        // Cannot do mutation if the transaction has no actions
-        vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
         Action memory action = transaction.actions[params.actionIdx];
         Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
-        // Cannot do do mutation if transaction has no compliance verifier inputs
-        vm.assume(complianceVerifierInputs.length > 0);
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         // Now delete the array entry
@@ -562,14 +538,10 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         Transaction memory transaction,
         MismatchingResourcesFailParams memory params
     ) public {
-        // Cannot do mutation if the transaction has no actions
-        vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
         Action memory action = transaction.actions[params.actionIdx];
         Logic.VerifierInput[] memory logicVerifierInputs = action.logicVerifierInputs;
-        // Cannot do do mutation if transaction has no logic verifier inputs
-        vm.assume(logicVerifierInputs.length > 0);
         // Wrap the logic verifier input index into range
         params.inputIdx = params.inputIdx % logicVerifierInputs.length;
         // Now delete the array entry
@@ -613,13 +585,9 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         Transaction memory transaction,
         MismatchingLogicRefsFailParams memory params
     ) public {
-        // Cannot do mutation if the transaction has no actions
-        vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
         Logic.VerifierInput[] memory logicVerifierInputs = transaction.actions[params.actionIdx].logicVerifierInputs;
-        // Cannot do do mutation if transaction has no logic verifier inputs
-        vm.assume(logicVerifierInputs.length > 0);
         // Wrap the logic verifier input index into range
         params.inputIdx = params.inputIdx % logicVerifierInputs.length;
         // Now corrupt the logic reference
@@ -650,14 +618,10 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         Transaction memory transaction,
         MismatchingForwarderCallOutputsFailParams memory params
     ) public {
-        // Cannot do mutation if the transaction has no actions
-        vm.assume(transaction.actions.length > 0);
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
         Action memory action = transaction.actions[params.actionIdx];
         Logic.VerifierInput[] memory logicVerifierInputs = action.logicVerifierInputs;
-        // Cannot do mutation if transaction has no logic verifier inputs
-        vm.assume(logicVerifierInputs.length > 0);
         // Wrap the logic verifier input index into range
         params.inputIdx = params.inputIdx % logicVerifierInputs.length;
         Logic.VerifierInput memory logicVerifierInput = logicVerifierInputs[params.inputIdx];
