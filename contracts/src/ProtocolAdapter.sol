@@ -59,10 +59,12 @@ contract ProtocolAdapter is
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
     /// @param riscZeroVerifierSelector The RISC Zero verifier selector this protocol adapter is associated with.
-    /// @param owner The owner that can stop the protocol adapter in case of a vulnerability.
-    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector, address owner)
-        Ownable(owner)
-    {
+    /// @param emergencyStopCaller The account that can stop the protocol adapter in case of a vulnerability.
+    constructor(
+        RiscZeroVerifierRouter riscZeroVerifierRouter,
+        bytes4 riscZeroVerifierSelector,
+        address emergencyStopCaller
+    ) Ownable(emergencyStopCaller) {
         if (address(riscZeroVerifierRouter) == address(0)) {
             revert ZeroNotAllowed();
         }

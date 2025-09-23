@@ -21,7 +21,7 @@ contract DeployProtocolAdapter is Script {
         _routers["base-sepolia"] = RiscZeroVerifierRouter(0x0b144E07A0826182B6b59788c34b32Bfa86Fb711);
     }
 
-    function run(bool isTestDeployment, address owner) public returns (address protocolAdapter) {
+    function run(bool isTestDeployment, address emergencyStopCaller) public returns (address protocolAdapter) {
         vm.startBroadcast();
 
         bytes32 salt;
@@ -35,7 +35,7 @@ contract DeployProtocolAdapter is Script {
             new ProtocolAdapter{salt: salt}({
                 riscZeroVerifierRouter: _routers[_networks[block.chainid]],
                 riscZeroVerifierSelector: RISC_ZERO_VERIFIER_SELECTOR,
-                owner: owner
+                emergencyStopCaller: emergencyStopCaller
             })
         );
 
