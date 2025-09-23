@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Test} from "forge-std/Test.sol";
-
-import {MerkleTree} from "../../src/libs/MerkleTree.sol";
-import {SHA256} from "../../src/libs/SHA256.sol";
-import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
 import {MerkleTree as ZeppelinMerkleTree} from "@openzeppelin/contracts/utils/structs/MerkleTree.sol";
+import {Test} from "forge-std/Test.sol";
+import {MerkleTree} from "./../../src/libs/MerkleTree.sol";
+import {SHA256} from "./../../src/libs/SHA256.sol";
+import {MerkleTreeExample} from "./../examples/MerkleTree.e.sol";
 
 contract MerkleTreeTest is Test, MerkleTreeExample {
     using MerkleTree for MerkleTree.Tree;
@@ -69,19 +68,17 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
             treeDepth++;
         }
         // Set up a protocol adapter Merkle tree and an OpenZeppelin one
-        _paMerkleTree.setup();
+        bytes32 newRoot1 = _paMerkleTree.setup();
         // OpenZeppelin implementation is not variable depth, it is easier to
         // just compare the end state once we have reached the final depth
-        _zeppelinMerkleTree.setup(treeDepth, SHA256.EMPTY_HASH, SHA256.hash_pair);
+        bytes32 newRoot2 = _zeppelinMerkleTree.setup(treeDepth, SHA256.EMPTY_HASH, SHA256.hashPair);
 
-        uint256 index1;
-        bytes32 newRoot1;
-        uint256 index2;
-        bytes32 newRoot2;
+        uint256 index1 = 0;
+        uint256 index2 = 0;
         // Now add all the leaves to each Merkle tree
         for (uint256 i = 0; i < leaves.length; i++) {
             (index1, newRoot1) = _paMerkleTree.push(leaves[i]);
-            (index2, newRoot2) = _zeppelinMerkleTree.push(leaves[i], SHA256.hash_pair);
+            (index2, newRoot2) = _zeppelinMerkleTree.push(leaves[i], SHA256.hashPair);
             // The lead counts must remain matched throughout
             assertEq(index1, index2);
             // Once we have reached the final depth, we might as well start
@@ -96,5 +93,29 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         assertEq(newRoot1, newRoot2);
         // Same depths
         assertEq(_paMerkleTree.depth(), _zeppelinMerkleTree.depth());
+    }
+
+    /// @notice Differentially test our Merkle tree implementation against
+    /// OpenZeppelin's implementation. Ensuring that we hit the 0 leaf case.
+    function testFuzz_push_implementations_yield_same_roots() public {
+        bytes32[] memory dynamicLeaves = new bytes32[](0);
+        testFuzz_push_implementations_yield_same_roots(dynamicLeaves);
+    }
+
+    /// @notice Differentially test our Merkle tree implementation against
+    /// OpenZeppelin's implementation. Ensuring that we hit the 1 leaf case.
+    function testFuzz_push_implementations_yield_same_roots(bytes32[1] memory leaves) public {
+        bytes32[] memory dynamicLeaves = new bytes32[](1);
+        dynamicLeaves[0] = leaves[0];
+        testFuzz_push_implementations_yield_same_roots(dynamicLeaves);
+    }
+
+    /// @notice Differentially test our Merkle tree implementation against
+    /// OpenZeppelin's implementation. Ensuring that we hit the 2 leaf case.
+    function testFuzz_push_implementations_yield_same_roots(bytes32[2] memory leaves) public {
+        bytes32[] memory dynamicLeaves = new bytes32[](2);
+        dynamicLeaves[0] = leaves[0];
+        dynamicLeaves[1] = leaves[1];
+        testFuzz_push_implementations_yield_same_roots(dynamicLeaves);
     }
 }
