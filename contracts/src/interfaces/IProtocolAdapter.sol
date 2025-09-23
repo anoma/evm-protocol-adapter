@@ -15,8 +15,8 @@ interface IProtocolAdapter {
 
     /// @notice Emitted when an action is executed.
     /// @param actionTreeRoot The action tree root.
-    /// @param tagsCount The number of tags in the action.
-    event ActionExecuted(bytes32 actionTreeRoot, uint256 tagsCount);
+    /// @param actionTagCount The number of tags in the action.
+    event ActionExecuted(bytes32 actionTreeRoot, uint256 actionTagCount);
 
     /// @notice Emitted when a forwarder call is executed.
     /// @param untrustedForwarder The forwarder contract forwarding the call.
@@ -53,6 +53,9 @@ interface IProtocolAdapter {
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 
+    /// @notice Stops the protocol adapter permanently in case of an emergency.
+    function emergencyStop() external;
+
     /// @notice Returns the semantic version number of the protocol adapter.
     /// @return version The semantic version number.
     function getProtocolAdapterVersion() external view returns (string memory version);
@@ -61,7 +64,9 @@ interface IProtocolAdapter {
     /// @return verifierSelector The RISC Zero verifier selector.
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
 
-    /// @notice Returns whether the RISC Zero verifier associated with the protocol adapter has been stopped or not.
-    /// @return isStopped Whether the RISC Zero verifier has been stopped.
+    /// @notice Returns whether the protocol adapter has been stopped or not. This can have two reasons:
+    /// 1. The RISC Zero verifier associated with the protocol adapter has been stopped.
+    /// 2. The protocol adapter itself was stopped by the owner.
+    /// @return isStopped Whether the protocol adapter has been stopped or not.
     function isEmergencyStopped() external view returns (bool isStopped);
 }

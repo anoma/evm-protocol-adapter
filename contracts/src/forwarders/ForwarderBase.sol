@@ -35,7 +35,9 @@ abstract contract ForwarderBase is IForwarder {
     function forwardCall(bytes32 logicRef, bytes calldata input) external returns (bytes memory output) {
         _checkCaller(_PROTOCOL_ADAPTER);
 
-        _checkLogicRef(logicRef);
+        if (_CALLDATA_CARRIER_LOGIC_REF != logicRef) {
+            revert UnauthorizedLogicRef({expected: _CALLDATA_CARRIER_LOGIC_REF, actual: logicRef});
+        }
 
         output = _forwardCall(input);
     }
@@ -50,14 +52,6 @@ abstract contract ForwarderBase is IForwarder {
     function _checkCaller(address expected) internal view {
         if (msg.sender != expected) {
             revert UnauthorizedCaller({expected: expected, actual: msg.sender});
-        }
-    }
-
-    /// @notice Checks that an forward call is triggered by the expected resource logic.
-    /// @param logicRef The logic reference to check.
-    function _checkLogicRef(bytes32 logicRef) internal view {
-        if (_CALLDATA_CARRIER_LOGIC_REF != logicRef) {
-            revert UnauthorizedLogicRef({expected: _CALLDATA_CARRIER_LOGIC_REF, actual: logicRef});
         }
     }
 }
