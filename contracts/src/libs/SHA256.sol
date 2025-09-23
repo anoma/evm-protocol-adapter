@@ -24,4 +24,12 @@ library SHA256 {
     function hash(bytes32 a, bytes32 b) internal pure returns (bytes32 hab) {
         hab = sha256(abi.encode(a, b));
     }
+
+    /// @notice Hashes two `bytes32` values.
+    /// @param a The first value to hash.
+    /// @param b The second value to hash.
+    /// @return hab The resulting hash.
+    function hash_pair(bytes32 a, bytes32 b) internal pure returns (bytes32 hab) {
+        hab = hash(a, b);
+    }
 }
