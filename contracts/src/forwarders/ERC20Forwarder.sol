@@ -27,13 +27,13 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @param token The ERC20 token address.
     /// @param from The address from which tokens were withdrawn.
     /// @param amount The token amount being deposited into the ERC20 forwarder contract.
-    event Wrapped(address indexed token, address indexed from, uint256 amount);
+    event Wrapped(address indexed token, address indexed from, uint128 amount);
 
     /// @notice Emitted when ERC20 tokens get unwrapped.
     /// @param token The ERC20 token address.
     /// @param to The address to which tokens were deposited.
     /// @param amount The token amount being withdrawn from the ERC20 forwarder contract.
-    event Unwrapped(address indexed token, address indexed to, uint256 amount);
+    event Unwrapped(address indexed token, address indexed to, uint128 amount);
 
     error CallTypeInvalid();
     error TypeOverflow(uint256 limit, uint256 actual);
@@ -78,7 +78,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             , // CallType
             address token,
             address to,
-            uint256 amount
+            uint128 amount
         ) = abi.decode(input, (CallType, address, address, uint128));
 
         emit Unwrapped({token: token, to: to, amount: amount});
@@ -111,7 +111,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             revert TypeOverflow({limit: type(uint128).max, actual: permit.permitted.amount});
         }
 
-        emit Wrapped({token: permit.permitted.token, from: from, amount: permit.permitted.amount});
+        emit Wrapped({token: permit.permitted.token, from: from, amount: uint128(permit.permitted.amount)});
 
         _PERMIT2.permitWitnessTransferFrom({
             permit: permit,

@@ -22,8 +22,10 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
 
     /// @notice Emitted when an created and unconsumed resource representing ERC20 tokens is migrated from the protocol
     /// adapter v1.
+    /// @param token The ERC20 token address.
+    /// @param amount The token amount being migrated into the ERC20 forwarder v2 contract.
     /// @param  nullifier The nullifier of the created and unconsumed resource.
-    event Migrated(bytes32 indexed nullifier);
+    event Migrated(address indexed token, uint128 amount, bytes32 nullifier);
 
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
@@ -77,10 +79,10 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     function _migrate(bytes calldata input) internal {
         (
             , // CallType
-            bytes32 nullifier,
             address token,
-            uint256 value
-        ) = abi.decode(input, (CallTypeV2, bytes32, address, uint128));
+            uint128 amount,
+            bytes32 nullifier
+        ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32));
 
         // Check that the resource being upgraded has not been consumed.
         if (NullifierSet(_PROTOCOL_ADAPTER_V1).contains(nullifier)) {
@@ -90,7 +92,9 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         // Make sure that the nullifier has not been added before
         _addNullifier(nullifier);
 
+        emit Migrated({token: token, amount: amount, nullifier: nullifier});
+
         // slither-disable-next-line unused-return
-        _ERC20_FORWARDER_V1.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), value)});
+        _ERC20_FORWARDER_V1.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
     }
 }
