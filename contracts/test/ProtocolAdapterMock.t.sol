@@ -252,10 +252,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         vm.assume(!_mockPa.containsRoot(fakeRoot));
 
         // Choose random compliance unit among the actions
-        actionCount = uint8(bound(actionCount, 1, 5));
-        complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
-        actionIndex = uint8(bound(actionIndex, 0, actionCount - 1));
-        complianceIndex = uint8(bound(complianceIndex, 0, complianceUnitCount - 1));
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
@@ -282,10 +280,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         vm.assume(fakeProof.length < 4);
 
         // Choose random compliance unit among the actions.
-        actionCount = uint8(bound(actionCount, 1, 5));
-        complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
-        actionIndex = uint8(bound(actionIndex, 0, actionCount - 1));
-        complianceIndex = uint8(bound(complianceIndex, 0, complianceUnitCount - 1));
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
@@ -313,10 +309,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         vm.assume(fakeProof.length >= 4);
 
         // Choose random compliance unit among the actions.
-        actionCount = uint8(bound(actionCount, 1, 5));
-        complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
-        actionIndex = uint8(bound(actionIndex, 0, actionCount - 1));
-        complianceIndex = uint8(bound(complianceIndex, 0, complianceUnitCount - 1));
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
@@ -342,10 +336,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         bytes32 nonce
     ) public {
         // Choose random compliance unit among the actions.
-        actionCount = uint8(bound(actionCount, 1, 5));
-        complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
-        actionIndex = uint8(bound(actionIndex, 0, actionCount - 1));
-        complianceIndex = uint8(bound(complianceIndex, 0, complianceUnitCount - 1));
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
@@ -379,10 +371,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         bytes32 nonce
     ) public {
         // Choose random compliance unit among the actions.
-        actionCount = uint8(bound(actionCount, 1, 5));
-        complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
-        actionIndex = uint8(bound(actionIndex, 0, actionCount - 1));
-        complianceIndex = uint8(bound(complianceIndex, 0, complianceUnitCount - 1));
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
@@ -414,9 +404,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 actionIndex
     ) public {
         // Choose a random action whose resource count we will mutate.
-        actionCount = uint8(bound(actionCount, 1, 5));
-        complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
-        actionIndex = uint8(bound(actionIndex, 0, actionCount - 1));
+        (actionCount, complianceUnitCount, actionIndex, /* complianceIndex */ ) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, 0);
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
@@ -445,9 +434,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 actionIndex
     ) public {
         // Choose a random action whose resource count we will mutate.
-        actionCount = uint8(bound(actionCount, 1, 5));
-        complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
-        actionIndex = uint8(bound(actionIndex, 0, actionCount - 1));
+        (actionCount, complianceUnitCount, actionIndex, /* complianceIndex */ ) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, 0);
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
@@ -479,10 +467,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         bytes32 nonce
     ) public {
         // Choose a random compliance whose commitment logicRef we will mutate.
-        actionCount = uint8(bound(actionCount, 1, 5));
-        complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
-        actionIndex = uint8(bound(actionIndex, 0, actionCount - 1));
-        complianceIndex = uint8(bound(complianceIndex, 0, complianceUnitCount - 1));
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
@@ -511,10 +497,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         bytes32 nonce
     ) public {
         // Choose a random compliance whose commitment logicRef we will mutate.
-        actionCount = uint8(bound(actionCount, 1, 5));
-        complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
-        actionIndex = uint8(bound(actionIndex, 0, actionCount - 1));
-        complianceIndex = uint8(bound(complianceIndex, 0, complianceUnitCount - 1));
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
@@ -610,5 +594,21 @@ contract ProtocolAdapterMockVerifierTest is Test {
             });
         }
         data[0].appData.externalPayload = externalBlobs;
+    }
+
+    function _bindParameters(uint8 actionCount, uint8 complianceUnitCount, uint8 actionIndex, uint8 complianceIndex)
+        private
+        pure
+        returns (
+            uint8 boundActionCount,
+            uint8 boundComplianceUnitCount,
+            uint8 boundActionIndex,
+            uint8 boundComplianceIndex
+        )
+    {
+        boundActionCount = uint8(bound(actionCount, 1, 5));
+        boundComplianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
+        boundActionIndex = uint8(bound(actionIndex, 0, boundActionCount - 1));
+        boundComplianceIndex = uint8(bound(complianceIndex, 0, boundComplianceUnitCount - 1));
     }
 }
