@@ -380,8 +380,8 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
             truncatedProof[k] = proof[k];
         }
         complianceVerifierInputs[params.inputIdx].proof = truncatedProof;
-        // With a short proof, we expect failure
-        vm.expectRevert(address(_router));
+        // With a short proof, we expect an EVM error (which is message-less)
+        vm.expectRevert(bytes(""), address(_router));
         // Finally, execute the transaction to make sure that it fails
         this.execute(transaction);
     }
