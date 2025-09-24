@@ -51,7 +51,6 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// @notice Forwards a call wrapping or unwrapping ERC20 tokens based on the provided input.
     /// @param input Contains data to withdraw or send ERC20 tokens from or to a user, respectively.
     /// @return output The empty string signaling that the function call has succeeded.
-    /// @dev This function internally uses the `SafeERC20` library.
     function _forwardCall(bytes calldata input) internal virtual override returns (bytes memory output) {
         CallType callType = CallType(uint8(input[31]));
 
@@ -69,7 +68,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     }
     // slither-disable-end dead-code
 
-    /// @notice Unwraps an ERC20 token and transfers funds to the recipient.
+    /// @notice Unwraps an ERC20 token and transfers funds to the recipient using the `SafeERC20.safeTransfer`.
     /// @param input The input bytes containing the encoded arguments for the unwrap call:
     /// * `token`: The address of the token to be transferred.
     /// * `to`: The address to transfer the funds to.
@@ -88,7 +87,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         IERC20(token).safeTransfer({to: to, value: amount});
     }
 
-    /// @notice Wraps an ERC20 token and transfers funds from the user that must have authorized the call via
+    /// @notice Wraps an ERC20 token and transfers funds from the user that must have authorized the call using
     /// `Permit2.permitWitnessTransferFrom`.
     /// @param input The input bytes containing the encoded arguments for the wrap call:
     /// * `from`: The signer of the Permit2 message from which the funds a transferred from.
