@@ -20,6 +20,8 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     address internal immutable _PROTOCOL_ADAPTER_V1;
     ERC20Forwarder internal immutable _ERC20_FORWARDER_V1;
 
+    error NullifierAlreadyMigrated(bytes32 nullifier);
+
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
     /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
@@ -79,7 +81,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
 
         // Check that the resource being upgraded has not been consumed.
         if (NullifierSet(_PROTOCOL_ADAPTER_V1).contains(nullifier)) {
-            revert NullifierSet.PreExistingNullifier(nullifier);
+            revert NullifierAlreadyMigrated(nullifier);
         }
 
         // Make sure that the nullifier has not been added before
