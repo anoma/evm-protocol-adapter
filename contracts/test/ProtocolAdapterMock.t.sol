@@ -13,6 +13,7 @@ import {SHA256} from "./../src/libs/SHA256.sol";
 import {ProtocolAdapter} from "./../src/ProtocolAdapter.sol";
 import {Compliance} from "./../src/proving/Compliance.sol";
 import {Logic} from "./../src/proving/Logic.sol";
+import {CommitmentAccumulator} from "./../src/state/CommitmentAccumulator.sol";
 import {NullifierSet} from "./../src/state/NullifierSet.sol";
 import {Transaction, Action} from "./../src/Types.sol";
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
@@ -20,13 +21,7 @@ import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
 
-struct ProtocolAdapterTestArgs {
-    RiscZeroVerifierRouter router;
-    RiscZeroVerifierEmergencyStop emergencyStop;
-    RiscZeroMockVerifier verifier;
-}
-
-contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
+contract ProtocolAdapterMockVerifierTest is Test {
     using MerkleTree for bytes32[];
     using TxGen for Action[];
     using TxGen for Action;
@@ -46,17 +41,11 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
 
     bytes32 internal _carrierLabelRef;
 
-    constructor(ProtocolAdapterTestArgs memory args)
-        ProtocolAdapter(args.router, args.verifier.SELECTOR(), _EMERGENCY_COMMITTEE)
-    {
-        _router = args.router;
-        _emergencyStop = args.emergencyStop;
-        _mockVerifier = args.verifier;
-        _verifierSelector = args.verifier.SELECTOR();
-        _mockPa = new ProtocolAdapter(_router, _mockVerifier.SELECTOR(), _EMERGENCY_COMMITTEE);
-    }
-
     function setUp() public {
+        (_router, _emergencyStop, _mockVerifier) = new DeployRiscZeroContractsMock().run();
+
+        _mockPa = new ProtocolAdapter(_router, _mockVerifier.SELECTOR(), _EMERGENCY_COMMITTEE);
+
         _fwd = address(
             new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
         );
@@ -260,7 +249,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         bytes32 fakeRoot
     ) public {
         // Assume the proposed commitment tree root is not already contained
-        vm.assume(!_containsRoot(fakeRoot));
+        vm.assume(!_mockPa.containsRoot(fakeRoot));
 
         // Choose random compliance unit among the actions
         actionCount = uint8(bound(actionCount, 1, 5));
@@ -277,7 +266,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.commitmentTreeRoot =
             fakeRoot;
 
-        vm.expectRevert(abi.encodeWithSelector(NonExistingRoot.selector, fakeRoot));
+        vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.NonExistingRoot.selector, fakeRoot));
         _mockPa.execute(txn);
     }
 
@@ -440,7 +429,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                TagCountMismatch.selector,
+                ProtocolAdapter.TagCountMismatch.selector,
                 txn.actions[actionIndex].logicVerifierInputs.length,
                 shortComplianceLength * 2
             )
@@ -472,7 +461,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         // Expect resource mismatch as there are fewer actions.
         vm.expectRevert(
             abi.encodeWithSelector(
-                TagCountMismatch.selector,
+                ProtocolAdapter.TagCountMismatch.selector,
                 shortActionLength,
                 txn.actions[actionIndex].complianceVerifierInputs.length * 2
             )
@@ -509,7 +498,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         txn.actions[actionIndex].logicVerifierInputs[(complianceIndex * 2) + 1].verifyingKey = fakeLogic;
 
         // Expect a logic mismatch.
-        vm.expectRevert(abi.encodeWithSelector(LogicRefMismatch.selector, fakeLogic, consumed.logicRef));
+        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.LogicRefMismatch.selector, fakeLogic, consumed.logicRef));
         _mockPa.execute(txn);
     }
 
@@ -541,7 +530,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         txn.actions[actionIndex].logicVerifierInputs[(complianceIndex * 2) + 1].verifyingKey = fakeLogic;
 
         // Expect a logic mismatch.
-        vm.expectRevert(abi.encodeWithSelector(LogicRefMismatch.selector, fakeLogic, created.logicRef));
+        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.LogicRefMismatch.selector, fakeLogic, created.logicRef));
         _mockPa.execute(txn);
     }
 
@@ -561,7 +550,9 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
 
         // Expect output mismatch.
-        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOutputMismatch.selector, fakeOutput, EXPECTED_OUTPUT));
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.ForwarderCallOutputMismatch.selector, fakeOutput, EXPECTED_OUTPUT)
+        );
         _mockPa.execute(txn);
     }
 
@@ -641,17 +632,5 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
             });
         }
         data[0].appData.externalPayload = externalBlobs;
-    }
-}
-
-contract ProtocolAdapterTest is ProtocolAdapterMockVerifierTest {
-    constructor() ProtocolAdapterMockVerifierTest(baseArgs()) {}
-
-    function baseArgs() public returns (ProtocolAdapterTestArgs memory args) {
-        RiscZeroVerifierRouter router;
-        RiscZeroVerifierEmergencyStop emergencyStop;
-        RiscZeroMockVerifier verifier;
-        (router, emergencyStop, verifier) = new DeployRiscZeroContractsMock().run();
-        return ProtocolAdapterTestArgs({router: router, emergencyStop: emergencyStop, verifier: verifier});
     }
 }
