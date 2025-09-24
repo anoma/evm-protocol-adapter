@@ -20,13 +20,6 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     address internal immutable _PROTOCOL_ADAPTER_V1;
     ERC20Forwarder internal immutable _ERC20_FORWARDER_V1;
 
-    /// @notice Emitted when an created and unconsumed resource representing ERC20 tokens is migrated from the protocol
-    /// adapter v1.
-    /// @param token The ERC20 token address.
-    /// @param amount The token amount being migrated into the ERC20 forwarder v2 contract.
-    /// @param  nullifier The nullifier of the created and unconsumed resource.
-    event Migrated(address indexed token, uint128 amount, bytes32 nullifier);
-
     /// @notice Initializes the ERC-20 forwarder contract.
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
     /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
@@ -92,9 +85,9 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         // Make sure that the nullifier has not been added before
         _addNullifier(nullifier);
 
-        emit Migrated({token: token, amount: amount, nullifier: nullifier});
-
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V1.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
+
+        emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V1), amount: amount});
     }
 }
