@@ -398,29 +398,33 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     /// @notice Test that transactions with a missing compliance verifier input fail
-    function testFuzz_execute_missing_compliance_verifier_input_fail(
+    function testFuzz_execute_incorrect_compliance_verifier_count_fail(
         uint8 actionCount,
         uint8 complianceUnitCount,
-        uint8 actionIndex
+        uint8 actionIndex,
+        uint8 fakeComplianceCount
     ) public {
         // Choose a random action whose resource count we will mutate.
         (actionCount, complianceUnitCount, actionIndex, /* complianceIndex */ ) =
             _bindParameters(actionCount, complianceUnitCount, actionIndex, 0);
+
+        // Take a fake compliance unit count.
+        vm.assume(fakeComplianceCount != complianceUnitCount);
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
-        // Make compliance slightly shorter.
-        uint256 shortComplianceLength = txn.actions[actionIndex].complianceVerifierInputs.length - 1;
-        txn.actions[actionIndex].complianceVerifierInputs = new Compliance.VerifierInput[](shortComplianceLength);
+        // Set the compliance unit count to the fake number.
+        txn.actions[actionIndex].complianceVerifierInputs = new Compliance.VerifierInput[](fakeComplianceCount);
 
+        // Expect revert based on wrong resource computation.
         vm.expectRevert(
             abi.encodeWithSelector(
                 ProtocolAdapter.TagCountMismatch.selector,
                 txn.actions[actionIndex].logicVerifierInputs.length,
-                shortComplianceLength * 2
+                uint256(fakeComplianceCount) * 2
             )
         );
 
@@ -428,29 +432,32 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     /// @notice Test that transactions with a missing logic verifier input fail
-    function testFuzz_execute_missing_logic_verifier_input_fail(
+    function testFuzz_execute_incorrect_logic_verifier_count_fail(
         uint8 actionCount,
         uint8 complianceUnitCount,
-        uint8 actionIndex
+        uint8 actionIndex,
+        uint8 fakeLogicVerifierCount
     ) public {
         // Choose a random action whose resource count we will mutate.
         (actionCount, complianceUnitCount, actionIndex, /* complianceIndex */ ) =
             _bindParameters(actionCount, complianceUnitCount, actionIndex, 0);
+
+        // Take a fake action unit count.
+        vm.assume(fakeLogicVerifierCount != (uint256(complianceUnitCount) * 2));
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
-        // Make actions slightly smaller.
-        uint256 shortActionLength = txn.actions[actionIndex].logicVerifierInputs.length - 1;
-        txn.actions[actionIndex].logicVerifierInputs = new Logic.VerifierInput[](shortActionLength);
+        // Set the logic verifier inputs length based on wrong count.
+        txn.actions[actionIndex].logicVerifierInputs = new Logic.VerifierInput[](fakeLogicVerifierCount);
 
-        // Expect resource mismatch as there are fewer actions.
+        // Expect revert based on wrong resource computation
         vm.expectRevert(
             abi.encodeWithSelector(
                 ProtocolAdapter.TagCountMismatch.selector,
-                shortActionLength,
+                fakeLogicVerifierCount,
                 txn.actions[actionIndex].complianceVerifierInputs.length * 2
             )
         );
