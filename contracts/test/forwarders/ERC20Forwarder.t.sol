@@ -84,7 +84,7 @@ contract ERC20ForwarderTest is Test {
         }
     }
 
-    function test_forwardCall_Unwrap_call_sends_funds_to_the_user() public {
+    function test_unwrap_sends_funds_to_the_user() public {
         _erc20.mint({to: address(_fwd), value: _TRANSFER_AMOUNT});
         uint256 startBalanceAlice = _erc20.balanceOf(_alice);
         uint256 startBalanceForwarder = _erc20.balanceOf(address(_fwd));
@@ -106,7 +106,7 @@ contract ERC20ForwarderTest is Test {
         assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder - _TRANSFER_AMOUNT);
     }
 
-    function test_forwardCall_Unwrap_call_emits_the_Unwrapped_event() public {
+    function test_unwrap_emits_the_Unwrapped_event() public {
         _erc20.mint({to: address(_fwd), value: _TRANSFER_AMOUNT});
         bytes memory input = abi.encode(ERC20Forwarder.CallType.Unwrap, address(_erc20), _alice, _TRANSFER_AMOUNT);
 
@@ -116,7 +116,7 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
-    function test_forwardCall_Wrap_call_reverts_if_user_did_not_approve_permit2() public {
+    function test_wrap_reverts_if_user_did_not_approve_permit2() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
 
         bytes memory input;
@@ -139,7 +139,7 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
-    function test_forwardCall_Wrap_call_reverts_if_the_signature_expired() public {
+    function test_wrap_reverts_if_the_signature_expired() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
@@ -167,7 +167,7 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
-    function test_forwardCall_Wrap_call_reverts_if_the_signature_was_already_used() public {
+    function test_wrap_reverts_if_the_signature_was_already_used() public {
         _erc20.mint({to: _alice, value: 2 * _TRANSFER_AMOUNT});
         vm.prank(_alice);
         _erc20.approve(address(_permit2), type(uint256).max);
@@ -196,7 +196,7 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
-    function test_forwardCall_Wrap_call_reverts_if_the_amount_to_be_wrapped_overflows() public {
+    function test_wrap_reverts_if_the_amount_to_be_wrapped_overflows() public {
         uint256 maxAmount = type(uint128).max;
 
         _erc20.mint({to: _alice, value: maxAmount + 1});
@@ -230,7 +230,7 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
-    function test_forwardCall_PermitTransferFrom_call_pulls_funds_from_user() public {
+    function test_wrap_pulls_funds_from_user() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
         uint256 startBalanceAlice = _erc20.balanceOf(_alice);
         uint256 startBalanceForwarder = _erc20.balanceOf(address(_fwd));
@@ -261,7 +261,7 @@ contract ERC20ForwarderTest is Test {
         assertEq(_erc20.balanceOf(address(_fwd)), startBalanceForwarder + _TRANSFER_AMOUNT);
     }
 
-    function test_forwardCall_PermitTransferFrom_emits_the_Wrapped_event() public {
+    function test_wrap_emits_the_Wrapped_event() public {
         _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
 
         vm.prank(_alice);
