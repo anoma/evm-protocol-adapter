@@ -40,4 +40,45 @@ contract LogicProofTest is Test {
             journalDigest: input.toJournalDigest(root, false)
         });
     }
+
+    function testFuzz_different_empty_payloads_produce_different_digest(
+        bytes32 root,
+        bool consumed,
+        bytes memory payload
+    ) public pure {
+        Logic.VerifierInput memory input;
+        Logic.ExpirableBlob memory blob = Logic.ExpirableBlob(Logic.DeletionCriterion.Never, payload);
+
+        Logic.ExpirableBlob[] memory payloadList = new Logic.ExpirableBlob[](1);
+        payloadList[0] = blob;
+
+        // Generate digest where only resource payload is filled.
+        input.appData.resourcePayload = payloadList;
+        bytes32 resourcePayloadDigest = input.toJournalDigest(root, consumed);
+        input.appData.resourcePayload = new Logic.ExpirableBlob[](0);
+
+        // Generate digest where only discovery payload is filled.
+        input.appData.discoveryPayload = payloadList;
+        bytes32 discoveryPayloadDigest = input.toJournalDigest(root, consumed);
+        input.appData.discoveryPayload = new Logic.ExpirableBlob[](0);
+
+        // Generate digest where only external payload is filled.
+        input.appData.externalPayload = payloadList;
+        bytes32 externalPayloadDigest = input.toJournalDigest(root, consumed);
+        input.appData.externalPayload = new Logic.ExpirableBlob[](0);
+
+        // Generate digest where only application payload is filled.
+        input.appData.applicationPayload = payloadList;
+        bytes32 applicationPayloadDigest = input.toJournalDigest(root, consumed);
+
+        // Assert that all four produce different digests.
+        assert(resourcePayloadDigest != discoveryPayloadDigest);
+        assert(resourcePayloadDigest != externalPayloadDigest);
+        assert(resourcePayloadDigest != applicationPayloadDigest);
+
+        assert(discoveryPayloadDigest != externalPayloadDigest);
+        assert(discoveryPayloadDigest != applicationPayloadDigest);
+
+        assert(externalPayloadDigest != applicationPayloadDigest);
+    }
 }
