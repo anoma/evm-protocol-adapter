@@ -556,28 +556,6 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
-    /// @param action The action whose root we compute.
-    /// @param complianceUnitCount The number of compliance units in the action.
-    /// @return root The root of the corresponding tree.
-    function _computeActionTreeRootMemory(Action memory action, uint256 complianceUnitCount)
-        internal
-        pure
-        returns (bytes32 root)
-    {
-        bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * 2);
-
-        // The order in which the tags are added to the tree are provided by the compliance units
-        for (uint256 j = 0; j < complianceUnitCount; ++j) {
-            Compliance.VerifierInput memory complianceVerifierInput = action.complianceVerifierInputs[j];
-
-            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
-            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
-        }
-
-        root = actionTreeTags.computeRoot();
-    }
-
     function _exampleResourceAndEmptyAppData(uint256 nonce)
         private
         view
