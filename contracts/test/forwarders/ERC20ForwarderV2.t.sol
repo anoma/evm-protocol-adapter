@@ -105,14 +105,14 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
 
         vm.prank(_PA_V2);
 
+        vm.expectEmit(address(_fwdV2));
+        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: address(_fwdV1), amount: _TRANSFER_AMOUNT});
+
         vm.expectEmit(address(_fwdV1));
         emit ERC20Forwarder.Unwrapped({token: address(_erc20), to: address(_fwdV2), amount: _TRANSFER_AMOUNT});
 
         vm.expectEmit(address(_erc20));
         emit IERC20.Transfer({from: address(_fwdV1), to: address(_fwdV2), value: _TRANSFER_AMOUNT});
-
-        vm.expectEmit(address(_fwdV2));
-        emit ERC20Forwarder.Wrapped({token: address(_erc20), from: address(_fwdV1), amount: _TRANSFER_AMOUNT});
 
         _fwdV2.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
 

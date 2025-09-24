@@ -87,9 +87,9 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         // Make sure that the nullifier has not been added before
         _addNullifier(nullifier);
 
+        emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V1), amount: amount});
+
         // slither-disable-next-line unused-return
         _ERC20_FORWARDER_V1.forwardEmergencyCall({input: abi.encode(CallType.Unwrap, token, address(this), amount)});
-
-        emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V1), amount: amount});
     }
 }
