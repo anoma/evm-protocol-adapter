@@ -412,7 +412,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
-        // Make cpm
+        // Make compliance slightly shorter.
         uint256 shortComplianceLength = txn.actions[actionIndex].complianceVerifierInputs.length - 1;
         txn.actions[actionIndex].complianceVerifierInputs = new Compliance.VerifierInput[](shortComplianceLength);
 
