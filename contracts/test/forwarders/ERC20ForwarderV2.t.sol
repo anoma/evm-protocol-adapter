@@ -29,14 +29,8 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     }
 
     function test_migrate_transfers_funds_from_V1_to_V2_forwarder() public {
-        _erc20.mint({to: _alice, value: _TRANSFER_AMOUNT});
-
-        vm.startPrank(_alice);
-        {
-            _erc20.approve(address(_permit2), type(uint256).max);
-            _erc20.transfer({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
-        }
-        vm.stopPrank();
+        // Fund the forwarder v1
+        _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
         assertEq(_erc20.balanceOf(address(_fwdV1)), _TRANSFER_AMOUNT);
         assertEq(_erc20.balanceOf(address(_fwdV2)), 0);
