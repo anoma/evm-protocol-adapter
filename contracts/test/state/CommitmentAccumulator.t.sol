@@ -139,7 +139,9 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
         bytes32[] memory wrongPath = new bytes32[](3);
 
         vm.expectRevert(
-            abi.encodeWithSelector(CommitmentAccumulator.InvalidPathLength.selector, _cmAcc.depth(), wrongPath.length),
+            abi.encodeWithSelector(
+                CommitmentAccumulator.PathLengthExceedsLatestDepth.selector, _cmAcc.depth(), wrongPath.length
+            ),
             address(_cmAcc)
         );
         _cmAcc.verifyMerkleProof({root: 0, commitment: 0, path: wrongPath, directionBits: 0});
@@ -159,6 +161,27 @@ contract CommitmentAccumulatorTest is Test, MerkleTreeExample {
             abi.encodeWithSelector(CommitmentAccumulator.InvalidRoot.selector, newRoot, invalidRoot), address(_cmAcc)
         );
         _cmAcc.verifyMerkleProof({root: newRoot, commitment: commitment, path: wrongPath, directionBits: 0});
+    }
+
+    function test_verifyMerkleProof_verifies_path_for_roots() public {
+        // Fix old root
+        bytes32 oldRoot = _cmAcc.latestRoot();
+
+        // Update the tree with some commitment
+        bytes32 commitment = sha256("SOMETHING");
+        bytes32 newRoot = _cmAcc.addCommitment(commitment);
+        _cmAcc.storeRoot(newRoot);
+
+        // Assert that the new root is different
+        assert(_cmAcc.latestRoot() != oldRoot);
+
+        // Check merkle path verification for initial root works
+        _cmAcc.verifyMerkleProof({
+            root: oldRoot,
+            commitment: SHA256.EMPTY_HASH,
+            path: new bytes32[](0),
+            directionBits: 0
+        });
     }
 
     function test_should_produce_an_invalid_root_for_a_non_existent_leaf_in_the_empty_tree() public view {

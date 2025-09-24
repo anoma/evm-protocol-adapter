@@ -31,7 +31,7 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     error NonExistingRoot(bytes32 root);
     error PreExistingRoot(bytes32 root);
     error InvalidRoot(bytes32 expected, bytes32 actual);
-    error InvalidPathLength(uint256 expected, uint256 actual);
+    error PathLengthExceedsLatestDepth(uint256 latestDepth, uint256 provided);
 
     /// @notice Initializes the commitment accumulator by setting up a Merkle tree.
     constructor() {
@@ -77,6 +77,7 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     }
 
     /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.
+    /// @dev To prevent second-preimage attacks, ensure that the commitment is a leaf and not an intermediary node.
     /// @param root The root to reproduce.
     /// @param commitment The commitment leaf to proof inclusion in the tree for.
     /// @param path The siblings constituting the path from the leaf to the root.
@@ -86,8 +87,8 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         view
     {
         // Check length.
-        if (path.length != _merkleTree.depth()) {
-            revert InvalidPathLength({expected: _merkleTree.depth(), actual: path.length});
+        if (path.length > _merkleTree.depth()) {
+            revert PathLengthExceedsLatestDepth({latestDepth: _merkleTree.depth(), provided: path.length});
         }
 
         // Check root existence.
