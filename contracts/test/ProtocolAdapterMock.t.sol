@@ -240,7 +240,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with nonexistent roots fail
+    /// @notice Test that transactions with nonexistent roots fail.
     function testFuzz_execute_non_existing_root_fails(
         uint8 actionCount,
         uint8 complianceUnitCount,
@@ -248,10 +248,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 complianceIndex,
         bytes32 fakeRoot
     ) public {
-        // Assume the proposed commitment tree root is not already contained
+        // Assume the proposed commitment tree root is not already contained.
         vm.assume(!_mockPa.containsRoot(fakeRoot));
 
-        // Choose random compliance unit among the actions
+        // Choose random compliance unit among the actions.
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
             _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
@@ -260,7 +260,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
-        // Assign the proposed commitment tree root into the transaction
+        // Assign the proposed commitment tree root into the transaction.
         txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.commitmentTreeRoot =
             fakeRoot;
 
@@ -268,7 +268,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with short proofs fail
+    /// @notice Test that transactions with short proofs fail.
     function testFuzz_execute_short_proof_fails(
         uint8 actionCount,
         uint8 complianceUnitCount,
@@ -295,7 +295,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with unknown selectors fail
+    /// @notice Test that transactions with unknown selectors fail.
     function testFuzz_execute_unknown_selector_fails(
         uint8 actionCount,
         uint8 complianceUnitCount,
@@ -303,7 +303,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 complianceIndex,
         bytes memory fakeProof
     ) public {
-        // Ensure that the first 4 bytes of the proof are invalid
+        // Ensure that the first 4 bytes of the proof are invalid.
         // The mock router only accepts one selector we deploy with.
         vm.assume(bytes4(fakeProof) != bytes4(0xFFFFFFFF));
         vm.assume(fakeProof.length >= 4);
@@ -352,6 +352,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         // Replace the nullifier corresponding to the selected compliance unit with a fake one.
         txn.actions[actionIndex].logicVerifierInputs[complianceIndex * 2].tag = fakeTag;
 
+        // Execution reverts as the original nullifier isn't found in logic inputs.
         vm.expectRevert(
             abi.encodeWithSelector(
                 Logic.TagNotFound.selector,
@@ -387,6 +388,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         // Replace the commitment corresponding to the selected compliance unit with a fake one
         txn.actions[actionIndex].logicVerifierInputs[(complianceIndex * 2) + 1].tag = fakeTag;
 
+        // Execution reverts as the original commitment isn't found in logic inputs.
         vm.expectRevert(
             abi.encodeWithSelector(
                 Logic.TagNotFound.selector,
@@ -397,7 +399,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with a missing compliance verifier input fail
+    /// @notice Test that transactions with a missing compliance verifier input fail.
     function testFuzz_execute_incorrect_compliance_verifier_count_fail(
         uint8 actionCount,
         uint8 complianceUnitCount,
@@ -431,7 +433,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with a missing logic verifier input fail
+    /// @notice Test that transactions with a missing logic verifier input fail.
     function testFuzz_execute_incorrect_logic_verifier_count_fail(
         uint8 actionCount,
         uint8 complianceUnitCount,
@@ -453,7 +455,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         // Set the logic verifier inputs length based on wrong count.
         txn.actions[actionIndex].logicVerifierInputs = new Logic.VerifierInput[](fakeLogicVerifierCount);
 
-        // Expect revert based on wrong resource computation
+        // Expect revert based on wrong resource computation.
         vm.expectRevert(
             abi.encodeWithSelector(
                 ProtocolAdapter.TagCountMismatch.selector,
@@ -465,7 +467,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with mismatching nullfifier logic references fail
+    /// @notice Test that transactions with mismatching nullfifier logic references fail.
     function testFuzz_execute_mismatching_nullifier_logic_refs_fail(
         uint8 actionCount,
         uint8 complianceUnitCount,
@@ -495,7 +497,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with mismatching commitment logic references fail
+    /// @notice Test that transactions with mismatching commitment logic references fail.
     function testFuzz_execute_mismatching_commitment_logic_refs_fail(
         uint8 actionCount,
         uint8 complianceUnitCount,
@@ -525,7 +527,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transaction with mismatching forwarder call outputs fails
+    /// @notice Test that transaction with mismatching forwarder call outputs fails.
     function testFuzz_execute_mismatching_forwarder_call_outputs_fail(bytes memory fakeOutput) public {
         vm.assume(keccak256(fakeOutput) != keccak256(EXPECTED_OUTPUT));
 
