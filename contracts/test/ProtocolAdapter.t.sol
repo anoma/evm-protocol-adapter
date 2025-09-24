@@ -37,6 +37,11 @@ contract ProtocolAdapterTest is Test {
         _pa = new ProtocolAdapter(_router, _verifierSelector, _EMERGENCY_COMMITTEE);
     }
 
+    function test_constructor_reverts_on_address_zero_router() public {
+        vm.expectRevert(ProtocolAdapter.ZeroNotAllowed.selector);
+        new ProtocolAdapter(RiscZeroVerifierRouter(address(0)), _verifierSelector, _EMERGENCY_COMMITTEE);
+    }
+
     function test_constructor_reverts_on_vulnerable_risc_zero_verifier() public {
         vm.prank(_emergencyStop.owner());
         _emergencyStop.estop();
