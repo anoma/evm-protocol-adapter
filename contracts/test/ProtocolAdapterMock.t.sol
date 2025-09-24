@@ -4,18 +4,21 @@ pragma solidity ^0.8.30;
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+
 import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
+
 import {IProtocolAdapter} from "./../src/interfaces/IProtocolAdapter.sol";
 import {MerkleTree} from "./../src/libs/MerkleTree.sol";
-import {RiscZeroUtils} from "./../src/libs/RiscZeroUtils.sol";
 import {SHA256} from "./../src/libs/SHA256.sol";
+
 import {ProtocolAdapter} from "./../src/ProtocolAdapter.sol";
 import {Compliance} from "./../src/proving/Compliance.sol";
 import {Logic} from "./../src/proving/Logic.sol";
 import {CommitmentAccumulator} from "./../src/state/CommitmentAccumulator.sol";
 import {NullifierSet} from "./../src/state/NullifierSet.sol";
 import {Transaction, Action} from "./../src/Types.sol";
+
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
 import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./libs/TxGen.sol";
@@ -26,16 +29,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
     using TxGen for Action[];
     using TxGen for Action;
     using TxGen for Vm;
-    using RiscZeroUtils for Logic.VerifierInput;
 
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
     bytes32 internal constant _CARRIER_LOGIC_REF = bytes32(uint256(123));
 
     RiscZeroVerifierRouter internal _router;
+    RiscZeroMockVerifier internal _mockVerifier;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _mockPa;
-    bytes4 internal _verifierSelector;
-    RiscZeroMockVerifier internal _mockVerifier;
     address internal _fwd;
     address[] internal _fwdList;
 
