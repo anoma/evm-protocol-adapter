@@ -175,6 +175,17 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    function test_execute_1_txn_with_up_to_3_empty_actions(bool[3] memory isEmpty) public {
+        TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](3);
+        configs[0] = TxGen.ActionConfig({complianceUnitCount: isEmpty[0] ? 0 : 1});
+        configs[1] = TxGen.ActionConfig({complianceUnitCount: isEmpty[1] ? 0 : 1});
+        configs[2] = TxGen.ActionConfig({complianceUnitCount: isEmpty[2] ? 0 : 1});
+
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
+        _mockPa.execute(txn);
+    }
+
     function test_execute_1_txn_with_n_actions_and_n_cus(uint8 actionCount, uint8 complianceUnitCount) public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
             actionCount: uint8(bound(actionCount, 0, 5)),
