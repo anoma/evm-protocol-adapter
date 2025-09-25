@@ -10,6 +10,7 @@ import {SignMagnitude} from "./SignMagnitude.sol";
 library DeltaGen {
     using EllipticCurveK256 for uint256;
     using SignMagnitude for SignMagnitude.Number;
+    using DeltaGen for uint256;
 
     /// @notice The parameters required to generate a mock delta instance for a .
     /// @param valueCommitmentRandomness The value commitment randomness.
@@ -30,6 +31,9 @@ library DeltaGen {
         uint256 valueCommitmentRandomness;
         bytes32 verifyingKey;
     }
+
+    /// @notice The secp256k1 (K-256) elliptic curve order.
+    uint256 internal constant SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
 
     // Resource kind must be non-zero
     error KindZero();
@@ -58,8 +62,8 @@ library DeltaGen {
             revert DeltaGen.KindZero();
         }
         uint256 quantity = canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
-        uint256 prod = mulmod(deltaInputs.kind, quantity, EllipticCurveK256.ORDER);
-        uint256 preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, EllipticCurveK256.ORDER);
+        uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
+        uint256 preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, SECP256K1_ORDER);
         if (preDelta == 0) {
             revert DeltaGen.PreDeltaZero();
         }
@@ -88,26 +92,32 @@ library DeltaGen {
         proof = abi.encodePacked(r, s, v);
     }
 
+    /// @notice Computes the modulo of a value and returns the remainder.
+    /// @param value The value to compute the module for.
+    /// @return remainder The remainder.
+    function modOrder(uint256 value) internal pure returns (uint256 remainder) {
+        remainder = value % SECP256K1_ORDER;
+    }
+
     /// @notice Convert an exponent represented as a boolean sign and a uint128
-    /// magnitude to an equivalent uint256 assuming an order of SECP256K1_ORDER
+    /// magnitude to an equivalent uint256 assuming an order of SECP256K1_SECP256K1_ORDER
     /// @param consumed False represents a non-negative quantity, true a non-positive quantity
     /// @param quantity The magnitude of the quantity being caanonicalized
-    /// @return quantityRepresentative The non-negative number less than SECP256K1_ORDER
-    /// that's equivalent to the exponent modulo SECP256K1_ORDER
+    /// @return quantityRepresentative The non-negative number less than SECP256K1_SECP256K1_ORDER
+    /// that's equivalent to the exponent modulo SECP256K1_SECP256K1_ORDER
     function canonicalizeQuantity(bool consumed, uint128 quantity)
         internal
         pure
         returns (uint256 quantityRepresentative)
     {
         // If positive, leave the number unchanged
-        quantityRepresentative =
-            consumed ? ((EllipticCurveK256.ORDER - uint256(quantity)).modOrder()) : uint256(quantity);
+        quantityRepresentative = consumed ? ((SECP256K1_ORDER - uint256(quantity)).modOrder()) : uint256(quantity);
     }
 
     function computePreDelta(DeltaGen.InstanceInputs memory deltaInputs) internal pure returns (uint256 preDelta) {
         uint256 canonicalizedQuantity = canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
-        uint256 prod = mulmod(deltaInputs.kind, canonicalizedQuantity, EllipticCurveK256.ORDER);
-        preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, EllipticCurveK256.ORDER);
+        uint256 prod = mulmod(deltaInputs.kind, canonicalizedQuantity, SECP256K1_ORDER);
+        preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, SECP256K1_ORDER);
     }
 
     /// @notice Balances an array of delta inputs by adjusting the inputs so that the sum is within the range
@@ -149,9 +159,9 @@ library DeltaGen {
 
         int256 quantityAcc = 0;
         for (uint256 i = 0; i < deltaInputs.length; i++) {
-            // Accumulate the randomness commitments modulo SECP256K1_ORDER
+            // Accumulate the randomness commitments modulo SECP256K1_SECP256K1_ORDER
             valueCommitmentRandomnessAcc =
-                addmod(valueCommitmentRandomnessAcc, deltaInputs[i].valueCommitmentRandomness, EllipticCurveK256.ORDER);
+                addmod(valueCommitmentRandomnessAcc, deltaInputs[i].valueCommitmentRandomness, SECP256K1_ORDER);
             int256 currentQuantityMag = int256(uint256(deltaInputs[i].quantity));
 
             int256 currentQuantity = deltaInputs[i].consumed ? -currentQuantityMag : currentQuantityMag;
