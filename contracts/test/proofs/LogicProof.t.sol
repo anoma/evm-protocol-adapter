@@ -55,21 +55,37 @@ contract LogicProofTest is Test {
         // Generate digest where only resource payload is filled.
         input.appData.resourcePayload = payloadList;
         bytes32 resourcePayloadDigest = input.toJournalDigest(root, consumed);
+        assertEq(input.appData.resourcePayload.length, 1);
+        assertEq(input.appData.discoveryPayload.length, 0);
+        assertEq(input.appData.externalPayload.length, 0);
+        assertEq(input.appData.applicationPayload.length, 0);
         input.appData.resourcePayload = new Logic.ExpirableBlob[](0);
 
         // Generate digest where only discovery payload is filled.
         input.appData.discoveryPayload = payloadList;
         bytes32 discoveryPayloadDigest = input.toJournalDigest(root, consumed);
+        assertEq(input.appData.resourcePayload.length, 0);
+        assertEq(input.appData.discoveryPayload.length, 1);
+        assertEq(input.appData.externalPayload.length, 0);
+        assertEq(input.appData.applicationPayload.length, 0);
         input.appData.discoveryPayload = new Logic.ExpirableBlob[](0);
 
         // Generate digest where only external payload is filled.
         input.appData.externalPayload = payloadList;
         bytes32 externalPayloadDigest = input.toJournalDigest(root, consumed);
+        assertEq(input.appData.resourcePayload.length, 0);
+        assertEq(input.appData.discoveryPayload.length, 0);
+        assertEq(input.appData.externalPayload.length, 1);
+        assertEq(input.appData.applicationPayload.length, 0);
         input.appData.externalPayload = new Logic.ExpirableBlob[](0);
 
         // Generate digest where only application payload is filled.
         input.appData.applicationPayload = payloadList;
         bytes32 applicationPayloadDigest = input.toJournalDigest(root, consumed);
+        assertEq(input.appData.resourcePayload.length, 0);
+        assertEq(input.appData.discoveryPayload.length, 0);
+        assertEq(input.appData.externalPayload.length, 0);
+        assertEq(input.appData.applicationPayload.length, 1);
 
         // Assert that all four produce different digests.
         assert(resourcePayloadDigest != discoveryPayloadDigest);
