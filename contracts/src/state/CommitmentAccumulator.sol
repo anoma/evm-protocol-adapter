@@ -59,7 +59,7 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         _verifyMerkleProof({root: root, commitment: commitment, path: path, directionBits: directionBits});
     }
 
-    /// @notice Adds a commitment to to the set, if it does not exist already and returns the new root.
+    /// @notice Adds a commitment to the accumulator and returns the new root.
     /// @param commitment The commitment to add.
     /// @return newRoot The resulting new root.
     function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
