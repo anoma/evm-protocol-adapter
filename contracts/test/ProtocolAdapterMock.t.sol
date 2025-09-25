@@ -18,14 +18,9 @@ import {ForwarderExample} from "./examples/Forwarder.e.sol";
 import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
+import {CommitmentAccumulator} from "./../src/state/CommitmentAccumulator.sol";
 
-struct ProtocolAdapterTestArgs {
-    RiscZeroVerifierRouter router;
-    RiscZeroVerifierEmergencyStop emergencyStop;
-    RiscZeroMockVerifier verifier;
-}
-
-contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
+contract ProtocolAdapterMockVerifierTest is Test {
     using MerkleTree for bytes32[];
     using TxGen for Action[];
     using TxGen for Action;
@@ -33,9 +28,6 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     using RiscZeroUtils for Logic.VerifierInput;
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
-    /// @param The index of the action to mutate
-    /// @param The index of the compliance verifier input of the action to mutate
-    /// @param The value to mutate the action tree root to
     struct NonExistingRootFailsParams {
         uint256 actionIdx;
         uint256 inputIdx;
@@ -43,17 +35,12 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
-    /// @param The index of the action to mutate
-    /// @param The index of the compliance verifier input of the action to mutate
     struct ShortProofFailsParams {
         uint256 actionIdx;
         uint256 inputIdx;
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
-    /// @param The index of the action to mutate
-    /// @param The index of the compliance verifier input of the action to mutate
-    /// @param The proof to overwrite with
     struct UnknownSelectorFailsParams {
         uint256 actionIdx;
         uint256 inputIdx;
@@ -61,9 +48,6 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
-    /// @param The index of the action to mutate
-    /// @param The index of the compliance verifier input of the action to mutate
-    /// @param The tag to overwrite with
     struct UnknownTagFailsParams {
         uint256 actionIdx;
         uint256 inputIdx;
@@ -71,17 +55,12 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
-    /// @param The index of the action to mutate
-    /// @param The index of the compliance verifier input of the action to mutate
     struct MismatchingResourcesFailParams {
         uint256 actionIdx;
         uint256 inputIdx;
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
-    /// @param The index of the action to mutate
-    /// @param The index of the logic verifier input of the action to mutate
-    /// @param The logic reference to overwrite with
     struct MismatchingLogicRefsFailParams {
         uint256 actionIdx;
         uint256 inputIdx;
@@ -89,10 +68,6 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
-    /// @param The index of the action to mutate
-    /// @param The index of the logic verifier input of the action to mutate
-    /// @param The index of the external payload to mutate
-    /// @param The output to overwrite with
     struct MismatchingForwarderCallOutputsFailParams {
         uint256 actionIdx;
         uint256 inputIdx;
@@ -113,13 +88,9 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
 
     bytes32 internal _carrierLabelRef;
 
-    constructor(ProtocolAdapterTestArgs memory args)
-        ProtocolAdapter(args.router, args.verifier.SELECTOR(), _EMERGENCY_COMMITTEE)
-    {
-        _router = args.router;
-        _emergencyStop = args.emergencyStop;
-        _mockVerifier = args.verifier;
-        _verifierSelector = args.verifier.SELECTOR();
+    constructor() {
+        (_router, _emergencyStop, _mockVerifier) = new DeployRiscZeroContractsMock().run();
+        _verifierSelector = _mockVerifier.SELECTOR();
         _mockPa = new ProtocolAdapter(_router, _mockVerifier.SELECTOR(), _EMERGENCY_COMMITTEE);
     }
 
@@ -318,11 +289,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         _mockPa.execute(txn);
     }
 
-    /// @notice Take a transaction that would execute successfully and make it
-    /// fail by giving one of its compliance verifier inputs an incorrect
-    /// commitment tree root.
-    /// @param transaction A successful transaction
-    /// @param params A failure inducing modification
+    /// @notice Make transaction fail by giving it an incorrect commitment tree root.
     function mutationTestExecuteNonExistingRootFails(
         Transaction memory transaction,
         NonExistingRootFailsParams memory params
@@ -332,15 +299,17 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         Compliance.VerifierInput[] memory complianceVerifierInputs =
             transaction.actions[params.actionIdx].complianceVerifierInputs;
         // Assume the proposed commitment tree root is not already contained
-        vm.assume(!_containsRoot(params.commitmentTreeRoot));
+        vm.assume(!_mockPa.containsRoot(params.commitmentTreeRoot));
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         // Finally assign the proposed commitment tree root into the transaction
         complianceVerifierInputs[params.inputIdx].instance.consumed.commitmentTreeRoot = params.commitmentTreeRoot;
         // With an incorrect commitment tree root, we expect failure
-        vm.expectRevert(abi.encodeWithSelector(NonExistingRoot.selector, params.commitmentTreeRoot));
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitmentAccumulator.NonExistingRoot.selector, params.commitmentTreeRoot)
+        );
         // Finally, execute the transaction to make sure that it fails
-        this.execute(transaction);
+        _mockPa.execute(transaction);
     }
 
     /// @notice Test that transactions with nonexistent rotts fail
@@ -358,11 +327,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         mutationTestExecuteNonExistingRootFails(txn, params);
     }
 
-    /// @notice Take a transaction that would execute successfully and make it
-    /// fail by giving one of its compliance verifier inputs a proof that's too
-    /// short.
-    /// @param transaction A successful transaction
-    /// @param params A failure inducing modification
+    /// @notice Make transaction fail by giving it a proof that's too short
     function mutationTestExecuteShortProofFails(Transaction memory transaction, ShortProofFailsParams memory params)
         public
     {
@@ -383,7 +348,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         // With a short proof, we expect an EVM error (which is message-less)
         vm.expectRevert(bytes(""), address(_router));
         // Finally, execute the transaction to make sure that it fails
-        this.execute(transaction);
+        _mockPa.execute(transaction);
     }
 
     /// @notice Test that transactions with short proofs fail
@@ -401,11 +366,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         mutationTestExecuteShortProofFails(txn, params);
     }
 
-    /// @notice Take a transaction that would execute successfully and make it
-    /// fail by giving one of its compliance verifier inputs a proof with an
-    /// unknown selector.
-    /// @param transaction A successful transaction
-    /// @param params A failure inducing modification
+    /// @notice Make transaction fail by giving it an unknown selector.
     function mutationTestExecuteUnknownSelectorFails(
         Transaction memory transaction,
         UnknownSelectorFailsParams memory params
@@ -428,7 +389,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
             address(_router)
         );
         // Finally, execute the transaction to make sure that it fails
-        this.execute(transaction);
+        _mockPa.execute(transaction);
     }
 
     /// @notice Test that transactions with unknown selectors fail
@@ -446,11 +407,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         mutationTestExecuteUnknownSelectorFails(txn, params);
     }
 
-    /// @notice Take a transaction that would execute successfully and make it
-    /// fail by ensuring that the nullifier of one of its compliance verifier
-    /// inputs is not found in the logic verifier inputs.
-    /// @param transaction A successful transaction
-    /// @param params A failure inducing modification
+    /// @notice Make transaction fail by ensuring unknown nullifier
     function mutationTestExecuteUnknownNullifierTagFails(
         Transaction memory transaction,
         UnknownTagFailsParams memory params
@@ -481,7 +438,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
             )
         );
         // Finally, execute the transaction to make sure that it fails
-        this.execute(transaction);
+        _mockPa.execute(transaction);
     }
 
     /// @notice Test that transactions with unknown nullifier tags fail
@@ -499,11 +456,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         mutationTestExecuteUnknownNullifierTagFails(txn, params);
     }
 
-    /// @notice Take a transaction that would execute successfully and make it
-    /// fail by ensuring that the commitment of one of its compliance verifier
-    /// inputs is not found in the logic verifier inputs.
-    /// @param transaction A successful transaction
-    /// @param params A failure inducing modification
+    /// @notice Make transaction fail by ensuring unknown commitment
     function mutationTestExecuteUnknownCommitmentTagFails(
         Transaction memory transaction,
         UnknownTagFailsParams memory params
@@ -534,7 +487,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
             )
         );
         // Finally, execute the transaction to make sure that it fails
-        this.execute(transaction);
+        _mockPa.execute(transaction);
     }
 
     /// @notice Test that transactions with unknown commitment tags fail
@@ -552,11 +505,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         mutationTestExecuteUnknownCommitmentTagFails(txn, params);
     }
 
-    /// @notice Take a transaction that would execute successfully and make it
-    /// fail by ensuring that it has less compliance verifier inputs than half
-    /// the logic verifier inputs.
-    /// @param transaction A successful transaction
-    /// @param params A failure inducing modification
+    /// @notice Make transaction fail by ensuring that it has less compliance verifier inputs
     function mutationTestExecuteMissingComplianceVerifierInputFail(
         Transaction memory transaction,
         MismatchingResourcesFailParams memory params
@@ -579,10 +528,12 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         transaction.actions[params.actionIdx].complianceVerifierInputs = shorter;
         // With mismatching resource counts, we expect failure
         vm.expectRevert(
-            abi.encodeWithSelector(TagCountMismatch.selector, action.logicVerifierInputs.length, shorter.length * 2)
+            abi.encodeWithSelector(
+                ProtocolAdapter.TagCountMismatch.selector, action.logicVerifierInputs.length, shorter.length * 2
+            )
         );
         // Finally, execute the transaction to make sure that it fails
-        this.execute(transaction);
+        _mockPa.execute(transaction);
     }
 
     /// @notice Test that transactions with a missing compliance verifier input fail
@@ -600,11 +551,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         mutationTestExecuteMissingComplianceVerifierInputFail(txn, params);
     }
 
-    /// @notice Take a transaction that would execute successfully and make it
-    /// fail by ensuring that it has less logic verifier inputs than the number
-    /// of compliance verifier inputs doubled.
-    /// @param transaction A successful transaction
-    /// @param params A failure inducing modification
+    /// @notice Make transaction fail by ensuring that it has less logic verifier inputs
     function mutationTestExecuteMissingLogicVerifierInputFail(
         Transaction memory transaction,
         MismatchingResourcesFailParams memory params
@@ -628,11 +575,11 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         // With mismatching resource counts, we expect failure
         vm.expectRevert(
             abi.encodeWithSelector(
-                TagCountMismatch.selector, shorter.length, action.complianceVerifierInputs.length * 2
+                ProtocolAdapter.TagCountMismatch.selector, shorter.length, action.complianceVerifierInputs.length * 2
             )
         );
         // Finally, execute the transaction to make sure that it fails
-        this.execute(transaction);
+        _mockPa.execute(transaction);
     }
 
     /// @notice Test that transactions with a missing logic verifier input fail
@@ -650,12 +597,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         mutationTestExecuteMissingLogicVerifierInputFail(txn, params);
     }
 
-    /// @notice Take a transaction that would execute successfully and make it
-    /// fail by ensuring that the verifying key of one of its logic verifier
-    /// inputs does not match the nullifier or commitment in the corresponding
-    /// compliance verifier input.
-    /// @param transaction A successful transaction
-    /// @param params A failure inducing modification
+    /// @notice Make transaction fail by making logic reference mismatch
     function mutationTestExecuteMismatchingLogicRefsFail(
         Transaction memory transaction,
         MismatchingLogicRefsFailParams memory params
@@ -669,9 +611,9 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         vm.assume(logicVerifierInputs[params.inputIdx].verifyingKey != params.logicRef);
         logicVerifierInputs[params.inputIdx].verifyingKey = params.logicRef;
         // With mismatching logic references, we expect failure
-        vm.expectPartialRevert(LogicRefMismatch.selector);
+        vm.expectPartialRevert(ProtocolAdapter.LogicRefMismatch.selector);
         // Finally, execute the transaction to make sure that it fails
-        this.execute(transaction);
+        _mockPa.execute(transaction);
     }
 
     /// @notice Test that transactions with mismatching logic references fail
@@ -689,10 +631,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         mutationTestExecuteMismatchingLogicRefsFail(txn, params);
     }
 
-    /// @notice Take a transaction that would execute successfully and make it
-    /// fail by ensuring that one of its forwarder call outputs mismatch.
-    /// @param transaction A successful transaction
-    /// @param params A failure inducing modification
+    /// @notice Make transaction fail by ensuring that one of its forwarder call outputs mismatch.
     function mutationTestExecuteMismatchingForwarderCallOutputsFail(
         Transaction memory transaction,
         MismatchingForwarderCallOutputsFailParams memory params
@@ -723,9 +662,7 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
         for (uint256 i = 0; i < complianceVerifierInputs.length; i++) {
             if (complianceVerifierInputs[i].instance.consumed.nullifier == logicVerifierInput.tag) {
                 isConsumed = true;
-            } else if (
-                complianceVerifierInputs[i].instance.created.commitment == logicVerifierInputs[params.inputIdx].tag
-            ) {
+            } else if (complianceVerifierInputs[i].instance.created.commitment == logicVerifierInput.tag) {
                 isConsumed = false;
             }
         }
@@ -737,9 +674,11 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
             journalDigest: logicVerifierInputs[params.inputIdx].toJournalDigest(actionTreeRoot, isConsumed)
         }).seal;
         // With mismatching forwarder call outputs, we expect failure
-        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOutputMismatch.selector, params.output, expectedOutput));
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.ForwarderCallOutputMismatch.selector, params.output, expectedOutput)
+        );
         // Finally, execute the transaction to make sure that it fails
-        this.execute(transaction);
+        _mockPa.execute(transaction);
     }
 
     /// @notice Test that transactions with mismatching forwarder call outputs fails
@@ -842,17 +781,5 @@ contract ProtocolAdapterMockVerifierTest is Test, ProtocolAdapter {
             });
         }
         data[0].appData.externalPayload = externalBlobs;
-    }
-}
-
-contract ProtocolAdapterTest is ProtocolAdapterMockVerifierTest {
-    constructor() ProtocolAdapterMockVerifierTest(baseArgs()) {}
-
-    function baseArgs() public returns (ProtocolAdapterTestArgs memory args) {
-        RiscZeroVerifierRouter router;
-        RiscZeroVerifierEmergencyStop emergencyStop;
-        RiscZeroMockVerifier verifier;
-        (router, emergencyStop, verifier) = new DeployRiscZeroContractsMock().run();
-        return ProtocolAdapterTestArgs({router: router, emergencyStop: emergencyStop, verifier: verifier});
     }
 }
