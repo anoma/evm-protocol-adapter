@@ -50,10 +50,13 @@ pub fn provider() -> DefaultProvider {
         .parse::<PrivateKeySigner>()
         .expect("Wrong private key format");
 
-    let rpc_url = format!(
-        "https://eth-sepolia.g.alchemy.com/v2/{}",
-        env::var("API_KEY_ALCHEMY").expect("Couldn't read API_KEY_ALCHEMY")
-    );
+    let rpc_url = env::var("RPC_URL")
+        .expect("Couldn't read RPC_URL");
+
+    let api_key = env::var("API_KEY")
+        .expect("Couldn't read API_KEY");
+
+    let rpc_url = format!("{}/{}", rpc_url, api_key);
 
     let wallet: EthereumWallet = signer.into();
 
