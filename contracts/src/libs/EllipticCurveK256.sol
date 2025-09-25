@@ -27,15 +27,6 @@ library EllipticCurveK256 {
     /// @notice The curve order.
     uint256 internal constant ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
 
-    /// @notice Derives a public key from a private key as an elliptic curve point.
-    /// @param privateKey The private key to derive the public key from.
-    /// @return qx The x-coordinate of the public key.
-    /// @return qy The y-coordinate of the public key.
-    /// @dev Do not use this function on-chain for sensitive data.
-    function derivePubKey(uint256 privateKey) internal pure returns (uint256 qx, uint256 qy) {
-        (qx, qy) = EllipticCurve.ecMul({_k: privateKey, _x: GX, _y: GY, _aa: AA, _pp: PP});
-    }
-
     /// @notice Adds two elliptic curve points and returns the result.
     /// @param x1 The x-coordinate of the first point.
     /// @param y1 The y-coordinate of the first point.
