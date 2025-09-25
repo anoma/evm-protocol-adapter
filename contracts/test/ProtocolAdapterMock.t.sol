@@ -37,12 +37,6 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
-    struct ShortProofFailsParams {
-        uint256 actionIdx;
-        uint256 inputIdx;
-    }
-
-    /// @notice The parameters necessary to make a failing mutation to a transaction
     struct UnknownSelectorFailsParams {
         uint256 actionIdx;
         uint256 inputIdx;
@@ -58,7 +52,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
-    struct MismatchingResourcesFailParams {
+    struct GenericFailParams {
         uint256 actionIdx;
         uint256 inputIdx;
     }
@@ -330,7 +324,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     /// @notice Make transaction fail by giving it a proof that's too short
-    function mutationTestExecuteShortProofFails(Transaction memory transaction, ShortProofFailsParams memory params)
+    function mutationTestExecuteShortProofFails(Transaction memory transaction, GenericFailParams memory params)
         public
     {
         uint256 minProofLen = 4;
@@ -357,7 +351,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function testFuzz_execute_short_proof_fails(
         uint8 actionCount,
         uint8 complianceUnitCount,
-        ShortProofFailsParams memory params
+        GenericFailParams memory params
     ) public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
             actionCount: uint8(bound(actionCount, 1, 5)),
@@ -455,7 +449,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// @notice Make transaction fail by ensuring that it has less compliance verifier inputs
     function mutationTestExecuteMissingComplianceVerifierInputFail(
         Transaction memory transaction,
-        MismatchingResourcesFailParams memory params
+        GenericFailParams memory params
     ) public {
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
@@ -487,7 +481,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function testFuzz_execute_missing_compliance_verifier_input_fail(
         uint8 actionCount,
         uint8 complianceUnitCount,
-        MismatchingResourcesFailParams memory params
+        GenericFailParams memory params
     ) public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
             actionCount: uint8(bound(actionCount, 1, 5)),
@@ -501,7 +495,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// @notice Make transaction fail by ensuring that it has less logic verifier inputs
     function mutationTestExecuteMissingLogicVerifierInputFail(
         Transaction memory transaction,
-        MismatchingResourcesFailParams memory params
+        GenericFailParams memory params
     ) public {
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
@@ -533,7 +527,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function testFuzz_execute_missing_logic_verifier_input_fail(
         uint8 actionCount,
         uint8 complianceUnitCount,
-        MismatchingResourcesFailParams memory params
+        GenericFailParams memory params
     ) public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
             actionCount: uint8(bound(actionCount, 1, 5)),
