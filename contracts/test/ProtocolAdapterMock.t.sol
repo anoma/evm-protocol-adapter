@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
-import {Test} from "forge-std/Test.sol";
-import {Vm} from "forge-std/Vm.sol";
-import {IProtocolAdapter} from "./../src/interfaces/IProtocolAdapter.sol";
-import {MerkleTree} from "./../src/libs/MerkleTree.sol";
-import {RiscZeroUtils} from "./../src/libs/RiscZeroUtils.sol";
-import {ProtocolAdapter} from "./../src/ProtocolAdapter.sol";
-import {Compliance} from "./../src/proving/Compliance.sol";
-import {Logic} from "./../src/proving/Logic.sol";
-import {NullifierSet} from "./../src/state/NullifierSet.sol";
-import {Transaction, Action} from "./../src/Types.sol";
-import {ForwarderExample} from "./examples/Forwarder.e.sol";
-import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
-import {TxGen} from "./libs/TxGen.sol";
-import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
-import {CommitmentAccumulator} from "./../src/state/CommitmentAccumulator.sol";
+import { RiscZeroVerifierEmergencyStop } from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
+import { RiscZeroVerifierRouter } from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
+import { RiscZeroMockVerifier } from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import { Test } from "forge-std/Test.sol";
+import { Vm } from "forge-std/Vm.sol";
+import { IProtocolAdapter } from "./../src/interfaces/IProtocolAdapter.sol";
+import { MerkleTree } from "./../src/libs/MerkleTree.sol";
+import { RiscZeroUtils } from "./../src/libs/RiscZeroUtils.sol";
+import { ProtocolAdapter } from "./../src/ProtocolAdapter.sol";
+import { Compliance } from "./../src/proving/Compliance.sol";
+import { Logic } from "./../src/proving/Logic.sol";
+import { CommitmentAccumulator } from "./../src/state/CommitmentAccumulator.sol";
+import { NullifierSet } from "./../src/state/NullifierSet.sol";
+import { Transaction, Action } from "./../src/Types.sol";
+import { ForwarderExample } from "./examples/Forwarder.e.sol";
+import { INPUT, EXPECTED_OUTPUT } from "./examples/ForwarderTarget.e.sol";
+import { TxGen } from "./libs/TxGen.sol";
+import { DeployRiscZeroContractsMock } from "./script/DeployRiscZeroContractsMock.s.sol";
 
 contract ProtocolAdapterMockVerifierTest is Test {
     using MerkleTree for bytes32[];
@@ -91,13 +91,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     bytes32 internal _carrierLabelRef;
 
-    constructor() {
+    function setUp() public {
         (_router, _emergencyStop, _mockVerifier) = new DeployRiscZeroContractsMock().run();
         _verifierSelector = _mockVerifier.SELECTOR();
-        _mockPa = new ProtocolAdapter(_router, _mockVerifier.SELECTOR(), _EMERGENCY_COMMITTEE);
-    }
+        _mockPa = new ProtocolAdapter(_router, _verifierSelector, _EMERGENCY_COMMITTEE);
 
-    function setUp() public {
         _fwd = address(
             new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
         );
@@ -636,19 +634,23 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Make transaction fail by ensuring that one of its forwarder call outputs mismatch.
     function mutationTestExecuteMismatchingForwarderCallOutputsFail(
-        Transaction calldata transaction_calldata,
+        Transaction calldata transactionCalldata,
         MismatchingForwarderCallOutputsFailParams memory params
-    ) public {Transaction memory transaction = transaction_calldata;
+    ) public {
+        Transaction memory transaction = transactionCalldata;
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
-        Action calldata action_calldata = transaction_calldata.actions[params.actionIdx];
+        Action calldata actionCalldata = transactionCalldata.actions[params.actionIdx];
         Action memory action = transaction.actions[params.actionIdx];
         Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
         // Wrap the logic verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
-        bytes32 tag = params.consumed ? complianceVerifierInput.instance.consumed.nullifier : complianceVerifierInput.instance.created.commitment;
-        Logic.VerifierInput memory logicVerifierInput = action_calldata.logicVerifierInputs.lookup(tag);
+        bytes32 tag = params.consumed
+            ? complianceVerifierInput.instance.consumed.nullifier
+            : complianceVerifierInput.instance.created.commitment;
+        uint256 logicVerifierInputIdx = actionCalldata.logicVerifierInputs.lookup(tag);
+        Logic.VerifierInput memory logicVerifierInput = action.logicVerifierInputs[logicVerifierInputIdx];
         Logic.ExpirableBlob[] memory externalPayloads = logicVerifierInput.appData.externalPayload;
         // Cannot do the mutation if transaction has no external payloads
         vm.assume(externalPayloads.length > 0);
@@ -663,7 +665,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         // Re-encode the calldata and replace the value in the external payloads
         externalPayloads[params.payloadIdx].blob = abi.encode(untrustedForwarder, input, params.output);
         // Compute the action tree root
-        bytes32[] memory actionTreeTags = action_calldata.complianceVerifierInputs.computeActionTreeTags(action.complianceVerifierInputs.length);
+        bytes32[] memory actionTreeTags =
+            actionCalldata.complianceVerifierInputs.computeActionTreeTags(action.complianceVerifierInputs.length);
         // Recompute the logic verifier input proof
         logicVerifierInput.proof = _mockVerifier.mockProve({
             imageId: logicVerifierInput.verifyingKey,
@@ -682,14 +685,12 @@ contract ProtocolAdapterMockVerifierTest is Test {
         MismatchingForwarderCallOutputsFailParams memory params
     ) public {
         bytes32 carrierLogicRef = bytes32(uint256(123));
-        address fwd =
-            address(new ForwarderExample({protocolAdapter: address(this), calldataCarrierLogicRef: carrierLogicRef}));
         address fwd2 =
-            address(new ForwarderExample({protocolAdapter: address(this), calldataCarrierLogicRef: carrierLogicRef}));
-        assertNotEq(fwd, fwd2);
+            address(new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: carrierLogicRef}));
+        assertNotEq(_fwd, fwd2);
 
         address[] memory fwdList = new address[](2);
-        fwdList[0] = fwd;
+        fwdList[0] = _fwd;
         fwdList[1] = fwd2;
 
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});

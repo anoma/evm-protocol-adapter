@@ -136,7 +136,7 @@ contract ProtocolAdapter is
                 // Check the consumed resource.
                 // slither-disable-next-line reentrancy-benign
                 _processResourceLogicContext({
-                    input: action.logicVerifierInputs.lookup(nf),
+                    input: action.logicVerifierInputs[action.logicVerifierInputs.lookup(nf)],
                     logicRef: complianceVerifierInput.instance.consumed.logicRef,
                     actionTreeRoot: actionTreeRoot,
                     consumed: true
@@ -145,7 +145,7 @@ contract ProtocolAdapter is
                 // Check the created resource.
                 // slither-disable-next-line reentrancy-benign
                 _processResourceLogicContext({
-                    input: action.logicVerifierInputs.lookup(cm),
+                    input: action.logicVerifierInputs[action.logicVerifierInputs.lookup(cm)],
                     logicRef: complianceVerifierInput.instance.created.logicRef,
                     actionTreeRoot: actionTreeRoot,
                     consumed: false

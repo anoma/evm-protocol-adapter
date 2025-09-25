@@ -53,11 +53,10 @@ library Compliance {
     /// @param complianceVerifierInputs Compliance verifier inputs.
     /// @param complianceUnitCount The number of compliance units in the action.
     /// @return actionTreeTags The action tree tags corresponding to the compliance verifier inputs.
-    function computeActionTreeTags(Compliance.VerifierInput[] calldata complianceVerifierInputs, uint256 complianceUnitCount)
-        internal
-        pure
-        returns (bytes32[] memory actionTreeTags)
-    {
+    function computeActionTreeTags(
+        Compliance.VerifierInput[] calldata complianceVerifierInputs,
+        uint256 complianceUnitCount
+    ) internal pure returns (bytes32[] memory actionTreeTags) {
         actionTreeTags = new bytes32[](complianceUnitCount * 2);
 
         // The order in which the tags are added to the tree is provided by the compliance units.
