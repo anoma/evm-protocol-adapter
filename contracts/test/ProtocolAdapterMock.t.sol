@@ -324,9 +324,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     /// @notice Make transaction fail by giving it a proof that's too short
-    function mutationTestExecuteShortProofFails(Transaction memory transaction, GenericFailParams memory params)
-        public
-    {
+    function mutationTestExecuteShortProofFails(
+        Transaction calldata transactionCalldata,
+        GenericFailParams memory params
+    ) public {
+        Transaction memory transaction = transactionCalldata;
         uint256 minProofLen = 4;
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
@@ -335,12 +337,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         // Finally truncate the compliance proof to below the minimum
-        bytes memory proof = complianceVerifierInputs[params.inputIdx].proof;
-        bytes memory truncatedProof = new bytes(proof.length % minProofLen);
-        for (uint256 k = 0; k < truncatedProof.length; k++) {
-            truncatedProof[k] = proof[k];
-        }
-        complianceVerifierInputs[params.inputIdx].proof = truncatedProof;
+        bytes calldata proof =
+            transactionCalldata.actions[params.actionIdx].complianceVerifierInputs[params.inputIdx].proof;
+        complianceVerifierInputs[params.inputIdx].proof = proof[0:(proof.length % minProofLen)];
         // With a short proof, we expect an EVM error (which is message-less)
         vm.expectRevert(bytes(""), address(_router));
         // Finally, execute the transaction to make sure that it fails
@@ -359,7 +358,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutationTestExecuteShortProofFails(txn, params);
+        this.mutationTestExecuteShortProofFails(txn, params);
     }
 
     /// @notice Make transaction fail by giving it an unknown selector.
