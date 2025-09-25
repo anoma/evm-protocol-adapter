@@ -71,14 +71,14 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         bytes32 newRoot1 = _paMerkleTree.setup();
         // OpenZeppelin implementation is not variable depth, it is easier to
         // just compare the end state once we have reached the final depth
-        bytes32 newRoot2 = _zeppelinMerkleTree.setup(treeDepth, SHA256.EMPTY_HASH, SHA256.hashPair);
+        bytes32 newRoot2 = _zeppelinMerkleTree.setup(treeDepth, SHA256.EMPTY_HASH, _hashPair);
 
         uint256 index1 = 0;
         uint256 index2 = 0;
         // Now add all the leaves to each Merkle tree
         for (uint256 i = 0; i < leaves.length; i++) {
             (index1, newRoot1) = _paMerkleTree.push(leaves[i]);
-            (index2, newRoot2) = _zeppelinMerkleTree.push(leaves[i], SHA256.hashPair);
+            (index2, newRoot2) = _zeppelinMerkleTree.push(leaves[i], _hashPair);
             // The lead counts must remain matched throughout
             assertEq(index1, index2);
             // Once we have reached the final depth, we might as well start
@@ -117,5 +117,13 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         dynamicLeaves[0] = leaves[0];
         dynamicLeaves[1] = leaves[1];
         testFuzz_push_implementations_yield_same_roots(dynamicLeaves);
+    }
+
+    /// @notice Hashes two `bytes32` values.
+    /// @param a The first value to hash.
+    /// @param b The second value to hash.
+    /// @return hab The resulting hash.
+    function _hashPair(bytes32 a, bytes32 b) internal pure returns (bytes32 hab) {
+        hab = SHA256.hash(a, b);
     }
 }
