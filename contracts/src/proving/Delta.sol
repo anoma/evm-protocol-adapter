@@ -22,8 +22,8 @@ library Delta {
         (p3[0], p3[1]) = EllipticCurveK256.ecAdd(p1[0], p1[1], p2[0], p2[1]);
     }
 
-    /// @notice Converts a delta public key to an Ethereum account.
-    /// @param delta  The delta public key.
+    /// @notice Converts an elliptic curve point to an Ethereum account address.
+    /// @param delta The elliptic curve point.
     /// @return account The associated account.
     function toAccount(uint256[2] memory delta) internal pure returns (address account) {
         // Hash the public key with Keccak-256
