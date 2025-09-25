@@ -242,7 +242,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     /// @notice Test that transactions with nonexistent roots fail.
-    function testFuzz_execute_non_existing_root_fails(
+    function testFuzz_execute_reverts_on_non_existing_root(
         uint8 actionCount,
         uint8 complianceUnitCount,
         uint8 actionIndex,
@@ -269,8 +269,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with short proofs fail.
-    function testFuzz_execute_short_proof_fails(
+    function testFuzz_execute_reverts_if_risc0_has_a_length_less_than_four(
         uint8 actionCount,
         uint8 complianceUnitCount,
         uint8 actionIndex,
@@ -297,7 +296,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     /// @notice Test that transactions with unknown selectors fail.
-    function testFuzz_execute_unknown_selector_fails(
+    function testFuzz_execute_reverts_if_proofs_start_with_an_unknown_verifier_selector(
         uint8 actionCount,
         uint8 complianceUnitCount,
         uint8 actionIndex,
@@ -306,7 +305,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     ) public {
         // Ensure that the first 4 bytes of the proof are invalid.
         // The mock router only accepts one selector we deploy with.
-        vm.assume(bytes4(fakeProof) != bytes4(0xFFFFFFFF));
+        vm.assume(bytes4(fakeProof) != _mockVerifier.SELECTOR());
         vm.assume(fakeProof.length >= 4);
 
         // Choose random compliance unit among the actions.
@@ -328,8 +327,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    // /// @notice Test that transactions with unknown nullifier tags fail.
-    function testFuzz_execute_unknown_nullifier_tag_fails(
+    function testFuzz_execute_reverts_if_nullifier_from_compliance_inputs_cannot_be_found_in_logic_inputs(
         uint8 actionCount,
         uint8 complianceUnitCount,
         uint8 actionIndex,
@@ -364,8 +362,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with unknown commitment tags fail.
-    function testFuzz_execute_unknown_commitment_tag_fails(
+    function testFuzz_execute_reverts_if_commitment_from_compliance_inputs_cannot_be_found_in_logic_inputs(
         uint8 actionCount,
         uint8 complianceUnitCount,
         uint8 actionIndex,
@@ -401,7 +398,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     /// @notice Test that transactions with a missing compliance verifier input fail.
-    function testFuzz_execute_incorrect_compliance_verifier_count_fail(
+    function testFuzz_execute_reverts_on_compliance_and_logic_verifier_tag_count_mismatch(
         uint8 actionCount,
         uint8 complianceUnitCount,
         uint8 actionIndex,
@@ -435,7 +432,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     /// @notice Test that transactions with a missing logic verifier input fail.
-    function testFuzz_execute_incorrect_logic_verifier_count_fail(
+    function testFuzz_execute_reverts_on_logic_and_compliance_verifier_tag_count_mismatch(
         uint8 actionCount,
         uint8 complianceUnitCount,
         uint8 actionIndex,
@@ -468,15 +465,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with mismatching nullfifier logic references fail.
-    function testFuzz_execute_mismatching_nullifier_logic_refs_fail(
+    function testFuzz_execute_reverts_on_compliance_and_logic_verifier_logic_reference_mismatch_for_consumed_resource(
         uint8 actionCount,
         uint8 complianceUnitCount,
         uint8 actionIndex,
         uint8 complianceIndex,
         bytes32 nonce
     ) public {
-        // Choose a random compliance whose commitment logicRef we will mutate.
+        // Choose a random compliance unit whose commitment logicRef we will mutate.
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
             _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
@@ -498,8 +494,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with mismatching commitment logic references fail.
-    function testFuzz_execute_mismatching_commitment_logic_refs_fail(
+    function testFuzz_execute_reverts_on_compliance_and_logic_verifier_logic_reference_mismatch_for_created_resource(
         uint8 actionCount,
         uint8 complianceUnitCount,
         uint8 actionIndex,
@@ -528,8 +523,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transaction with mismatching forwarder call outputs fails.
-    function testFuzz_execute_mismatching_forwarder_call_outputs_fail(bytes memory fakeOutput) public {
+    function testFuzz_execute_reverts_on_unexpected_forwarder_call_output(bytes memory fakeOutput) public {
         vm.assume(keccak256(fakeOutput) != keccak256(EXPECTED_OUTPUT));
 
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
