@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import { RiscZeroVerifierEmergencyStop } from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
-import { RiscZeroVerifierRouter } from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-import { RiscZeroMockVerifier } from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
-import { Test } from "forge-std/Test.sol";
-import { Vm } from "forge-std/Vm.sol";
-import { IProtocolAdapter } from "./../src/interfaces/IProtocolAdapter.sol";
-import { MerkleTree } from "./../src/libs/MerkleTree.sol";
-import { RiscZeroUtils } from "./../src/libs/RiscZeroUtils.sol";
-import { ProtocolAdapter } from "./../src/ProtocolAdapter.sol";
-import { Compliance } from "./../src/proving/Compliance.sol";
-import { Logic } from "./../src/proving/Logic.sol";
-import { CommitmentAccumulator } from "./../src/state/CommitmentAccumulator.sol";
-import { NullifierSet } from "./../src/state/NullifierSet.sol";
-import { Transaction, Action } from "./../src/Types.sol";
-import { ForwarderExample } from "./examples/Forwarder.e.sol";
-import { INPUT, EXPECTED_OUTPUT } from "./examples/ForwarderTarget.e.sol";
-import { TxGen } from "./libs/TxGen.sol";
-import { DeployRiscZeroContractsMock } from "./script/DeployRiscZeroContractsMock.s.sol";
+import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
+import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import {Test} from "forge-std/Test.sol";
+import {Vm} from "forge-std/Vm.sol";
+import {IProtocolAdapter} from "./../src/interfaces/IProtocolAdapter.sol";
+import {MerkleTree} from "./../src/libs/MerkleTree.sol";
+import {RiscZeroUtils} from "./../src/libs/RiscZeroUtils.sol";
+import {ProtocolAdapter} from "./../src/ProtocolAdapter.sol";
+import {Compliance} from "./../src/proving/Compliance.sol";
+import {Logic} from "./../src/proving/Logic.sol";
+import {CommitmentAccumulator} from "./../src/state/CommitmentAccumulator.sol";
+import {NullifierSet} from "./../src/state/NullifierSet.sol";
+import {Transaction, Action} from "./../src/Types.sol";
+import {ForwarderExample} from "./examples/Forwarder.e.sol";
+import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
+import {TxGen} from "./libs/TxGen.sol";
+import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
 
 contract ProtocolAdapterMockVerifierTest is Test {
     using MerkleTree for bytes32[];
@@ -54,6 +54,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint256 actionIdx;
         uint256 inputIdx;
         bytes32 tag;
+        bool consumed;
     }
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
@@ -408,8 +409,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         mutationTestExecuteUnknownSelectorFails(txn, params);
     }
 
-    /// @notice Make transaction fail by ensuring unknown nullifier
-    function mutationTestExecuteUnknownNullifierTagFails(
+    /// @notice Make transaction fail by ensuring unknown tag
+    function mutationTestExecuteUnknownTagFails(
         Transaction calldata transactionCalldata,
         UnknownTagFailsParams memory params
     ) public {
@@ -423,23 +424,21 @@ contract ProtocolAdapterMockVerifierTest is Test {
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
         // Make sure that the planned corruption will change something
-        bytes32 tag = complianceVerifierInput.instance.consumed.nullifier;
+        bytes32 tag = params.consumed
+            ? complianceVerifierInput.instance.consumed.nullifier
+            : complianceVerifierInput.instance.created.commitment;
         vm.assume(tag != params.tag);
         // Finally, corrupt the corresponding logic verifier input tag
         uint256 logicVerifierInputIdx = actionCalldata.logicVerifierInputs.lookup(tag);
         action.logicVerifierInputs[logicVerifierInputIdx].tag = params.tag;
         // With an unknown tag, we expect failure
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Logic.TagNotFound.selector, complianceVerifierInputs[params.inputIdx].instance.consumed.nullifier
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(Logic.TagNotFound.selector, tag));
         // Finally, execute the transaction to make sure that it fails
         _mockPa.execute(transaction);
     }
 
-    /// @notice Test that transactions with unknown nullifier tags fail
-    function testFuzz_execute_unknown_nullifier_tag_fails(
+    /// @notice Test that transactions with unknown tags fail
+    function testFuzz_execute_unknown_tag_fails(
         uint8 actionCount,
         uint8 complianceUnitCount,
         UnknownTagFailsParams memory params
@@ -450,53 +449,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        this.mutationTestExecuteUnknownNullifierTagFails(txn, params);
-    }
-
-    /// @notice Make transaction fail by ensuring unknown commitment
-    function mutationTestExecuteUnknownCommitmentTagFails(
-        Transaction calldata transactionCalldata,
-        UnknownTagFailsParams memory params
-    ) public {
-        Transaction memory transaction = transactionCalldata;
-        // Wrap the action index into range
-        params.actionIdx = params.actionIdx % transaction.actions.length;
-        Action calldata actionCalldata = transactionCalldata.actions[params.actionIdx];
-        Action memory action = transaction.actions[params.actionIdx];
-        Compliance.VerifierInput[] memory complianceVerifierInputs =
-            transaction.actions[params.actionIdx].complianceVerifierInputs;
-        // Wrap the compliance verifier input index into range
-        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
-        Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
-        // Make sure that the planned corruption will change something
-        bytes32 tag = complianceVerifierInput.instance.created.commitment;
-        vm.assume(tag != params.tag);
-        // Finally, corrupt the corresponding logic verifier input tag
-        uint256 logicVerifierInputIdx = actionCalldata.logicVerifierInputs.lookup(tag);
-        action.logicVerifierInputs[logicVerifierInputIdx].tag = params.tag;
-        // With an unknown tag, we expect failure
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Logic.TagNotFound.selector, complianceVerifierInputs[params.inputIdx].instance.created.commitment
-            )
-        );
-        // Finally, execute the transaction to make sure that it fails
-        _mockPa.execute(transaction);
-    }
-
-    /// @notice Test that transactions with unknown commitment tags fail
-    function testFuzz_execute_unknown_commitment_tag_fails(
-        uint8 actionCount,
-        uint8 complianceUnitCount,
-        UnknownTagFailsParams memory params
-    ) public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
-            actionCount: uint8(bound(actionCount, 1, 5)),
-            complianceUnitCount: uint8(bound(complianceUnitCount, 1, 5))
-        });
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        this.mutationTestExecuteUnknownCommitmentTagFails(txn, params);
+        this.mutationTestExecuteUnknownTagFails(txn, params);
     }
 
     /// @notice Make transaction fail by ensuring that it has less compliance verifier inputs
