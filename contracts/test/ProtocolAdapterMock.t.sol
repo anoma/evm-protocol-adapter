@@ -410,28 +410,24 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Make transaction fail by ensuring unknown nullifier
     function mutationTestExecuteUnknownNullifierTagFails(
-        Transaction memory transaction,
+        Transaction calldata transactionCalldata,
         UnknownTagFailsParams memory params
     ) public {
+        Transaction memory transaction = transactionCalldata;
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
-        Compliance.VerifierInput[] memory complianceVerifierInputs =
-            transaction.actions[params.actionIdx].complianceVerifierInputs;
+        Action calldata actionCalldata = transactionCalldata.actions[params.actionIdx];
+        Action memory action = transaction.actions[params.actionIdx];
+        Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
         // Make sure that the planned corruption will change something
-        vm.assume(complianceVerifierInput.instance.consumed.nullifier != params.tag);
+        bytes32 tag = complianceVerifierInput.instance.consumed.nullifier;
+        vm.assume(tag != params.tag);
         // Finally, corrupt the corresponding logic verifier input tag
-        Logic.VerifierInput[] memory logicVerifierInputs = transaction.actions[params.actionIdx].logicVerifierInputs;
-        // Do a linear search to identify the corresponding logic verifier input
-        for (uint256 i = 0; i < logicVerifierInputs.length; i++) {
-            // Select the logic verifier input with a tag matching the nullifier
-            if (logicVerifierInputs[i].tag == complianceVerifierInput.instance.consumed.nullifier) {
-                // Finally, corrupt the logic verifier input tag so it can no longer be found
-                logicVerifierInputs[i].tag = params.tag;
-            }
-        }
+        uint256 logicVerifierInputIdx = actionCalldata.logicVerifierInputs.lookup(tag);
+        action.logicVerifierInputs[logicVerifierInputIdx].tag = params.tag;
         // With an unknown tag, we expect failure
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -454,33 +450,30 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutationTestExecuteUnknownNullifierTagFails(txn, params);
+        this.mutationTestExecuteUnknownNullifierTagFails(txn, params);
     }
 
     /// @notice Make transaction fail by ensuring unknown commitment
     function mutationTestExecuteUnknownCommitmentTagFails(
-        Transaction memory transaction,
+        Transaction calldata transactionCalldata,
         UnknownTagFailsParams memory params
     ) public {
+        Transaction memory transaction = transactionCalldata;
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
+        Action calldata actionCalldata = transactionCalldata.actions[params.actionIdx];
+        Action memory action = transaction.actions[params.actionIdx];
         Compliance.VerifierInput[] memory complianceVerifierInputs =
             transaction.actions[params.actionIdx].complianceVerifierInputs;
         // Wrap the compliance verifier input index into range
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
         // Make sure that the planned corruption will change something
-        vm.assume(complianceVerifierInput.instance.created.commitment != params.tag);
+        bytes32 tag = complianceVerifierInput.instance.created.commitment;
+        vm.assume(tag != params.tag);
         // Finally, corrupt the corresponding logic verifier input tag
-        Logic.VerifierInput[] memory logicVerifierInputs = transaction.actions[params.actionIdx].logicVerifierInputs;
-        // Do a linear search to identify the corresponding logic verifier input
-        for (uint256 i = 0; i < logicVerifierInputs.length; i++) {
-            // Select the logic verifier input with a tag matching the commitment
-            if (logicVerifierInputs[i].tag == complianceVerifierInput.instance.created.commitment) {
-                // Finally, corrupt the logic verifier input tag so it can no longer be found
-                logicVerifierInputs[i].tag = params.tag;
-            }
-        }
+        uint256 logicVerifierInputIdx = actionCalldata.logicVerifierInputs.lookup(tag);
+        action.logicVerifierInputs[logicVerifierInputIdx].tag = params.tag;
         // With an unknown tag, we expect failure
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -503,7 +496,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutationTestExecuteUnknownCommitmentTagFails(txn, params);
+        this.mutationTestExecuteUnknownCommitmentTagFails(txn, params);
     }
 
     /// @notice Make transaction fail by ensuring that it has less compliance verifier inputs
