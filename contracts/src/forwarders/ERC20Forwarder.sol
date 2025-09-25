@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 
-import {EmergencyMigratableForwarderBase} from "./EmergencyMigratableForwarderBase.sol";
+import {EmergencyMigratableForwarderBase} from "./bases/EmergencyMigratableForwarderBase.sol";
 
 /// @title ERC20Forwarder
 /// @author Anoma Foundation, 2025

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IForwarder} from "../interfaces/IForwarder.sol";
+import {IForwarder} from "../../interfaces/IForwarder.sol";
 
 /// @title ForwarderBase
 /// @author Anoma Foundation, 2025

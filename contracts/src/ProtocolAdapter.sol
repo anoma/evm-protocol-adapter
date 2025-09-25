@@ -18,9 +18,7 @@ import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
 import {Logic} from "./proving/Logic.sol";
 import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
-
 import {NullifierSet} from "./state/NullifierSet.sol";
-
 import {Action, Transaction} from "./Types.sol";
 
 /// @title ProtocolAdapter
