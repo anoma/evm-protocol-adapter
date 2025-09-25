@@ -202,17 +202,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function test_execute_reverts_on_pre_existing_nullifier() public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1});
 
-        (Transaction memory tx1, bytes32 updatedNonce) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory tx1,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         bytes32 preExistingNf = tx1.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
         _mockPa.execute(tx1);
 
-        (Transaction memory tx2,) = vm.transaction({mockVerifier: _mockVerifier, nonce: updatedNonce, configs: configs});
-        tx2.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier = preExistingNf;
         vm.expectRevert(
             abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, preExistingNf), address(_mockPa)
         );
-        _mockPa.execute(tx2);
+        _mockPa.execute(tx1);
     }
 
     function test_execute_reverts_on_resource_count_mismatch(uint8 complianceUnitCount) public {
