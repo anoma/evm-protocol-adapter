@@ -14,7 +14,7 @@ library Delta {
     /// @notice Thrown if the recovered delta public key doesn't match the delta instance.
     error DeltaMismatch(address expected, address actual);
 
-    /// @notice Adds to ellipitic curve points and returns the resulting value.
+    /// @notice Adds two elliptic curve points and returns the resulting value.
     /// @param p1 The first curve point.
     /// @param p2 The second curve point.
     /// @return p3 The resulting curve point.
