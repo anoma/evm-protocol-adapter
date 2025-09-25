@@ -7,7 +7,7 @@ on:
 jobs:
   contracts:
     name: Contracts
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     env:
       FOUNDRY_PROFILE: ci
 
@@ -24,6 +24,10 @@ jobs:
 
       - name: Show Foundry version
         run: forge --version
+
+      - name: Run Forge Lint
+        run: forge lint --deny-warnings
+        working-directory: ./contracts
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v1
@@ -60,6 +64,7 @@ jobs:
         env:
           API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
           API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
         working-directory: ./contracts
 
       - name: Upload Contract Artifacts
@@ -70,7 +75,7 @@ jobs:
 
   bindings:
     name: Bindings
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: contracts
     env:
       PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: ${{ vars.PROTOCOL_ADAPTER_ADDRESS_SEPOLIA }}
@@ -97,15 +102,13 @@ jobs:
       - name: Show Rust version
         run: rustc --version
 
-      - name: Cache Rust toolchain and dependencies
+      - name: Restore dependencies cache
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo
-            ./bindings/target
-          key: rust-build-${{ hashFiles('bindings/Cargo.toml') }}
-          restore-keys: |
-            rust-build-
+            bindings/target
+          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build Bindings
         run: cargo build --release

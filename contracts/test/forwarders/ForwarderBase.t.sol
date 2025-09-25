@@ -1,39 +1,48 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Test} from "forge-std/Test.sol";
 
-import {ForwarderBase} from "../src/forwarders/ForwarderBase.sol";
-import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {ForwarderBase} from "../../src/forwarders/ForwarderBase.sol";
+import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 
-import {ForwarderExample} from "./examples/Forwarder.e.sol";
+import {ForwarderExample} from "../examples/Forwarder.e.sol";
 import {
-    ForwarderTargetExample, INPUT_VALUE, OUTPUT_VALUE, INPUT, EXPECTED_OUTPUT
-} from "./examples/ForwarderTarget.e.sol";
-import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
+    ForwarderTargetExample,
+    INPUT_VALUE,
+    OUTPUT_VALUE,
+    INPUT,
+    EXPECTED_OUTPUT
+} from "../examples/ForwarderTarget.e.sol";
+import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
 contract ForwarderBaseTest is Test {
     address internal constant _EMERGENCY_CALLER = address(uint160(1));
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
+    address internal constant _PA_OWNER = address(uint160(3));
 
     bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF = bytes32(type(uint256).max);
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     address internal _riscZeroAdmin;
+
     address internal _pa;
 
     ForwarderExample internal _fwd;
     ForwarderTargetExample internal _tgt;
 
     function setUp() public virtual {
-        (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
+        RiscZeroGroth16Verifier verifier;
+        (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts().run();
+
         _riscZeroAdmin = _emergencyStop.owner();
 
-        _pa = address(new ProtocolAdapter(_router));
+        _pa = address(new ProtocolAdapter(_router, verifier.SELECTOR(), _PA_OWNER));
 
         _fwd = new ForwarderExample({protocolAdapter: _pa, calldataCarrierLogicRef: _CALLDATA_CARRIER_LOGIC_REF});
         _tgt = ForwarderTargetExample(_fwd.TARGET());

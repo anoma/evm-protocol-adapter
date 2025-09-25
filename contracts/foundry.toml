@@ -1,16 +1,21 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
 [profile.default]
 fs_permissions = [
-    { access = "read", path = "./test/benchmark/test_tx01.bin" },
-    { access = "read", path = "./test/benchmark/test_tx05.bin" },
-    { access = "read", path = "./test/benchmark/test_tx10.bin" },
-    { access = "read", path = "./test/benchmark/test_tx15.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx01.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx05.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx10.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx15.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx20.bin" },
+    { access = "read", path = "./test/examples/transactions/mint.bin" },
+    { access = "read", path = "./test/examples/transactions/transfer.bin" },
+    { access = "read", path = "./test/examples/transactions/burn.bin" },
 ]
 
 
 remappings = [
     "forge-std/=lib/forge-std/src/",
     "@openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
+    "@solady/=lib/solady/src",
     "@risc0-ethereum/=lib/risc0-ethereum/contracts/src/",
     "@elliptic-curve-solidity/=lib/elliptic-curve-solidity/",
     "@permit2/=lib/permit2/",
@@ -28,7 +33,6 @@ bytecode_hash = "none"
 solc = "0.8.30"
 auto_detect_solc = false
 evm_version = "prague"
-fuzz = { runs = 1_000 }
 gas_reports = [
     "ProtocolAdapter",
     "CommitmentAccumulatorMock",
@@ -46,8 +50,11 @@ script = "script"
 test = "test"
 allow_internal_expect_revert = true
 
+[fuzz]
+runs = 1_000
+
 [profile.ci]
-fuzz = { runs = 10_000 }
+fuzz = { runs = 1_000 }
 verbosity = 4
 
 [etherscan]

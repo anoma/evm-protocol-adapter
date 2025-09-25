@@ -10,8 +10,6 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using MerkleTree for MerkleTree.Tree;
 
-    constructor() CommitmentAccumulator() {}
-
     function addCommitment(bytes32 commitment) external returns (bytes32 newRoot) {
         newRoot = _addCommitment(commitment);
     }
@@ -42,14 +40,6 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
 
     function emptyLeafHash() external view returns (bytes32 hash) {
         hash = _merkleTreeZero(0);
-    }
-
-    function findCommitmentIndex(bytes32 commitment) external view returns (uint256 index) {
-        index = _findCommitmentIndex(commitment);
-    }
-
-    function commitmentAtIndex(uint256 index) external view returns (bytes32 commitment) {
-        commitment = _commitmentAtIndex(index);
     }
 
     function _merkleTreeZero(uint256 level) internal view returns (bytes32 zeroHash) {

@@ -1,18 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {EmergencyMigratableForwarderBase} from "../src/forwarders/EmergencyMigratableForwarderBase.sol";
-import {ForwarderBase} from "../src/forwarders/ForwarderBase.sol";
-import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 
-import {EmergencyMigratableForwarderExample} from "./examples/EmergencyMigratableForwarder.e.sol";
-import {ForwarderExample} from "./examples/Forwarder.e.sol";
+import {EmergencyMigratableForwarderBase} from "../../src/forwarders/EmergencyMigratableForwarderBase.sol";
+import {ForwarderBase} from "../../src/forwarders/ForwarderBase.sol";
+import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
+
+import {EmergencyMigratableForwarderExample} from "../examples/EmergencyMigratableForwarder.e.sol";
+import {ForwarderExample} from "../examples/Forwarder.e.sol";
 import {
-    ForwarderTargetExample, INPUT_VALUE, OUTPUT_VALUE, INPUT, EXPECTED_OUTPUT
-} from "./examples/ForwarderTarget.e.sol";
+    ForwarderTargetExample,
+    INPUT_VALUE,
+    OUTPUT_VALUE,
+    INPUT,
+    EXPECTED_OUTPUT
+} from "../examples/ForwarderTarget.e.sol";
 
+import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 import {ForwarderBaseTest} from "./ForwarderBase.t.sol";
-import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(3));
@@ -20,10 +26,11 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
     EmergencyMigratableForwarderExample internal _emrgFwd;
 
     function setUp() public override {
-        (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
+        RiscZeroGroth16Verifier verifier;
+        (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts().run();
         _riscZeroAdmin = _emergencyStop.owner();
 
-        _pa = address(new ProtocolAdapter(_router));
+        _pa = address(new ProtocolAdapter(_router, verifier.SELECTOR(), _EMERGENCY_COMMITTEE));
 
         _emrgFwd = new EmergencyMigratableForwarderExample({
             protocolAdapter: _pa,
@@ -85,7 +92,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         _stopProtocolAdapter();
 
         vm.expectRevert(EmergencyMigratableForwarderBase.EmergencyCallerNotSet.selector);
-        _emrgFwd.forwardEmergencyCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
+        _emrgFwd.forwardEmergencyCall({input: INPUT});
     }
 
     function test_forwardEmergencyCall_reverts_if_the_pa_is_stopped_but_the_caller_is_not_the_emergency_caller()
@@ -98,7 +105,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         vm.expectRevert(
             abi.encodeWithSelector(ForwarderBase.UnauthorizedCaller.selector, _EMERGENCY_CALLER, _UNAUTHORIZED_CALLER)
         );
-        _emrgFwd.forwardEmergencyCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
+        _emrgFwd.forwardEmergencyCall({input: INPUT});
     }
 
     function test_forwardEmergencyCall_forwards_calls_if_the_pa_is_stopped_and_the_caller_is_the_emergency_caller()
@@ -108,7 +115,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         _setEmergencyCaller();
 
         vm.prank(_EMERGENCY_CALLER);
-        bytes memory output = _emrgFwd.forwardEmergencyCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
+        bytes memory output = _emrgFwd.forwardEmergencyCall({input: INPUT});
         assertEq(keccak256(output), keccak256(EXPECTED_OUTPUT));
     }
 
@@ -119,7 +126,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
         vm.prank(_EMERGENCY_CALLER);
         vm.expectEmit(address(_emrgFwd));
         emit ForwarderExample.EmergencyCallForwarded(INPUT, EXPECTED_OUTPUT);
-        _emrgFwd.forwardEmergencyCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
+        _emrgFwd.forwardEmergencyCall({input: INPUT});
     }
 
     function test_forwardEmergencyCall_calls_the_function_in_the_target_contract() public {
@@ -129,7 +136,7 @@ contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {
 
         vm.expectEmit(address(_tgt));
         emit ForwarderTargetExample.CallReceived(INPUT_VALUE, OUTPUT_VALUE);
-        _emrgFwd.forwardEmergencyCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: INPUT});
+        _emrgFwd.forwardEmergencyCall({input: INPUT});
     }
 
     function test_emergencyCaller_returns_the_emergency_caller_after_it_has_been_set() public {
