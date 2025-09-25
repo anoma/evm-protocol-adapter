@@ -45,6 +45,7 @@ contract ProtocolAdapter is
     using RiscZeroUtils for Logic.VerifierInput;
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
+    using Compliance for Compliance.VerifierInput[];
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
     bytes4 internal immutable _RISC_ZERO_VERIFIER_SELECTOR;
@@ -366,16 +367,6 @@ contract ProtocolAdapter is
         pure
         returns (bytes32 root)
     {
-        bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * 2);
-
-        // The order in which the tags are added to the tree is provided by the compliance units.
-        for (uint256 j = 0; j < complianceUnitCount; ++j) {
-            Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-
-            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
-            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
-        }
-
-        root = actionTreeTags.computeRoot();
+        root = action.complianceVerifierInputs.computeActionTreeTags(complianceUnitCount).computeRoot();
     }
 }

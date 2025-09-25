@@ -48,4 +48,24 @@ library Compliance {
     /// @notice The compliance verifying key.
     /// @dev The key is fixed as long as the compliance circuit binary is not changed.
     bytes32 internal constant _VERIFYING_KEY = 0x706468196fd92568220f5271e843c608126f7a8f204205d42ceef1f2c69f91df;
+
+    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
+    /// @param complianceVerifierInputs Compliance verifier inputs.
+    /// @param complianceUnitCount The number of compliance units in the action.
+    /// @return actionTreeTags The action tree tags corresponding to the compliance verifier inputs.
+    function computeActionTreeTags(Compliance.VerifierInput[] calldata complianceVerifierInputs, uint256 complianceUnitCount)
+        internal
+        pure
+        returns (bytes32[] memory actionTreeTags)
+    {
+        actionTreeTags = new bytes32[](complianceUnitCount * 2);
+
+        // The order in which the tags are added to the tree is provided by the compliance units.
+        for (uint256 j = 0; j < complianceUnitCount; ++j) {
+            Compliance.VerifierInput calldata complianceVerifierInput = complianceVerifierInputs[j];
+
+            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
+            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
+        }
+    }
 }

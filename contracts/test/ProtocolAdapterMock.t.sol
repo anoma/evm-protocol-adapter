@@ -26,6 +26,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
     using TxGen for Action;
     using TxGen for Vm;
     using RiscZeroUtils for Logic.VerifierInput;
+    using Logic for Logic.VerifierInput[];
+    using Compliance for Compliance.VerifierInput[];
 
     /// @notice The parameters necessary to make a failing mutation to a transaction
     struct NonExistingRootFailsParams {
@@ -73,6 +75,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint256 inputIdx;
         uint256 payloadIdx;
         bytes output;
+        bool consumed;
     }
 
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
@@ -633,16 +636,19 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Make transaction fail by ensuring that one of its forwarder call outputs mismatch.
     function mutationTestExecuteMismatchingForwarderCallOutputsFail(
-        Transaction memory transaction,
+        Transaction calldata transaction_calldata,
         MismatchingForwarderCallOutputsFailParams memory params
-    ) public {
+    ) public {Transaction memory transaction = transaction_calldata;
         // Wrap the action index into range
         params.actionIdx = params.actionIdx % transaction.actions.length;
+        Action calldata action_calldata = transaction_calldata.actions[params.actionIdx];
         Action memory action = transaction.actions[params.actionIdx];
-        Logic.VerifierInput[] memory logicVerifierInputs = action.logicVerifierInputs;
+        Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
         // Wrap the logic verifier input index into range
-        params.inputIdx = params.inputIdx % logicVerifierInputs.length;
-        Logic.VerifierInput memory logicVerifierInput = logicVerifierInputs[params.inputIdx];
+        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
+        Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
+        bytes32 tag = params.consumed ? complianceVerifierInput.instance.consumed.nullifier : complianceVerifierInput.instance.created.commitment;
+        Logic.VerifierInput memory logicVerifierInput = action_calldata.logicVerifierInputs.lookup(tag);
         Logic.ExpirableBlob[] memory externalPayloads = logicVerifierInput.appData.externalPayload;
         // Cannot do the mutation if transaction has no external payloads
         vm.assume(externalPayloads.length > 0);
@@ -656,22 +662,12 @@ contract ProtocolAdapterMockVerifierTest is Test {
         );
         // Re-encode the calldata and replace the value in the external payloads
         externalPayloads[params.payloadIdx].blob = abi.encode(untrustedForwarder, input, params.output);
-        // Now determine whether the current resource is being created or consumed
-        Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
-        bool isConsumed;
-        for (uint256 i = 0; i < complianceVerifierInputs.length; i++) {
-            if (complianceVerifierInputs[i].instance.consumed.nullifier == logicVerifierInput.tag) {
-                isConsumed = true;
-            } else if (complianceVerifierInputs[i].instance.created.commitment == logicVerifierInput.tag) {
-                isConsumed = false;
-            }
-        }
         // Compute the action tree root
-        bytes32 actionTreeRoot = _computeActionTreeRootMemory(action, action.complianceVerifierInputs.length);
+        bytes32[] memory actionTreeTags = action_calldata.complianceVerifierInputs.computeActionTreeTags(action.complianceVerifierInputs.length);
         // Recompute the logic verifier input proof
-        logicVerifierInputs[params.inputIdx].proof = _mockVerifier.mockProve({
-            imageId: logicVerifierInputs[params.inputIdx].verifyingKey,
-            journalDigest: logicVerifierInputs[params.inputIdx].toJournalDigest(actionTreeRoot, isConsumed)
+        logicVerifierInput.proof = _mockVerifier.mockProve({
+            imageId: logicVerifierInput.verifyingKey,
+            journalDigest: logicVerifierInput.toJournalDigest(actionTreeTags.computeRoot(), params.consumed)
         }).seal;
         // With mismatching forwarder call outputs, we expect failure
         vm.expectRevert(
@@ -702,29 +698,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
         Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
-        mutationTestExecuteMismatchingForwarderCallOutputsFail(txn, params);
-    }
-
-    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
-    /// @param action The action whose root we compute.
-    /// @param complianceUnitCount The number of compliance units in the action.
-    /// @return root The root of the corresponding tree.
-    function _computeActionTreeRootMemory(Action memory action, uint256 complianceUnitCount)
-        internal
-        pure
-        returns (bytes32 root)
-    {
-        bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * 2);
-
-        // The order in which the tags are added to the tree are provided by the compliance units
-        for (uint256 j = 0; j < complianceUnitCount; ++j) {
-            Compliance.VerifierInput memory complianceVerifierInput = action.complianceVerifierInputs[j];
-
-            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
-            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
-        }
-
-        root = actionTreeTags.computeRoot();
+        this.mutationTestExecuteMismatchingForwarderCallOutputsFail(txn, params);
     }
 
     function _exampleResourceAndEmptyAppData(uint256 nonce)
