@@ -47,7 +47,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         EmergencyMigratableForwarderBase(protocolAdapter, calldataCarrierLogicRef, emergencyCommittee)
     {}
 
-    // slither-disable-start dead-code
+    // slither-disable-start dead-code /* NOTE: This code is not dead and falsely flagged as such by slither. */
     /// @notice Forwards a call wrapping or unwrapping ERC20 tokens based on the provided input.
     /// @param input Contains data to withdraw or send ERC20 tokens from or to a user, respectively.
     /// @return output The empty string signaling that the function call has succeeded.
