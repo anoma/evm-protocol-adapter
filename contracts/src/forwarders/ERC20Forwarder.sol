@@ -97,7 +97,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// * * `nonce`: A unique value to prevent signature replays.
     /// * * `deadline`: The deadline of the permit signature.
     /// * `witness`: The witness information (the action tree root) that was signed over in addition to the permit data.
-    /// * `signature`: The Permit2 signature
+    /// * `signature`: The Permit2 signature.
     function _wrap(bytes calldata input) internal {
         // slither-disable-next-line unused-return
         (

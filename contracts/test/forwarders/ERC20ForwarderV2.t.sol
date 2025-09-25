@@ -40,7 +40,7 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         _pa.execute(txn);
         assertEq(_pa.contains(nullifier), true);
 
-        // Stop the PA
+        // Stop the PA.
         vm.prank(address(_pa.owner()));
         _pa.emergencyStop();
 
@@ -58,10 +58,10 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     }
 
     function test_migrate_reverts_if_the_resource_has_already_been_migrated() public {
-        // Fund the forwarder v1
+        // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
-        // Stop the PA
+        // Stop the PA.
         vm.prank(address(_pa.owner()));
         _pa.emergencyStop();
 
@@ -83,13 +83,13 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
     }
 
     function test_migrate_transfers_funds_from_V1_to_V2_forwarder() public {
-        // Fund the forwarder v1
+        // Fund the forwarder v1.
         _erc20.mint({to: address(_fwdV1), value: _TRANSFER_AMOUNT});
 
         assertEq(_erc20.balanceOf(address(_fwdV1)), _TRANSFER_AMOUNT);
         assertEq(_erc20.balanceOf(address(_fwdV2)), 0);
 
-        // Stop the PA
+        // Stop the PA.
         vm.prank(address(_pa.owner()));
         _pa.emergencyStop();
 

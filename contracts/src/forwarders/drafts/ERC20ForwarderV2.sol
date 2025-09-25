@@ -84,7 +84,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
             revert NullifierAlreadyMigrated(nullifier);
         }
 
-        // Make sure that the nullifier has not been added before
+        // Make sure that the nullifier has not been added before.
         _addNullifier(nullifier);
 
         emit ERC20Forwarder.Wrapped({token: token, from: address(_ERC20_FORWARDER_V1), amount: amount});
