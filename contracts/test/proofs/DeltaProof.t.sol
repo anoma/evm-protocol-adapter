@@ -31,6 +31,7 @@ contract DeltaProofTest is Test {
     using EllipticCurveK256 for uint256;
     using DeltaGen for DeltaGen.InstanceInputs[];
     using DeltaGen for DeltaGen.InstanceInputs;
+    using DeltaGen for uint256;
 
     function testFuzz_verify_delta_succeeds(
         uint256 kind,
@@ -38,8 +39,8 @@ contract DeltaProofTest is Test {
         bool consumed,
         bytes32 verifyingKey
     ) public {
-        kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
-        valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
+        kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
+        valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
 
         // Construct delta instance inputs from the above parameters
         DeltaGen.InstanceInputs memory deltaInstanceInputs = DeltaGen.InstanceInputs({
@@ -70,9 +71,9 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.InstanceInputsExceptKind memory input1,
         DeltaFuzzing.InstanceInputsExceptKind memory input2
     ) public {
-        kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
-        input1.valueCommitmentRandomness = bound(input1.valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
-        input2.valueCommitmentRandomness = bound(input2.valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
+        kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
+        input1.valueCommitmentRandomness = bound(input1.valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
+        input2.valueCommitmentRandomness = bound(input2.valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
 
         vm.assume(input1.consumed != input2.consumed || input2.quantity <= type(uint128).max - input1.quantity);
         vm.assume(
@@ -129,9 +130,9 @@ contract DeltaProofTest is Test {
         DeltaGen.InstanceInputs memory deltaInstanceInputs,
         bytes32 fuzzedVerifyingKey
     ) public {
-        deltaInstanceInputs.kind = bound(deltaInstanceInputs.kind, 1, EllipticCurveK256.ORDER - 1);
+        deltaInstanceInputs.kind = bound(deltaInstanceInputs.kind, 1, DeltaGen.SECP256K1_ORDER - 1);
         deltaInstanceInputs.valueCommitmentRandomness =
-            bound(deltaInstanceInputs.valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
+            bound(deltaInstanceInputs.valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
 
         vm.assume(DeltaGen.canonicalizeQuantity(deltaInstanceInputs.consumed, deltaInstanceInputs.quantity) != 0);
 
@@ -158,10 +159,10 @@ contract DeltaProofTest is Test {
         uint256 valueCommitmentRandomness1,
         uint256 valueCommitmentRandomness2
     ) public {
-        kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
+        kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
 
-        valueCommitmentRandomness1 = bound(valueCommitmentRandomness1, 1, EllipticCurveK256.ORDER - 1);
-        valueCommitmentRandomness2 = bound(valueCommitmentRandomness2, 1, EllipticCurveK256.ORDER - 1);
+        valueCommitmentRandomness1 = bound(valueCommitmentRandomness1, 1, DeltaGen.SECP256K1_ORDER - 1);
+        valueCommitmentRandomness2 = bound(valueCommitmentRandomness2, 1, DeltaGen.SECP256K1_ORDER - 1);
         vm.assume(valueCommitmentRandomness1.modOrder() != valueCommitmentRandomness2.modOrder());
 
         bytes memory proofRcv1 = DeltaGen.generateProof(
@@ -193,8 +194,8 @@ contract DeltaProofTest is Test {
         bytes32 verifyingKey1,
         bytes32 verifyingKey2
     ) public {
-        kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
-        valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, EllipticCurveK256.ORDER - 1);
+        kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
+        valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
         vm.assume(verifyingKey1 != verifyingKey2);
 
         bytes memory proofForVk1 = DeltaGen.generateProof(
@@ -225,7 +226,7 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs,
         bytes32 verifyingKey
     ) public {
-        kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
+        kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
         DeltaGen.InstanceInputs[] memory deltaInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
 
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
@@ -277,7 +278,7 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs,
         bytes32 verifyingKey
     ) public {
-        kind = bound(kind, 1, EllipticCurveK256.ORDER - 1);
+        kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
         DeltaGen.InstanceInputs[] memory deltaInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
 
         uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
