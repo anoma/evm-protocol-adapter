@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-import {RiscZeroMockVerifier, VerificationFailed} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
+import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
 import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
@@ -13,6 +13,7 @@ import {MerkleTree} from "../src/libs/MerkleTree.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Logic} from "../src/proving/Logic.sol";
+import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {Transaction, Action} from "../src/Types.sol";
 
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
@@ -201,15 +202,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function test_execute_reverts_on_pre_existing_nullifier() public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1});
 
-        (Transaction memory tx1, bytes32 updatedNonce) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory tx1,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         bytes32 preExistingNf = tx1.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
         _mockPa.execute(tx1);
 
-        (Transaction memory tx2,) = vm.transaction({mockVerifier: _mockVerifier, nonce: updatedNonce, configs: configs});
-        tx2.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier = preExistingNf;
-        vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
-        _mockPa.execute(tx2);
+        vm.expectRevert(
+            abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, preExistingNf), address(_mockPa)
+        );
+        _mockPa.execute(tx1);
     }
 
     function test_execute_reverts_on_resource_count_mismatch(uint8 complianceUnitCount) public {
