@@ -61,7 +61,7 @@ impl From<LogicVerifierInputs> for Logic::VerifierInput {
             verifyingKey: B256::from_slice(words_to_bytes(&logic_verifier_inputs.verifying_key)),
             appData: logic_verifier_inputs.app_data.into(),
             proof: Bytes::from(
-                encode_seal(&logic_verifier_inputs.proof.unwrap_or(vec![]))
+                encode_seal(&logic_verifier_inputs.proof.unwrap_or_default())
                     .unwrap()
                     .to_vec(),
             ),
@@ -93,7 +93,7 @@ impl From<ComplianceUnit> for Compliance::VerifierInput {
     fn from(compliance_unit: ComplianceUnit) -> Self {
         Self {
             proof: Bytes::from(
-                encode_seal(&compliance_unit.clone().proof.unwrap_or(vec![])).unwrap(),
+                encode_seal(&compliance_unit.clone().proof.unwrap_or_default()).unwrap(),
             ),
             instance: compliance_unit.get_instance().unwrap().into(),
         }
@@ -132,7 +132,7 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
                 .collect(),
             deltaProof: Bytes::from(delta_proof),
             aggregationProof: Bytes::from(
-                encode_seal(&tx.aggregation_proof.unwrap_or(vec![])).unwrap(),
+                encode_seal(&tx.aggregation_proof.unwrap_or_default()).unwrap(),
             ),
         }
     }
