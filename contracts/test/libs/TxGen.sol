@@ -38,7 +38,7 @@ library TxGen {
     function complianceVerifierInput(
         VmSafe vm,
         RiscZeroMockVerifier mockVerifier,
-        bytes32 commitmentTreeRoot, // historical root
+        bytes32 commitmentRoot, // historical root
         Resource memory consumed,
         Resource memory created
     ) internal returns (Compliance.VerifierInput memory unit) {
@@ -70,11 +70,7 @@ library TxGen {
         );
 
         Compliance.Instance memory instance = Compliance.Instance({
-            consumed: Compliance.ConsumedRefs({
-                nullifier: nf,
-                commitmentTreeRoot: commitmentTreeRoot,
-                logicRef: consumed.logicRef
-            }),
+            consumed: Compliance.ConsumedRefs({nullifier: nf, commitmentRoot: commitmentRoot, logicRef: consumed.logicRef}),
             created: Compliance.CreatedRefs({commitment: cm, logicRef: created.logicRef}),
             unitDeltaX: bytes32(unitDelta[0]),
             unitDeltaY: bytes32(unitDelta[1])
@@ -109,14 +105,14 @@ library TxGen {
             actionTreeTags[index + 1] = commitment(created[i].resource);
         }
 
-        bytes32 actionTreeRoot = actionTreeTags.computeRoot();
+        bytes32 actionRoot = actionTreeTags.computeRoot();
 
         for (uint256 i = 0; i < complianceUnitCount; ++i) {
             uint256 index = i * 2;
 
             logicVerifierInputs[index] = logicVerifierInput({
                 mockVerifier: mockVerifier,
-                actionTreeRoot: actionTreeRoot,
+                actionRoot: actionRoot,
                 resource: consumed[i].resource,
                 isConsumed: true,
                 appData: consumed[i].appData
@@ -124,7 +120,7 @@ library TxGen {
 
             logicVerifierInputs[index + 1] = logicVerifierInput({
                 mockVerifier: mockVerifier,
-                actionTreeRoot: actionTreeRoot,
+                actionRoot: actionRoot,
                 resource: created[i].resource,
                 isConsumed: false,
                 appData: created[i].appData
@@ -133,7 +129,7 @@ library TxGen {
             complianceVerifierInputs[i] = complianceVerifierInput({
                 vm: vm,
                 mockVerifier: mockVerifier,
-                commitmentTreeRoot: initialRoot(),
+                commitmentRoot: initialRoot(),
                 consumed: consumed[i].resource,
                 created: created[i].resource
             });
@@ -259,7 +255,7 @@ library TxGen {
 
     function logicVerifierInput(
         RiscZeroMockVerifier mockVerifier,
-        bytes32 actionTreeRoot,
+        bytes32 actionRoot,
         Resource memory resource,
         bool isConsumed,
         Logic.AppData memory appData
@@ -273,7 +269,7 @@ library TxGen {
 
         input.proof = mockVerifier.mockProve({
             imageId: resource.logicRef,
-            journalDigest: input.toJournalDigest(actionTreeRoot, isConsumed)
+            journalDigest: input.toJournalDigest(actionRoot, isConsumed)
         }).seal;
     }
 

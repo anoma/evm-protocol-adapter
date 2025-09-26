@@ -71,7 +71,7 @@ impl From<ComplianceInstance> for Compliance::Instance {
             consumed: Compliance::ConsumedRefs {
                 nullifier: B256::from_slice(words_to_bytes(&instance.consumed_nullifier)),
                 logicRef: B256::from_slice(words_to_bytes(&instance.consumed_logic_ref)),
-                commitmentTreeRoot: B256::from_slice(words_to_bytes(
+                commitmentRoot: B256::from_slice(words_to_bytes(
                     &instance.consumed_commitment_tree_root,
                 )),
             },

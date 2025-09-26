@@ -14,14 +14,14 @@ interface INullifierSet {
     /// @notice Returns whether the set contains a given nullifier or not.
     /// @param nullifier The nullifier to check.
     /// @return isContained Whether the nullifier is contained or not.
-    function contains(bytes32 nullifier) external view returns (bool isContained);
+    function isNullifierContained(bytes32 nullifier) external view returns (bool isContained);
 
-    /// @notice Returns the number of nullifiers in the set.
-    /// @return len The number of nullifiers in the set.
-    function length() external view returns (uint256 len);
+    /// @notice Returns the number of nullifiers in the nullifier set.
+    /// @return count The number of nullifiers in the set.
+    function nullifierCount() external view returns (uint256 count);
 
     /// @notice Returns the nullifier with the given index.
     /// @param index The index to return the nullifier for.
     /// @return nullifier The nullifier at the given index.
-    function atIndex(uint256 index) external view returns (bytes32 nullifier);
+    function nullifierAtIndex(uint256 index) external view returns (bytes32 nullifier);
 }

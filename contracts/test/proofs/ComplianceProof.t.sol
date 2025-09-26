@@ -39,7 +39,7 @@ contract ComplianceProofTest is Test {
             abi.encodePacked(
                 instance.consumed.nullifier,
                 instance.consumed.logicRef,
-                instance.consumed.commitmentTreeRoot,
+                instance.consumed.commitmentRoot,
                 instance.created.commitment,
                 instance.created.logicRef,
                 instance.unitDeltaX,

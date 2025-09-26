@@ -34,7 +34,7 @@ library TransactionExample {
         instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
                 nullifier: _CONSUMED_NULLIFIER,
-                commitmentTreeRoot: SHA256.EMPTY_HASH,
+                commitmentRoot: SHA256.EMPTY_HASH,
                 logicRef: _CONSUMED_LOGIC_REF
             }),
             created: Compliance.CreatedRefs({commitment: _CREATED_COMMITMENT, logicRef: _CREATED_LOGIC_REF}),
@@ -106,7 +106,7 @@ library TransactionExample {
         txn = Transaction({actions: actions, deltaProof: _DELTA_PROOF});
     }
 
-    function treeRoot() internal pure returns (bytes32 root) {
+    function commitmentRoot() internal pure returns (bytes32 root) {
         bytes32[] memory leaves = new bytes32[](2);
         leaves[0] = _CONSUMED_NULLIFIER;
         leaves[1] = _CREATED_COMMITMENT;
