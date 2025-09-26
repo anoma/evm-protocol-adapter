@@ -51,7 +51,6 @@ contract TagLookupTest is Test {
         }
     }
 
-    /// @notice
     function _lookupMem(Logic.VerifierInput[] memory list, bytes32 tag)
         internal
         returns (Logic.VerifierInput memory found)
