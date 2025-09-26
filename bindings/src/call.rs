@@ -1,7 +1,7 @@
-use crate::conversion::ProtocolAdapter;
+use crate::conversion;
 
 use alloy::network::EthereumWallet;
-use alloy::primitives::Address;
+use alloy::primitives::{Address, U256};
 use alloy::providers::fillers::{
     BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, WalletFiller,
 };
@@ -9,6 +9,8 @@ use alloy::providers::{Identity, ProviderBuilder, RootProvider};
 use alloy::sol;
 use reqwest::Url;
 use url::ParseError;
+use arm_risc0::transaction::Transaction;
+use async_trait::async_trait;
 
 type DefaultProvider = FillProvider<
     JoinFill<
@@ -20,6 +22,28 @@ type DefaultProvider = FillProvider<
     >,
     RootProvider,
     >;
+
+#[async_trait]
+pub trait ProtocolAdapter {
+    async fn execute(&self, tx: Transaction) -> Result<(), alloy::contract::Error>;
+    async fn emergency_stop(&self) -> Result<(), alloy::contract::Error>;
+    async fn is_emergency_stopped(&self) -> Result<bool, alloy::contract::Error>;
+    async fn get_risc_zero_verifier_selector(&self) -> Result<[u8; 4], alloy::contract::Error>;
+    async fn get_protocol_adapter_version(&self) -> Result<[u8; 32], alloy::contract::Error>;
+    async fn latest_root(&self) -> Result<[u8; 32], alloy::contract::Error>;
+    async fn contains_root(&self, root: &[u8; 32]) -> Result<bool, alloy::contract::Error>;
+    async fn verify_merkle_proof(
+        &self,
+        root: &[u8; 32],
+        commitment: &[u8; 32],
+        path: &[[u8; 32]],
+        direction_bits: U256,
+    ) -> Result<(), alloy::contract::Error>;
+    async fn contains(&self, nullifier: &[u8; 32]) -> Result<bool, alloy::contract::Error>;
+    async fn length(&self) -> Result<U256, alloy::contract::Error>;
+    async fn at_index(&self, index: U256) -> Result<[u8; 32], alloy::contract::Error>;
+}
+
 
 pub enum EthereumRpc {
     Sepolia(Url),
@@ -57,7 +81,7 @@ pub fn protocol_adapter(
     id: ProtocolAdapterId,
     rpc: EthereumRpc,
     wallet: EthereumWallet,
-) -> ProtocolAdapter::ProtocolAdapterInstance<DefaultProvider> {
+) -> Box<dyn ProtocolAdapter> {
     let provider = ProviderBuilder::new().wallet(wallet);
     match (id, rpc) {
         (ProtocolAdapterId::SepoliaPa, EthereumRpc::Sepolia(rpc_url)) => {
@@ -65,11 +89,11 @@ pub fn protocol_adapter(
                 .parse::<Address>()
                 .expect("Sepolia deployment address should be correct");
             let provider = provider.connect_http(rpc_url);
-            ProtocolAdapter::new(protocol_adapter_address, provider)
+            Box::new(conversion::ProtocolAdapter::new(protocol_adapter_address, provider))
         },
         (ProtocolAdapterId::Other { protocol_adapter, .. }, rpc) => {
             let provider = provider.connect_http(rpc.into());
-            ProtocolAdapter::new(protocol_adapter, provider)
+            Box::new(conversion::ProtocolAdapter::new(protocol_adapter, provider))
         },
         _ => unreachable!("Incompatable RPC chosen for protocol adapter"),
     }
@@ -107,21 +131,21 @@ pub fn erc20_forwarder(
 
 #[cfg(test)]
 mod tests {
-    use crate::call::{protocol_adapter, DefaultProvider, EthereumRpc, ProtocolAdapterId};
-    use crate::conversion::ProtocolAdapter;
+    use crate::call::{protocol_adapter, ProtocolAdapter, EthereumRpc, ProtocolAdapterId};
     use alloy::hex;
-    use alloy::primitives::B256;
     use tokio;
     use std::env;
     use alloy::signers::local::PrivateKeySigner;
+    use arm_risc0::transaction::{Delta, Transaction};
+    use arm_risc0::delta_proof::{DeltaProof, DeltaWitness};
 
-    fn initial_root() -> B256 {
-        B256::from(hex!(
+    fn initial_root() -> [u8; 32] {
+        hex!(
             "7e70786b1d52fc0412d75203ef2ac22de13d9596ace8a5a1ed5324c3ed7f31c3"
-        ))
+        )
     }
 
-    fn sepolia_protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<DefaultProvider> {
+    fn sepolia_protocol_adapter() -> Box<dyn ProtocolAdapter> {
         let api_key = env::var("API_KEY_ALCHEMY").expect("Couldn't read API_KEY_ALCHEMY");
         let signer = env::var("PRIVATE_KEY")
             .expect("Couldn't read PRIVATE_KEY")
@@ -136,8 +160,7 @@ mod tests {
     async fn contains_initial_root() {
         assert!(
             sepolia_protocol_adapter()
-                .containsRoot(initial_root())
-                .call()
+                .contains_root(&initial_root())
                 .await
                 .unwrap()
         );
@@ -146,18 +169,19 @@ mod tests {
     #[tokio::test]
     #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn call_latest_root() {
-        let root = sepolia_protocol_adapter().latestRoot().call().await.unwrap();
+        let root = sepolia_protocol_adapter().latest_root().await.unwrap();
         assert_ne!(root, initial_root());
     }
 
     #[tokio::test]
     #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn call_execute() {
-        let empty_tx = ProtocolAdapter::Transaction {
+        let empty_tx = Transaction {
             actions: vec![],
-            deltaProof: vec![].into(),
+            delta_proof: Delta::Proof(DeltaProof::prove(&vec![], &DeltaWitness::from_scalars(&[]))),
+            expected_balance: None,
         };
-        let result = sepolia_protocol_adapter().execute(empty_tx).call().await;
+        let result = sepolia_protocol_adapter().execute(empty_tx).await;
         assert!(result.is_ok());
     }
 }
