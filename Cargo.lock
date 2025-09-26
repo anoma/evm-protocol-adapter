@@ -2779,10 +2779,12 @@ version = "1.0.0-beta"
 dependencies = [
  "alloy",
  "arm",
+ "reqwest",
  "serde",
  "sha2",
  "simple-transfer-app",
  "tokio",
+ "url",
 ]
 
 [[package]]
