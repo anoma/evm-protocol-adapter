@@ -36,9 +36,9 @@ contract ERC20ForwarderV2Test is ERC20ForwarderTest {
         Transaction memory txn = TransactionExample.transaction();
         bytes32 nullifier = txn.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
 
-        assertEq(_pa.contains(nullifier), false);
+        assertEq(_pa.isNullifierContained(nullifier), false);
         _pa.execute(txn);
-        assertEq(_pa.contains(nullifier), true);
+        assertEq(_pa.isNullifierContained(nullifier), true);
 
         // Stop the PA.
         vm.prank(address(_pa.owner()));

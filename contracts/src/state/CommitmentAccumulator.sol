@@ -41,22 +41,53 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
     }
 
     /// @inheritdoc ICommitmentAccumulator
-    function latestRoot() external view override returns (bytes32 root) {
-        root = _latestRoot();
+    function commitmentCount() external view override returns (uint256 count) {
+        count = _merkleTree.leafCount();
     }
 
     /// @inheritdoc ICommitmentAccumulator
-    function containsRoot(bytes32 root) external view override returns (bool isContained) {
-        isContained = _containsRoot(root);
+    function commitmentTreeDepth() external view override returns (uint8 depth) {
+        depth = _merkleTree.depth();
     }
 
     /// @inheritdoc ICommitmentAccumulator
-    function verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path, uint256 directionBits)
-        external
-        view
-        override
-    {
-        _verifyMerkleProof({root: root, commitment: commitment, path: path, directionBits: directionBits});
+    function commitmentTreeCapacity() external view override returns (uint256 capacity) {
+        capacity = _merkleTree.capacity();
+    }
+
+    /// @inheritdoc ICommitmentAccumulator
+    function isCommitmentRootContained(bytes32 root) external view override returns (bool isContained) {
+        isContained = _roots.contains(root);
+    }
+
+    /// @inheritdoc ICommitmentAccumulator
+    function commitmentRootCount() external view override returns (uint256 count) {
+        count = _roots.length();
+    }
+
+    /// @inheritdoc ICommitmentAccumulator
+    function commitmentRootAtIndex(uint256 index) external view override returns (bytes32 root) {
+        root = _roots.at(index);
+    }
+
+    /// @inheritdoc ICommitmentAccumulator
+    function latestCommitmentRoot() external view override returns (bytes32 root) {
+        root = _roots.at(_roots.length() - 1);
+    }
+
+    /// @inheritdoc ICommitmentAccumulator
+    function verifyMerkleProof(
+        bytes32 commitmentRoot,
+        bytes32 commitment,
+        bytes32[] calldata path,
+        uint256 directionBits
+    ) external view override {
+        _verifyMerkleProof({
+            commitmentRoot: commitmentRoot,
+            commitment: commitment,
+            path: path,
+            directionBits: directionBits
+        });
     }
 
     /// @notice Adds a commitment to the accumulator and returns the new root.
@@ -73,34 +104,36 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         if (!_roots.add(root)) {
             revert PreExistingRoot(root);
         }
-        emit CommitmentTreeRootStored(root);
+        emit CommitmentRootStored(root);
     }
 
     /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.
     /// @dev To prevent second-preimage attacks, ensure that the commitment is a leaf and not an intermediary node.
-    /// @param root The root to reproduce.
+    /// @param commitmentRoot The commitment tree root to reproduce.
     /// @param commitment The commitment leaf to proof inclusion in the tree for.
     /// @param path The siblings constituting the path from the leaf to the root.
     /// @param directionBits The direction bits indicating whether the siblings are left of right.
-    function _verifyMerkleProof(bytes32 root, bytes32 commitment, bytes32[] calldata path, uint256 directionBits)
-        internal
-        view
-    {
+    function _verifyMerkleProof(
+        bytes32 commitmentRoot,
+        bytes32 commitment,
+        bytes32[] calldata path,
+        uint256 directionBits
+    ) internal view {
         // Check length.
         if (path.length > _merkleTree.depth()) {
             revert PathLengthExceedsLatestDepth({latestDepth: _merkleTree.depth(), provided: path.length});
         }
 
         // Check root existence.
-        if (!_roots.contains(root)) {
-            revert NonExistingRoot(root);
+        if (!_roots.contains(commitmentRoot)) {
+            revert NonExistingRoot(commitmentRoot);
         }
 
         // Check that the commitment leaf and path reproduce the root.
         bytes32 computedRoot = path.processProof(directionBits, commitment);
 
-        if (root != computedRoot) {
-            revert InvalidRoot({expected: root, actual: computedRoot});
+        if (commitmentRoot != computedRoot) {
+            revert InvalidRoot({expected: commitmentRoot, actual: computedRoot});
         }
     }
 
@@ -110,18 +143,5 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         if (!_roots.contains(root)) {
             revert NonExistingRoot(root);
         }
-    }
-
-    /// @notice Returns the latest  commitment tree state root.
-    /// @return root The latest commitment tree state root.
-    function _latestRoot() internal view returns (bytes32 root) {
-        root = _roots.at(_roots.length() - 1);
-    }
-
-    /// @notice Checks if a commitment tree state root exists.
-    /// @param root The root to check.
-    /// @return isContained Whether the root exists or not.
-    function _containsRoot(bytes32 root) internal view returns (bool isContained) {
-        isContained = _roots.contains(root);
     }
 }

@@ -21,11 +21,11 @@ library Compliance {
     /// @notice A struct containing references associated with the consumed resource of the compliance unit.
     /// @param nullifier The nullifier t associated with the resource.
     /// @param logicRef A reference to the logic function associated with the consumed resource.
-    /// @param commitmentTreeRoot The root of the commitment tree from which this resource is derived.
+    /// @param commitmentRoot The root of the commitment tree from which this resource is derived.
     struct ConsumedRefs {
         bytes32 nullifier;
         bytes32 logicRef;
-        bytes32 commitmentTreeRoot;
+        bytes32 commitmentRoot;
     }
 
     /// @notice A struct containing references associated with the created resource of the compliance unit.

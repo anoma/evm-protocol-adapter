@@ -24,7 +24,7 @@ library RiscZeroUtils {
             _EIGHT,
             instance.consumed.logicRef,
             _EIGHT,
-            instance.consumed.commitmentTreeRoot,
+            instance.consumed.commitmentRoot,
             _EIGHT,
             instance.created.commitment,
             _EIGHT,
@@ -39,23 +39,23 @@ library RiscZeroUtils {
 
     /// @notice Calculates the digest of the logic instance (journal).
     /// @param input The logic verifier input.
-    /// @param root The action tree root computed per-action.
+    /// @param actionRoot The action tree root computed per-action.
     /// @param consumed The bool describing whether the input is for a consumed or created resource.
     /// @return digest The journal digest.
-    function toJournalDigest(Logic.VerifierInput memory input, bytes32 root, bool consumed)
+    function toJournalDigest(Logic.VerifierInput memory input, bytes32 actionRoot, bool consumed)
         internal
         pure
         returns (bytes32 digest)
     {
-        digest = sha256(convertJournal(input, root, consumed));
+        digest = sha256(convertJournal(input, actionRoot, consumed));
     }
 
     /// @notice Converts the logic instance to match the RISC Zero journal.
     /// @param input The logic verifier input.
-    /// @param root The action tree root computed per-action.
+    /// @param actionRoot The action tree root computed per-action.
     /// @param consumed The bool describing whether the input is for a consumed or created resource.
     /// @return converted The converted journal.
-    function convertJournal(Logic.VerifierInput memory input, bytes32 root, bool consumed)
+    function convertJournal(Logic.VerifierInput memory input, bytes32 actionRoot, bool consumed)
         internal
         pure
         returns (bytes memory converted)
@@ -67,7 +67,7 @@ library RiscZeroUtils {
         encodedAppData = encodedAppData.appendPayload(input.appData.externalPayload);
         encodedAppData = encodedAppData.appendPayload(input.appData.applicationPayload);
 
-        converted = abi.encodePacked(_EIGHT, input.tag, toRiscZero(consumed), _EIGHT, root, encodedAppData);
+        converted = abi.encodePacked(_EIGHT, input.tag, toRiscZero(consumed), _EIGHT, actionRoot, encodedAppData);
     }
 
     /// @notice Appends expirable blob payload to the encode app data.
