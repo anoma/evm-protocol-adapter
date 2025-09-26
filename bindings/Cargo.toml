@@ -8,13 +8,14 @@ arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.6.0", pa
     "groth16_prover",
     "bonsai"
 ] }
-alloy = { version = "1.0.30", features = ["full", "eip712", "node-bindings"] }
+alloy = { version = "1.0.30", features = ["contract", "full", "eip712", "node-bindings", "sol-types"] }
 tokio = { version = "1.44", features = ["rt-multi-thread"] }
 serde = { version = "1.0.197", default-features = false }
 sha2 = { version = "0.10.9" }
 simple_transfer_app = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.6.0", package = "simple-transfer-app" }
 reqwest = { version = "0.12", default-features = false }
 url = { version = "2.4", default-features = false }
+async-trait = "0.1.89"
 
 
 [features]

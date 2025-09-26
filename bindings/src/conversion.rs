@@ -1,4 +1,5 @@
-use alloy::primitives::{Bytes, B256};
+use alloy::primitives::{Bytes, B256, U256};
+use alloy::providers::Provider;
 use alloy::sol;
 use arm_risc0::action::Action;
 use arm_risc0::compliance::ComplianceInstance;
@@ -9,6 +10,7 @@ use arm_risc0::proving_system::encode_seal;
 
 use arm_risc0::transaction::{Delta, Transaction};
 use arm_risc0::utils::words_to_bytes;
+use async_trait::async_trait;
 
 sol!(
     #[allow(missing_docs)]
@@ -126,6 +128,65 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
                 .collect(),
             deltaProof: Bytes::from(delta_proof),
         }
+    }
+}
+
+#[async_trait]
+impl<X: Provider> crate::call::ProtocolAdapter for ProtocolAdapter::ProtocolAdapterInstance<X> {
+    async fn execute(&self, tx: Transaction) -> Result<(), alloy::contract::Error> {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::execute(self, tx.into()).call().await.map(|_| ())
+    }
+
+    async fn emergency_stop(&self) -> Result<(), alloy::contract::Error> {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::emergencyStop(self).call().await.map(|_| ())
+    }
+
+    async fn is_emergency_stopped(&self) -> Result<bool, alloy::contract::Error> {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::isEmergencyStopped(self).call().await
+    }
+
+    async fn get_risc_zero_verifier_selector(&self) -> Result<[u8; 4], alloy::contract::Error> {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::getRiscZeroVerifierSelector(self).call().await.map(|x| x.0)
+    }
+
+    async fn get_protocol_adapter_version(&self) -> Result<[u8; 32], alloy::contract::Error> {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::getProtocolAdapterVersion(self).call().await.map(|x| x.0)
+    }
+
+    async fn latest_root(&self) -> Result<[u8; 32], alloy::contract::Error> {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::latestRoot(self).call().await.map(|x| x.0)
+    }
+
+    async fn contains_root(&self, root: &[u8; 32]) -> Result<bool, alloy::contract::Error> {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::containsRoot(self, root.into()).call().await
+    }
+
+    async fn verify_merkle_proof(
+        &self,
+        root: &[u8; 32],
+        commitment: &[u8; 32],
+        path: &[[u8; 32]],
+        direction_bits: U256,
+    ) -> Result<(), alloy::contract::Error> {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::verifyMerkleProof(
+            self,
+            root.into(),
+            commitment.into(),
+            path.iter().map(Into::into).collect(),
+            direction_bits,
+        ).call().await.map(|_| ())
+    }
+
+    async fn contains(&self, nullifier: &[u8; 32]) -> Result<bool, alloy::contract::Error> {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::contains(self, nullifier.into()).call().await
+    }
+
+    async fn length(&self) -> Result<U256, alloy::contract::Error> {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::length(self).call().await
+    }
+
+    async fn at_index(&self, index: U256) -> Result<[u8; 32], alloy::contract::Error> {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::atIndex(self, index).call().await.map(Into::into)
     }
 }
 
