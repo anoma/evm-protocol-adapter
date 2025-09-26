@@ -143,15 +143,25 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 mod tests {
     use crate::conversion::ProtocolAdapter;
     use alloy::primitives::B256;
+    use arm_risc0::aggregation::AggregationStrategy;
 
     #[test]
     #[ignore]
-    fn print_tx() {
+    fn print_verifying_keys() {
         println!(
-            "{:?}",
+            "COMPLIANCE_VK: {:?}",
             B256::from_slice(arm_risc0::constants::COMPLIANCE_VK.as_bytes())
         );
 
+        println!(
+            "BATCH_AGGREGATION_VK: {:?}",
+            B256::from_slice(arm_risc0::aggregation::constants::BATCH_AGGREGATION_VK.as_bytes())
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn print_tx_normal() {
         let n_actions = 1;
 
         let raw_tx = arm_risc0::transaction::generate_test_transaction(n_actions);
@@ -165,6 +175,31 @@ mod tests {
         assert_eq!(evm_tx, decoded_tx);
         println!("Transaction: {:#?}", evm_tx);
         std::fs::write(format!("test_tx{n_actions:02}.bin"), &encoded_tx)
+            .expect("Failed to write encoded transaction to file");
+    }
+
+    #[test]
+    #[ignore]
+    fn print_tx_aggregated_proof() {
+        let n_actions = 1;
+
+        let mut raw_tx = arm_risc0::transaction::generate_test_transaction(n_actions);
+        raw_tx
+            .aggregate_with_strategy(AggregationStrategy::Batch)
+            .unwrap();
+
+        println!("{:?}", raw_tx);
+
+        let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
+
+        use alloy::sol_types::SolValue;
+        let encoded_tx = evm_tx.abi_encode();
+        let decoded_tx: ProtocolAdapter::Transaction =
+            ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
+        assert_eq!(evm_tx, decoded_tx);
+
+        println!("Transaction: {:#?}", evm_tx);
+        std::fs::write(format!("test_tx_agg{n_actions:02}.bin"), &encoded_tx)
             .expect("Failed to write encoded transaction to file");
     }
 }
