@@ -103,7 +103,7 @@ library TransactionExample {
         actions[0] =
             Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
 
-        txn = Transaction({actions: actions, deltaProof: _DELTA_PROOF});
+        txn = Transaction({actions: actions, deltaProof: _DELTA_PROOF, aggregationProof: ""});
     }
 
     function treeRoot() internal pure returns (bytes32 root) {

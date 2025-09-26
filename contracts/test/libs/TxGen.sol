@@ -222,7 +222,7 @@ library TxGen {
                 })
             );
         }
-        txn = Transaction({actions: actions, deltaProof: proof});
+        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
     }
 
     function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
@@ -254,7 +254,7 @@ library TxGen {
                 })
             );
         }
-        txn = Transaction({actions: actions, deltaProof: proof});
+        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
     }
 
     function logicVerifierInput(

@@ -38,6 +38,7 @@ contract ProtocolAdapter is
     using MerkleTree for bytes32[];
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.VerifierInput;
+    using RiscZeroUtils for uint32;
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
@@ -93,6 +94,9 @@ contract ProtocolAdapter is
         // Reset the resource counter.
         tagCount = 0;
 
+        bytes memory logicInstances = "";
+        bytes memory complianceInstances = "";
+
         // Allocate variable for the root update.
         bytes32 updatedCommitmentTreeRoot = 0;
 
@@ -104,12 +108,6 @@ contract ProtocolAdapter is
 
             uint256 complianceUnitCount = action.complianceVerifierInputs.length;
             uint256 actionTagCount = action.logicVerifierInputs.length;
-
-            // Check that the tag count in the action and compliance units matches which ensures that if the tags match,
-            // the compliance units partition the action.
-            if (actionTagCount != complianceUnitCount * 2) {
-                revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
-            }
 
             // Compute the action tree root.
             bytes32 actionTreeRoot = _computeActionTreeRoot(action, complianceUnitCount);
@@ -127,23 +125,31 @@ contract ProtocolAdapter is
                 // Verify the proof against a hardcoded compliance circuit.
                 _verifyComplianceProof(complianceVerifierInput);
 
+                complianceInstances =
+                    abi.encodePacked(complianceInstances, complianceVerifierInput.instance.toJournal());
+
+                Logic.VerifierInput calldata nullifierLogicInput = action.logicVerifierInputs.lookup(nf);
+                Logic.VerifierInput calldata commitmentLogicInput = action.logicVerifierInputs.lookup(cm);
+
                 // Check the consumed resource.
                 // slither-disable-next-line reentrancy-benign
                 _processResourceLogicContext({
                     input: action.logicVerifierInputs.lookup(nf),
-                    logicRef: complianceVerifierInput.instance.consumed.logicRef,
-                    actionTreeRoot: actionTreeRoot,
-                    consumed: true
+                    logicRef: complianceVerifierInput.instance.consumed.logicRef
                 });
 
                 // Check the created resource.
                 // slither-disable-next-line reentrancy-benign
                 _processResourceLogicContext({
                     input: action.logicVerifierInputs.lookup(cm),
-                    logicRef: complianceVerifierInput.instance.created.logicRef,
-                    actionTreeRoot: actionTreeRoot,
-                    consumed: false
+                    logicRef: complianceVerifierInput.instance.created.logicRef
                 });
+
+                logicInstances =
+                    abi.encodePacked(logicInstances, nullifierLogicInput.convertJournal(actionTreeRoot, true));
+
+                logicInstances =
+                    abi.encodePacked(logicInstances, commitmentLogicInput.convertJournal(actionTreeRoot, true));
 
                 // Transition the resource machine state.
                 _addNullifier(nf);
@@ -169,6 +175,20 @@ contract ProtocolAdapter is
 
         // Check if the transaction induces a state change.
         if (tagCount != 0) {
+            if (keccak256(transaction.aggregationProof) != keccak256("")) {
+                bytes32 aggregatedJournalDigest = sha256(
+                    abi.encodePacked(
+                                     uint32(tagCount / 2).toRiscZero(),
+                        complianceInstances,
+                        Compliance._VERIFYING_KEY,
+                                     uint32(tagCount).toRiscZero(),
+                        logicInstances,
+                                     uint32(tagCount).toRiscZero(),
+                        logicRefs
+                    )
+                );
+            }
+
             // Check the delta proof.
             _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
@@ -230,21 +250,11 @@ contract ProtocolAdapter is
     ///  * processing forward calls.
     /// @param input The logic verifier input for processing.
     /// @param logicRef The logic ref approved by compliance proof.
-    /// @param actionTreeRoot The root of the tree containing all action tags for the instance.
-    /// @param consumed Flag for indicating whether the resource is consumed.
-    function _processResourceLogicContext(
-        Logic.VerifierInput calldata input,
-        bytes32 logicRef,
-        bytes32 actionTreeRoot,
-        bool consumed
-    ) internal {
+    function _processResourceLogicContext(Logic.VerifierInput calldata input, bytes32 logicRef) internal {
         // Check verifying key correspondence.
         if (logicRef != input.verifyingKey) {
             revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
         }
-
-        // Check the logic proof.
-        _verifyLogicProof({input: input, root: actionTreeRoot, consumed: consumed});
 
         // Perform external calls.
         _processForwarderCalls(input);

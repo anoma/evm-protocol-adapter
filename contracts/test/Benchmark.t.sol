@@ -30,7 +30,7 @@ contract Benchmark is Test {
             "../examples/transactions/test_tx20.bin"
         ];
 
-        _txns[0] = Transaction({actions: new Action[](0), deltaProof: ""});
+        _txns[0] = Transaction({actions: new Action[](0), deltaProof: "", aggregationProof: ""});
 
         for (uint256 i = 0; i < paths.length; ++i) {
             _txns[i + 1] = vm.parseTransaction(string.concat("/test/benchmark/", paths[i]));

@@ -18,7 +18,11 @@ library RiscZeroUtils {
     /// @param instance The compliance instance.
     /// @return digest The journal digest.
     function toJournalDigest(Compliance.Instance memory instance) internal pure returns (bytes32 digest) {
-        bytes memory encodedInstance = abi.encodePacked(
+        digest = sha256(toJournal(instance));
+    }
+
+    function toJournal(Compliance.Instance memory instance) internal pure returns (bytes memory journal) {
+        journal = abi.encodePacked(
             _EIGHT,
             instance.consumed.nullifier,
             _EIGHT,
@@ -34,7 +38,6 @@ library RiscZeroUtils {
             _EIGHT,
             instance.unitDeltaY
         );
-        digest = sha256(encodedInstance);
     }
 
     /// @notice Calculates the digest of the logic instance (journal).

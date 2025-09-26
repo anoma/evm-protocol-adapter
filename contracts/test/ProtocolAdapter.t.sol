@@ -71,7 +71,7 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_execute_executes_the_empty_transaction() public {
-        Transaction memory emptyTx = Transaction({actions: new Action[](0), deltaProof: ""});
+        Transaction memory emptyTx = Transaction({actions: new Action[](0), deltaProof: "", aggregationProof: ""});
 
         vm.expectEmit(address(_pa));
         emit IProtocolAdapter.TransactionExecuted({tags: new bytes32[](0), logicRefs: new bytes32[](0)});
@@ -79,7 +79,7 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_execute_does_not_emit_the_CommitmentTreeRootStored_event_for_the_empty_transaction() public {
-        Transaction memory emptyTx = Transaction({actions: new Action[](0), deltaProof: ""});
+        Transaction memory emptyTx = Transaction({actions: new Action[](0), deltaProof: "", aggregationProof: ""});
 
         vm.recordLogs();
 
