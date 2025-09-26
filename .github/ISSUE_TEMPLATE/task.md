@@ -1,5 +1,5 @@
 ---
-name: task
+name: Task
 about: A protocol adapter related task
 title: ""
 labels: ""
