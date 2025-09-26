@@ -1,11 +1,11 @@
 use alloy::hex;
-use alloy::primitives::{Address, B256, U256, address};
+use alloy::primitives::{address, Address, B256, U256};
 use alloy::signers::local::PrivateKeySigner;
 use alloy::sol_types::SolValue;
 use arm_risc0::action_tree::MerkleTree;
 use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
 use arm_risc0::compliance::INITIAL_ROOT;
-use arm_risc0::encryption::{AffinePoint, SecretKey, random_keypair};
+use arm_risc0::encryption::{random_keypair, AffinePoint, SecretKey};
 use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
@@ -74,7 +74,7 @@ fn example_keychain() -> KeyChain {
     let (encryption_sk, encryption_pk) = random_keypair();
 
     KeyChain {
-        auth_signing_key: AuthorizationSigningKey::from_bytes(&vec![15u8; 32]),
+        auth_signing_key: AuthorizationSigningKey::from_bytes(&vec![15u8; 32]).unwrap(),
         nf_key: NullifierKey::from_bytes(&vec![13u8; 32]),
         discovery_sk,
         discovery_pk,
@@ -142,10 +142,10 @@ fn mint_tx(
         created_resource.clone(),
         keychain.discovery_pk,
         keychain.encryption_pk,
-    );
+    )
+    .unwrap();
 
-    // Verify the transaction
-    assert!(tx.clone().verify(), "Transaction verification failed");
+    tx.clone().verify().unwrap();
 
     (ProtocolAdapter::Transaction::from(tx), created_resource)
 }
@@ -187,10 +187,10 @@ fn transfer_tx(
         created_resource.clone(),
         keychain.discovery_pk,
         keychain.encryption_pk,
-    );
+    )
+    .unwrap();
 
-    // Verify the transaction
-    assert!(tx.clone().verify(), "Transaction verification failed");
+    tx.clone().verify().unwrap();
 
     (ProtocolAdapter::Transaction::from(tx), created_resource)
 }
@@ -249,7 +249,10 @@ fn burn_tx(
         data.spender.to_vec(),
         data.erc20.to_vec(),
         data.signer.address().to_vec(),
-    );
+    )
+    .unwrap();
+
+    tx.clone().verify().unwrap();
 
     ProtocolAdapter::Transaction::from(tx)
 }

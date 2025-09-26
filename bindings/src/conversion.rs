@@ -1,4 +1,4 @@
-use alloy::primitives::{B256, Bytes};
+use alloy::primitives::{Bytes, B256};
 use alloy::sol;
 use arm_risc0::action::Action;
 use arm_risc0::compliance::ComplianceInstance;
@@ -60,7 +60,11 @@ impl From<LogicVerifierInputs> for Logic::VerifierInput {
             tag: B256::from_slice(words_to_bytes(&logic_verifier_inputs.tag)),
             verifyingKey: B256::from_slice(words_to_bytes(&logic_verifier_inputs.verifying_key)),
             appData: logic_verifier_inputs.app_data.into(),
-            proof: Bytes::from(encode_seal(&logic_verifier_inputs.proof.unwrap())),
+            proof: Bytes::from(
+                encode_seal(&logic_verifier_inputs.proof.unwrap_or(vec![]))
+                    .unwrap()
+                    .to_vec(),
+            ),
         }
     }
 }
@@ -88,8 +92,10 @@ impl From<ComplianceInstance> for Compliance::Instance {
 impl From<ComplianceUnit> for Compliance::VerifierInput {
     fn from(compliance_unit: ComplianceUnit) -> Self {
         Self {
-            proof: Bytes::from(encode_seal(&compliance_unit.proof.unwrap())),
-            instance: compliance_unit.get_instance().into(),
+            proof: Bytes::from(
+                encode_seal(&compliance_unit.clone().proof.unwrap_or(vec![])).unwrap(),
+            ),
+            instance: compliance_unit.get_instance().unwrap().into(),
         }
     }
 }
@@ -125,7 +131,9 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
                 .map(ProtocolAdapter::Action::from)
                 .collect(),
             deltaProof: Bytes::from(delta_proof),
-            aggregationProof: Bytes::from(encode_seal(&tx.aggregation_proof.unwrap())),
+            aggregationProof: Bytes::from(
+                encode_seal(&tx.aggregation_proof.unwrap_or(vec![])).unwrap(),
+            ),
         }
     }
 }
