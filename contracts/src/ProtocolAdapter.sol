@@ -24,6 +24,8 @@ import {NullifierSet} from "./state/NullifierSet.sol";
 
 import {Action, Transaction} from "./Types.sol";
 
+import {console} from "forge-std/Test.sol"; // TODO! Remove me
+
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
 /// @notice The protocol adapter contract verifying and executing resource machine transactions.
@@ -120,7 +122,6 @@ contract ProtocolAdapter is
                 bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
                 // Process the tags and provided root against global state.
-                // Process the tags and provided root against global state
                 _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
 
                 // Verify the proof against a hardcoded compliance circuit.
@@ -130,27 +131,27 @@ contract ProtocolAdapter is
                     abi.encodePacked(complianceInstances, complianceVerifierInput.instance.toJournal());
 
                 Logic.VerifierInput calldata nullifierLogicInput = action.logicVerifierInputs.lookup(nf);
-                Logic.VerifierInput calldata commitmentLogicInput = action.logicVerifierInputs.lookup(cm);
-
                 // Check the consumed resource.
                 // slither-disable-next-line reentrancy-benign
                 _processResourceLogicContext({
-                    input: action.logicVerifierInputs.lookup(nf),
+                    input: nullifierLogicInput,
                     logicRef: complianceVerifierInput.instance.consumed.logicRef
                 });
+
+                Logic.VerifierInput calldata commitmentLogicInput = action.logicVerifierInputs.lookup(cm);
 
                 // Check the created resource.
                 // slither-disable-next-line reentrancy-benign
                 _processResourceLogicContext({
-                    input: action.logicVerifierInputs.lookup(cm),
+                    input: commitmentLogicInput,
                     logicRef: complianceVerifierInput.instance.created.logicRef
                 });
 
-                logicInstances =
-                    abi.encodePacked(logicInstances, nullifierLogicInput.convertJournal(actionTreeRoot, true));
-
-                logicInstances =
-                    abi.encodePacked(logicInstances, commitmentLogicInput.convertJournal(actionTreeRoot, true));
+                logicInstances = abi.encodePacked(
+                    logicInstances,
+                    nullifierLogicInput.convertJournal(actionTreeRoot, true),
+                    commitmentLogicInput.convertJournal(actionTreeRoot, false)
+                );
 
                 // Transition the resource machine state.
                 _addNullifier(nf);
@@ -176,18 +177,19 @@ contract ProtocolAdapter is
 
         // Check if the transaction induces a state change.
         if (tagCount != 0) {
-            if (keccak256(transaction.aggregationProof) != keccak256("")) {
-                bytes32 aggregatedJournalDigest = sha256(
-                    abi.encodePacked(
-                        uint32(tagCount / 2).toRiscZero(),
-                        complianceInstances,
-                        Compliance._VERIFYING_KEY,
-                        uint32(tagCount).toRiscZero(),
-                        logicInstances,
-                        uint32(tagCount).toRiscZero(),
-                        logicRefs
-                    )
+            if (transaction.aggregationProof.length != 0) {
+                bytes memory journal = abi.encodePacked(
+                    uint32(tagCount / 2).toRiscZero(),
+                    complianceInstances,
+                    Compliance._VERIFYING_KEY,
+                    uint32(tagCount).toRiscZero(),
+                    logicInstances,
+                    uint32(tagCount).toRiscZero(),
+                    logicRefs
                 );
+                console.logBytes(journal);
+
+                bytes32 aggregatedJournalDigest = sha256(journal);
 
                 // slither-disable-next-line calls-loop
                 _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
