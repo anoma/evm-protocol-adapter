@@ -1,4 +1,4 @@
-use alloy::primitives::{Bytes, B256, U256};
+use alloy::primitives::{B256, Bytes, U256};
 use alloy::providers::Provider;
 use alloy::sol;
 use arm_risc0::action::Action;
@@ -132,33 +132,54 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 }
 
 #[async_trait]
-impl<X: Provider> crate::call::ProtocolAdapter for ProtocolAdapter::ProtocolAdapterInstance<X> {
+impl<X: Provider> crate::call::ProtocolAdapterEndpoint
+    for ProtocolAdapter::ProtocolAdapterInstance<X>
+{
     async fn execute(&self, tx: Transaction) -> Result<(), alloy::contract::Error> {
-        ProtocolAdapter::ProtocolAdapterInstance::<X>::execute(self, tx.into()).call().await.map(|_| ())
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::execute(self, tx.into())
+            .call()
+            .await
+            .map(|_| ())
     }
 
     async fn emergency_stop(&self) -> Result<(), alloy::contract::Error> {
-        ProtocolAdapter::ProtocolAdapterInstance::<X>::emergencyStop(self).call().await.map(|_| ())
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::emergencyStop(self)
+            .call()
+            .await
+            .map(|_| ())
     }
 
     async fn is_emergency_stopped(&self) -> Result<bool, alloy::contract::Error> {
-        ProtocolAdapter::ProtocolAdapterInstance::<X>::isEmergencyStopped(self).call().await
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::isEmergencyStopped(self)
+            .call()
+            .await
     }
 
     async fn get_risc_zero_verifier_selector(&self) -> Result<[u8; 4], alloy::contract::Error> {
-        ProtocolAdapter::ProtocolAdapterInstance::<X>::getRiscZeroVerifierSelector(self).call().await.map(|x| x.0)
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::getRiscZeroVerifierSelector(self)
+            .call()
+            .await
+            .map(|x| x.0)
     }
 
     async fn get_protocol_adapter_version(&self) -> Result<[u8; 32], alloy::contract::Error> {
-        ProtocolAdapter::ProtocolAdapterInstance::<X>::getProtocolAdapterVersion(self).call().await.map(|x| x.0)
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::getProtocolAdapterVersion(self)
+            .call()
+            .await
+            .map(|x| x.0)
     }
 
     async fn latest_root(&self) -> Result<[u8; 32], alloy::contract::Error> {
-        ProtocolAdapter::ProtocolAdapterInstance::<X>::latestRoot(self).call().await.map(|x| x.0)
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::latestRoot(self)
+            .call()
+            .await
+            .map(|x| x.0)
     }
 
     async fn contains_root(&self, root: &[u8; 32]) -> Result<bool, alloy::contract::Error> {
-        ProtocolAdapter::ProtocolAdapterInstance::<X>::containsRoot(self, root.into()).call().await
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::containsRoot(self, root.into())
+            .call()
+            .await
     }
 
     async fn verify_merkle_proof(
@@ -174,19 +195,29 @@ impl<X: Provider> crate::call::ProtocolAdapter for ProtocolAdapter::ProtocolAdap
             commitment.into(),
             path.iter().map(Into::into).collect(),
             direction_bits,
-        ).call().await.map(|_| ())
+        )
+        .call()
+        .await
+        .map(|_| ())
     }
 
     async fn contains(&self, nullifier: &[u8; 32]) -> Result<bool, alloy::contract::Error> {
-        ProtocolAdapter::ProtocolAdapterInstance::<X>::contains(self, nullifier.into()).call().await
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::contains(self, nullifier.into())
+            .call()
+            .await
     }
 
     async fn length(&self) -> Result<U256, alloy::contract::Error> {
-        ProtocolAdapter::ProtocolAdapterInstance::<X>::length(self).call().await
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::length(self)
+            .call()
+            .await
     }
 
     async fn at_index(&self, index: U256) -> Result<[u8; 32], alloy::contract::Error> {
-        ProtocolAdapter::ProtocolAdapterInstance::<X>::atIndex(self, index).call().await.map(Into::into)
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::atIndex(self, index)
+            .call()
+            .await
+            .map(Into::into)
     }
 }
 
