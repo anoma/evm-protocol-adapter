@@ -26,7 +26,7 @@ contract ERC20ForwarderTest is Test {
     bytes32 internal constant _ACTION_TREE_ROOT = bytes32(uint256(0));
 
     bytes32 internal constant _CALLDATA_CARRIER_LOGIC_REF =
-        0x6fd807d5589b13808fede076d2b756d721cd07b9e12a761b43cb80af5cd6f1f0;
+        0xfbc64b9acd8503080e4f88cd95845e9ae3236b5db351d245407b19545ecd6010;
 
     address internal _alice;
     uint256 internal _alicePrivateKey;
