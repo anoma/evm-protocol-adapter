@@ -17,7 +17,7 @@ import {Versioning} from "./libs/Versioning.sol";
 import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
 import {Logic} from "./proving/Logic.sol";
-import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
+import {CommitmentTree} from "./state/CommitmentTree.sol";
 
 import {NullifierSet} from "./state/NullifierSet.sol";
 
@@ -32,7 +32,7 @@ contract ProtocolAdapter is
     ReentrancyGuardTransient,
     Ownable,
     Pausable,
-    CommitmentAccumulator,
+    CommitmentTree,
     NullifierSet
 {
     using MerkleTree for bytes32[];
