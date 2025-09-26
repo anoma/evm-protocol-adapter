@@ -130,10 +130,11 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
                 .into_iter()
                 .map(ProtocolAdapter::Action::from)
                 .collect(),
+            aggregationProof: match &tx.aggregation_proof {
+                Some(proof) => Bytes::from(encode_seal(proof).unwrap()),
+                None => Bytes::from(""),
+            },
             deltaProof: Bytes::from(delta_proof),
-            aggregationProof: Bytes::from(
-                encode_seal(&tx.aggregation_proof.unwrap_or_default()).unwrap(),
-            ),
         }
     }
 }
