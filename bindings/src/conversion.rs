@@ -60,11 +60,10 @@ impl From<LogicVerifierInputs> for Logic::VerifierInput {
             tag: B256::from_slice(words_to_bytes(&logic_verifier_inputs.tag)),
             verifyingKey: B256::from_slice(words_to_bytes(&logic_verifier_inputs.verifying_key)),
             appData: logic_verifier_inputs.app_data.into(),
-            proof: Bytes::from(
-                encode_seal(&logic_verifier_inputs.proof.unwrap_or_default())
-                    .unwrap()
-                    .to_vec(),
-            ),
+            proof: match &logic_verifier_inputs.proof {
+                Some(proof) => Bytes::from(encode_seal(proof).unwrap()),
+                None => Bytes::from(""),
+            },
         }
     }
 }
@@ -92,9 +91,10 @@ impl From<ComplianceInstance> for Compliance::Instance {
 impl From<ComplianceUnit> for Compliance::VerifierInput {
     fn from(compliance_unit: ComplianceUnit) -> Self {
         Self {
-            proof: Bytes::from(
-                encode_seal(&compliance_unit.clone().proof.unwrap_or_default()).unwrap(),
-            ),
+            proof: match &compliance_unit.clone().proof {
+                Some(proof) => Bytes::from(encode_seal(proof).unwrap()),
+                None => Bytes::from(""),
+            },
             instance: compliance_unit.get_instance().unwrap().into(),
         }
     }
@@ -184,6 +184,7 @@ mod tests {
         let n_actions = 1;
 
         let mut raw_tx = arm_risc0::transaction::generate_test_transaction(n_actions);
+
         raw_tx
             .aggregate_with_strategy(AggregationStrategy::Batch)
             .unwrap();
