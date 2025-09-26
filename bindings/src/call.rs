@@ -89,17 +89,18 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "This test requires updatng the protocol adapter address in .env"]
+    #[ignore = "This test requires updating the protocol adapter address in .env"]
     async fn call_latest_root() {
         let root = protocol_adapter().latestRoot().call().await.unwrap();
         assert_ne!(root, initial_root());
     }
 
     #[tokio::test]
-    #[ignore = "This test requires updatng the protocol adapter address in .env"]
+    #[ignore = "This test requires updating the protocol adapter address in .env"]
     async fn call_execute() {
         let empty_tx = ProtocolAdapter::Transaction {
             actions: vec![],
+            aggregationProof: vec![].into(),
             deltaProof: vec![].into(),
         };
         let result = protocol_adapter().execute(empty_tx).call().await;
