@@ -4,16 +4,16 @@ pragma solidity ^0.8.30;
 import {Arrays} from "@openzeppelin-contracts/utils/Arrays.sol";
 import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
-import {ICommitmentAccumulator} from "../interfaces/ICommitmentAccumulator.sol";
+import {ICommitmentTree} from "../interfaces/ICommitmentTree.sol";
 import {MerkleTree} from "../libs/MerkleTree.sol";
 
-/// @title CommitmentAccumulator
+/// @title CommitmentTree
 /// @author Anoma Foundation, 2025
 /// @notice A commitment accumulator being inherited by the protocol adapter.
 /// @dev The contract is based on a modified version of OZ's `MerkleTree` implementation and and the unchanged OZ
 /// `EnumerableSet` implementation.
 /// @custom:security-contact security@anoma.foundation
-contract CommitmentAccumulator is ICommitmentAccumulator {
+contract CommitmentTree is ICommitmentTree {
     using MerkleTree for MerkleTree.Tree;
     using MerkleTree for bytes32[];
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -40,42 +40,42 @@ contract CommitmentAccumulator is ICommitmentAccumulator {
         if (!_roots.add(initialRoot)) revert PreExistingRoot(initialRoot);
     }
 
-    /// @inheritdoc ICommitmentAccumulator
+    /// @inheritdoc ICommitmentTree
     function commitmentCount() external view override returns (uint256 count) {
         count = _merkleTree.leafCount();
     }
 
-    /// @inheritdoc ICommitmentAccumulator
+    /// @inheritdoc ICommitmentTree
     function commitmentTreeDepth() external view override returns (uint8 depth) {
         depth = _merkleTree.depth();
     }
 
-    /// @inheritdoc ICommitmentAccumulator
+    /// @inheritdoc ICommitmentTree
     function commitmentTreeCapacity() external view override returns (uint256 capacity) {
         capacity = _merkleTree.capacity();
     }
 
-    /// @inheritdoc ICommitmentAccumulator
+    /// @inheritdoc ICommitmentTree
     function isCommitmentRootContained(bytes32 root) external view override returns (bool isContained) {
         isContained = _roots.contains(root);
     }
 
-    /// @inheritdoc ICommitmentAccumulator
+    /// @inheritdoc ICommitmentTree
     function commitmentRootCount() external view override returns (uint256 count) {
         count = _roots.length();
     }
 
-    /// @inheritdoc ICommitmentAccumulator
+    /// @inheritdoc ICommitmentTree
     function commitmentRootAtIndex(uint256 index) external view override returns (bytes32 root) {
         root = _roots.at(index);
     }
 
-    /// @inheritdoc ICommitmentAccumulator
+    /// @inheritdoc ICommitmentTree
     function latestCommitmentRoot() external view override returns (bytes32 root) {
         root = _roots.at(_roots.length() - 1);
     }
 
-    /// @inheritdoc ICommitmentAccumulator
+    /// @inheritdoc ICommitmentTree
     function verifyMerkleProof(
         bytes32 commitmentRoot,
         bytes32 commitment,

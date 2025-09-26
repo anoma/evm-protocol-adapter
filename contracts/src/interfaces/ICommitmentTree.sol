@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-/// @title ICommitmentAccumulator
+/// @title ICommitmentTree
 /// @author Anoma Foundation, 2025
 /// @notice The interface of the commitment accumulator contract.
 /// @custom:security-contact security@anoma.foundation
-interface ICommitmentAccumulator {
+interface ICommitmentTree {
     /// @notice Emitted when a commitment tree root is stored in the set of historical roots.
     /// @param root The root that was stored.
     event CommitmentRootStored(bytes32 root);
