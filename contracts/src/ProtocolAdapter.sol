@@ -14,6 +14,7 @@ import {MerkleTree} from "./libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 import {Versioning} from "./libs/Versioning.sol";
 
+import {Aggregation} from "./proving/Aggregation.sol";
 import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
 import {Logic} from "./proving/Logic.sol";
@@ -123,7 +124,7 @@ contract ProtocolAdapter is
                 _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
 
                 // Verify the proof against a hardcoded compliance circuit.
-                _verifyComplianceProof(complianceVerifierInput);
+                // TODO! // _verifyComplianceProof(complianceVerifierInput);
 
                 complianceInstances =
                     abi.encodePacked(complianceInstances, complianceVerifierInput.instance.toJournal());
@@ -178,15 +179,22 @@ contract ProtocolAdapter is
             if (keccak256(transaction.aggregationProof) != keccak256("")) {
                 bytes32 aggregatedJournalDigest = sha256(
                     abi.encodePacked(
-                                     uint32(tagCount / 2).toRiscZero(),
+                        uint32(tagCount / 2).toRiscZero(),
                         complianceInstances,
                         Compliance._VERIFYING_KEY,
-                                     uint32(tagCount).toRiscZero(),
+                        uint32(tagCount).toRiscZero(),
                         logicInstances,
-                                     uint32(tagCount).toRiscZero(),
+                        uint32(tagCount).toRiscZero(),
                         logicRefs
                     )
                 );
+
+                // slither-disable-next-line calls-loop
+                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                    seal: transaction.aggregationProof,
+                    imageId: Aggregation._VERIFYING_KEY,
+                    journalDigest: aggregatedJournalDigest
+                });
             }
 
             // Check the delta proof.

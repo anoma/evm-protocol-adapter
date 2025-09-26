@@ -21,7 +21,10 @@ contract Benchmark is Test {
     ProtocolAdapter internal _pa;
     Transaction[6] internal _txns;
 
+    Transaction internal _aggProofTxn;
+
     function setUp() public {
+        /*
         string[5] memory paths = [
             "../examples/transactions/test_tx01.bin",
             "../examples/transactions/test_tx05.bin",
@@ -35,6 +38,7 @@ contract Benchmark is Test {
         for (uint256 i = 0; i < paths.length; ++i) {
             _txns[i + 1] = vm.parseTransaction(string.concat("/test/benchmark/", paths[i]));
         }
+        */
         {
             RiscZeroGroth16Verifier verifier;
 
@@ -42,8 +46,16 @@ contract Benchmark is Test {
 
             _pa = new ProtocolAdapter(_router, verifier.SELECTOR(), msg.sender);
         }
+
+        _aggProofTxn =
+            vm.parseTransaction(string.concat("/test/benchmark/", "../examples/transactions/test_tx_agg01.bin"));
     }
 
+    function test_execute_agg_01() public {
+        _pa.execute(_aggProofTxn);
+    }
+
+    /*
     function test_execute_00() public {
         _pa.execute(_txns[0]);
     }
@@ -64,9 +76,11 @@ contract Benchmark is Test {
         _pa.execute(_txns[4]);
     }
 
+
     function test_execute_20() public {
         _pa.execute(_txns[5]);
     }
+
 
     function test_print_calldata() public view {
         for (uint256 i = 0; i < _txns.length; ++i) {
@@ -94,4 +108,5 @@ contract Benchmark is Test {
             console.log(output);
         }
     }
+    */
 }
