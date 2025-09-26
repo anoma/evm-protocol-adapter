@@ -80,7 +80,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
         ) = abi.decode(input, (CallTypeV2, address, uint128, bytes32));
 
         // Check that the resource being upgraded has not been consumed.
-        if (NullifierSet(_PROTOCOL_ADAPTER_V1).contains(nullifier)) {
+        if (NullifierSet(_PROTOCOL_ADAPTER_V1).isNullifierContained(nullifier)) {
             revert NullifierAlreadyMigrated(nullifier);
         }
 
