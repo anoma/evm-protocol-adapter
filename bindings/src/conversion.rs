@@ -126,12 +126,13 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 
         Self {
             actions: tx
+                .clone()
                 .actions
                 .into_iter()
                 .map(ProtocolAdapter::Action::from)
                 .collect(),
-            aggregationProof: match &tx.aggregation_proof {
-                Some(proof) => Bytes::from(encode_seal(proof).unwrap()),
+            aggregationProof: match tx.get_raw_aggregation_proof() {
+                Some(proof) => Bytes::from(encode_seal(&proof).unwrap()),
                 None => Bytes::from(""),
             },
             deltaProof: Bytes::from(delta_proof),
