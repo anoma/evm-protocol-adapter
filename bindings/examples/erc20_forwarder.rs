@@ -2,6 +2,7 @@ use alloy::hex;
 use alloy::primitives::{Address, B256, U256, address};
 use alloy::signers::local::PrivateKeySigner;
 use alloy::sol_types::SolValue;
+use arm_risc0::Digest as ArmDigest;
 use arm_risc0::action_tree::MerkleTree;
 use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
 use arm_risc0::compliance::INITIAL_ROOT;
@@ -9,7 +10,6 @@ use arm_risc0::encryption::{AffinePoint, SecretKey, random_keypair};
 use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
-use arm_risc0::utils::{bytes_to_words, words_to_bytes};
 use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
 use evm_protocol_adapter_bindings::permit2::permit_witness_transfer_from_signature;
 use sha2::{Digest, Sha256};
@@ -74,8 +74,8 @@ fn example_keychain() -> KeyChain {
     let (encryption_sk, encryption_pk) = random_keypair();
 
     KeyChain {
-        auth_signing_key: AuthorizationSigningKey::from_bytes(&vec![15u8; 32]),
-        nf_key: NullifierKey::from_bytes(&vec![13u8; 32]),
+        auth_signing_key: AuthorizationSigningKey::from_bytes(&vec![15u8; 32]).unwrap(),
+        nf_key: NullifierKey::from_bytes(&[13u8; 32]),
         discovery_sk,
         discovery_pk,
         encryption_sk,
@@ -87,17 +87,17 @@ fn mint_tx(
     data: &SetUp,
     keychain: &KeyChain,
 ) -> (ProtocolAdapter::Transaction, arm_risc0::resource::Resource) {
-    let latest_cm_tree_root = INITIAL_ROOT.as_words().to_vec();
+    let latest_cm_tree_root = &INITIAL_ROOT;
 
     let consumed_resource = construct_ephemeral_resource(
         &data.spender.to_vec(),
         &data.erc20.to_vec(),
         data.amount.try_into().unwrap(),
-        vec![4u8; 32], // nonce
+        [4u8; 32], // nonce
         keychain.nf_key.commit(),
-        vec![5u8; 32], // rand_seed
+        [5u8; 32], // rand_seed
         CallType::Wrap,
-        &data.signer.address().to_vec(),
+        &data.signer.address().as_slice(),
     );
 
     let consumed_nf = consumed_resource.nullifier(&keychain.nf_key).unwrap();
@@ -107,9 +107,9 @@ fn mint_tx(
         &data.spender.to_vec(),
         &data.erc20.to_vec(),
         data.amount.try_into().unwrap(),
-        consumed_nf.as_bytes().to_vec(), // nonce // ZCash Trick
+        consumed_nf.into(), // nonce // ZCash Trick
         keychain.nf_key.commit(),
-        vec![6u8; 32], // rand_seed
+        [6u8; 32], // rand_seed
         &keychain.auth_verifying_key(),
     );
 
@@ -121,17 +121,17 @@ fn mint_tx(
     let permit_sig = rt.block_on(permit_witness_transfer_from_signature(
         &data.signer,
         data.erc20,
-        data.amount,
+        data.amount.try_into().unwrap(),
         data.nonce,
         data.deadline,
         data.spender,
-        B256::from_slice(words_to_bytes(action_tree.root().as_slice())), // Witness
+        B256::from_slice(action_tree.root().as_bytes()), // Witness
     ));
 
     // Construct the mint transaction
     let tx = construct_mint_tx(
         consumed_resource,
-        latest_cm_tree_root,
+        latest_cm_tree_root.as_bytes().try_into().unwrap(),
         keychain.nf_key.clone(),
         data.spender.to_vec(),
         data.erc20.to_vec(),
@@ -142,10 +142,11 @@ fn mint_tx(
         created_resource.clone(),
         keychain.discovery_pk,
         keychain.encryption_pk,
-    );
+    )
+    .unwrap();
 
     // Verify the transaction
-    assert!(tx.clone().verify(), "Transaction verification failed");
+    tx.clone().verify().unwrap();
 
     (ProtocolAdapter::Transaction::from(tx), created_resource)
 }
@@ -161,9 +162,9 @@ fn transfer_tx(
         &data.spender.to_vec(), // forwarder_addr
         &data.erc20.to_vec(),   // token_addr
         data.amount.try_into().unwrap(),
-        consumed_nf.as_bytes().to_vec(), // nonce
+        consumed_nf.into(), // nonce
         keychain.nullifier_key_commitment(),
-        vec![7u8; 32], // rand_seed
+        [7u8; 32], // rand_seed
         &keychain.auth_verifying_key(),
     );
     let created_cm = created_resource.commitment();
@@ -175,7 +176,8 @@ fn transfer_tx(
 
     // Construct the transfer transaction
     let is_left = false;
-    let path: &[(Vec<u32>, bool)] = &[(bytes_to_words(empty_leaf_hash().as_slice()), is_left)];
+    let node: [u8; 32] = empty_leaf_hash().into();
+    let path: &[(ArmDigest, bool)] = &[(node.into(), is_left)];
     let merkle_path = MerklePath::from_path(path);
 
     let tx = construct_transfer_tx(
@@ -187,10 +189,11 @@ fn transfer_tx(
         created_resource.clone(),
         keychain.discovery_pk,
         keychain.encryption_pk,
-    );
+    )
+    .unwrap();
 
     // Verify the transaction
-    assert!(tx.clone().verify(), "Transaction verification failed");
+    tx.clone().verify().unwrap();
 
     (ProtocolAdapter::Transaction::from(tx), created_resource)
 }
@@ -208,9 +211,9 @@ fn burn_tx(
         &data.spender.to_vec(), // forwarder_addr
         &data.erc20.to_vec(),   // token_addr
         data.amount.try_into().unwrap(),
-        consumed_nf.as_bytes().to_vec(), // nonce
+        consumed_nf.into(), // nonce
         keychain.nullifier_key_commitment(),
-        vec![6u8; 32], // rand_seed
+        [6u8; 32], // rand_seed
         CallType::Unwrap,
         &data.signer.address().to_vec(), // user_addr // TODO rename
     );
@@ -224,19 +227,17 @@ fn burn_tx(
 
     let sibling0is_left = true;
     let sibling0 = (
-        bytes_to_words(minted_resource.commitment().as_bytes()),
+        ArmDigest::from(minted_resource.commitment()),
         sibling0is_left,
     );
 
     let sibling1is_left = false;
     let sibling1 = (
-        bytes_to_words(
-            sha256(empty_leaf_hash().as_slice(), empty_leaf_hash().as_slice()).as_slice(),
-        ),
+        sha256(empty_leaf_hash().as_slice(), empty_leaf_hash().as_slice()).into(),
         sibling1is_left,
     );
 
-    let path: &[(Vec<u32>, bool)] = &[sibling0, sibling1];
+    let path: &[(ArmDigest, bool)] = &[sibling0, sibling1];
     let merkle_path = MerklePath::from_path(path);
 
     let tx = construct_burn_tx(
@@ -249,17 +250,20 @@ fn burn_tx(
         data.spender.to_vec(),
         data.erc20.to_vec(),
         data.signer.address().to_vec(),
-    );
+    )
+    .unwrap();
+
+    tx.clone().verify().unwrap();
 
     ProtocolAdapter::Transaction::from(tx)
 }
 
-fn sha256(a: &[u8], b: &[u8]) -> B256 {
+fn sha256(a: &[u8], b: &[u8]) -> [u8; 32] {
     let mut hasher = Sha256::new();
     hasher.update(a);
     hasher.update(b);
 
-    B256::from_slice(&hasher.finalize())
+    B256::from_slice(&hasher.finalize()).into()
 }
 
 fn main() {

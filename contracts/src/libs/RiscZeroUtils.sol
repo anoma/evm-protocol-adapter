@@ -11,27 +11,17 @@ import {Logic} from "../proving/Logic.sol";
 library RiscZeroUtils {
     using RiscZeroUtils for bytes;
 
-    /// @notice The value `8` which is required on `arm-risc0` to encode vector types.
-    bytes4 internal constant _EIGHT = hex"08000000"; // TODO This will be refactored in the future..
-
     /// @notice Calculates the digest of the compliance instance (journal).
     /// @param instance The compliance instance.
     /// @return digest The journal digest.
     function toJournalDigest(Compliance.Instance memory instance) internal pure returns (bytes32 digest) {
         bytes memory encodedInstance = abi.encodePacked(
-            _EIGHT,
             instance.consumed.nullifier,
-            _EIGHT,
             instance.consumed.logicRef,
-            _EIGHT,
             instance.consumed.commitmentTreeRoot,
-            _EIGHT,
             instance.created.commitment,
-            _EIGHT,
             instance.created.logicRef,
-            _EIGHT,
             instance.unitDeltaX,
-            _EIGHT,
             instance.unitDeltaY
         );
         digest = sha256(encodedInstance);
@@ -67,7 +57,7 @@ library RiscZeroUtils {
         encodedAppData = encodedAppData.appendPayload(input.appData.externalPayload);
         encodedAppData = encodedAppData.appendPayload(input.appData.applicationPayload);
 
-        converted = abi.encodePacked(_EIGHT, input.tag, toRiscZero(consumed), _EIGHT, root, encodedAppData);
+        converted = abi.encodePacked(input.tag, toRiscZero(consumed), root, encodedAppData);
     }
 
     /// @notice Appends expirable blob payload to the encode app data.
