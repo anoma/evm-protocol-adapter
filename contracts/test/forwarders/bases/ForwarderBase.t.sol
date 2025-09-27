@@ -7,18 +7,18 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test} from "forge-std/Test.sol";
 
-import {ForwarderBase} from "../../src/forwarders/ForwarderBase.sol";
-import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
+import {ForwarderBase} from "../../../src/forwarders/bases/ForwarderBase.sol";
+import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 
-import {ForwarderExample} from "../examples/Forwarder.e.sol";
+import {ForwarderExample} from "../../examples/Forwarder.e.sol";
 import {
     ForwarderTargetExample,
     INPUT_VALUE,
     OUTPUT_VALUE,
     INPUT,
     EXPECTED_OUTPUT
-} from "../examples/ForwarderTarget.e.sol";
-import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
+} from "../../examples/ForwarderTarget.e.sol";
+import {DeployRiscZeroContracts} from "../../script/DeployRiscZeroContracts.s.sol";
 
 contract ForwarderBaseTest is Test {
     address internal constant _EMERGENCY_CALLER = address(uint160(1));
