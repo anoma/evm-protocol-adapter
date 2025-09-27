@@ -8,13 +8,16 @@ import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.so
 import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 
-import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
-import {MerkleTree} from "../src/libs/MerkleTree.sol";
+import {IProtocolAdapter} from "./../src/interfaces/IProtocolAdapter.sol";
+import {MerkleTree} from "./../src/libs/MerkleTree.sol";
+import {SHA256} from "./../src/libs/SHA256.sol";
 
-import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Logic} from "../src/proving/Logic.sol";
-import {NullifierSet} from "../src/state/NullifierSet.sol";
-import {Transaction, Action} from "../src/Types.sol";
+import {ProtocolAdapter} from "./../src/ProtocolAdapter.sol";
+import {Compliance} from "./../src/proving/Compliance.sol";
+import {Logic} from "./../src/proving/Logic.sol";
+import {CommitmentAccumulator} from "./../src/state/CommitmentAccumulator.sol";
+import {NullifierSet} from "./../src/state/NullifierSet.sol";
+import {Transaction, Action} from "./../src/Types.sol";
 
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
 import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
@@ -235,6 +238,309 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    /// @notice Test that transactions with nonexistent roots fail.
+    function testFuzz_execute_reverts_on_non_existing_root(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        uint8 actionIndex,
+        uint8 complianceIndex,
+        bytes32 fakeRoot
+    ) public {
+        // Assume the proposed commitment tree root is not already contained.
+        vm.assume(!_mockPa.containsRoot(fakeRoot));
+
+        // Choose random compliance unit among the actions.
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
+
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
+
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
+        // Assign the proposed commitment tree root into the transaction.
+        txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.commitmentTreeRoot =
+            fakeRoot;
+
+        vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.NonExistingRoot.selector, fakeRoot));
+        _mockPa.execute(txn);
+    }
+
+    function testFuzz_execute_reverts_if_risc0_has_a_length_less_than_four(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        uint8 actionIndex,
+        uint8 complianceIndex,
+        bytes memory fakeProof
+    ) public {
+        // Ensure that the proof does not have enough bytes to contain the selector.
+        vm.assume(fakeProof.length < 4);
+
+        // Choose random compliance unit among the actions.
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
+
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
+
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
+        txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].proof = fakeProof;
+
+        // With a short proof, we expect an EVM error (which is message-less).
+        vm.expectRevert(bytes(""), address(_router));
+        _mockPa.execute(txn);
+    }
+
+    /// @notice Test that transactions with unknown selectors fail.
+    function testFuzz_execute_reverts_if_proofs_start_with_an_unknown_verifier_selector(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        uint8 actionIndex,
+        uint8 complianceIndex,
+        bytes memory fakeProof
+    ) public {
+        // Ensure that the first 4 bytes of the proof are invalid.
+        // The mock router only accepts one selector we deploy with.
+        vm.assume(bytes4(fakeProof) != _mockVerifier.SELECTOR());
+        vm.assume(fakeProof.length >= 4);
+
+        // Choose random compliance unit among the actions.
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
+
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
+
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
+        // Replace the selected compliance unit's proof with a fake one.
+        txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].proof = fakeProof;
+
+        // With an unknown selector, we expect failure.
+        vm.expectRevert(
+            abi.encodeWithSelector(RiscZeroVerifierRouter.SelectorUnknown.selector, bytes4(fakeProof)), address(_router)
+        );
+        _mockPa.execute(txn);
+    }
+
+    function testFuzz_execute_reverts_if_nullifier_from_compliance_inputs_cannot_be_found_in_logic_inputs(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        uint8 actionIndex,
+        uint8 complianceIndex,
+        bytes32 nonce
+    ) public {
+        // Choose random compliance unit among the actions.
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
+
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
+
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
+        // Generate a different tag with the nonce.
+        bytes32 fakeTag = SHA256.hash(
+            txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.nullifier, nonce
+        );
+
+        // Replace the nullifier corresponding to the selected compliance unit with a fake one.
+        txn.actions[actionIndex].logicVerifierInputs[complianceIndex * 2].tag = fakeTag;
+
+        // Execution reverts as the original nullifier isn't found in logic inputs.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Logic.TagNotFound.selector,
+                txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.nullifier
+            )
+        );
+
+        _mockPa.execute(txn);
+    }
+
+    function testFuzz_execute_reverts_if_commitment_from_compliance_inputs_cannot_be_found_in_logic_inputs(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        uint8 actionIndex,
+        uint8 complianceIndex,
+        bytes32 nonce
+    ) public {
+        // Choose random compliance unit among the actions.
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
+
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
+
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
+        // Generate a different tag with the nonce.
+        bytes32 fakeTag = SHA256.hash(
+            txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created.commitment, nonce
+        );
+
+        // Replace the commitment corresponding to the selected compliance unit with a fake one
+        txn.actions[actionIndex].logicVerifierInputs[(complianceIndex * 2) + 1].tag = fakeTag;
+
+        // Execution reverts as the original commitment isn't found in logic inputs.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Logic.TagNotFound.selector,
+                txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created.commitment
+            )
+        );
+
+        _mockPa.execute(txn);
+    }
+
+    /// @notice Test that transactions with a missing compliance verifier input fail.
+    function testFuzz_execute_reverts_on_compliance_and_logic_verifier_tag_count_mismatch(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        uint8 actionIndex,
+        uint8 fakeComplianceCount
+    ) public {
+        // Choose a random action whose resource count we will mutate.
+        (actionCount, complianceUnitCount, actionIndex, /* complianceIndex */ ) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, 0);
+
+        // Take a fake compliance unit count.
+        vm.assume(fakeComplianceCount != complianceUnitCount);
+
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
+
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
+        // Set the compliance unit count to the fake number.
+        txn.actions[actionIndex].complianceVerifierInputs = new Compliance.VerifierInput[](fakeComplianceCount);
+
+        // Expect revert based on wrong resource computation.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ProtocolAdapter.TagCountMismatch.selector,
+                txn.actions[actionIndex].logicVerifierInputs.length,
+                uint256(fakeComplianceCount) * 2
+            )
+        );
+
+        _mockPa.execute(txn);
+    }
+
+    /// @notice Test that transactions with a missing logic verifier input fail.
+    function testFuzz_execute_reverts_on_logic_and_compliance_verifier_tag_count_mismatch(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        uint8 actionIndex,
+        uint8 fakeLogicVerifierCount
+    ) public {
+        // Choose a random action whose resource count we will mutate.
+        (actionCount, complianceUnitCount, actionIndex, /* complianceIndex */ ) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, 0);
+
+        // Take a fake action unit count.
+        vm.assume(fakeLogicVerifierCount != (uint256(complianceUnitCount) * 2));
+
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
+
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
+        // Set the logic verifier inputs length based on wrong count.
+        txn.actions[actionIndex].logicVerifierInputs = new Logic.VerifierInput[](fakeLogicVerifierCount);
+
+        // Expect revert based on wrong resource computation.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ProtocolAdapter.TagCountMismatch.selector,
+                fakeLogicVerifierCount,
+                txn.actions[actionIndex].complianceVerifierInputs.length * 2
+            )
+        );
+
+        _mockPa.execute(txn);
+    }
+
+    function testFuzz_execute_reverts_on_compliance_and_logic_verifier_logic_reference_mismatch_for_consumed_resource(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        uint8 actionIndex,
+        uint8 complianceIndex,
+        bytes32 nonce
+    ) public {
+        // Choose a random compliance unit whose commitment logicRef we will mutate.
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
+
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
+
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
+        Compliance.ConsumedRefs memory consumed =
+            txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed;
+
+        // Generate a fake logic using a nonce.
+        bytes32 fakeLogic = SHA256.hash(consumed.logicRef, nonce);
+        // Replace the original logic.
+        txn.actions[actionIndex].logicVerifierInputs[(complianceIndex * 2) + 1].verifyingKey = fakeLogic;
+
+        // Expect a logic mismatch.
+        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.LogicRefMismatch.selector, fakeLogic, consumed.logicRef));
+        _mockPa.execute(txn);
+    }
+
+    function testFuzz_execute_reverts_on_compliance_and_logic_verifier_logic_reference_mismatch_for_created_resource(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        uint8 actionIndex,
+        uint8 complianceIndex,
+        bytes32 nonce
+    ) public {
+        // Choose a random compliance whose commitment logicRef we will mutate.
+        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
+            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
+
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
+
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
+        Compliance.CreatedRefs memory created =
+            txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created;
+
+        // Generate a fake logic using a nonce.
+        bytes32 fakeLogic = SHA256.hash(created.logicRef, nonce);
+        // Replace the original logic.
+        txn.actions[actionIndex].logicVerifierInputs[(complianceIndex * 2) + 1].verifyingKey = fakeLogic;
+
+        // Expect a logic mismatch.
+        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.LogicRefMismatch.selector, fakeLogic, created.logicRef));
+        _mockPa.execute(txn);
+    }
+
+    function testFuzz_execute_reverts_on_unexpected_forwarder_call_output(bytes memory fakeOutput) public {
+        vm.assume(keccak256(fakeOutput) != keccak256(EXPECTED_OUTPUT));
+
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
+
+        created[0].appData.externalPayload[0].blob = abi.encode(_fwd, INPUT, fakeOutput);
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+
+        // Create a transaction with two resources, the created calling the forwarder.
+        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+
+        // Expect output mismatch.
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.ForwarderCallOutputMismatch.selector, fakeOutput, EXPECTED_OUTPUT)
+        );
+        _mockPa.execute(txn);
+    }
+
     function _exampleResourceAndEmptyAppData(uint256 nonce)
         private
         view
@@ -289,5 +595,21 @@ contract ProtocolAdapterMockVerifierTest is Test {
             });
         }
         data[0].appData.externalPayload = externalBlobs;
+    }
+
+    function _bindParameters(uint8 actionCount, uint8 complianceUnitCount, uint8 actionIndex, uint8 complianceIndex)
+        private
+        pure
+        returns (
+            uint8 boundActionCount,
+            uint8 boundComplianceUnitCount,
+            uint8 boundActionIndex,
+            uint8 boundComplianceIndex
+        )
+    {
+        boundActionCount = uint8(bound(actionCount, 1, 5));
+        boundComplianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
+        boundActionIndex = uint8(bound(actionIndex, 0, boundActionCount - 1));
+        boundComplianceIndex = uint8(bound(complianceIndex, 0, boundComplianceUnitCount - 1));
     }
 }
