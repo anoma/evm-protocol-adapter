@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {EfficientHashLib} from "@solady/utils/EfficientHashLib.sol";
+
 /// @title SHA256
 /// @author Anoma Foundation, 2025
 /// @notice A library for computing SHA256 hashes.
@@ -13,15 +15,15 @@ library SHA256 {
     /// @notice Hashes a single `bytes32` value.
     /// @param a The value to hash.
     /// @return ha The resulting hash.
-    function hash(bytes32 a) internal pure returns (bytes32 ha) {
-        ha = sha256(abi.encode(a));
+    function hash(bytes32 a) internal view returns (bytes32 ha) {
+        ha = EfficientHashLib.sha2(a);
     }
 
     /// @notice Hashes two `bytes32` values.
     /// @param a The first value to hash.
     /// @param b The second value to hash.
     /// @return hab The resulting hash.
-    function hash(bytes32 a, bytes32 b) internal pure returns (bytes32 hab) {
-        hab = sha256(abi.encode(a, b));
+    function hash(bytes32 a, bytes32 b) internal view returns (bytes32 hab) {
+        hab = EfficientHashLib.sha2(abi.encode(a, b));
     }
 }
