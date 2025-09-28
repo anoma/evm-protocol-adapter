@@ -318,6 +318,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
         // Generate a different tag with the nonce.
+        // We assume that the tags are generated using sha256. Hence the tag is different modulo hash-breaking.
         bytes32 fakeTag = SHA256.hash(
             txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.nullifier, nonce
         );
@@ -353,6 +354,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
         // Generate a different tag with the nonce.
+        // We assume that the tags are generated using sha256. Hence the tag is different modulo hash-breaking.
         bytes32 fakeTag = SHA256.hash(
             txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created.commitment, nonce
         );
