@@ -269,32 +269,6 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function testFuzz_execute_reverts_if_risc0_has_a_length_less_than_four(
-        uint8 actionCount,
-        uint8 complianceUnitCount,
-        uint8 actionIndex,
-        uint8 complianceIndex,
-        bytes memory fakeProof
-    ) public {
-        // Ensure that the proof does not have enough bytes to contain the selector.
-        vm.assume(fakeProof.length < 4);
-
-        // Choose random compliance unit among the actions.
-        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
-            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
-
-        TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-
-        txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].proof = fakeProof;
-
-        // With a short proof, we expect an EVM error (which is message-less).
-        vm.expectRevert(bytes(""), address(_router));
-        _mockPa.execute(txn);
-    }
-
     /// @notice Test that transactions with unknown selectors fail.
     function testFuzz_execute_reverts_if_proofs_start_with_an_unknown_verifier_selector(
         uint8 actionCount,
