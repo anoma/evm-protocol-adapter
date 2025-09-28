@@ -317,22 +317,18 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
+        bytes32 tag = txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.nullifier;
+        uint256 tagIndex = TxGen.getExistingTagIndex(txn.actions[actionIndex], tag);
+
         // Generate a different tag with the nonce.
         // We assume that the tags are generated using sha256. Hence the tag is different modulo hash-breaking.
-        bytes32 fakeTag = SHA256.hash(
-            txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.nullifier, nonce
-        );
+        bytes32 fakeTag = SHA256.hash(tag, nonce);
 
         // Replace the nullifier corresponding to the selected compliance unit with a fake one.
-        txn.actions[actionIndex].logicVerifierInputs[complianceIndex * 2].tag = fakeTag;
+        txn.actions[actionIndex].logicVerifierInputs[tagIndex].tag = fakeTag;
 
         // Execution reverts as the original nullifier isn't found in logic inputs.
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Logic.TagNotFound.selector,
-                txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.nullifier
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(Logic.TagNotFound.selector, tag));
 
         _mockPa.execute(txn);
     }
@@ -359,16 +355,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
             txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created.commitment, nonce
         );
 
+        bytes32 tag = txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created.commitment;
+        uint256 tagIndex = TxGen.getExistingTagIndex(txn.actions[actionIndex], tag);
+
         // Replace the commitment corresponding to the selected compliance unit with a fake one
-        txn.actions[actionIndex].logicVerifierInputs[(complianceIndex * 2) + 1].tag = fakeTag;
+        txn.actions[actionIndex].logicVerifierInputs[tagIndex].tag = fakeTag;
 
         // Execution reverts as the original commitment isn't found in logic inputs.
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Logic.TagNotFound.selector,
-                txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created.commitment
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(Logic.TagNotFound.selector, tag));
 
         _mockPa.execute(txn);
     }
@@ -460,11 +454,12 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         Compliance.ConsumedRefs memory consumed =
             txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed;
+        uint256 tagIndex = TxGen.getExistingTagIndex(txn.actions[actionIndex], consumed.nullifier);
 
         // Generate a fake logic using a nonce.
         bytes32 fakeLogic = SHA256.hash(consumed.logicRef, nonce);
         // Replace the original logic.
-        txn.actions[actionIndex].logicVerifierInputs[(complianceIndex * 2) + 1].verifyingKey = fakeLogic;
+        txn.actions[actionIndex].logicVerifierInputs[tagIndex].verifyingKey = fakeLogic;
 
         // Expect a logic mismatch.
         vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.LogicRefMismatch.selector, fakeLogic, consumed.logicRef));
@@ -489,11 +484,12 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         Compliance.CreatedRefs memory created =
             txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created;
+        uint256 tagIndex = TxGen.getExistingTagIndex(txn.actions[actionIndex], created.commitment);
 
         // Generate a fake logic using a nonce.
         bytes32 fakeLogic = SHA256.hash(created.logicRef, nonce);
         // Replace the original logic.
-        txn.actions[actionIndex].logicVerifierInputs[(complianceIndex * 2) + 1].verifyingKey = fakeLogic;
+        txn.actions[actionIndex].logicVerifierInputs[tagIndex].verifyingKey = fakeLogic;
 
         // Expect a logic mismatch.
         vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.LogicRefMismatch.selector, fakeLogic, created.logicRef));
