@@ -393,6 +393,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
         // Set the compliance unit count to the fake number.
+        // We assume these can be kept empty as the compliance partition is checked prior to other checks.
         txn.actions[actionIndex].complianceVerifierInputs = new Compliance.VerifierInput[](fakeComplianceCount);
 
         // Expect revert based on wrong resource computation.
