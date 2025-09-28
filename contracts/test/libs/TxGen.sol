@@ -351,6 +351,16 @@ library TxGen {
         });
     }
 
+    function getExistingTagIndex(Action memory action, bytes32 tag) internal pure returns (uint256 index) {
+        uint256 logicVerifierInputCount = action.logicVerifierInputs.length;
+
+        for (uint256 i = 0; i < logicVerifierInputCount; ++i) {
+            if (tag == action.logicVerifierInputs[i].tag) {
+                return (index = i);
+            }
+        }
+    }
+
     function commitment(Resource memory resource) internal pure returns (bytes32 hash) {
         hash = sha256(abi.encode(resource));
     }
