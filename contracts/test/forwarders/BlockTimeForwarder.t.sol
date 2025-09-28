@@ -35,14 +35,14 @@ contract BlockTimeForwarderTest is Test {
 
     function test_forwardCall_returns_true_if_timestamp_is_in_the_past() public view {
         // solhint-disable-next-line not-rely-on-time
-        bytes memory passedTimestampBytes = abi.encode(uint256(block.timestamp - 1));
+        bytes memory passedTimestampBytes = abi.encode(uint248(block.timestamp - 1));
         bytes memory output = _fwd.forwardCall("", passedTimestampBytes);
 
         assert(abi.decode(output, (bool)));
     }
 
     function test_forwardCall_returns_false_if_timestamp_is_in_the_future() public view {
-        bytes memory futureTimestampBytes = abi.encode(type(uint256).max);
+        bytes memory futureTimestampBytes = abi.encode(type(uint248).max);
         bytes memory output = _fwd.forwardCall("", futureTimestampBytes);
 
         assert(!abi.decode(output, (bool)));
@@ -50,7 +50,7 @@ contract BlockTimeForwarderTest is Test {
 
     function test_forwardCall_returns_false_if_timestamp_is_in_the_present() public view {
         // solhint-disable-next-line not-rely-on-time
-        bytes memory presentTimestampBytes = abi.encode(block.timestamp);
+        bytes memory presentTimestampBytes = abi.encode(uint248(block.timestamp));
         bytes memory output = _fwd.forwardCall("", presentTimestampBytes);
 
         assert(!abi.decode(output, (bool)));

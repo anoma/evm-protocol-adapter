@@ -17,7 +17,7 @@ contract BlockTimeForwarder is IForwarder {
         returns (bytes memory output)
     {
         // 248-limit is imposed by Risc0 not accepting 256-bit inputs.
-        (uint256 expectedTime) = abi.decode(input, (uint256));
+        (uint256 expectedTime) = abi.decode(input, (uint248));
 
         // slither-disable-next-line timestamp
         output = abi.encode(expectedTime < block.timestamp);  // solhint-disable-line not-rely-on-time
