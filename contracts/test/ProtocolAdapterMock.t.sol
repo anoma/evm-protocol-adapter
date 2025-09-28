@@ -175,7 +175,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_1_txn_with_up_to_3_empty_actions(bool[3] memory isEmpty) public {
+    function testFuzz_execute_1_txn_with_up_to_3_empty_actions(bool[3] memory isEmpty) public {
         TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](3);
 
         for (uint256 i = 0; i < isEmpty.length; ++i) {
@@ -187,7 +187,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_1_txn_with_n_actions_and_n_cus(uint8 actionCount, uint8 complianceUnitCount) public {
+    function testFuzz_execute_1_txn_with_n_actions_and_n_cus(uint8 actionCount, uint8 complianceUnitCount) public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
             actionCount: uint8(bound(actionCount, 0, 5)),
             complianceUnitCount: uint8(bound(complianceUnitCount, 0, 5))
@@ -197,7 +197,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_2_txns_with_n_actions_and_n_cus(uint8 actionCount, uint8 complianceUnitCount) public {
+    function testFuzz_execute_2_txns_with_n_actions_and_n_cus(uint8 actionCount, uint8 complianceUnitCount) public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
             actionCount: uint8(bound(actionCount, 0, 5)),
             complianceUnitCount: uint8(bound(complianceUnitCount, 0, 5))
@@ -224,7 +224,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(tx1);
     }
 
-    function test_execute_reverts_on_resource_count_mismatch(uint8 complianceUnitCount) public {
+    function testFuzz_execute_reverts_on_resource_count_mismatch(uint8 complianceUnitCount) public {
         complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: uint8(bound(complianceUnitCount, 1, 5))});

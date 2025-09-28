@@ -44,26 +44,32 @@ contract Benchmark is Test {
         }
     }
 
+    /// forge-config: default.isolate = true
     function test_execute_00() public {
         _pa.execute(_txns[0]);
     }
 
+    /// forge-config: default.isolate = true
     function test_execute_01() public {
         _pa.execute(_txns[1]);
     }
 
+    /// forge-config: default.isolate = true
     function test_execute_05() public {
         _pa.execute(_txns[2]);
     }
 
+    /// forge-config: default.isolate = true
     function test_execute_10() public {
         _pa.execute(_txns[3]);
     }
 
+    /// forge-config: default.isolate = true
     function test_execute_15() public {
         _pa.execute(_txns[4]);
     }
 
+    /// forge-config: default.isolate = true
     function test_execute_20() public {
         _pa.execute(_txns[5]);
     }
