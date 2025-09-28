@@ -49,6 +49,7 @@ out = "out"
 script = "script"
 test = "test"
 allow_internal_expect_revert = true
+isolate = true
 
 [fuzz]
 runs = 1_000
