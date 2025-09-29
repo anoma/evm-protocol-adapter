@@ -41,15 +41,15 @@ pub trait ProtocolAdapterEndpoint {
     async fn at_index(&self, index: U256) -> Result<[u8; 32], alloy::contract::Error>;
 }
 
-/// An Ethereum RPC endpoint
-pub enum EthereumRpc {
+/// An Ethereum network and RPC endpoint to connect to it with
+pub enum NetworkRpc {
     /// A Sepolia RPC endpoint
     Sepolia(Url),
     /// A custom Ethereum RPC endpoint
     Custom(Url),
 }
 
-impl EthereumRpc {
+impl NetworkRpc {
     /// A general Sepolia RPC endpoint
     pub fn sepolia_rpc(rpc_url: String) -> Result<Self, ParseError> {
         Ok(Self::Sepolia(rpc_url.parse()?))
@@ -68,19 +68,19 @@ impl EthereumRpc {
     }
 }
 
-impl From<EthereumRpc> for Url {
-    fn from(rpc: EthereumRpc) -> Self {
+impl From<NetworkRpc> for Url {
+    fn from(rpc: NetworkRpc) -> Self {
         match rpc {
-            EthereumRpc::Sepolia(url) => url,
-            EthereumRpc::Custom(url) => url,
+            NetworkRpc::Sepolia(url) => url,
+            NetworkRpc::Custom(url) => url,
         }
     }
 }
 
 /// Uniquely identifies a protocol adapter
-pub enum ProtocolAdapterId {
+pub enum Version {
     /// The adapter deployed on Sepolia
-    SepoliaPa,
+    V1_0_0Beta,
     /// Some other instance deployed at the given address
     Custom { protocol_adapter: Address },
 }
@@ -88,14 +88,14 @@ pub enum ProtocolAdapterId {
 /// Construct an endpoint for the identified protocol adapter over the given RPC
 /// and wallet
 pub fn protocol_adapter(
-    id: ProtocolAdapterId,
-    rpc: EthereumRpc,
+    network: NetworkRpc,
+    version: Version,
     wallet: EthereumWallet,
 ) -> Box<dyn ProtocolAdapterEndpoint> {
     let provider = ProviderBuilder::new().wallet(wallet);
-    match (id, rpc) {
+    match (network, version) {
         // Sepolia RPC must be used with the Sepolia protocol adapter instance
-        (ProtocolAdapterId::SepoliaPa, EthereumRpc::Sepolia(rpc_url)) => {
+        (NetworkRpc::Sepolia(rpc_url), Version::V1_0_0Beta) => {
             // The address of the Sepolia Protocol Adapter instance
             let protocol_adapter_address = "0xaf21c8a4d489610f42aabc883e66be3d651e5d52"
                 .parse::<Address>()
@@ -108,12 +108,12 @@ pub fn protocol_adapter(
         }
         // Custom protocol adapter instances can be used with any RPC
         (
-            ProtocolAdapterId::Custom {
+            network,
+            Version::Custom {
                 protocol_adapter, ..
             },
-            rpc,
         ) => {
-            let provider = provider.connect_http(rpc.into());
+            let provider = provider.connect_http(network.into());
             Box::new(protocol_adapter_v1_0_0_beta::ProtocolAdapter::new(
                 protocol_adapter,
                 provider,
@@ -125,7 +125,7 @@ pub fn protocol_adapter(
 
 #[cfg(test)]
 mod tests {
-    use crate::call::{EthereumRpc, ProtocolAdapterEndpoint, ProtocolAdapterId, protocol_adapter};
+    use crate::call::{NetworkRpc, ProtocolAdapterEndpoint, Version, protocol_adapter};
     use alloy::hex;
     use alloy::signers::local::PrivateKeySigner;
     use arm_risc0::delta_proof::{DeltaProof, DeltaWitness};
@@ -138,13 +138,13 @@ mod tests {
     }
 
     fn sepolia_protocol_adapter() -> Box<dyn ProtocolAdapterEndpoint> {
-        let api_key = env::var("API_KEY_ALCHEMY").expect("Couldn't read API_KEY_ALCHEMY");
         let signer = env::var("PRIVATE_KEY")
             .expect("Couldn't read PRIVATE_KEY")
             .parse::<PrivateKeySigner>()
             .expect("Wrong private key format");
-        let rpc = EthereumRpc::alchemy_sepolia_rpc(api_key).expect("invalid API key");
-        protocol_adapter(ProtocolAdapterId::SepoliaPa, rpc, signer.into())
+        let api_key = env::var("API_KEY_ALCHEMY").expect("Couldn't read API_KEY_ALCHEMY");
+        let network = NetworkRpc::alchemy_sepolia_rpc(api_key).expect("invalid API key");
+        protocol_adapter(network, Version::V1_0_0Beta, signer.into())
     }
 
     #[tokio::test]

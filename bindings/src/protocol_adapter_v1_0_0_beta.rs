@@ -223,7 +223,7 @@ impl<X: Provider> crate::call::ProtocolAdapterEndpoint
 
 #[cfg(test)]
 mod tests {
-    use crate::conversion::ProtocolAdapter;
+    use super::ProtocolAdapter;
     use alloy::primitives::B256;
 
     #[test]

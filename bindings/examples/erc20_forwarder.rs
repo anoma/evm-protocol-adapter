@@ -10,7 +10,6 @@ use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
 use arm_risc0::utils::{bytes_to_words, words_to_bytes};
-use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
 use evm_protocol_adapter_bindings::permit2::permit_witness_transfer_from_signature;
 use sha2::{Digest, Sha256};
 use simple_transfer_app::burn::construct_burn_tx;
@@ -19,6 +18,8 @@ use simple_transfer_app::resource::{construct_ephemeral_resource, construct_pers
 use simple_transfer_app::transfer::construct_transfer_tx;
 use simple_transfer_app::utils::authorize_the_action;
 use std::env;
+use arm_risc0::transaction::Transaction;
+use evm_protocol_adapter_bindings::protocol_adapter_v1_0_0_beta;
 
 pub struct SetUp {
     pub signer: PrivateKeySigner,
@@ -86,7 +87,7 @@ fn example_keychain() -> KeyChain {
 fn mint_tx(
     data: &SetUp,
     keychain: &KeyChain,
-) -> (ProtocolAdapter::Transaction, arm_risc0::resource::Resource) {
+) -> (Transaction, arm_risc0::resource::Resource) {
     let latest_cm_tree_root = INITIAL_ROOT.as_words().to_vec();
 
     let consumed_resource = construct_ephemeral_resource(
@@ -147,14 +148,14 @@ fn mint_tx(
     // Verify the transaction
     assert!(tx.clone().verify(), "Transaction verification failed");
 
-    (ProtocolAdapter::Transaction::from(tx), created_resource)
+    (tx, created_resource)
 }
 
 fn transfer_tx(
     data: &SetUp,
     keychain: &KeyChain,
     resource_to_transfer: &arm_risc0::resource::Resource,
-) -> (ProtocolAdapter::Transaction, arm_risc0::resource::Resource) {
+) -> (Transaction, arm_risc0::resource::Resource) {
     let consumed_nf = resource_to_transfer.nullifier(&keychain.nf_key).unwrap();
 
     let created_resource = construct_persistent_resource(
@@ -192,7 +193,7 @@ fn transfer_tx(
     // Verify the transaction
     assert!(tx.clone().verify(), "Transaction verification failed");
 
-    (ProtocolAdapter::Transaction::from(tx), created_resource)
+    (tx, created_resource)
 }
 
 fn burn_tx(
@@ -200,7 +201,7 @@ fn burn_tx(
     keychain: &KeyChain,
     minted_resource: &arm_risc0::resource::Resource,
     resource_to_burn: &arm_risc0::resource::Resource,
-) -> ProtocolAdapter::Transaction {
+) -> Transaction {
     let consumed_nf = resource_to_burn.nullifier(&keychain.nf_key).unwrap();
 
     // Create the ephemeral resource
@@ -251,7 +252,7 @@ fn burn_tx(
         data.signer.address().to_vec(),
     );
 
-    ProtocolAdapter::Transaction::from(tx)
+    tx
 }
 
 fn sha256(a: &[u8], b: &[u8]) -> B256 {
@@ -278,8 +279,8 @@ fn main() {
     write_to_file(burn_tx, "burn");
 }
 
-fn write_to_file(tx: ProtocolAdapter::Transaction, file_name: &str) {
-    let encoded_tx = tx.abi_encode();
+fn write_to_file(tx: Transaction, file_name: &str) {
+    let encoded_tx = protocol_adapter_v1_0_0_beta::ProtocolAdapter::Transaction::from(tx).abi_encode();
 
     std::fs::write(
         format!("./contracts/test/examples/transactions/{file_name}.bin"),
