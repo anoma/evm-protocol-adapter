@@ -15,7 +15,7 @@ contract BlockTimeForwarder is IForwarder {
     }
 
     /// @inheritdoc IForwarder
-    function forwardCall(bytes32, /* logicRef */ bytes calldata input)
+    function forwardCall( /* logicRef */ bytes32, bytes calldata input)
         external
         view
         override
