@@ -56,34 +56,34 @@ contract CommitmentTree is ICommitmentTree {
     }
 
     /// @inheritdoc ICommitmentTree
-    function isCommitmentRootContained(bytes32 root) external view override returns (bool isContained) {
+    function isCommitmentTreeRootContained(bytes32 root) external view override returns (bool isContained) {
         isContained = _roots.contains(root);
     }
 
     /// @inheritdoc ICommitmentTree
-    function commitmentRootCount() external view override returns (uint256 count) {
+    function commitmentTreeRootCount() external view override returns (uint256 count) {
         count = _roots.length();
     }
 
     /// @inheritdoc ICommitmentTree
-    function commitmentRootAtIndex(uint256 index) external view override returns (bytes32 root) {
+    function commitmentTreeRootAtIndex(uint256 index) external view override returns (bytes32 root) {
         root = _roots.at(index);
     }
 
     /// @inheritdoc ICommitmentTree
-    function latestCommitmentRoot() external view override returns (bytes32 root) {
+    function latestCommitmentTreeRoot() external view override returns (bytes32 root) {
         root = _roots.at(_roots.length() - 1);
     }
 
     /// @inheritdoc ICommitmentTree
     function verifyMerkleProof(
-        bytes32 commitmentRoot,
+        bytes32 commitmentTreeRoot,
         bytes32 commitment,
         bytes32[] calldata path,
         uint256 directionBits
     ) external view override {
         _verifyMerkleProof({
-            commitmentRoot: commitmentRoot,
+            commitmentTreeRoot: commitmentTreeRoot,
             commitment: commitment,
             path: path,
             directionBits: directionBits
@@ -98,23 +98,23 @@ contract CommitmentTree is ICommitmentTree {
         (index, newRoot) = _merkleTree.push(commitment);
     }
 
-    /// @notice Stores a root in the set of historical roots.
+    /// @notice Adds a root to the set of historical roots and emits the `CommitmentTreeRootStored` event.
     /// @param root The root to store.
-    function _storeRoot(bytes32 root) internal {
+    function _addCommitmentTreeRoot(bytes32 root) internal {
         if (!_roots.add(root)) {
             revert PreExistingRoot(root);
         }
-        emit CommitmentRootStored(root);
+        emit CommitmentTreeRootStored(root);
     }
 
     /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.
     /// @dev To prevent second-preimage attacks, ensure that the commitment is a leaf and not an intermediary node.
-    /// @param commitmentRoot The commitment tree root to reproduce.
+    /// @param commitmentTreeRoot The commitment tree root to reproduce.
     /// @param commitment The commitment leaf to proof inclusion in the tree for.
     /// @param path The siblings constituting the path from the leaf to the root.
     /// @param directionBits The direction bits indicating whether the siblings are left of right.
     function _verifyMerkleProof(
-        bytes32 commitmentRoot,
+        bytes32 commitmentTreeRoot,
         bytes32 commitment,
         bytes32[] calldata path,
         uint256 directionBits
@@ -125,15 +125,15 @@ contract CommitmentTree is ICommitmentTree {
         }
 
         // Check root existence.
-        if (!_roots.contains(commitmentRoot)) {
-            revert NonExistingRoot(commitmentRoot);
+        if (!_roots.contains(commitmentTreeRoot)) {
+            revert NonExistingRoot(commitmentTreeRoot);
         }
 
         // Check that the commitment leaf and path reproduce the root.
         bytes32 computedRoot = path.processProof(directionBits, commitment);
 
-        if (commitmentRoot != computedRoot) {
-            revert InvalidRoot({expected: commitmentRoot, actual: computedRoot});
+        if (commitmentTreeRoot != computedRoot) {
+            revert InvalidRoot({expected: commitmentTreeRoot, actual: computedRoot});
         }
     }
 

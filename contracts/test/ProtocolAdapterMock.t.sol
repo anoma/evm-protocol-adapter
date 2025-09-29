@@ -89,7 +89,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         for (uint256 i = 0; i < actionCount; ++i) {
             vm.expectEmit(address(_mockPa));
             emit IProtocolAdapter.ActionExecuted({
-                actionRoot: txn.actions[i].collectTags().computeRoot(),
+                actionTreeRoot: txn.actions[i].collectTags().computeRoot(),
                 actionTagCount: complianceUnitCount * 2
             });
         }

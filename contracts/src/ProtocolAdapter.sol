@@ -92,7 +92,7 @@ contract ProtocolAdapter is
         tagCount = 0;
 
         // Allocate variable for the root update.
-        bytes32 updatedCommitmentRoot = 0;
+        bytes32 updatedCommitmentTreeRoot = 0;
 
         // Start with the zero point on the curve for delta-computation.
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
@@ -110,7 +110,7 @@ contract ProtocolAdapter is
             }
 
             // Compute the action tree root.
-            bytes32 actionRoot = _computeActionRoot(action, complianceUnitCount);
+            bytes32 actionTreeRoot = _computeActionRoot(action, complianceUnitCount);
 
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
@@ -130,7 +130,7 @@ contract ProtocolAdapter is
                 _processResourceLogicContext({
                     input: action.logicVerifierInputs.lookup(nf),
                     logicRef: complianceVerifierInput.instance.consumed.logicRef,
-                    actionRoot: actionRoot,
+                    actionTreeRoot: actionTreeRoot,
                     consumed: true
                 });
 
@@ -139,13 +139,13 @@ contract ProtocolAdapter is
                 _processResourceLogicContext({
                     input: action.logicVerifierInputs.lookup(cm),
                     logicRef: complianceVerifierInput.instance.created.logicRef,
-                    actionRoot: actionRoot,
+                    actionTreeRoot: actionTreeRoot,
                     consumed: false
                 });
 
                 // Transition the resource machine state.
                 _addNullifier(nf);
-                updatedCommitmentRoot = _addCommitment(cm);
+                updatedCommitmentTreeRoot = _addCommitment(cm);
 
                 // Populate the tags
                 tags[tagCount] = nf;
@@ -162,7 +162,7 @@ contract ProtocolAdapter is
                 );
             }
 
-            emit ActionExecuted({actionRoot: actionRoot, actionTagCount: actionTagCount});
+            emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: actionTagCount});
         }
 
         // Check if the transaction induces a state change.
@@ -171,7 +171,7 @@ contract ProtocolAdapter is
             _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
             // Store the final commitment tree root
-            _storeRoot(updatedCommitmentRoot);
+            _addCommitmentTreeRoot(updatedCommitmentTreeRoot);
         }
 
         // Emit the event containing the transaction and new root
@@ -228,12 +228,12 @@ contract ProtocolAdapter is
     ///  * processing forward calls.
     /// @param input The logic verifier input for processing.
     /// @param logicRef The logic ref approved by compliance proof.
-    /// @param actionRoot The root of the tree containing all action tags for the instance.
+    /// @param actionTreeRoot The root of the tree containing all action tags for the instance.
     /// @param consumed Flag for indicating whether the resource is consumed.
     function _processResourceLogicContext(
         Logic.VerifierInput calldata input,
         bytes32 logicRef,
-        bytes32 actionRoot,
+        bytes32 actionTreeRoot,
         bool consumed
     ) internal {
         // Check verifying key correspondence.
@@ -242,7 +242,7 @@ contract ProtocolAdapter is
         }
 
         // Check the logic proof.
-        _verifyLogicProof({input: input, actionRoot: actionRoot, consumed: consumed});
+        _verifyLogicProof({input: input, actionTreeRoot: actionTreeRoot, consumed: consumed});
 
         // Perform external calls.
         _processForwarderCalls(input);
@@ -313,10 +313,10 @@ contract ProtocolAdapter is
 
     /// @notice Verifies a RISC0 logic proof.
     /// @param input The verifier input of the logic proof.
-    /// @param actionRoot The root of the action tree containing all tags of an action.
+    /// @param actionTreeRoot The root of the action tree containing all tags of an action.
     /// @param consumed Bool indicating whether the tag is a commitment or a nullifier.
     /// @dev This function is virtual to allow for it to be overridden, e.g., to mock proofs with a mock verifier.
-    function _verifyLogicProof(Logic.VerifierInput calldata input, bytes32 actionRoot, bool consumed)
+    function _verifyLogicProof(Logic.VerifierInput calldata input, bytes32 actionTreeRoot, bool consumed)
         internal
         view
         virtual
@@ -325,7 +325,7 @@ contract ProtocolAdapter is
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
             seal: input.proof,
             imageId: input.verifyingKey,
-            journalDigest: input.toJournalDigest(actionRoot, consumed)
+            journalDigest: input.toJournalDigest(actionTreeRoot, consumed)
         });
     }
 

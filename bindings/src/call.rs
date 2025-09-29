@@ -81,7 +81,7 @@ mod tests {
     async fn contains_initial_root() {
         assert!(
             protocol_adapter()
-                .isCommitmentRootContained(initial_root())
+                .isCommitmentTreeRootContained(initial_root())
                 .call()
                 .await
                 .unwrap()
@@ -92,7 +92,7 @@ mod tests {
     #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn call_latest_root() {
         let root = protocol_adapter()
-            .latestCommitmentRoot()
+            .latestCommitmentTreeRoot()
             .call()
             .await
             .unwrap();
