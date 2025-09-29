@@ -49,13 +49,14 @@ out = "out"
 script = "script"
 test = "test"
 allow_internal_expect_revert = true
+isolate = true
 
 [fuzz]
 runs = 1_000
 
 [profile.ci]
 fuzz = { runs = 1_000 }
-verbosity = 4
+verbosity = 3
 
 [etherscan]
 mainnet = { key = "${API_KEY_ETHERSCAN}" }
