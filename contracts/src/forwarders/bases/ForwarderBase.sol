@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IForwarder} from "../interfaces/IForwarder.sol";
+import {IForwarder} from "../../interfaces/IForwarder.sol";
 
 /// @title ForwarderBase
 /// @author Anoma Foundation, 2025
@@ -11,7 +11,7 @@ abstract contract ForwarderBase is IForwarder {
     /// @notice The protocol adapter contract that can forward calls.
     address internal immutable _PROTOCOL_ADAPTER;
 
-    /// @notice The the calldata carrier resource logic reference.
+    /// @notice The calldata carrier resource logic reference.
     bytes32 internal immutable _CALLDATA_CARRIER_LOGIC_REF;
 
     error ZeroNotAllowed();

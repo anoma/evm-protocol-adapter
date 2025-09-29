@@ -1,4 +1,4 @@
-use alloy::primitives::{Bytes, B256};
+use alloy::primitives::{B256, Bytes};
 use alloy::sol;
 use arm_risc0::action::Action;
 use arm_risc0::compliance::ComplianceInstance;
@@ -57,10 +57,10 @@ impl From<AppData> for Logic::AppData {
 impl From<LogicVerifierInputs> for Logic::VerifierInput {
     fn from(logic_verifier_inputs: LogicVerifierInputs) -> Self {
         Self {
-            tag: B256::from_slice(words_to_bytes(&logic_verifier_inputs.tag)),
-            verifyingKey: B256::from_slice(words_to_bytes(&logic_verifier_inputs.verifying_key)),
+            tag: B256::from_slice(&logic_verifier_inputs.tag.as_bytes()),
+            verifyingKey: B256::from_slice(&logic_verifier_inputs.verifying_key.as_bytes()),
             appData: logic_verifier_inputs.app_data.into(),
-            proof: Bytes::from(encode_seal(&logic_verifier_inputs.proof)),
+            proof: Bytes::from(encode_seal(&logic_verifier_inputs.proof).unwrap()),
         }
     }
 }
@@ -69,15 +69,15 @@ impl From<ComplianceInstance> for Compliance::Instance {
     fn from(instance: ComplianceInstance) -> Self {
         Self {
             consumed: Compliance::ConsumedRefs {
-                nullifier: B256::from_slice(words_to_bytes(&instance.consumed_nullifier)),
-                logicRef: B256::from_slice(words_to_bytes(&instance.consumed_logic_ref)),
-                commitmentTreeRoot: B256::from_slice(words_to_bytes(
-                    &instance.consumed_commitment_tree_root,
-                )),
+                nullifier: B256::from_slice(&instance.consumed_nullifier.as_bytes()),
+                logicRef: B256::from_slice(&instance.consumed_logic_ref.as_bytes()),
+                commitmentTreeRoot: B256::from_slice(
+                    &instance.consumed_commitment_tree_root.as_bytes(),
+                ),
             },
             created: Compliance::CreatedRefs {
-                commitment: B256::from_slice(words_to_bytes(&instance.created_commitment)),
-                logicRef: B256::from_slice(words_to_bytes(&instance.created_logic_ref)),
+                commitment: B256::from_slice(&instance.created_commitment.as_bytes()),
+                logicRef: B256::from_slice(&instance.created_logic_ref.as_bytes()),
             },
             unitDeltaX: B256::from_slice(words_to_bytes(&instance.delta_x)),
             unitDeltaY: B256::from_slice(words_to_bytes(&instance.delta_y)),
@@ -88,8 +88,8 @@ impl From<ComplianceInstance> for Compliance::Instance {
 impl From<ComplianceUnit> for Compliance::VerifierInput {
     fn from(compliance_unit: ComplianceUnit) -> Self {
         Self {
-            proof: Bytes::from(encode_seal(&compliance_unit.proof)),
-            instance: compliance_unit.get_instance().into(),
+            proof: Bytes::from(encode_seal(&compliance_unit.proof).unwrap()),
+            instance: compliance_unit.get_instance().unwrap().into(),
         }
     }
 }
@@ -144,7 +144,7 @@ mod tests {
 
         let n_actions = 1;
 
-        let raw_tx = arm_risc0::transaction::generate_test_transaction(n_actions);
+        let raw_tx = arm_risc0::tests::generate_test_transaction(n_actions);
         println!("{:?}", raw_tx);
         let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
 

@@ -14,7 +14,7 @@ library Delta {
     /// @notice Thrown if the recovered delta public key doesn't match the delta instance.
     error DeltaMismatch(address expected, address actual);
 
-    /// @notice Adds to ellipitic curve points and returns the resulting value.
+    /// @notice Adds two elliptic curve points and returns the resulting value.
     /// @param p1 The first curve point.
     /// @param p2 The second curve point.
     /// @return p3 The resulting curve point.
@@ -22,8 +22,8 @@ library Delta {
         (p3[0], p3[1]) = EllipticCurveK256.ecAdd(p1[0], p1[1], p2[0], p2[1]);
     }
 
-    /// @notice Converts a delta public key to an Ethereum account.
-    /// @param delta  The delta public key.
+    /// @notice Converts an elliptic curve point to an Ethereum account address.
+    /// @param delta The elliptic curve point.
     /// @return account The associated account.
     function toAccount(uint256[2] memory delta) internal pure returns (address account) {
         // Hash the public key with Keccak-256

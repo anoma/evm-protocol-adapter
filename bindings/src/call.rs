@@ -81,7 +81,7 @@ mod tests {
     async fn contains_initial_root() {
         assert!(
             protocol_adapter()
-                .containsRoot(initial_root())
+                .isCommitmentTreeRootContained(initial_root())
                 .call()
                 .await
                 .unwrap()
@@ -91,7 +91,11 @@ mod tests {
     #[tokio::test]
     #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn call_latest_root() {
-        let root = protocol_adapter().latestRoot().call().await.unwrap();
+        let root = protocol_adapter()
+            .latestCommitmentTreeRoot()
+            .call()
+            .await
+            .unwrap();
         assert_ne!(root, initial_root());
     }
 

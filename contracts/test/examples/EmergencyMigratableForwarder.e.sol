@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Address} from "@openzeppelin-contracts/utils/Address.sol";
 
-import {EmergencyMigratableForwarderBase} from "../../src/forwarders/EmergencyMigratableForwarderBase.sol";
+import {EmergencyMigratableForwarderBase} from "../../src/forwarders/bases/EmergencyMigratableForwarderBase.sol";
 
 import {ForwarderTargetExample} from "./ForwarderTarget.e.sol";
 

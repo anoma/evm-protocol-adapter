@@ -15,7 +15,7 @@ import {SHA256} from "./../src/libs/SHA256.sol";
 import {ProtocolAdapter} from "./../src/ProtocolAdapter.sol";
 import {Compliance} from "./../src/proving/Compliance.sol";
 import {Logic} from "./../src/proving/Logic.sol";
-import {CommitmentAccumulator} from "./../src/state/CommitmentAccumulator.sol";
+import {CommitmentTree} from "./../src/state/CommitmentTree.sol";
 import {NullifierSet} from "./../src/state/NullifierSet.sol";
 import {Transaction, Action} from "./../src/Types.sol";
 
@@ -178,6 +178,18 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    function test_execute_1_txn_with_up_to_3_empty_actions(bool[3] memory isEmpty) public {
+        TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](3);
+
+        for (uint256 i = 0; i < isEmpty.length; ++i) {
+            configs[i] = TxGen.ActionConfig({complianceUnitCount: isEmpty[i] ? 0 : 1});
+        }
+
+        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+
+        _mockPa.execute(txn);
+    }
+
     function test_execute_1_txn_with_n_actions_and_n_cus(uint8 actionCount, uint8 complianceUnitCount) public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
             actionCount: uint8(bound(actionCount, 0, 5)),
@@ -205,17 +217,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function test_execute_reverts_on_pre_existing_nullifier() public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1});
 
-        (Transaction memory tx1, bytes32 updatedNonce) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory tx1,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         bytes32 preExistingNf = tx1.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
         _mockPa.execute(tx1);
 
-        (Transaction memory tx2,) = vm.transaction({mockVerifier: _mockVerifier, nonce: updatedNonce, configs: configs});
-        tx2.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier = preExistingNf;
         vm.expectRevert(
             abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, preExistingNf), address(_mockPa)
         );
-        _mockPa.execute(tx2);
+        _mockPa.execute(tx1);
     }
 
     function test_execute_reverts_on_resource_count_mismatch(uint8 complianceUnitCount) public {
@@ -250,7 +259,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         bytes32 fakeRoot
     ) public {
         // Assume the proposed commitment tree root is not already contained.
-        vm.assume(!_mockPa.containsRoot(fakeRoot));
+        vm.assume(!_mockPa.isCommitmentTreeRootContained(fakeRoot));
 
         // Choose random compliance unit among the actions.
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
@@ -266,7 +275,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.commitmentTreeRoot =
             fakeRoot;
 
-        vm.expectRevert(abi.encodeWithSelector(CommitmentAccumulator.NonExistingRoot.selector, fakeRoot));
+        vm.expectRevert(abi.encodeWithSelector(CommitmentTree.NonExistingRoot.selector, fakeRoot));
         _mockPa.execute(txn);
     }
 
@@ -292,7 +301,6 @@ contract ProtocolAdapterMockVerifierTest is Test {
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
         });
-
 
         // Replace the selected compliance unit's proof with a fake one.
         txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].proof = fakeProof;

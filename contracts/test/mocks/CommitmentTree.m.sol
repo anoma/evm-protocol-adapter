@@ -4,9 +4,9 @@ pragma solidity ^0.8.30;
 import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
-import {CommitmentAccumulator} from "../../src/state/CommitmentAccumulator.sol";
+import {CommitmentTree} from "../../src/state/CommitmentTree.sol";
 
-contract CommitmentAccumulatorMock is CommitmentAccumulator {
+contract CommitmentTreeMock is CommitmentTree {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using MerkleTree for MerkleTree.Tree;
 
@@ -14,28 +14,16 @@ contract CommitmentAccumulatorMock is CommitmentAccumulator {
         newRoot = _addCommitment(commitment);
     }
 
-    function storeRoot(bytes32 root) external {
-        _storeRoot(root);
+    function storeCommitmentTreeRoot(bytes32 root) external {
+        _addCommitmentTreeRoot(root);
     }
 
     function merkleTreeZero(uint8 level) external view returns (bytes32 zeroHash) {
         zeroHash = _merkleTreeZero(level);
     }
 
-    function commitmentCount() external view returns (uint256 count) {
-        count = _merkleTree.leafCount();
-    }
-
     function initialRoot() external view returns (bytes32 hash) {
         hash = _roots.at(0);
-    }
-
-    function capacity() external view returns (uint256 treeCapacity) {
-        treeCapacity = _merkleTree.capacity();
-    }
-
-    function depth() external view returns (uint256 treeDepth) {
-        treeDepth = _merkleTree.depth();
     }
 
     function emptyLeafHash() external view returns (bytes32 hash) {

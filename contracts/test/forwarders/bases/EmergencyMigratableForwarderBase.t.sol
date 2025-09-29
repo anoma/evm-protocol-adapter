@@ -3,21 +3,21 @@ pragma solidity ^0.8.30;
 
 import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 
-import {EmergencyMigratableForwarderBase} from "../../src/forwarders/EmergencyMigratableForwarderBase.sol";
-import {ForwarderBase} from "../../src/forwarders/ForwarderBase.sol";
-import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
+import {EmergencyMigratableForwarderBase} from "../../../src/forwarders/bases/EmergencyMigratableForwarderBase.sol";
+import {ForwarderBase} from "../../../src/forwarders/bases/ForwarderBase.sol";
+import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 
-import {EmergencyMigratableForwarderExample} from "../examples/EmergencyMigratableForwarder.e.sol";
-import {ForwarderExample} from "../examples/Forwarder.e.sol";
+import {EmergencyMigratableForwarderExample} from "../../examples/EmergencyMigratableForwarder.e.sol";
+import {ForwarderExample} from "../../examples/Forwarder.e.sol";
 import {
     ForwarderTargetExample,
     INPUT_VALUE,
     OUTPUT_VALUE,
     INPUT,
     EXPECTED_OUTPUT
-} from "../examples/ForwarderTarget.e.sol";
+} from "../../examples/ForwarderTarget.e.sol";
 
-import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
+import {DeployRiscZeroContracts} from "../../script/DeployRiscZeroContracts.s.sol";
 import {ForwarderBaseTest} from "./ForwarderBase.t.sol";
 
 contract EmergencyMigratableForwarderBaseTest is ForwarderBaseTest {

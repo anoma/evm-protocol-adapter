@@ -12,21 +12,14 @@ import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
+import {Versioning} from "./libs/Versioning.sol";
 
 import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
 import {Logic} from "./proving/Logic.sol";
-import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
-
+import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
-
 import {Action, Transaction} from "./Types.sol";
-
-// The semantic version number of the Anoma protocol adapter.
-string constant PROTOCOL_ADAPTER_VERSION = "1.0.0-beta";
-
-// The RISC Zero verifier selector that the protocol adapter is associated with.
-bytes4 constant RISC_ZERO_VERIFIER_SELECTOR = 0x73c457ba;
 
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -37,7 +30,7 @@ contract ProtocolAdapter is
     ReentrancyGuardTransient,
     Ownable,
     Pausable,
-    CommitmentAccumulator,
+    CommitmentTree,
     NullifierSet
 {
     using MerkleTree for bytes32[];
@@ -99,7 +92,7 @@ contract ProtocolAdapter is
         tagCount = 0;
 
         // Allocate variable for the root update.
-        bytes32 updatedRoot = 0;
+        bytes32 updatedCommitmentTreeRoot = 0;
 
         // Start with the zero point on the curve for delta-computation.
         uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
@@ -117,7 +110,7 @@ contract ProtocolAdapter is
             }
 
             // Compute the action tree root.
-            bytes32 actionTreeRoot = _computeActionTreeRoot(action, complianceUnitCount);
+            bytes32 actionTreeRoot = _computeActionRoot(action, complianceUnitCount);
 
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
@@ -126,8 +119,8 @@ contract ProtocolAdapter is
                 bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
                 // Process the tags and provided root against global state.
-                updatedRoot =
-                    _processState({nf: nf, cm: cm, root: complianceVerifierInput.instance.consumed.commitmentTreeRoot});
+                // Process the tags and provided root against global state
+                _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
 
                 // Verify the proof against a hardcoded compliance circuit.
                 _verifyComplianceProof(complianceVerifierInput);
@@ -150,7 +143,11 @@ contract ProtocolAdapter is
                     consumed: false
                 });
 
-                // Populate the tags and logic reference arrays.
+                // Transition the resource machine state.
+                _addNullifier(nf);
+                updatedCommitmentTreeRoot = _addCommitment(cm);
+
+                // Populate the tags
                 tags[tagCount] = nf;
                 logicRefs[tagCount++] = complianceVerifierInput.instance.consumed.logicRef;
                 tags[tagCount] = cm;
@@ -173,10 +170,11 @@ contract ProtocolAdapter is
             // Check the delta proof.
             _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
-            // Store the final root.
-            _storeRoot(updatedRoot);
+            // Store the final commitment tree root
+            _addCommitmentTreeRoot(updatedCommitmentTreeRoot);
         }
 
+        // Emit the event containing the transaction and new root
         emit TransactionExecuted({tags: tags, logicRefs: logicRefs});
     }
     // slither-disable-end reentrancy-no-eth
@@ -201,8 +199,8 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
-    function getProtocolAdapterVersion() public pure override returns (string memory version) {
-        version = PROTOCOL_ADAPTER_VERSION;
+    function getProtocolAdapterVersion() public pure override returns (bytes32 version) {
+        version = Versioning._PROTOCOL_ADAPTER_VERSION;
     }
 
     /// @notice Executes a call to a forwarder contracts.
@@ -222,23 +220,6 @@ contract ProtocolAdapter is
 
         // solhint-disable-next-line max-line-length
         emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
-    }
-
-    /// @notice The function processing the state checks and updates.
-    /// @param nf The nullifier of a compliance unit.
-    /// @param cm The commitment of a compliance unit.
-    /// @param root The current commitment tree root.
-    /// @return newRoot The root after potentially adding the commitment in the compliance unit.
-    function _processState(bytes32 nf, bytes32 cm, bytes32 root) internal returns (bytes32 newRoot) {
-        // Check root in the compliance unit is an actually existing root.
-        _checkRootPreExistence(root);
-
-        // Nullifier addition reverts if it was present in the set before.
-        _addNullifier(nf);
-
-        // Compute the root after adding the commitment. Note, that the compliance circuit ensures the uniqueness of the
-        // commitment given a unique nullifier in the same compliance unit.
-        newRoot = _addCommitment(cm);
     }
 
     /// @notice Processes a resource by
@@ -261,7 +242,7 @@ contract ProtocolAdapter is
         }
 
         // Check the logic proof.
-        _verifyLogicProof({input: input, root: actionTreeRoot, consumed: consumed});
+        _verifyLogicProof({input: input, actionTreeRoot: actionTreeRoot, consumed: consumed});
 
         // Perform external calls.
         _processForwarderCalls(input);
@@ -332,15 +313,19 @@ contract ProtocolAdapter is
 
     /// @notice Verifies a RISC0 logic proof.
     /// @param input The verifier input of the logic proof.
-    /// @param root The root of the action tree containing all tags of an action.
+    /// @param actionTreeRoot The root of the action tree containing all tags of an action.
     /// @param consumed Bool indicating whether the tag is a commitment or a nullifier.
     /// @dev This function is virtual to allow for it to be overridden, e.g., to mock proofs with a mock verifier.
-    function _verifyLogicProof(Logic.VerifierInput calldata input, bytes32 root, bool consumed) internal view virtual {
+    function _verifyLogicProof(Logic.VerifierInput calldata input, bytes32 actionTreeRoot, bool consumed)
+        internal
+        view
+        virtual
+    {
         // slither-disable-next-line calls-loop
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
             seal: input.proof,
             imageId: input.verifyingKey,
-            journalDigest: input.toJournalDigest(root, consumed)
+            journalDigest: input.toJournalDigest(actionTreeRoot, consumed)
         });
     }
 
@@ -361,7 +346,7 @@ contract ProtocolAdapter is
     /// @param action The action whose root we compute.
     /// @param complianceUnitCount The number of compliance units in the action.
     /// @return root The root of the corresponding tree.
-    function _computeActionTreeRoot(Action calldata action, uint256 complianceUnitCount)
+    function _computeActionRoot(Action calldata action, uint256 complianceUnitCount)
         internal
         pure
         returns (bytes32 root)
