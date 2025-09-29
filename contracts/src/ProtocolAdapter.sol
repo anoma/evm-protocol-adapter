@@ -14,6 +14,7 @@ import {MerkleTree} from "./libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 import {Versioning} from "./libs/Versioning.sol";
 
+import {Aggregation} from "./proving/Aggregation.sol";
 import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
 import {Logic} from "./proving/Logic.sol";
@@ -34,16 +35,34 @@ contract ProtocolAdapter is
     NullifierSet
 {
     using MerkleTree for bytes32[];
+    using RiscZeroUtils for Aggregation.Instance;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.VerifierInput;
+    using RiscZeroUtils for uint32;
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
+
+    /// @notice A data structure containing variables being updated while iterating over the actions and compliance
+    /// units within a transaction.
+    /// @param commitmentTreeRoot The commitment tree root for the root update.
+    /// @param tags A variable to aggregate tags over the actions.
+    /// @param logicRefs A variable to aggregate logic references over the actions.
+    /// @param transactionDelta A variable to aggregate the unit deltas over the actions.
+    /// @param packedComplianceProofJournals A variable to aggregate RISC Zero compliance proof journals.
+    /// @param packedLogicProofJournals A variable to aggregate RISC Zero logic proof journals.
+    struct AggregatedArguments {
+        bytes32 commitmentTreeRoot;
+        bytes32[] tags;
+        bytes32[] logicRefs;
+        uint256[2] transactionDelta;
+        bytes packedComplianceProofJournals;
+        bytes packedLogicProofJournals;
+    }
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
     bytes4 internal immutable _RISC_ZERO_VERIFIER_SELECTOR;
 
     error ZeroNotAllowed();
-
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error TagCountMismatch(uint256 expected, uint256 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
@@ -75,107 +94,130 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
         uint256 actionCount = transaction.actions.length;
-        uint256 tagCount = 0;
+        uint256 tagCounter = 0;
 
         // Count the total number of tags in the transaction.
         for (uint256 i = 0; i < actionCount; ++i) {
-            tagCount += transaction.actions[i].logicVerifierInputs.length;
+            tagCounter += transaction.actions[i].logicVerifierInputs.length;
         }
 
-        // Allocate the tags array containing all commitments and nullifiers.
-        bytes32[] memory tags = new bytes32[](tagCount);
+        AggregatedArguments memory args = AggregatedArguments({
+            commitmentTreeRoot: bytes32(0),
+            tags: new bytes32[](tagCounter),
+            logicRefs: new bytes32[](tagCounter),
+            transactionDelta: [uint256(0), uint256(0)],
+            packedComplianceProofJournals: "",
+            packedLogicProofJournals: ""
+        });
 
-        // Allocate the array containing all logic references.
-        bytes32[] memory logicRefs = new bytes32[](tagCount);
+        bool isProofAggregated = transaction.aggregationProof.length != 0;
 
-        // Reset the resource counter.
-        tagCount = 0;
-
-        // Allocate variable for the root update.
-        bytes32 updatedCommitmentTreeRoot = 0;
-
-        // Start with the zero point on the curve for delta-computation.
-        uint256[2] memory transactionDelta = [uint256(0), uint256(0)];
-
+        tagCounter = 0;
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
 
+            _checkActionPartitioning(action);
+
+            bytes32 actionTreeRoot = _computeActionTreeRoot(action);
+
             uint256 complianceUnitCount = action.complianceVerifierInputs.length;
-            uint256 actionTagCount = action.logicVerifierInputs.length;
-
-            // Check that the tag count in the action and compliance units matches which ensures that if the tags match,
-            // the compliance units partition the action.
-            if (actionTagCount != complianceUnitCount * 2) {
-                revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
-            }
-
-            // Compute the action tree root.
-            bytes32 actionTreeRoot = _computeActionRoot(action, complianceUnitCount);
-
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
+                // Compliance Proof
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
+                {
+                    // slither-disable-next-line encode-packed-collision
+                    args.packedComplianceProofJournals = abi.encodePacked(
+                        args.packedComplianceProofJournals,
+                        _processComplianceProof(complianceVerifierInput, isProofAggregated)
+                    );
+                }
 
+                // Consumed resource logic proof.
                 bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
+                Logic.VerifierInput calldata consumedInput = action.logicVerifierInputs.lookup(nf);
                 bytes32 cm = complianceVerifierInput.instance.created.commitment;
+                Logic.VerifierInput calldata createdInput = action.logicVerifierInputs.lookup(cm);
+                {
+                    bytes memory nfLogicProofJournal = _processLogicProof({
+                        input: consumedInput,
+                        actionTreeRoot: actionTreeRoot,
+                        logicRef: complianceVerifierInput.instance.consumed.logicRef,
+                        isConsumed: true,
+                        isProofAggregated: isProofAggregated
+                    });
+                    bytes memory cmLogicProofJournal = _processLogicProof({
+                        input: createdInput,
+                        actionTreeRoot: actionTreeRoot,
+                        logicRef: complianceVerifierInput.instance.created.logicRef,
+                        isConsumed: false,
+                        isProofAggregated: isProofAggregated
+                    });
 
-                // Process the tags and provided root against global state.
-                // Process the tags and provided root against global state
-                _checkRootPreExistence(complianceVerifierInput.instance.consumed.commitmentTreeRoot);
+                    // slither-disable-next-line encode-packed-collision
+                    args.packedLogicProofJournals =
+                        abi.encodePacked(args.packedLogicProofJournals, nfLogicProofJournal, cmLogicProofJournal);
+                }
 
-                // Verify the proof against a hardcoded compliance circuit.
-                _verifyComplianceProof(complianceVerifierInput);
-
-                // Check the consumed resource.
-                // slither-disable-next-line reentrancy-benign
-                _processResourceLogicContext({
-                    input: action.logicVerifierInputs.lookup(nf),
-                    logicRef: complianceVerifierInput.instance.consumed.logicRef,
-                    actionTreeRoot: actionTreeRoot,
-                    consumed: true
-                });
-
-                // Check the created resource.
-                // slither-disable-next-line reentrancy-benign
-                _processResourceLogicContext({
-                    input: action.logicVerifierInputs.lookup(cm),
-                    logicRef: complianceVerifierInput.instance.created.logicRef,
-                    actionTreeRoot: actionTreeRoot,
-                    consumed: false
-                });
+                // Execute external calls.
+                _executeForwarderCalls(consumedInput);
+                _executeForwarderCalls(createdInput);
 
                 // Transition the resource machine state.
                 _addNullifier(nf);
-                updatedCommitmentTreeRoot = _addCommitment(cm);
+                args.tags[tagCounter] = nf;
+                args.logicRefs[tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
 
-                // Populate the tags
-                tags[tagCount] = nf;
-                logicRefs[tagCount++] = complianceVerifierInput.instance.consumed.logicRef;
-                tags[tagCount] = cm;
-                logicRefs[tagCount++] = complianceVerifierInput.instance.created.logicRef;
+                args.commitmentTreeRoot = _addCommitment(cm);
+                args.tags[tagCounter] = cm;
+                args.logicRefs[tagCounter++] = complianceVerifierInput.instance.created.logicRef;
 
                 // Compute transaction delta.
-                transactionDelta = transactionDelta.add(
+                args.transactionDelta = args.transactionDelta.add(
                     [
                         uint256(complianceVerifierInput.instance.unitDeltaX),
                         uint256(complianceVerifierInput.instance.unitDeltaY)
                     ]
                 );
+
+                // Emit app-data blobs.
+                _emitAppDataBlobs(consumedInput.appData, nf);
+                _emitAppDataBlobs(createdInput.appData, cm);
             }
 
-            emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: actionTagCount});
+            emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: action.logicVerifierInputs.length});
         }
 
         // Check if the transaction induces a state change.
-        if (tagCount != 0) {
+        if (tagCounter != 0) {
             // Check the delta proof.
-            _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
+            Delta.verify({
+                proof: transaction.deltaProof,
+                instance: args.transactionDelta,
+                verifyingKey: Delta.computeVerifyingKey(args.tags)
+            });
+
+            // Verify aggregation proof.
+            if (isProofAggregated) {
+                // slither-disable-next-line calls-loop
+                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                    seal: transaction.aggregationProof,
+                    imageId: Aggregation._VERIFYING_KEY,
+                    journalDigest: sha256(
+                        Aggregation.Instance({
+                            packedComplianceProofJournals: args.packedComplianceProofJournals,
+                            packedLogicProofJournals: args.packedLogicProofJournals,
+                            logicRefs: args.logicRefs
+                        }).toJournal()
+                    )
+                });
+            }
 
             // Store the final commitment tree root
-            _addCommitmentTreeRoot(updatedCommitmentTreeRoot);
+            _addCommitmentTreeRoot(args.commitmentTreeRoot);
         }
 
         // Emit the event containing the transaction and new root
-        emit TransactionExecuted({tags: tags, logicRefs: logicRefs});
+        emit TransactionExecuted({tags: args.tags, logicRefs: args.logicRefs});
     }
     // slither-disable-end reentrancy-no-eth
 
@@ -222,73 +264,46 @@ contract ProtocolAdapter is
         emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
     }
 
-    /// @notice Processes a resource by
-    ///  * checking the verifying key correspondence,
-    ///  * checking the resource logic proof, and
-    ///  * processing forward calls.
-    /// @param input The logic verifier input for processing.
-    /// @param logicRef The logic ref approved by compliance proof.
-    /// @param actionTreeRoot The root of the tree containing all action tags for the instance.
-    /// @param consumed Flag for indicating whether the resource is consumed.
-    function _processResourceLogicContext(
-        Logic.VerifierInput calldata input,
-        bytes32 logicRef,
-        bytes32 actionTreeRoot,
-        bool consumed
-    ) internal {
-        // Check verifying key correspondence.
-        if (logicRef != input.verifyingKey) {
-            revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
-        }
-
-        // Check the logic proof.
-        _verifyLogicProof({input: input, actionTreeRoot: actionTreeRoot, consumed: consumed});
-
-        // Perform external calls.
-        _processForwarderCalls(input);
-
-        _emitBlobs(input);
-    }
-
     /// @notice Emits app data blobs based on their deletion criterion.
-    /// @param input The logic verifier input containing the app data.
-    function _emitBlobs(Logic.VerifierInput calldata input) internal {
-        Logic.ExpirableBlob[] calldata payload = input.appData.resourcePayload;
+    /// @param appData The logic verifier input containing the app data.
+    /// @param tag The tag of the associated resource.
+    function _emitAppDataBlobs(Logic.AppData calldata appData, bytes32 tag) internal {
+        Logic.ExpirableBlob[] calldata payload = appData.resourcePayload;
         uint256 n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ResourcePayload({tag: input.tag, index: i, blob: payload[i].blob});
+                emit ResourcePayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
 
-        payload = input.appData.discoveryPayload;
+        payload = appData.discoveryPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit DiscoveryPayload({tag: input.tag, index: i, blob: payload[i].blob});
+                emit DiscoveryPayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
 
-        payload = input.appData.externalPayload;
+        payload = appData.externalPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ExternalPayload({tag: input.tag, index: i, blob: payload[i].blob});
+                emit ExternalPayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
 
-        payload = input.appData.applicationPayload;
+        payload = appData.applicationPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ApplicationPayload({tag: input.tag, index: i, blob: payload[i].blob});
+                emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
     }
 
     /// @notice Processes forwarder calls by verifying and executing them.
     /// @param verifierInput The logic verifier input of a resource making the call.
-    function _processForwarderCalls(Logic.VerifierInput calldata verifierInput) internal {
+    function _executeForwarderCalls(Logic.VerifierInput calldata verifierInput) internal {
         uint256 nCalls = verifierInput.appData.externalPayload.length;
 
         for (uint256 i = 0; i < nCalls; ++i) {
@@ -299,58 +314,102 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Verifies a RISC0 compliance proof.
-    /// @param input The verifier input of the compliance proof.
-    /// @dev This function is virtual to allow for it to be overridden, e.g., to use mock proofs with a mock verifier.
-    function _verifyComplianceProof(Compliance.VerifierInput calldata input) internal view virtual {
-        // slither-disable-next-line calls-loop
-        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-            seal: input.proof,
-            imageId: Compliance._VERIFYING_KEY,
-            journalDigest: input.instance.toJournalDigest()
-        });
-    }
-
-    /// @notice Verifies a RISC0 logic proof.
-    /// @param input The verifier input of the logic proof.
-    /// @param actionTreeRoot The root of the action tree containing all tags of an action.
-    /// @param consumed Bool indicating whether the tag is a commitment or a nullifier.
-    /// @dev This function is virtual to allow for it to be overridden, e.g., to mock proofs with a mock verifier.
-    function _verifyLogicProof(Logic.VerifierInput calldata input, bytes32 actionTreeRoot, bool consumed)
+    /// @notice Processes a resource machine compliance proof by
+    /// * checking that the commitment tree root is an historical root, and
+    /// * verifying or the compliance proof or computing the compliance proof RISC Zero journal.
+    /// @param input The logic verifier input for processing.
+    /// @param isProofAggregated Whether the proof is aggregated or not.
+    /// @return encodedJournal The encoded RISC Zero journal if the proof is aggregated or the empty array.
+    function _processComplianceProof(Compliance.VerifierInput calldata input, bool isProofAggregated)
         internal
         view
-        virtual
+        returns (bytes memory encodedJournal)
     {
-        // slither-disable-next-line calls-loop
-        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-            seal: input.proof,
-            imageId: input.verifyingKey,
-            journalDigest: input.toJournalDigest(actionTreeRoot, consumed)
-        });
+        bytes32 root = input.instance.consumed.commitmentTreeRoot;
+        if (!_isCommitmentTreeRootContained(root)) {
+            revert NonExistingRoot(root);
+        }
+
+        // Process compliance proof.
+        {
+            bytes memory journal = input.instance.toJournal();
+
+            // Aggregate the compliance instance
+            if (isProofAggregated) {
+                encodedJournal = abi.encodePacked(RiscZeroUtils._COMPLIANCE_INSTANCE_PADDING, journal);
+            }
+            // Verify the compliance proof.
+            else {
+                // slither-disable-next-line calls-loop
+                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                    seal: input.proof,
+                    imageId: Compliance._VERIFYING_KEY,
+                    journalDigest: sha256(journal)
+                });
+            }
+        }
     }
 
-    /// @notice Verifies a delta proof.
-    /// @param proof The delta proof.
-    /// @param transactionDelta The transaction delta.
-    /// @param tags The tags being part of the transaction in the order of appearance in the compliance units.
-    /// @dev This function is virtual to allow for it to be overridden, e.g., to mock proofs.
-    function _verifyDeltaProof(bytes calldata proof, uint256[2] memory transactionDelta, bytes32[] memory tags)
-        internal
-        view
-        virtual
-    {
-        Delta.verify({proof: proof, instance: transactionDelta, verifyingKey: Delta.computeVerifyingKey(tags)});
+    /// @notice Processes a resource logic proof by
+    /// * checking the verifying key correspondence,
+    /// * checking the resource logic proof, and
+    /// * executing external calls.
+    /// @param input The logic verifier input for processing.
+    /// @param actionTreeRoot The action tree root.
+    /// @param logicRef The logic reference that was verified in the compliance proof.
+    /// @param isConsumed Whether the proof belongs to a consumed or created resource.
+    /// @param isProofAggregated Whether the proof is aggregated or not.
+    /// @return encodedJournal The encoded RISC Zero journal if the proof is aggregated or the empty array.
+    function _processLogicProof(
+        Logic.VerifierInput calldata input,
+        bytes32 actionTreeRoot,
+        bytes32 logicRef,
+        bool isConsumed,
+        bool isProofAggregated
+    ) internal view returns (bytes memory encodedJournal) {
+        // Check verifying key correspondence.
+        if (logicRef != input.verifyingKey) {
+            revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
+        }
+
+        // Process logic proof.
+        {
+            bytes memory journal = input.toJournal({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
+
+            // Aggregate the logic instance.
+            if (isProofAggregated) {
+                encodedJournal = abi.encodePacked(uint32(journal.length / 4).toRiscZero(), journal);
+            }
+            // Verify the logic proof.
+            else {
+                // slither-disable-next-line calls-loop
+                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                    seal: input.proof,
+                    imageId: input.verifyingKey,
+                    journalDigest: sha256(journal)
+                });
+            }
+        }
+    }
+
+    /// @notice Checks the compliance units partition the action.
+    /// @param action The action to check.
+    function _checkActionPartitioning(Action calldata action) internal pure {
+        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
+        uint256 actionTagCount = action.logicVerifierInputs.length;
+
+        // Check that the tag count in the action and compliance units match.
+        if (actionTagCount != complianceUnitCount * 2) {
+            revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
+        }
     }
 
     /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
     /// @param action The action whose root we compute.
-    /// @param complianceUnitCount The number of compliance units in the action.
     /// @return root The root of the corresponding tree.
-    function _computeActionRoot(Action calldata action, uint256 complianceUnitCount)
-        internal
-        pure
-        returns (bytes32 root)
-    {
+    function _computeActionTreeRoot(Action calldata action) internal pure returns (bytes32 root) {
+        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
+
         bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * 2);
 
         // The order in which the tags are added to the tree is provided by the compliance units.

@@ -82,7 +82,7 @@ library TxGen {
         });
 
         unit = Compliance.VerifierInput({
-            proof: mockVerifier.mockProve({imageId: Compliance._VERIFYING_KEY, journalDigest: instance.toJournalDigest()})
+            proof: mockVerifier.mockProve({imageId: Compliance._VERIFYING_KEY, journalDigest: sha256(instance.toJournal())})
                 .seal,
             instance: instance
         });
@@ -223,7 +223,7 @@ library TxGen {
                 })
             );
         }
-        txn = Transaction({actions: actions, deltaProof: proof});
+        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
     }
 
     function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
@@ -255,7 +255,7 @@ library TxGen {
                 })
             );
         }
-        txn = Transaction({actions: actions, deltaProof: proof});
+        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
     }
 
     function logicVerifierInput(
@@ -274,7 +274,7 @@ library TxGen {
 
         input.proof = mockVerifier.mockProve({
             imageId: resource.logicRef,
-            journalDigest: input.toJournalDigest(actionTreeRoot, isConsumed)
+            journalDigest: sha256(input.toJournal(actionTreeRoot, isConsumed))
         }).seal;
     }
 

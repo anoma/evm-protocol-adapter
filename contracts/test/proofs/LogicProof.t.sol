@@ -27,7 +27,7 @@ contract LogicProofTest is Test {
         _router.verify({
             seal: input.proof,
             imageId: input.verifyingKey,
-            journalDigest: input.toJournalDigest(root, true)
+            journalDigest: sha256(input.toJournal(root, true))
         });
     }
 
@@ -37,7 +37,7 @@ contract LogicProofTest is Test {
         _router.verify({
             seal: input.proof,
             imageId: input.verifyingKey,
-            journalDigest: input.toJournalDigest(root, false)
+            journalDigest: sha256(input.toJournal(root, false))
         });
     }
 
@@ -54,7 +54,7 @@ contract LogicProofTest is Test {
 
         // Generate digest where only resource payload is filled.
         input.appData.resourcePayload = payloadList;
-        bytes32 resourcePayloadDigest = input.toJournalDigest(root, consumed);
+        bytes32 resourcePayloadDigest = sha256(input.toJournal(root, consumed));
         assertEq(input.appData.resourcePayload.length, 1);
         assertEq(input.appData.discoveryPayload.length, 0);
         assertEq(input.appData.externalPayload.length, 0);
@@ -63,7 +63,7 @@ contract LogicProofTest is Test {
 
         // Generate digest where only discovery payload is filled.
         input.appData.discoveryPayload = payloadList;
-        bytes32 discoveryPayloadDigest = input.toJournalDigest(root, consumed);
+        bytes32 discoveryPayloadDigest = sha256(input.toJournal(root, consumed));
         assertEq(input.appData.resourcePayload.length, 0);
         assertEq(input.appData.discoveryPayload.length, 1);
         assertEq(input.appData.externalPayload.length, 0);
@@ -72,7 +72,7 @@ contract LogicProofTest is Test {
 
         // Generate digest where only external payload is filled.
         input.appData.externalPayload = payloadList;
-        bytes32 externalPayloadDigest = input.toJournalDigest(root, consumed);
+        bytes32 externalPayloadDigest = sha256(input.toJournal(root, consumed));
         assertEq(input.appData.resourcePayload.length, 0);
         assertEq(input.appData.discoveryPayload.length, 0);
         assertEq(input.appData.externalPayload.length, 1);
@@ -81,7 +81,7 @@ contract LogicProofTest is Test {
 
         // Generate digest where only application payload is filled.
         input.appData.applicationPayload = payloadList;
-        bytes32 applicationPayloadDigest = input.toJournalDigest(root, consumed);
+        bytes32 applicationPayloadDigest = sha256(input.toJournal(root, consumed));
         assertEq(input.appData.resourcePayload.length, 0);
         assertEq(input.appData.discoveryPayload.length, 0);
         assertEq(input.appData.externalPayload.length, 0);

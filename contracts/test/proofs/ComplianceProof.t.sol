@@ -27,7 +27,7 @@ contract ComplianceProofTest is Test {
         _router.verify({
             seal: cu.proof,
             imageId: Compliance._VERIFYING_KEY,
-            journalDigest: cu.instance.toJournalDigest()
+            journalDigest: sha256(cu.instance.toJournal())
         });
     }
 

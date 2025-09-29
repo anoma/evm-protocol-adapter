@@ -60,7 +60,10 @@ impl From<LogicVerifierInputs> for Logic::VerifierInput {
             tag: B256::from_slice(&logic_verifier_inputs.tag.as_bytes()),
             verifyingKey: B256::from_slice(&logic_verifier_inputs.verifying_key.as_bytes()),
             appData: logic_verifier_inputs.app_data.into(),
-            proof: Bytes::from(encode_seal(&logic_verifier_inputs.proof).unwrap()),
+            proof: match &logic_verifier_inputs.proof {
+                Some(proof) => Bytes::from(encode_seal(proof).unwrap()),
+                None => Bytes::from(""),
+            },
         }
     }
 }
@@ -88,7 +91,10 @@ impl From<ComplianceInstance> for Compliance::Instance {
 impl From<ComplianceUnit> for Compliance::VerifierInput {
     fn from(compliance_unit: ComplianceUnit) -> Self {
         Self {
-            proof: Bytes::from(encode_seal(&compliance_unit.proof).unwrap()),
+            proof: match &compliance_unit.clone().proof {
+                Some(proof) => Bytes::from(encode_seal(proof).unwrap()),
+                None => Bytes::from(""),
+            },
             instance: compliance_unit.get_instance().unwrap().into(),
         }
     }
@@ -120,11 +126,16 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 
         Self {
             actions: tx
+                .clone()
                 .actions
                 .into_iter()
                 .map(ProtocolAdapter::Action::from)
                 .collect(),
             deltaProof: Bytes::from(delta_proof),
+            aggregationProof: match tx.get_raw_aggregation_proof() {
+                Some(proof) => Bytes::from(encode_seal(&proof).unwrap()),
+                None => Bytes::from(""),
+            },
         }
     }
 }
@@ -133,28 +144,58 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 mod tests {
     use crate::conversion::ProtocolAdapter;
     use alloy::primitives::B256;
+    use alloy::sol_types::SolValue;
+    use arm_risc0::aggregation::AggregationStrategy;
 
     #[test]
-    #[ignore]
-    fn print_tx() {
+    fn print_verifying_keys() {
         println!(
-            "{:?}",
+            "COMPLIANCE_VK: {:?}",
             B256::from_slice(arm_risc0::constants::COMPLIANCE_VK.as_bytes())
         );
 
+        println!(
+            "BATCH_AGGREGATION_VK: {:?}",
+            B256::from_slice(arm_risc0::aggregation::constants::BATCH_AGGREGATION_VK.as_bytes())
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn generate_tx_reg() {
         let n_actions = 1;
 
-        let raw_tx = arm_risc0::tests::generate_test_transaction(n_actions);
-        println!("{:?}", raw_tx);
-        let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
+        let tx = arm_risc0::tests::generate_test_transaction(n_actions);
 
-        use alloy::sol_types::SolValue;
-        let encoded_tx = evm_tx.abi_encode();
+        to_evm_bin_file(ProtocolAdapter::Transaction::from(tx), "tx_reg");
+    }
+
+    #[test]
+    #[ignore]
+    fn generate_tx_agg() {
+        let n_actions = 1;
+
+        let mut tx = arm_risc0::tests::generate_test_transaction(n_actions);
+
+        tx.aggregate_with_strategy(AggregationStrategy::Batch)
+            .unwrap();
+
+        to_evm_bin_file(ProtocolAdapter::Transaction::from(tx), "tx_agg");
+    }
+
+    fn to_evm_bin_file(tx: ProtocolAdapter::Transaction, name: &str) {
+        let n_actions = tx.actions.len();
+
+        let encoded_tx = tx.abi_encode();
         let decoded_tx: ProtocolAdapter::Transaction =
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
-        assert_eq!(evm_tx, decoded_tx);
-        println!("Transaction: {:#?}", evm_tx);
-        std::fs::write(format!("test_tx{n_actions:02}.bin"), &encoded_tx)
-            .expect("Failed to write encoded transaction to file");
+        assert_eq!(tx, decoded_tx);
+
+        println!("Transaction: {tx:#?}");
+        std::fs::write(
+            format!("../contracts/test/examples/transactions/test_{name}_{n_actions:02}.bin"),
+            &encoded_tx,
+        )
+        .expect("Failed to write encoded transaction to file");
     }
 }
