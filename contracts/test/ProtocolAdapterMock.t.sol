@@ -330,7 +330,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
 
         bytes32 tag = txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.nullifier;
-        uint256 tagIndex = TxGen.getExistingTagIndex(txn.actions[actionIndex], tag);
+        uint256 tagIndex = TxGen.getTagIndex(txn.actions[actionIndex], tag);
 
         // Generate a different tag with the nonce.
         // We assume that the tags are generated using sha256. Hence the tag is different modulo hash-breaking.
@@ -369,7 +369,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         );
 
         bytes32 tag = txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created.commitment;
-        uint256 tagIndex = TxGen.getExistingTagIndex(txn.actions[actionIndex], tag);
+        uint256 tagIndex = TxGen.getTagIndex(txn.actions[actionIndex], tag);
 
         // Replace the commitment corresponding to the selected compliance unit with a fake one
         txn.actions[actionIndex].logicVerifierInputs[tagIndex].tag = fakeTag;
@@ -469,7 +469,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         Compliance.ConsumedRefs memory consumed =
             txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed;
-        uint256 tagIndex = TxGen.getExistingTagIndex(txn.actions[actionIndex], consumed.nullifier);
+        uint256 tagIndex = TxGen.getTagIndex(txn.actions[actionIndex], consumed.nullifier);
 
         // Generate a fake logic using a nonce.
         bytes32 fakeLogic = SHA256.hash(consumed.logicRef, nonce);
@@ -500,7 +500,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         Compliance.CreatedRefs memory created =
             txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created;
-        uint256 tagIndex = TxGen.getExistingTagIndex(txn.actions[actionIndex], created.commitment);
+        uint256 tagIndex = TxGen.getTagIndex(txn.actions[actionIndex], created.commitment);
 
         // Generate a fake logic using a nonce.
         bytes32 fakeLogic = SHA256.hash(created.logicRef, nonce);
