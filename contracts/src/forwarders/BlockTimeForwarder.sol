@@ -3,11 +3,10 @@ pragma solidity ^0.8.30;
 
 import {IForwarder} from "../interfaces/IForwarder.sol";
 
-/// @title ForwarderBase
+/// @title BlockTimeForwarder
 /// @author Anoma Foundation, 2025
-/// @notice The forwarder contract allowing to check whether a certain block time has passed.
+/// @notice A forwarder contract allowing to check whether a certain block time has passed.
 /// @custom:security-contact security@anoma.foundation
-
 contract BlockTimeForwarder is IForwarder {
     /// @inheritdoc IForwarder
     function forwardCall(bytes32, /* logicRef */ bytes calldata input)
