@@ -8,6 +8,12 @@ import {IForwarder} from "../interfaces/IForwarder.sol";
 /// @notice A forwarder contract allowing to check whether a certain block time has passed.
 /// @custom:security-contact security@anoma.foundation
 contract BlockTimeForwarder is IForwarder {
+    enum TimeComparison {
+        LT,
+        EQ,
+        GT
+    }
+
     /// @inheritdoc IForwarder
     function forwardCall(bytes32, /* logicRef */ bytes calldata input)
         external
@@ -19,6 +25,17 @@ contract BlockTimeForwarder is IForwarder {
         (uint256 expectedTime) = abi.decode(input, (uint248));
 
         // slither-disable-next-line timestamp
-        output = abi.encode(expectedTime < block.timestamp);  // solhint-disable-line not-rely-on-time
+        uint256 currentTime = block.timestamp; // solhint-disable-line not-rely-on-time
+
+        TimeComparison result;
+        if (expectedTime < currentTime) {
+            result = TimeComparison.LT;
+        } else if (expectedTime > currentTime) {
+            result = TimeComparison.GT;
+        } else {
+            result = TimeComparison.EQ;
+        }
+
+        output = abi.encode(result);
     }
 }
