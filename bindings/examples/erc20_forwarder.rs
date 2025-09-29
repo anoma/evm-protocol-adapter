@@ -263,7 +263,7 @@ fn sha256(a: &[u8], b: &[u8]) -> [u8; 32] {
     hasher.update(a);
     hasher.update(b);
 
-    B256::from_slice(&hasher.finalize()).into()
+    hasher.finalize().into()
 }
 
 fn main() {
