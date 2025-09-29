@@ -9,8 +9,10 @@ use arm_risc0::encryption::{AffinePoint, SecretKey, random_keypair};
 use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
+use arm_risc0::transaction::Transaction;
 use arm_risc0::utils::{bytes_to_words, words_to_bytes};
 use evm_protocol_adapter_bindings::permit2::permit_witness_transfer_from_signature;
+use evm_protocol_adapter_bindings::protocol_adapter_v1_0_0_beta;
 use sha2::{Digest, Sha256};
 use simple_transfer_app::burn::construct_burn_tx;
 use simple_transfer_app::mint::construct_mint_tx;
@@ -18,8 +20,6 @@ use simple_transfer_app::resource::{construct_ephemeral_resource, construct_pers
 use simple_transfer_app::transfer::construct_transfer_tx;
 use simple_transfer_app::utils::authorize_the_action;
 use std::env;
-use arm_risc0::transaction::Transaction;
-use evm_protocol_adapter_bindings::protocol_adapter_v1_0_0_beta;
 
 pub struct SetUp {
     pub signer: PrivateKeySigner,
@@ -84,10 +84,7 @@ fn example_keychain() -> KeyChain {
     }
 }
 
-fn mint_tx(
-    data: &SetUp,
-    keychain: &KeyChain,
-) -> (Transaction, arm_risc0::resource::Resource) {
+fn mint_tx(data: &SetUp, keychain: &KeyChain) -> (Transaction, arm_risc0::resource::Resource) {
     let latest_cm_tree_root = INITIAL_ROOT.as_words().to_vec();
 
     let consumed_resource = construct_ephemeral_resource(
@@ -280,7 +277,8 @@ fn main() {
 }
 
 fn write_to_file(tx: Transaction, file_name: &str) {
-    let encoded_tx = protocol_adapter_v1_0_0_beta::ProtocolAdapter::Transaction::from(tx).abi_encode();
+    let encoded_tx =
+        protocol_adapter_v1_0_0_beta::ProtocolAdapter::Transaction::from(tx).abi_encode();
 
     std::fs::write(
         format!("./contracts/test/examples/transactions/{file_name}.bin"),
