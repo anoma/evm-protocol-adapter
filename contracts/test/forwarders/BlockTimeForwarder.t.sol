@@ -12,11 +12,6 @@ import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
-/// @title ForwarderBase
-/// @author Anoma Foundation, 2025
-/// @notice The forwarder contract returning whether a specific block time has passed.
-/// @custom:security-contact security@anoma.foundation
-
 contract BlockTimeForwarderTest is Test {
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
 
