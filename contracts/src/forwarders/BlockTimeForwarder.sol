@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
+
 import {IForwarder} from "../interfaces/IForwarder.sol";
 
 /// @title BlockTimeForwarder
@@ -21,11 +23,9 @@ contract BlockTimeForwarder is IForwarder {
         override
         returns (bytes memory output)
     {
-        // 248-limit is imposed by Risc0 not accepting 256-bit inputs.
-        (uint256 expectedTime) = abi.decode(input, (uint248));
+        (uint48 expectedTime) = abi.decode(input, (uint48));
 
-        // slither-disable-next-line timestamp
-        uint256 currentTime = block.timestamp; // solhint-disable-line not-rely-on-time
+        uint48 currentTime = Time.timestamp();
 
         TimeComparison result;
         if (expectedTime < currentTime) {

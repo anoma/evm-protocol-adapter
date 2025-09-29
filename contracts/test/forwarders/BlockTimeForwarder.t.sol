@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
 import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 
@@ -35,7 +36,7 @@ contract BlockTimeForwarderTest is Test {
 
     function test_forwardCall_returns_LT_if_timestamp_is_in_the_past() public view {
         // solhint-disable-next-line not-rely-on-time
-        bytes memory passedTimestampBytes = abi.encode(uint248(block.timestamp - 1));
+        bytes memory passedTimestampBytes = abi.encode(uint48(Time.timestamp() - 1));
         bytes memory output = _fwd.forwardCall("", passedTimestampBytes);
 
         BlockTimeForwarder.TimeComparison decodedOutput = abi.decode(output, (BlockTimeForwarder.TimeComparison));
@@ -44,7 +45,7 @@ contract BlockTimeForwarderTest is Test {
     }
 
     function test_forwardCall_returns_GT_if_timestamp_is_in_the_future() public view {
-        bytes memory futureTimestampBytes = abi.encode(type(uint248).max);
+        bytes memory futureTimestampBytes = abi.encode(type(uint48).max);
         bytes memory output = _fwd.forwardCall("", futureTimestampBytes);
 
         BlockTimeForwarder.TimeComparison decodedOutput = abi.decode(output, (BlockTimeForwarder.TimeComparison));
@@ -54,7 +55,7 @@ contract BlockTimeForwarderTest is Test {
 
     function test_forwardCall_returns_EQ_if_timestamp_is_in_the_present() public view {
         // solhint-disable-next-line not-rely-on-time
-        bytes memory presentTimestampBytes = abi.encode(uint248(block.timestamp));
+        bytes memory presentTimestampBytes = abi.encode(uint48(Time.timestamp()));
         bytes memory output = _fwd.forwardCall("", presentTimestampBytes);
 
         BlockTimeForwarder.TimeComparison decodedOutput = abi.decode(output, (BlockTimeForwarder.TimeComparison));
