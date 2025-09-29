@@ -17,7 +17,7 @@ import {Versioning} from "./libs/Versioning.sol";
 import {Compliance} from "./proving/Compliance.sol";
 import {Delta} from "./proving/Delta.sol";
 import {Logic} from "./proving/Logic.sol";
-import {CommitmentAccumulator} from "./state/CommitmentAccumulator.sol";
+import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 import {Action, Transaction} from "./Types.sol";
 
@@ -30,7 +30,7 @@ contract ProtocolAdapter is
     ReentrancyGuardTransient,
     Ownable,
     Pausable,
-    CommitmentAccumulator,
+    CommitmentTree,
     NullifierSet
 {
     using MerkleTree for bytes32[];
@@ -110,7 +110,7 @@ contract ProtocolAdapter is
             }
 
             // Compute the action tree root.
-            bytes32 actionTreeRoot = _computeActionTreeRoot(action, complianceUnitCount);
+            bytes32 actionTreeRoot = _computeActionRoot(action, complianceUnitCount);
 
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
@@ -171,7 +171,7 @@ contract ProtocolAdapter is
             _verifyDeltaProof({proof: transaction.deltaProof, transactionDelta: transactionDelta, tags: tags});
 
             // Store the final commitment tree root
-            _storeRoot(updatedCommitmentTreeRoot);
+            _addCommitmentTreeRoot(updatedCommitmentTreeRoot);
         }
 
         // Emit the event containing the transaction and new root
@@ -242,7 +242,7 @@ contract ProtocolAdapter is
         }
 
         // Check the logic proof.
-        _verifyLogicProof({input: input, root: actionTreeRoot, consumed: consumed});
+        _verifyLogicProof({input: input, actionTreeRoot: actionTreeRoot, consumed: consumed});
 
         // Perform external calls.
         _processForwarderCalls(input);
@@ -313,15 +313,19 @@ contract ProtocolAdapter is
 
     /// @notice Verifies a RISC0 logic proof.
     /// @param input The verifier input of the logic proof.
-    /// @param root The root of the action tree containing all tags of an action.
+    /// @param actionTreeRoot The root of the action tree containing all tags of an action.
     /// @param consumed Bool indicating whether the tag is a commitment or a nullifier.
     /// @dev This function is virtual to allow for it to be overridden, e.g., to mock proofs with a mock verifier.
-    function _verifyLogicProof(Logic.VerifierInput calldata input, bytes32 root, bool consumed) internal view virtual {
+    function _verifyLogicProof(Logic.VerifierInput calldata input, bytes32 actionTreeRoot, bool consumed)
+        internal
+        view
+        virtual
+    {
         // slither-disable-next-line calls-loop
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
             seal: input.proof,
             imageId: input.verifyingKey,
-            journalDigest: input.toJournalDigest(root, consumed)
+            journalDigest: input.toJournalDigest(actionTreeRoot, consumed)
         });
     }
 
@@ -342,7 +346,7 @@ contract ProtocolAdapter is
     /// @param action The action whose root we compute.
     /// @param complianceUnitCount The number of compliance units in the action.
     /// @return root The root of the corresponding tree.
-    function _computeActionTreeRoot(Action calldata action, uint256 complianceUnitCount)
+    function _computeActionRoot(Action calldata action, uint256 complianceUnitCount)
         internal
         pure
         returns (bytes32 root)

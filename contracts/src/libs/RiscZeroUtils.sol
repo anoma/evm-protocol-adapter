@@ -29,23 +29,23 @@ library RiscZeroUtils {
 
     /// @notice Calculates the digest of the logic instance (journal).
     /// @param input The logic verifier input.
-    /// @param root The action tree root computed per-action.
+    /// @param actionTreeRoot The action tree root computed per-action.
     /// @param consumed The bool describing whether the input is for a consumed or created resource.
     /// @return digest The journal digest.
-    function toJournalDigest(Logic.VerifierInput memory input, bytes32 root, bool consumed)
+    function toJournalDigest(Logic.VerifierInput memory input, bytes32 actionTreeRoot, bool consumed)
         internal
         pure
         returns (bytes32 digest)
     {
-        digest = sha256(convertJournal(input, root, consumed));
+        digest = sha256(convertJournal(input, actionTreeRoot, consumed));
     }
 
     /// @notice Converts the logic instance to match the RISC Zero journal.
     /// @param input The logic verifier input.
-    /// @param root The action tree root computed per-action.
+    /// @param actionTreeRoot The action tree root computed per-action.
     /// @param consumed The bool describing whether the input is for a consumed or created resource.
     /// @return converted The converted journal.
-    function convertJournal(Logic.VerifierInput memory input, bytes32 root, bool consumed)
+    function convertJournal(Logic.VerifierInput memory input, bytes32 actionTreeRoot, bool consumed)
         internal
         pure
         returns (bytes memory converted)
@@ -57,7 +57,7 @@ library RiscZeroUtils {
         encodedAppData = encodedAppData.appendPayload(input.appData.externalPayload);
         encodedAppData = encodedAppData.appendPayload(input.appData.applicationPayload);
 
-        converted = abi.encodePacked(input.tag, toRiscZero(consumed), root, encodedAppData);
+        converted = abi.encodePacked(input.tag, toRiscZero(consumed), actionTreeRoot, encodedAppData);
     }
 
     /// @notice Appends expirable blob payload to the encode app data.

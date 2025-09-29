@@ -106,7 +106,7 @@ library TransactionExample {
         txn = Transaction({actions: actions, deltaProof: _DELTA_PROOF});
     }
 
-    function treeRoot() internal pure returns (bytes32 root) {
+    function commitmentTreeRoot() internal pure returns (bytes32 root) {
         bytes32[] memory leaves = new bytes32[](2);
         leaves[0] = _CONSUMED_NULLIFIER;
         leaves[1] = _CREATED_COMMITMENT;

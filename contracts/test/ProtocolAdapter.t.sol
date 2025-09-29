@@ -10,7 +10,7 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test, Vm} from "forge-std/Test.sol";
 
-import {ICommitmentAccumulator} from "../src/interfaces/ICommitmentAccumulator.sol";
+import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
@@ -88,7 +88,7 @@ contract ProtocolAdapterTest is Test {
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         for (uint256 i = 0; i < entries.length; i++) {
-            assert(entries[i].topics[0] != ICommitmentAccumulator.CommitmentTreeRootStored.selector);
+            assert(entries[i].topics[0] != ICommitmentTree.CommitmentTreeRootStored.selector);
         }
     }
 
