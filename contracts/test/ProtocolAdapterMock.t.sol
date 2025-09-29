@@ -256,10 +256,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
             _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
-        TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+        });
 
         // Assign the proposed commitment tree root into the transaction.
         txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.commitmentTreeRoot =
@@ -286,10 +287,12 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
             _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
-        TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+        });
 
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
         // Replace the selected compliance unit's proof with a fake one.
         txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].proof = fakeProof;
@@ -312,10 +315,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
             _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
-        TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+        });
 
         bytes32 tag = txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.nullifier;
         uint256 tagIndex = TxGen.getExistingTagIndex(txn.actions[actionIndex], tag);
@@ -344,10 +348,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
             _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
-        TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+        });
 
         // Generate a different tag with the nonce.
         // We assume that the tags are generated using sha256. Hence the tag is different modulo hash-breaking.
@@ -381,10 +386,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         // Take a fake compliance unit count.
         vm.assume(fakeComplianceCount != complianceUnitCount);
 
-        TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+        });
 
         // Set the compliance unit count to the fake number.
         // We assume these can be kept empty as the compliance partition is checked prior to other checks.
@@ -447,10 +453,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
             _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
-        TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+        });
 
         Compliance.ConsumedRefs memory consumed =
             txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed;
@@ -477,10 +484,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
             _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
 
-        TxGen.ActionConfig[] memory configs =
-            TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+        });
 
         Compliance.CreatedRefs memory created =
             txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created;
