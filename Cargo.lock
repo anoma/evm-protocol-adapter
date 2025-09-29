@@ -1310,8 +1310,8 @@ dependencies = [
 
 [[package]]
 name = "arm"
-version = "0.6.0"
-source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.6.0#d2fbbc234e4af302e9c91d72b3e6efeb53643a36"
+version = "0.6.1"
+source = "git+https://github.com/anoma/arm-risc0.git?rev=05e5208b84c3d6af22195c4ebf496cb4a8ab4930#05e5208b84c3d6af22195c4ebf496cb4a8ab4930"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",
@@ -1325,6 +1325,7 @@ dependencies = [
  "risc0-zkvm",
  "serde",
  "sha3",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -6086,7 +6087,7 @@ checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 [[package]]
 name = "simple-transfer-app"
 version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.6.0#d2fbbc234e4af302e9c91d72b3e6efeb53643a36"
+source = "git+https://github.com/anoma/arm-risc0.git?rev=05e5208b84c3d6af22195c4ebf496cb4a8ab4930#05e5208b84c3d6af22195c4ebf496cb4a8ab4930"
 dependencies = [
  "arm",
  "hex",
@@ -6100,7 +6101,7 @@ dependencies = [
 [[package]]
 name = "simple-transfer-witness"
 version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.6.0#d2fbbc234e4af302e9c91d72b3e6efeb53643a36"
+source = "git+https://github.com/anoma/arm-risc0.git?rev=05e5208b84c3d6af22195c4ebf496cb4a8ab4930#05e5208b84c3d6af22195c4ebf496cb4a8ab4930"
 dependencies = [
  "arm",
  "rand 0.8.5",
