@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Aggregation} from "../proving/Aggregation.sol";
 import {Compliance} from "../proving/Compliance.sol";
 import {Logic} from "../proving/Logic.sol";
 
@@ -9,13 +10,21 @@ import {Logic} from "../proving/Logic.sol";
 /// @notice A library containing utility functions to convert and encode types for RISC Zero.
 /// @custom:security-contact security@anoma.foundation
 library RiscZeroUtils {
+    using RiscZeroUtils for uint32;
     using RiscZeroUtils for bytes;
+    using RiscZeroUtils for bool;
 
-    /// @notice Calculates the digest of the compliance instance (journal).
+    /// @notice The RISC Zero padding bytes for the compliance instance obtained from its length (`7 * 32 bytes`)
+    /// divided by 4 (bytes) representing the number of RISC Zero words in little-endian order
+    /// (https://dev.risczero.com/api/zkvm/optimization#unaligned-data-access-is-significantly-more-expensive).
+    /// @dev `uint32(56).toRiscZero() = bytes4(0x38000000)`
+    bytes4 internal constant _COMPLIANCE_INSTANCE_PADDING = bytes4(0x38000000);
+
+    /// @notice Converts the compliance instance to the RISC Zero journal format.
     /// @param instance The compliance instance.
-    /// @return digest The journal digest.
-    function toJournalDigest(Compliance.Instance memory instance) internal pure returns (bytes32 digest) {
-        bytes memory encodedInstance = abi.encodePacked(
+    /// @return journal The resulting RISC Zero journal.
+    function toJournal(Compliance.Instance memory instance) internal pure returns (bytes memory journal) {
+        journal = abi.encodePacked(
             instance.consumed.nullifier,
             instance.consumed.logicRef,
             instance.consumed.commitmentTreeRoot,
@@ -24,35 +33,21 @@ library RiscZeroUtils {
             instance.unitDeltaX,
             instance.unitDeltaY
         );
-        digest = sha256(encodedInstance);
     }
 
-    /// @notice Calculates the digest of the logic instance (journal).
+    /// @notice Converts the logic instance to the RISC Zero journal format.
     /// @param input The logic verifier input.
     /// @param actionTreeRoot The action tree root computed per-action.
-    /// @param consumed The bool describing whether the input is for a consumed or created resource.
-    /// @return digest The journal digest.
-    function toJournalDigest(Logic.VerifierInput memory input, bytes32 actionTreeRoot, bool consumed)
-        internal
-        pure
-        returns (bytes32 digest)
-    {
-        digest = sha256(convertJournal(input, actionTreeRoot, consumed));
-    }
-
-    /// @notice Converts the logic instance to match the RISC Zero journal.
-    /// @param input The logic verifier input.
-    /// @param actionTreeRoot The action tree root computed per-action.
-    /// @param consumed The bool describing whether the input is for a consumed or created resource.
+    /// @param isConsumed Whether the logic instance belongs to a consumed or created resource.
     /// @return converted The converted journal.
-    function convertJournal(Logic.VerifierInput memory input, bytes32 actionTreeRoot, bool consumed)
+    function toJournal(Logic.VerifierInput memory input, bytes32 actionTreeRoot, bool isConsumed)
         internal
         pure
         returns (bytes memory converted)
     {
         converted = abi.encodePacked(
             input.tag,
-            toRiscZero(consumed),
+            isConsumed.toRiscZero(),
             actionTreeRoot,
             encodePayload(input.appData.resourcePayload),
             encodePayload(input.appData.discoveryPayload),
@@ -61,21 +56,41 @@ library RiscZeroUtils {
         );
     }
 
+    /// @notice Converts the aggregation instance to the RISC Zero journal format.
+    /// @param instance The aggregation instance.
+    /// @return journal The resulting RISC Zero journal.
+    function toJournal(Aggregation.Instance memory instance) internal pure returns (bytes memory journal) {
+        uint256 tagCount = instance.logicRefs.length;
+
+        bytes4 complianceCountPadding = uint32(tagCount / 2).toRiscZero();
+        bytes4 tagCountPadding = uint32(tagCount).toRiscZero();
+
+        journal = abi.encodePacked(
+            complianceCountPadding,
+            instance.packedComplianceProofJournals,
+            Compliance._VERIFYING_KEY,
+            //
+            tagCountPadding,
+            instance.packedLogicProofJournals,
+            //
+            tagCountPadding,
+            instance.logicRefs
+        );
+    }
+
     /// @notice Encodes a given payload for Risc0 Journal format.
     /// @param payload The payload.
     /// @return encoded The encoded bytes of the payload.
     function encodePayload(Logic.ExpirableBlob[] memory payload) internal pure returns (bytes memory encoded) {
         uint32 nBlobs = uint32(payload.length);
-        encoded = abi.encodePacked(toRiscZero(nBlobs));
+        encoded = abi.encodePacked(nBlobs.toRiscZero());
 
         for (uint256 i = 0; i < nBlobs; ++i) {
             encoded = abi.encodePacked(
                 encoded,
-                abi.encodePacked(
-                    toRiscZero(uint32(payload[i].blob.length / 4)),
-                    payload[i].blob,
-                    toRiscZero(uint32(payload[i].deletionCriterion))
-                )
+                uint32(payload[i].blob.length / 4).toRiscZero(),
+                payload[i].blob,
+                uint32(payload[i].deletionCriterion).toRiscZero()
             );
         }
     }

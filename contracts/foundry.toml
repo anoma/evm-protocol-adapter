@@ -1,11 +1,16 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
 [profile.default]
 fs_permissions = [
-    { access = "read", path = "./test/examples/transactions/test_tx01.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx05.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx10.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx15.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx20.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx_reg_01.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx_reg_05.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx_reg_10.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx_reg_15.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx_reg_20.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx_agg_01.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx_agg_05.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx_agg_10.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx_agg_15.bin" },
+    { access = "read", path = "./test/examples/transactions/test_tx_agg_20.bin" },
     { access = "read", path = "./test/examples/transactions/mint.bin" },
     { access = "read", path = "./test/examples/transactions/transfer.bin" },
     { access = "read", path = "./test/examples/transactions/burn.bin" },

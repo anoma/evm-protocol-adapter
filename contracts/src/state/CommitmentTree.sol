@@ -57,7 +57,7 @@ contract CommitmentTree is ICommitmentTree {
 
     /// @inheritdoc ICommitmentTree
     function isCommitmentTreeRootContained(bytes32 root) external view override returns (bool isContained) {
-        isContained = _roots.contains(root);
+        isContained = _isCommitmentTreeRootContained(root);
     }
 
     /// @inheritdoc ICommitmentTree
@@ -137,11 +137,10 @@ contract CommitmentTree is ICommitmentTree {
         }
     }
 
-    /// @notice Checks the existence of a root in the set of historical roots.
+    /// @notice Checks if a commitment tree root is contained in the set of historical roots.
     /// @param root The root to check.
-    function _checkRootPreExistence(bytes32 root) internal view {
-        if (!_roots.contains(root)) {
-            revert NonExistingRoot(root);
-        }
+    /// @return isContained Whether the root exists or not.
+    function _isCommitmentTreeRootContained(bytes32 root) internal view returns (bool isContained) {
+        isContained = _roots.contains(root);
     }
 }

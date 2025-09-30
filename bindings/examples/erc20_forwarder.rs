@@ -286,7 +286,7 @@ fn write_to_file(tx: ProtocolAdapter::Transaction, file_name: &str) {
     let encoded_tx = tx.abi_encode();
 
     std::fs::write(
-        format!("./contracts/test/examples/transactions/{file_name}.bin"),
+        format!("../contracts/test/examples/transactions/{file_name}.bin"),
         encoded_tx,
     )
     .expect("Failed to write file");

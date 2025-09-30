@@ -28,9 +28,11 @@ struct Resource {
 /// in which resource get consumed and created.
 /// @param actions The list of actions to be executed.
 /// @param deltaProof The proof for the transaction delta value.
+/// @param aggregationProof A recursive proof of all compliance and resource logics in the transaction.
 struct Transaction {
     Action[] actions;
     bytes deltaProof;
+    bytes aggregationProof;
 }
 
 /// @notice The action object providing context separation between non-intersecting sets of resources.

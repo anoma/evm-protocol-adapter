@@ -19,22 +19,25 @@ contract Benchmark is Test {
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _pa;
-    Transaction[6] internal _txns;
+
+    Transaction internal _txnEmpty;
+    Transaction[5] internal _txnsReg;
+    Transaction[5] internal _txnsAgg;
 
     function setUp() public {
-        string[5] memory paths = [
-            "../examples/transactions/test_tx01.bin",
-            "../examples/transactions/test_tx05.bin",
-            "../examples/transactions/test_tx10.bin",
-            "../examples/transactions/test_tx15.bin",
-            "../examples/transactions/test_tx20.bin"
-        ];
+        _txnEmpty = Transaction({actions: new Action[](0), deltaProof: "", aggregationProof: ""});
 
-        _txns[0] = Transaction({actions: new Action[](0), deltaProof: ""});
+        string[5] memory suffixes = ["01", "05", "10", "15", "20"];
 
-        for (uint256 i = 0; i < paths.length; ++i) {
-            _txns[i + 1] = vm.parseTransaction(string.concat("/test/benchmark/", paths[i]));
+        for (uint256 i = 0; i < suffixes.length; ++i) {
+            _txnsReg[i] =
+                vm.parseTransaction(string.concat("/test/examples/transactions/test_tx_reg_", suffixes[i], ".bin"));
         }
+        for (uint256 i = 0; i < suffixes.length; ++i) {
+            _txnsAgg[i] =
+                vm.parseTransaction(string.concat("/test/examples/transactions/test_tx_agg_", suffixes[i], ".bin"));
+        }
+
         {
             RiscZeroGroth16Verifier verifier;
 
@@ -45,37 +48,57 @@ contract Benchmark is Test {
     }
 
     function test_execute_00() public {
-        _pa.execute(_txns[0]);
+        _pa.execute(_txnEmpty);
     }
 
-    function test_execute_01() public {
-        _pa.execute(_txns[1]);
+    function test_execute_01_reg() public {
+        _pa.execute(_txnsReg[0]);
     }
 
-    function test_execute_05() public {
-        _pa.execute(_txns[2]);
+    function test_execute_05_reg() public {
+        _pa.execute(_txnsReg[1]);
     }
 
-    function test_execute_10() public {
-        _pa.execute(_txns[3]);
+    function test_execute_10_reg() public {
+        _pa.execute(_txnsReg[2]);
     }
 
-    function test_execute_15() public {
-        _pa.execute(_txns[4]);
+    function test_execute_15_reg() public {
+        _pa.execute(_txnsReg[3]);
     }
 
-    function test_execute_20() public {
-        _pa.execute(_txns[5]);
+    function test_execute_20_reg() public {
+        _pa.execute(_txnsReg[4]);
     }
 
-    function test_print_calldata() public view {
-        for (uint256 i = 0; i < _txns.length; ++i) {
+    function test_execute_01_agg() public {
+        _pa.execute(_txnsAgg[0]);
+    }
+
+    function test_execute_05_agg() public {
+        _pa.execute(_txnsAgg[1]);
+    }
+
+    function test_execute_10_agg() public {
+        _pa.execute(_txnsAgg[2]);
+    }
+
+    function test_execute_15_agg() public {
+        _pa.execute(_txnsAgg[3]);
+    }
+
+    function test_execute_20_agg() public {
+        _pa.execute(_txnsAgg[4]);
+    }
+
+    function test_print_calldata_reg() public view {
+        for (uint256 i = 0; i < _txnsReg.length; ++i) {
             uint256 complianceUnitCount = 0;
 
-            uint256 actionCount = _txns[i].actions.length;
+            uint256 actionCount = _txnsReg[i].actions.length;
 
             for (uint256 j = 0; j < actionCount; ++j) {
-                complianceUnitCount += _txns[i].actions[j].complianceVerifierInputs.length;
+                complianceUnitCount += _txnsReg[i].actions[j].complianceVerifierInputs.length;
             }
 
             string memory output = string(
@@ -87,7 +110,7 @@ contract Benchmark is Test {
                     Strings.toString(complianceUnitCount),
                     ", ",
                     "Calldata (bytes): ",
-                    Strings.toString(abi.encodeCall(ProtocolAdapter.execute, _txns[i]).length)
+                    Strings.toString(abi.encodeCall(ProtocolAdapter.execute, _txnsReg[i]).length)
                 )
             );
 
