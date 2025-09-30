@@ -53,11 +53,6 @@ contract ProtocolAdapter is
         Logic.Instance[] logicInstances;
     }
 
-    struct ActionOrderedTagInfo {
-        bytes32[] tagList;
-        bytes32[] logicRefList;
-    }
-
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
     bytes4 internal immutable _RISC_ZERO_VERIFIER_SELECTOR;
 
@@ -117,8 +112,7 @@ contract ProtocolAdapter is
 
             _checkActionPartitioning(action);
             uint256 complianceUnitCount = action.complianceVerifierInputs.length;
-            ActionOrderedTagInfo memory actionTagInfo =
-                ActionOrderedTagInfo(new bytes32[](complianceUnitCount * 2), new bytes32[](complianceUnitCount * 2));
+            bytes32[] memory tagList = new bytes32[](complianceUnitCount * 2);
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
                 // Compliance Proof
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
@@ -135,13 +129,11 @@ contract ProtocolAdapter is
 
                 args.tags[tagCounter] = nf;
                 args.logicRefs[tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
-                actionTagInfo.tagList[2 * j] = nf;
-                actionTagInfo.logicRefList[2 * j] = complianceVerifierInput.instance.consumed.logicRef;
+                tagList[2 * j] = nf;
 
                 args.tags[tagCounter] = cm;
                 args.logicRefs[tagCounter++] = complianceVerifierInput.instance.created.logicRef;
-                actionTagInfo.tagList[(2 * j) + 1] = cm;
-                actionTagInfo.logicRefList[(2 * j) + 1] = complianceVerifierInput.instance.created.logicRef;
+                tagList[(2 * j) + 1] = cm;
 
                 // Compute transaction delta.
                 args.transactionDelta = args.transactionDelta.add(
@@ -152,17 +144,17 @@ contract ProtocolAdapter is
                 );
             }
 
-            bytes32 actionTreeRoot = actionTagInfo.tagList.computeRoot();
+            bytes32 actionTreeRoot = tagList.computeRoot();
 
             for (uint256 k = 0; k < action.logicVerifierInputs.length; ++k) {
                 Logic.VerifierInput calldata logicInput = action.logicVerifierInputs[k];
-                console.logBytes32(actionTagInfo.tagList[1]);
-                uint256 position = Compliance.lookup(actionTagInfo.tagList, logicInput.tag);
+                console.logBytes32(tagList[1]);
+                uint256 position = Compliance.lookup(tagList, logicInput.tag);
 
                 _processLogicProof({
                     input: logicInput,
                     actionTreeRoot: actionTreeRoot,
-                    logicRef: actionTagInfo.logicRefList[position],
+                    logicRef: args.logicRefs[tagCounter + position - tagList.length],
                     isConsumed: (position % 2 == 0),
                     isProofAggregated: isProofAggregated
                 });
@@ -171,7 +163,7 @@ contract ProtocolAdapter is
                 console.log("position", position);
 
                 if (isProofAggregated) {
-                    args.logicInstances[tagCounter + position - actionTagInfo.tagList.length] = Logic.Instance(
+                    args.logicInstances[tagCounter + position - tagList.length] = Logic.Instance(
                         logicInput.tag, logicInput.verifyingKey, (position % 2 == 0), actionTreeRoot, logicInput.appData
                     );
                 }
