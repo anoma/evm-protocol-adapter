@@ -59,6 +59,8 @@ contract ProtocolAdapter is
         bytes packedLogicProofJournals;
     }
 
+    uint256 internal constant _MAX_ARRAY_LENGTH = type(uint32).max;
+
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
     bytes4 internal immutable _RISC_ZERO_VERIFIER_SELECTOR;
 
@@ -94,6 +96,7 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
         uint256 actionCount = transaction.actions.length;
+
         uint256 tagCounter = 0;
 
         // Count the total number of tags in the transaction.
@@ -121,6 +124,7 @@ contract ProtocolAdapter is
             bytes32 actionTreeRoot = _computeActionTreeRoot(action);
 
             uint256 complianceUnitCount = action.complianceVerifierInputs.length;
+
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
                 // Compliance Proof
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];

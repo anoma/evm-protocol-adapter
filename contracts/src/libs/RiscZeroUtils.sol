@@ -55,6 +55,8 @@ library RiscZeroUtils {
     /// @notice Converts the aggregation instance to the RISC Zero journal format.
     /// @param instance The aggregation instance.
     /// @return journal The resulting RISC Zero journal.
+    /// @dev `instance.logicRefs.length` can be assumed to fit into `uint32` because the block gas limit constitutes a
+    /// lower bound in practice.
     function toJournal(Aggregation.Instance memory instance) internal pure returns (bytes memory journal) {
         uint32 tagCount = uint32(instance.logicRefs.length);
 
@@ -77,6 +79,8 @@ library RiscZeroUtils {
     /// @notice Encodes a given payload for Risc0 Journal format.
     /// @param payload The payload.
     /// @return encoded The encoded bytes of the payload.
+    /// @dev `payload.length` and `blob.length` can be assumed to fit into `uint32` because the block gas limit
+    /// constitutes a lower bound in practice.
     function encodePayload(Logic.ExpirableBlob[] memory payload) internal pure returns (bytes memory encoded) {
         uint256 nBlobs = payload.length;
         encoded = abi.encodePacked(reverseByteOrderUint32(uint32(nBlobs)));
@@ -95,6 +99,8 @@ library RiscZeroUtils {
     /// words in little-endian order.
     /// @param journal The journal to encode.
     /// @return lengthEncodedJournal The length encoded journal.
+    /// @dev `journal.length` can be assumed to fit into `uint32` because the block gas limit constitutes a lower bound
+    /// in practice.
     function toJournalWithEncodedLength(bytes memory journal)
         internal
         pure
