@@ -378,7 +378,7 @@ contract ProtocolAdapter is
 
             // Aggregate the logic instance.
             if (isProofAggregated) {
-                encodedJournal = abi.encodePacked(uint32(journal.length / 4).toRiscZero(), journal);
+                encodedJournal = journal.toJournalWithEncodedLength();
             }
             // Verify the logic proof.
             else {
