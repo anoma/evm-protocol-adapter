@@ -42,21 +42,18 @@ contract ProtocolAdapter is
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
-    /// @notice A data structure containing variables being updated while iterating over the actions and compliance
-    /// units within a transaction.
-    /// @param commitmentTreeRoot The commitment tree root for the root update.
-    /// @param tags A variable to aggregate tags over the actions.
-    /// @param logicRefs A variable to aggregate logic references over the actions.
-    /// @param transactionDelta A variable to aggregate the unit deltas over the actions.
-    /// @param packedComplianceProofJournals A variable to aggregate RISC Zero compliance proof journals.
-    /// @param packedLogicProofJournals A variable to aggregate RISC Zero logic proof journals.
     struct AggregatedArguments {
         bytes32 commitmentTreeRoot;
         bytes32[] tags;
         bytes32[] logicRefs;
         uint256[2] transactionDelta;
-        bytes packedComplianceProofJournals;
-        bytes packedLogicProofJournals;
+        Compliance.Instance[] complianceInstances;
+        Logic.Instance[] logicInstances;
+    }
+
+    struct ActionOrderedTagInfo {
+        bytes32[] tagList;
+        bytes32[] logicRefList;
     }
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
@@ -106,8 +103,8 @@ contract ProtocolAdapter is
             tags: new bytes32[](tagCounter),
             logicRefs: new bytes32[](tagCounter),
             transactionDelta: [uint256(0), uint256(0)],
-            packedComplianceProofJournals: "",
-            packedLogicProofJournals: ""
+            complianceInstances: new Compliance.Instance[](tagCounter / 2),
+            logicInstances: new Logic.Instance[](tagCounter)
         });
 
         bool isProofAggregated = transaction.aggregationProof.length != 0;
@@ -117,59 +114,32 @@ contract ProtocolAdapter is
             Action calldata action = transaction.actions[i];
 
             _checkActionPartitioning(action);
-
-            bytes32 actionTreeRoot = _computeActionTreeRoot(action);
-
             uint256 complianceUnitCount = action.complianceVerifierInputs.length;
+            ActionOrderedTagInfo memory actionTagInfo =
+                ActionOrderedTagInfo(new bytes32[](complianceUnitCount * 2), new bytes32[](complianceUnitCount * 2));
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
                 // Compliance Proof
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-                {
-                    // slither-disable-next-line encode-packed-collision
-                    args.packedComplianceProofJournals = abi.encodePacked(
-                        args.packedComplianceProofJournals,
-                        _processComplianceProof(complianceVerifierInput, isProofAggregated)
-                    );
+
+                _processComplianceProof(complianceVerifierInput, isProofAggregated);
+
+                if (isProofAggregated) {
+                    args.complianceInstances[tagCounter / 2] = complianceVerifierInput.instance;
                 }
 
                 // Consumed resource logic proof.
                 bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
-                Logic.VerifierInput calldata consumedInput = action.logicVerifierInputs.lookup(nf);
                 bytes32 cm = complianceVerifierInput.instance.created.commitment;
-                Logic.VerifierInput calldata createdInput = action.logicVerifierInputs.lookup(cm);
-                {
-                    bytes memory nfLogicProofJournal = _processLogicProof({
-                        input: consumedInput,
-                        actionTreeRoot: actionTreeRoot,
-                        logicRef: complianceVerifierInput.instance.consumed.logicRef,
-                        isConsumed: true,
-                        isProofAggregated: isProofAggregated
-                    });
-                    bytes memory cmLogicProofJournal = _processLogicProof({
-                        input: createdInput,
-                        actionTreeRoot: actionTreeRoot,
-                        logicRef: complianceVerifierInput.instance.created.logicRef,
-                        isConsumed: false,
-                        isProofAggregated: isProofAggregated
-                    });
 
-                    // slither-disable-next-line encode-packed-collision
-                    args.packedLogicProofJournals =
-                        abi.encodePacked(args.packedLogicProofJournals, nfLogicProofJournal, cmLogicProofJournal);
-                }
-
-                // Execute external calls.
-                _executeForwarderCalls(consumedInput);
-                _executeForwarderCalls(createdInput);
-
-                // Transition the resource machine state.
-                _addNullifier(nf);
                 args.tags[tagCounter] = nf;
                 args.logicRefs[tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
+                actionTagInfo.tagList[2 * j] = nf;
+                actionTagInfo.logicRefList[2 * j] = complianceVerifierInput.instance.consumed.logicRef;
 
-                args.commitmentTreeRoot = _addCommitment(cm);
                 args.tags[tagCounter] = cm;
                 args.logicRefs[tagCounter++] = complianceVerifierInput.instance.created.logicRef;
+                actionTagInfo.tagList[(2 * j) + 1] = cm;
+                actionTagInfo.logicRefList[(2 * j) + 1] = complianceVerifierInput.instance.created.logicRef;
 
                 // Compute transaction delta.
                 args.transactionDelta = args.transactionDelta.add(
@@ -178,10 +148,39 @@ contract ProtocolAdapter is
                         uint256(complianceVerifierInput.instance.unitDeltaY)
                     ]
                 );
+            }
+
+            bytes32 actionTreeRoot = actionTagInfo.tagList.computeRoot();
+
+            for (uint256 k = 0; k < action.logicVerifierInputs.length; ++k) {
+                Logic.VerifierInput calldata logicInput = action.logicVerifierInputs[k];
+                uint256 position = Compliance.lookup(actionTagInfo.tagList, logicInput.tag);
+
+                _processLogicProof({
+                    input: logicInput,
+                    actionTreeRoot: actionTreeRoot,
+                    logicRef: actionTagInfo.logicRefList[position],
+                    isConsumed: (position % 2 == 0),
+                    isProofAggregated: isProofAggregated
+                });
+
+                if (isProofAggregated) {
+                    args.logicInstances[(tagCounter - 1) - actionTagInfo.tagList.length + position] = Logic.Instance(
+                        logicInput.tag, logicInput.verifyingKey, (position % 2 == 0), actionTreeRoot, logicInput.appData
+                    );
+                }
+
+                // Execute external calls.
+                _executeForwarderCalls(logicInput);
+
+                if (position % 2 == 0) {
+                    _addNullifier(logicInput.tag);
+                } else {
+                    args.commitmentTreeRoot = _addCommitment(logicInput.tag);
+                }
 
                 // Emit app-data blobs.
-                _emitAppDataBlobs(consumedInput.appData, nf);
-                _emitAppDataBlobs(createdInput.appData, cm);
+                _emitAppDataBlobs(logicInput.appData, logicInput.tag);
             }
 
             emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: action.logicVerifierInputs.length});
@@ -204,8 +203,8 @@ contract ProtocolAdapter is
                     imageId: Aggregation._VERIFYING_KEY,
                     journalDigest: sha256(
                         Aggregation.Instance({
-                            packedComplianceProofJournals: args.packedComplianceProofJournals,
-                            packedLogicProofJournals: args.packedLogicProofJournals,
+                            complianceInstances: args.complianceInstances,
+                            logicInstances: args.logicInstances,
                             logicRefs: args.logicRefs
                         }).toJournal()
                     )
@@ -402,24 +401,5 @@ contract ProtocolAdapter is
         if (actionTagCount != complianceUnitCount * 2) {
             revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
         }
-    }
-
-    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
-    /// @param action The action whose root we compute.
-    /// @return root The root of the corresponding tree.
-    function _computeActionTreeRoot(Action calldata action) internal pure returns (bytes32 root) {
-        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
-
-        bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * 2);
-
-        // The order in which the tags are added to the tree is provided by the compliance units.
-        for (uint256 j = 0; j < complianceUnitCount; ++j) {
-            Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-
-            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
-            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
-        }
-
-        root = actionTreeTags.computeRoot();
     }
 }

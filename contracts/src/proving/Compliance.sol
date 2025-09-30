@@ -45,7 +45,20 @@ library Compliance {
         Instance instance;
     }
 
+    /// @notice Thrown if a tag is not found in a list of verifier inputs.
+    error TagNotFound(bytes32 tag);
+
     /// @notice The compliance verifying key.
     /// @dev The key is fixed as long as the compliance circuit binary is not changed.
     bytes32 internal constant _VERIFYING_KEY = 0x2652d58ac2fba40aa5811adf2cee2314c4dc2168ae93dab069c8eb7496107c99;
+
+    function lookup(bytes32[] memory list, bytes32 tag) internal pure returns (uint256 position) {
+        uint256 len = list.length;
+        for (uint256 i = 0; i < len; ++i) {
+            if (list[i] == tag) {
+                return i;
+            }
+            revert TagNotFound(tag);
+        }
+    }
 }

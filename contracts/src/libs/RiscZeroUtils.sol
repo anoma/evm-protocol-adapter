@@ -13,6 +13,8 @@ library RiscZeroUtils {
     using RiscZeroUtils for uint32;
     using RiscZeroUtils for bytes;
     using RiscZeroUtils for bool;
+    using RiscZeroUtils for Compliance.Instance;
+    using RiscZeroUtils for Logic.Instance;
 
     /// @notice Converts the compliance instance to the RISC Zero journal format.
     /// @param instance The compliance instance.
@@ -50,6 +52,18 @@ library RiscZeroUtils {
         );
     }
 
+    function toJournal(Logic.Instance memory input) internal pure returns (bytes memory converted) {
+        converted = abi.encodePacked(
+            input.tag,
+            input.isConsumed.toRiscZero(),
+            input.actionTreeRoot,
+            encodePayload(input.appData.resourcePayload),
+            encodePayload(input.appData.discoveryPayload),
+            encodePayload(input.appData.externalPayload),
+            encodePayload(input.appData.applicationPayload)
+        );
+    }
+
     /// @notice Converts the aggregation instance to the RISC Zero journal format.
     /// @param instance The aggregation instance.
     /// @return journal The resulting RISC Zero journal.
@@ -59,13 +73,27 @@ library RiscZeroUtils {
         bytes4 complianceCountPadding = uint32(tagCount / 2).toRiscZero();
         bytes4 tagCountPadding = uint32(tagCount).toRiscZero();
 
+        bytes memory compliancesJournal;
+        bytes memory logicJournals;
+
+        for (uint256 i = 0; i < instance.complianceInstances.length; ++i) {
+            compliancesJournal = abi.encodePacked(compliancesJournal, instance.complianceInstances[i].toJournal());
+        }
+
+        for (uint256 j = 0; j < instance.logicInstances.length; ++j) {
+            Logic.Instance memory logicInstance = instance.logicInstances[j];
+            bytes memory logicJournal = logicInstance.toJournal();
+            compliancesJournal =
+                abi.encodePacked(logicJournals, uint32(logicJournal.length / 4).toRiscZero(), logicJournal);
+        }
+
         journal = abi.encodePacked(
             complianceCountPadding,
-            instance.packedComplianceProofJournals,
+            compliancesJournal,
             Compliance._VERIFYING_KEY,
             //
             tagCountPadding,
-            instance.packedLogicProofJournals,
+            logicJournals,
             //
             tagCountPadding,
             instance.logicRefs

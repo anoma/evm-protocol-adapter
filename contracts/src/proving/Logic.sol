@@ -26,6 +26,14 @@ library Logic {
         bytes proof;
     }
 
+    struct Instance {
+        bytes32 tag;
+        bytes32 verifyingKey;
+        bool isConsumed;
+        bytes32 actionTreeRoot;
+        AppData appData;
+    }
+
     /// @notice A struct containing payloads of different kinds.
     /// @param resourcePayload A list of blobs for encoding plaintext info connected to resources.
     /// @param discoveryPayload A list of blobs for encoding data with public keys for discovery.
