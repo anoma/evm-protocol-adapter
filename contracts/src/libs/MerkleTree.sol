@@ -195,7 +195,7 @@ library MerkleTree {
         treeDepth = 0;
 
         while (treeCapacity < leavesCount) {
-            treeCapacity *= 2;
+            treeCapacity <<= 1;
             ++treeDepth;
         }
 
