@@ -14,12 +14,6 @@ library RiscZeroUtils {
     using RiscZeroUtils for bytes;
     using RiscZeroUtils for bool;
 
-    /// @notice The RISC Zero padding bytes for the compliance instance obtained from its length (`7 * 32 bytes`)
-    /// divided by 4 (bytes) representing the number of RISC Zero words in little-endian order
-    /// (https://dev.risczero.com/api/zkvm/optimization#unaligned-data-access-is-significantly-more-expensive).
-    /// @dev `uint32(56).toRiscZero() = bytes4(0x38000000)`
-    bytes4 internal constant _COMPLIANCE_INSTANCE_PADDING = bytes4(0x38000000);
-
     /// @notice Converts the compliance instance to the RISC Zero journal format.
     /// @param instance The compliance instance.
     /// @return journal The resulting RISC Zero journal.
