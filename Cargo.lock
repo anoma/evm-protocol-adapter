@@ -1311,7 +1311,7 @@ dependencies = [
 [[package]]
 name = "arm"
 version = "0.7.0"
-source = "git+https://github.com/anoma/arm-risc0.git?rev=1379cbaa2db78e94c4d32fdcfd2c97cd7195d6d8#1379cbaa2db78e94c4d32fdcfd2c97cd7195d6d8"
+source = "git+https://github.com/anoma/arm-risc0.git?rev=b4810fad7bb5dee1b0314d96854137d0e6bd5dbd#b4810fad7bb5dee1b0314d96854137d0e6bd5dbd"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",
@@ -1324,6 +1324,7 @@ dependencies = [
  "rand 0.8.5",
  "risc0-zkvm",
  "serde",
+ "serde_with",
  "sha3",
  "thiserror 2.0.16",
 ]
@@ -2781,6 +2782,7 @@ dependencies = [
  "alloy",
  "arm",
  "serde",
+ "serde_with",
  "sha2",
  "simple-transfer-app",
  "tokio",
@@ -5980,9 +5982,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "3.14.0"
+version = "3.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2c45cd61fefa9db6f254525d46e392b852e0e61d9a1fd36e5bd183450a556d5"
+checksum = "c522100790450cf78eeac1507263d0a350d4d5b30df0c8e1fe051a10c22b376e"
 dependencies = [
  "base64",
  "chrono",
@@ -6000,11 +6002,11 @@ dependencies = [
 
 [[package]]
 name = "serde_with_macros"
-version = "3.14.0"
+version = "3.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de90945e6565ce0d9a25098082ed4ee4002e047cb59892c318d66821e14bb30f"
+checksum = "327ada00f7d64abaac1e55a6911e90cf665aa051b9a561c7006c157f4633135e"
 dependencies = [
- "darling 0.20.11",
+ "darling 0.21.3",
  "proc-macro2",
  "quote",
  "syn 2.0.106",
@@ -6087,7 +6089,7 @@ checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 [[package]]
 name = "simple-transfer-app"
 version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?rev=1379cbaa2db78e94c4d32fdcfd2c97cd7195d6d8#1379cbaa2db78e94c4d32fdcfd2c97cd7195d6d8"
+source = "git+https://github.com/anoma/arm-risc0.git?rev=b4810fad7bb5dee1b0314d96854137d0e6bd5dbd#b4810fad7bb5dee1b0314d96854137d0e6bd5dbd"
 dependencies = [
  "arm",
  "hex",
@@ -6101,7 +6103,7 @@ dependencies = [
 [[package]]
 name = "simple-transfer-witness"
 version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?rev=1379cbaa2db78e94c4d32fdcfd2c97cd7195d6d8#1379cbaa2db78e94c4d32fdcfd2c97cd7195d6d8"
+source = "git+https://github.com/anoma/arm-risc0.git?rev=b4810fad7bb5dee1b0314d96854137d0e6bd5dbd#b4810fad7bb5dee1b0314d96854137d0e6bd5dbd"
 dependencies = [
  "arm",
  "rand 0.8.5",
