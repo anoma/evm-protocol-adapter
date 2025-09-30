@@ -50,31 +50,27 @@ library RiscZeroUtils {
         pure
         returns (bytes memory converted)
     {
-        bytes memory encodedAppData;
-
-        encodedAppData = encodedAppData.appendPayload(input.appData.resourcePayload);
-        encodedAppData = encodedAppData.appendPayload(input.appData.discoveryPayload);
-        encodedAppData = encodedAppData.appendPayload(input.appData.externalPayload);
-        encodedAppData = encodedAppData.appendPayload(input.appData.applicationPayload);
-
-        converted = abi.encodePacked(input.tag, toRiscZero(consumed), actionTreeRoot, encodedAppData);
+        converted = abi.encodePacked(
+            input.tag,
+            toRiscZero(consumed),
+            actionTreeRoot,
+            encodePayload(input.appData.resourcePayload),
+            encodePayload(input.appData.discoveryPayload),
+            encodePayload(input.appData.externalPayload),
+            encodePayload(input.appData.applicationPayload)
+        );
     }
 
-    /// @notice Appends expirable blob payload to the encode app data.
-    /// @param encodedAppData The app data to append the payload to.
+    /// @notice Encodes a given payload for Risc0 Journal format.
     /// @param payload The payload.
-    /// @return updated The updated app data.
-    function appendPayload(bytes memory encodedAppData, Logic.ExpirableBlob[] memory payload)
-        internal
-        pure
-        returns (bytes memory updated)
-    {
+    /// @return encoded The encoded bytes of the payload.
+    function encodePayload(Logic.ExpirableBlob[] memory payload) internal pure returns (bytes memory encoded) {
         uint32 nBlobs = uint32(payload.length);
-        updated = abi.encodePacked(encodedAppData, toRiscZero(nBlobs));
+        encoded = abi.encodePacked(toRiscZero(nBlobs));
 
         for (uint256 i = 0; i < nBlobs; ++i) {
-            updated = abi.encodePacked(
-                updated,
+            encoded = abi.encodePacked(
+                encoded,
                 abi.encodePacked(
                     toRiscZero(uint32(payload[i].blob.length / 4)),
                     payload[i].blob,
