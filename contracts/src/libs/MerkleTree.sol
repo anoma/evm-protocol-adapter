@@ -81,7 +81,7 @@ library MerkleTree {
     /// @param self The tree data structure.
     /// @return treeDepth The depth of the tree.
     function depth(Tree storage self) internal view returns (uint256 treeDepth) {
-        treeDepth = self._sides.length;
+        treeDepth = self._sides.length - 1;
     }
 
     /// @notice Returns the number of leaves that have been added to the tree.
