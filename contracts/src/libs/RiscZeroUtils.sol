@@ -73,8 +73,8 @@ library RiscZeroUtils {
         bytes4 complianceCountPadding = uint32(tagCount / 2).toRiscZero();
         bytes4 tagCountPadding = uint32(tagCount).toRiscZero();
 
-        bytes memory compliancesJournal;
-        bytes memory logicJournals;
+        bytes memory compliancesJournal = "";
+        bytes memory logicsJournal = "";
 
         for (uint256 i = 0; i < instance.complianceInstances.length; ++i) {
             compliancesJournal = abi.encodePacked(compliancesJournal, instance.complianceInstances[i].toJournal());
@@ -83,8 +83,8 @@ library RiscZeroUtils {
         for (uint256 j = 0; j < instance.logicInstances.length; ++j) {
             Logic.Instance memory logicInstance = instance.logicInstances[j];
             bytes memory logicJournal = logicInstance.toJournal();
-            compliancesJournal =
-                abi.encodePacked(logicJournals, uint32(logicJournal.length / 4).toRiscZero(), logicJournal);
+            logicsJournal =
+                abi.encodePacked(logicsJournal, uint32(logicJournal.length / 4).toRiscZero(), logicJournal);
         }
 
         journal = abi.encodePacked(
@@ -93,7 +93,7 @@ library RiscZeroUtils {
             Compliance._VERIFYING_KEY,
             //
             tagCountPadding,
-            logicJournals,
+            logicsJournal,
             //
             tagCountPadding,
             instance.logicRefs

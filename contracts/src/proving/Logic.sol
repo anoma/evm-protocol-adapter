@@ -28,7 +28,6 @@ library Logic {
 
     struct Instance {
         bytes32 tag;
-        bytes32 verifyingKey;
         bool isConsumed;
         bytes32 actionTreeRoot;
         AppData appData;

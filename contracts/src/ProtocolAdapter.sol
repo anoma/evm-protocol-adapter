@@ -163,9 +163,8 @@ contract ProtocolAdapter is
                 console.log("position", position);
 
                 if (isProofAggregated) {
-                    args.logicInstances[tagCounter + position - tagList.length] = Logic.Instance(
-                        logicInput.tag, logicInput.verifyingKey, (position % 2 == 0), actionTreeRoot, logicInput.appData
-                    );
+                    args.logicInstances[tagCounter + position - tagList.length] =
+                        Logic.Instance(logicInput.tag, (position % 2 == 0), actionTreeRoot, logicInput.appData);
                 }
 
                 // Execute external calls.
