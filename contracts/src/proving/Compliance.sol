@@ -56,9 +56,9 @@ library Compliance {
         uint256 len = list.length;
         for (uint256 i = 0; i < len; ++i) {
             if (list[i] == tag) {
-                return i;
+                return position = i;
             }
-            revert TagNotFound(tag);
         }
+        revert TagNotFound(tag);
     }
 }
