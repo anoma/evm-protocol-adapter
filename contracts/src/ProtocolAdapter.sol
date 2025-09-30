@@ -336,7 +336,7 @@ contract ProtocolAdapter is
 
             // Aggregate the compliance instance
             if (isProofAggregated) {
-                encodedJournal = abi.encodePacked(RiscZeroUtils._COMPLIANCE_INSTANCE_PADDING, journal);
+                encodedJournal = journal;
             }
             // Verify the compliance proof.
             else {
