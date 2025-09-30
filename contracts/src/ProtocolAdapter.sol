@@ -34,13 +34,13 @@ contract ProtocolAdapter is
     CommitmentTree,
     NullifierSet
 {
+    using Delta for Delta.CurvePoint;
     using MerkleTree for bytes32[];
+    using Logic for Logic.VerifierInput[];
     using RiscZeroUtils for Aggregation.Instance;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.VerifierInput;
     using RiscZeroUtils for uint32;
-    using Logic for Logic.VerifierInput[];
-    using Delta for uint256[2];
 
     /// @notice A data structure containing variables being updated while iterating over the actions and compliance
     /// units within a transaction.
@@ -54,7 +54,7 @@ contract ProtocolAdapter is
         bytes32 commitmentTreeRoot;
         bytes32[] tags;
         bytes32[] logicRefs;
-        uint256[2] transactionDelta;
+        Delta.CurvePoint transactionDelta;
         bytes packedComplianceProofJournals;
         bytes packedLogicProofJournals;
     }
@@ -105,7 +105,7 @@ contract ProtocolAdapter is
             commitmentTreeRoot: bytes32(0),
             tags: new bytes32[](tagCounter),
             logicRefs: new bytes32[](tagCounter),
-            transactionDelta: [uint256(0), uint256(0)],
+            transactionDelta: Delta.zero(),
             packedComplianceProofJournals: "",
             packedLogicProofJournals: ""
         });
@@ -173,10 +173,10 @@ contract ProtocolAdapter is
 
                 // Compute transaction delta.
                 args.transactionDelta = args.transactionDelta.add(
-                    [
-                        uint256(complianceVerifierInput.instance.unitDeltaX),
-                        uint256(complianceVerifierInput.instance.unitDeltaY)
-                    ]
+                    Delta.CurvePoint({
+                        x: uint256(complianceVerifierInput.instance.unitDeltaX),
+                        y: uint256(complianceVerifierInput.instance.unitDeltaY)
+                    })
                 );
 
                 // Emit app-data blobs.

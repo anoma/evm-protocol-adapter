@@ -47,7 +47,7 @@ library TxGen {
         bytes32 cm = commitment(created);
 
         // Construct the delta for consumption based on kind and quantity
-        uint256[2] memory unitDelta = DeltaGen.generateInstance(
+        Delta.CurvePoint memory unitDelta = DeltaGen.generateInstance(
             vm,
             DeltaGen.InstanceInputs({
                 kind: kind(consumed),
@@ -77,8 +77,8 @@ library TxGen {
                 logicRef: consumed.logicRef
             }),
             created: Compliance.CreatedRefs({commitment: cm, logicRef: created.logicRef}),
-            unitDeltaX: bytes32(unitDelta[0]),
-            unitDeltaY: bytes32(unitDelta[1])
+            unitDeltaX: bytes32(unitDelta.x),
+            unitDeltaY: bytes32(unitDelta.y)
         });
 
         unit = Compliance.VerifierInput({
