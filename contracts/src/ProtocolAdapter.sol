@@ -167,8 +167,11 @@ contract ProtocolAdapter is
                     isProofAggregated: isProofAggregated
                 });
 
+                console.logUint(tagCounter);
+                console.log("position", position);
+
                 if (isProofAggregated) {
-                    args.logicInstances[(tagCounter - 1) + position - actionTagInfo.tagList.length] = Logic.Instance(
+                    args.logicInstances[tagCounter + position - actionTagInfo.tagList.length] = Logic.Instance(
                         logicInput.tag, logicInput.verifyingKey, (position % 2 == 0), actionTreeRoot, logicInput.appData
                     );
                 }
@@ -181,6 +184,8 @@ contract ProtocolAdapter is
                 } else {
                     args.commitmentTreeRoot = _addCommitment(logicInput.tag);
                 }
+
+                console.logString("aggregated");
 
                 // Emit app-data blobs.
                 _emitAppDataBlobs(logicInput.appData, logicInput.tag);
