@@ -34,6 +34,7 @@ library TxGen {
     }
 
     error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
+    error NonExistingTag(bytes32 tag);
 
     function complianceVerifierInput(
         VmSafe vm,
@@ -349,6 +350,18 @@ library TxGen {
             randSeed: 0,
             ephemeral: true
         });
+    }
+
+    function getTagIndex(Action memory action, bytes32 tag) internal pure returns (uint256 index) {
+        uint256 logicVerifierInputCount = action.logicVerifierInputs.length;
+
+        for (uint256 i = 0; i < logicVerifierInputCount; ++i) {
+            if (tag == action.logicVerifierInputs[i].tag) {
+                return (index = i);
+            }
+        }
+
+        revert NonExistingTag(tag);
     }
 
     function commitment(Resource memory resource) internal pure returns (bytes32 hash) {
