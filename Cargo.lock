@@ -2782,7 +2782,6 @@ dependencies = [
  "alloy",
  "arm",
  "serde",
- "serde_with",
  "sha2",
  "simple-transfer-app",
  "tokio",
