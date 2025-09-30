@@ -21,7 +21,7 @@ library DeltaFuzzing {
     }
 
     /// @dev This function exposes `Delta.verify` for the fuzzer.
-    function verify(bytes memory proof, uint256[2] memory instance, bytes32 verifyingKey) public pure {
+    function verify(bytes memory proof, Delta.CurvePoint memory instance, bytes32 verifyingKey) public pure {
         Delta.verify({proof: proof, instance: instance, verifyingKey: verifyingKey});
     }
 }
@@ -29,6 +29,7 @@ library DeltaFuzzing {
 contract DeltaProofTest is Test {
     using SignMagnitude for SignMagnitude.Number;
     using EllipticCurveK256 for uint256;
+    using Delta for Delta.CurvePoint;
     using DeltaGen for DeltaGen.InstanceInputs[];
     using DeltaGen for DeltaGen.InstanceInputs;
     using DeltaGen for uint256;
@@ -56,7 +57,7 @@ contract DeltaProofTest is Test {
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
 
         // Generate a delta instance from the above inputs
-        uint256[2] memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
+        Delta.CurvePoint memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
 
         // Generate a delta proof from the above inputs
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
@@ -114,15 +115,15 @@ contract DeltaProofTest is Test {
         vm.assume(summedDeltaInputs.computePreDelta() != 0);
 
         // Generate a delta proof and instance from the above tags and preimage
-        uint256[2] memory instance1 = DeltaGen.generateInstance(vm, deltaInputs1);
-        uint256[2] memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
-        uint256[2] memory expectedDelta = DeltaGen.generateInstance(vm, summedDeltaInputs);
+        Delta.CurvePoint memory instance1 = DeltaGen.generateInstance(vm, deltaInputs1);
+        Delta.CurvePoint memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
+        Delta.CurvePoint memory expectedDelta = DeltaGen.generateInstance(vm, summedDeltaInputs);
 
         // Verify that the deltas add correctly
-        uint256[2] memory computedDelta = Delta.add(instance1, instance2);
+        Delta.CurvePoint memory computedDelta = Delta.add(instance1, instance2);
 
-        assertEq(computedDelta[0], expectedDelta[0]);
-        assertEq(computedDelta[1], expectedDelta[1]);
+        assertEq(computedDelta.x, expectedDelta.x);
+        assertEq(computedDelta.y, expectedDelta.y);
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
@@ -145,7 +146,7 @@ contract DeltaProofTest is Test {
         });
 
         // Generate a delta proof and instance from the above tags and preimage
-        uint256[2] memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
+        Delta.CurvePoint memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         DeltaFuzzing.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
@@ -170,7 +171,7 @@ contract DeltaProofTest is Test {
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness1, verifyingKey: verifyingKey})
         );
 
-        uint256[2] memory instanceRcv2;
+        Delta.CurvePoint memory instanceRcv2;
         {
             DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
                 kind: kind,
@@ -203,7 +204,7 @@ contract DeltaProofTest is Test {
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey1})
         );
 
-        uint256[2] memory instance;
+        Delta.CurvePoint memory instance;
         {
             DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
                 kind: kind,
@@ -229,7 +230,7 @@ contract DeltaProofTest is Test {
         kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
         DeltaGen.InstanceInputs[] memory deltaInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
 
-        uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
+        Delta.CurvePoint memory deltaAcc = Delta.zero();
 
         // Make sure that the delta quantities balance out
         (
@@ -259,8 +260,8 @@ contract DeltaProofTest is Test {
             vm.assume(wrappedDeltaInputs[i].valueCommitmentRandomness != 0);
             vm.assume(wrappedDeltaInputs[i].computePreDelta() != 0);
 
-            uint256[2] memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
-            deltaAcc = Delta.add(deltaAcc, instance);
+            Delta.CurvePoint memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
+            deltaAcc = deltaAcc.add(instance);
         }
 
         // Compute the proof for the balanced transaction
@@ -281,7 +282,7 @@ contract DeltaProofTest is Test {
         kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
         DeltaGen.InstanceInputs[] memory deltaInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
 
-        uint256[2] memory deltaAcc = [uint256(0), uint256(0)];
+        Delta.CurvePoint memory deltaAcc = Delta.zero();
 
         // Accumulate the total quantity and randomness commitment
         (
@@ -300,8 +301,8 @@ contract DeltaProofTest is Test {
             vm.assume(wrappedDeltaInputs[i].valueCommitmentRandomness != 0);
             vm.assume(wrappedDeltaInputs[i].computePreDelta() != 0);
 
-            uint256[2] memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
-            deltaAcc = Delta.add(deltaAcc, instance);
+            Delta.CurvePoint memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
+            deltaAcc = deltaAcc.add(instance);
         }
         // Compute the proof for the balanced transaction
         DeltaGen.ProofInputs memory sumDeltaInputs =
@@ -318,10 +319,10 @@ contract DeltaProofTest is Test {
 
         DeltaFuzzing.verify({
             proof: txn.deltaProof,
-            instance: [
-                uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaX),
-                uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaY)
-            ],
+            instance: Delta.CurvePoint({
+                x: uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaX),
+                y: uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaY)
+            }),
             verifyingKey: Delta.computeVerifyingKey(TxGen.collectTags(txn.actions))
         });
     }
