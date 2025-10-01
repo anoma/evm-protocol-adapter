@@ -125,8 +125,9 @@ contract ProtocolAdapter is
 
             uint256 complianceUnitCount = action.complianceVerifierInputs.length;
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
-                // Compliance proof
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
+
+                // Compliance proof
                 args = _processComplianceProof({
                     input: complianceVerifierInput,
                     isProofAggregated: isProofAggregated,
@@ -134,7 +135,6 @@ contract ProtocolAdapter is
                 });
 
                 // Consumed logic proof
-
                 args = _processLogicProof({
                     input: action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.consumed.nullifier}),
                     complianceLogicRef: complianceVerifierInput.instance.consumed.logicRef,
