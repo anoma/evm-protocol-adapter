@@ -146,6 +146,7 @@ contract ProtocolAdapter is
 
         // Check if the transaction induces a state change.
         if (vars.tagCounter > 0) {
+            // Verify the delta proof and, optionally, the aggregation proof, if it is present.
             _verifyGlobalProofs({
                 deltaProof: transaction.deltaProof,
                 aggregationProof: transaction.aggregationProof,
