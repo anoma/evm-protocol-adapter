@@ -460,11 +460,11 @@ contract ProtocolAdapter is
         bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * 2);
 
         // The order in which the tags are added to the tree is provided by the compliance units.
-        for (uint256 j = 0; j < complianceUnitCount; ++j) {
-            Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
+        for (uint256 i = 0; i < complianceUnitCount; ++i) {
+            Compliance.VerifierInput calldata input = action.complianceVerifierInputs[i];
 
-            actionTreeTags[(2 * j)] = complianceVerifierInput.instance.consumed.nullifier;
-            actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
+            actionTreeTags[(2 * i)] = input.instance.consumed.nullifier;
+            actionTreeTags[(2 * i) + 1] = input.instance.created.commitment;
         }
 
         root = actionTreeTags.computeRoot();
