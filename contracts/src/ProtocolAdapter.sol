@@ -99,20 +99,11 @@ contract ProtocolAdapter is
     function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
         (uint256 actionCount, uint256 tagCount) = _computeCounts(transaction);
 
-        InternalVariables memory vars = InternalVariables({
-            commitmentTreeRoot: bytes32(0),
-            tags: new bytes32[](tagCount),
-            logicRefs: new bytes32[](tagCount),
-            transactionDelta: Delta.zero(),
-            complianceInstances: new Compliance.Instance[](tagCount / 2),
-            logicInstances: new Logic.Instance[](tagCount),
-            tagCounter: 0,
-            isProofAggregated: transaction.aggregationProof.length != 0
-        });
+        InternalVariables memory vars =
+            _initializeVars({tagCount: tagCount, isProofAggregated: transaction.aggregationProof.length != 0});
 
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
-
 
             bytes32 actionTreeRoot = _computeActionTreeRoot(action);
 
@@ -378,6 +369,25 @@ contract ProtocolAdapter is
 
             tagCount += action.logicVerifierInputs.length;
         }
+    }
+
+    function _initializeVars(uint256 tagCount, bool isProofAggregated)
+        internal
+        pure
+        returns (InternalVariables memory vars)
+    {
+        vars = InternalVariables({
+            // Initialize regular variables.
+            commitmentTreeRoot: bytes32(0),
+            tags: new bytes32[](tagCount),
+            logicRefs: new bytes32[](tagCount),
+            transactionDelta: Delta.zero(),
+            tagCounter: 0,
+            // Initialize proof aggregation-related variables.
+            isProofAggregated: isProofAggregated,
+            complianceInstances: new Compliance.Instance[](isProofAggregated ? tagCount / 2 : 0),
+            logicInstances: new Logic.Instance[](isProofAggregated ? tagCount : 0)
+        });
     }
 
     /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
