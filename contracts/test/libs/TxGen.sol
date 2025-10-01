@@ -19,6 +19,12 @@ library TxGen {
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
+    uint256 public constant MAX_ACTIONS = 4;
+    uint256 public constant MAX_RESOURCES = 5;
+    // The order of the secp256k1 curve.
+    uint256 internal constant SECP256K1_ORDER =
+        115792089237316195423570985008687907852837564279074904382605163141518161494337;
+
     struct ActionConfig {
         uint256 complianceUnitCount;
     }
@@ -31,6 +37,18 @@ library TxGen {
     struct ResourceLists {
         ResourceAndAppData[] consumed;
         ResourceAndAppData[] created;
+    }
+
+    struct ActionParams {
+        Resource[2][MAX_RESOURCES] resources;
+        uint256[MAX_RESOURCES] bijection;
+        uint256 targetResourcesLen;
+        uint256[2][MAX_RESOURCES] valueCommitmentRandomness;
+    }
+
+    struct TransactionParams {
+        ActionParams[MAX_ACTIONS] actionParams;
+        uint256 targetActionsLen;
     }
 
     error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
@@ -257,6 +275,142 @@ library TxGen {
         txn = Transaction({actions: actions, deltaProof: proof});
     }
 
+    function generateAction(VmSafe vm, RiscZeroMockVerifier mockVerifier, ActionParams memory params)
+        internal
+        returns (Action memory action, uint256 totalValueCommitmentRandomness)
+    {
+        Resource[2][] memory truncatedResources =
+            truncateResources(params.resources, params.targetResourcesLen % MAX_RESOURCES);
+        action.logicVerifierInputs = new Logic.VerifierInput[](truncatedResources.length * 2);
+        action.complianceVerifierInputs = new Compliance.VerifierInput[](truncatedResources.length);
+        // Created empty app data for all the resources
+        Logic.AppData memory appData = Logic.AppData({
+            resourcePayload: new Logic.ExpirableBlob[](0),
+            discoveryPayload: new Logic.ExpirableBlob[](0),
+            externalPayload: new Logic.ExpirableBlob[](0),
+            applicationPayload: new Logic.ExpirableBlob[](0)
+        });
+        // Match the created and consumed resources
+        uint256[] memory bijection = generateBijection(params.bijection, truncatedResources.length);
+        for (uint256 i = 0; i < truncatedResources.length; ++i) {
+            truncatedResources[bijection[i]][1].quantity = truncatedResources[i][0].quantity;
+            truncatedResources[bijection[i]][1].logicRef = truncatedResources[i][0].logicRef;
+            truncatedResources[bijection[i]][1].labelRef = truncatedResources[i][0].labelRef;
+        }
+        // Compute action tree tags and action tree root
+        bytes32[] memory actionTreeTags = new bytes32[](2 * truncatedResources.length);
+        totalValueCommitmentRandomness = 0;
+        for (uint256 i = 0; i < truncatedResources.length; ++i) {
+            uint256 index = (i * 2);
+
+            actionTreeTags[index] = nullifier(truncatedResources[i][0], 0);
+            actionTreeTags[index + 1] = commitment(truncatedResources[i][1]);
+            // Adjust and accumulate the value randomness commitments
+            params.valueCommitmentRandomness[i][0] =
+                1 + (params.valueCommitmentRandomness[i][0] % (SECP256K1_ORDER - 1));
+            params.valueCommitmentRandomness[i][1] =
+                1 + (params.valueCommitmentRandomness[i][1] % (SECP256K1_ORDER - 1));
+            totalValueCommitmentRandomness =
+                addmod(totalValueCommitmentRandomness, params.valueCommitmentRandomness[i][0], SECP256K1_ORDER);
+            totalValueCommitmentRandomness =
+                addmod(totalValueCommitmentRandomness, params.valueCommitmentRandomness[i][1], SECP256K1_ORDER);
+        }
+        bytes32 actionTreeRoot = actionTreeTags.computeRoot();
+        // Create logic and compliance verifier inputs
+        for (uint256 i = 0; i < truncatedResources.length; i++) {
+            Resource memory consumedResource = truncatedResources[i][0];
+            Resource memory createdResource = truncatedResources[i][1];
+            bytes32 nf = nullifier(consumedResource, 0);
+            bytes32 cm = commitment(createdResource);
+
+            // Created logic verifier input for a consumed resource
+            action.logicVerifierInputs[2 * i] =
+                Logic.VerifierInput({tag: nf, verifyingKey: consumedResource.logicRef, proof: "", appData: appData});
+            action.logicVerifierInputs[2 * i].proof = mockVerifier.mockProve({
+                imageId: consumedResource.logicRef,
+                journalDigest: action.logicVerifierInputs[2 * i].toJournalDigest(actionTreeRoot, true)
+            }).seal;
+            // Create logic verifier input for a created resource
+            action.logicVerifierInputs[2 * i + 1] =
+                Logic.VerifierInput({tag: cm, verifyingKey: createdResource.logicRef, proof: "", appData: appData});
+            action.logicVerifierInputs[2 * i + 1].proof = mockVerifier.mockProve({
+                imageId: createdResource.logicRef,
+                journalDigest: action.logicVerifierInputs[2 * i + 1].toJournalDigest(actionTreeRoot, false)
+            }).seal;
+            // Create the delta for the consumed resource
+            uint256[2] memory unitDelta = DeltaGen.generateInstance(
+                vm,
+                DeltaGen.InstanceInputs({
+                    kind: kind(consumedResource),
+                    quantity: consumedResource.quantity,
+                    consumed: true,
+                    valueCommitmentRandomness: params.valueCommitmentRandomness[i][0]
+                })
+            );
+
+            // Add the delta for the created resource
+            unitDelta = Delta.add(
+                unitDelta,
+                DeltaGen.generateInstance(
+                    vm,
+                    DeltaGen.InstanceInputs({
+                        kind: kind(createdResource),
+                        quantity: createdResource.quantity,
+                        consumed: false,
+                        valueCommitmentRandomness: params.valueCommitmentRandomness[i][1]
+                    })
+                )
+            );
+            // Create the compliance verifier input
+            Compliance.Instance memory instance = Compliance.Instance({
+                unitDeltaX: bytes32(unitDelta[0]),
+                unitDeltaY: bytes32(unitDelta[1]),
+                consumed: Compliance.ConsumedRefs({
+                    nullifier: nf,
+                    logicRef: consumedResource.logicRef,
+                    commitmentTreeRoot: initialRoot()
+                }),
+                created: Compliance.CreatedRefs({commitment: cm, logicRef: createdResource.logicRef})
+            });
+            action.complianceVerifierInputs[i] = Compliance.VerifierInput({
+                instance: instance,
+                proof: mockVerifier.mockProve({
+                    imageId: Compliance._VERIFYING_KEY,
+                    journalDigest: instance.toJournalDigest()
+                }).seal
+            });
+        }
+    }
+
+    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, TransactionParams memory params)
+        internal
+        returns (Transaction memory txn)
+    {
+        // Generate actions
+        Action[] memory actions = new Action[](params.targetActionsLen % MAX_ACTIONS);
+        uint256 totalValueCommitmentRandomness = 0;
+        for (uint256 i = 0; i < actions.length; i++) {
+            uint256 valueCommitmentRandomness;
+            (actions[i], valueCommitmentRandomness) = generateAction(vm, mockVerifier, params.actionParams[i]);
+            totalValueCommitmentRandomness =
+                addmod(totalValueCommitmentRandomness, valueCommitmentRandomness, SECP256K1_ORDER);
+        }
+        // Generate delta proof
+        bytes memory proof = "";
+        bytes32[] memory tags = TxGen.collectTags(actions);
+        if (tags.length != 0) {
+            proof = DeltaGen.generateProof(
+                vm,
+                DeltaGen.ProofInputs({
+                    valueCommitmentRandomness: totalValueCommitmentRandomness,
+                    verifyingKey: Delta.computeVerifyingKey(tags)
+                })
+            );
+        }
+        // Generate transaction
+        txn = Transaction({actions: actions, deltaProof: proof});
+    }
+
     function logicVerifierInput(
         RiscZeroMockVerifier mockVerifier,
         bytes32 actionTreeRoot,
@@ -377,5 +531,44 @@ library TxGen {
 
     function initialRoot() internal pure returns (bytes32 root) {
         root = SHA256.EMPTY_HASH;
+    }
+
+    function truncateResources(Resource[2][MAX_RESOURCES] memory resources, uint256 len)
+        internal
+        pure
+        returns (Resource[2][] memory truncatedResources)
+    {
+        truncatedResources = new Resource[2][](len);
+        for (uint256 i = 0; i < len; i++) {
+            truncatedResources[i][0] = resources[i][0];
+            truncatedResources[i][1] = resources[i][1];
+        }
+    }
+
+    function generateBijection(uint256[MAX_RESOURCES] memory input, uint256 len)
+        internal
+        pure
+        returns (uint256[] memory output)
+    {
+        output = new uint256[](len);
+        uint256[] memory duplicates = new uint256[](len);
+        uint256 duplicateCount = 0;
+        for (uint256 i = 0; i < len; i++) {
+            output[i] = duplicates[i] = len;
+            input[i] %= len;
+        }
+        for (uint256 i = 0; i < len; i++) {
+            if (output[input[i]] == len) {
+                output[input[i]] = i;
+            } else {
+                duplicates[duplicateCount++] = i;
+            }
+        }
+        duplicateCount = 0;
+        for (uint256 i = 0; i < len; i++) {
+            if (output[i] == len) {
+                output[i] = duplicates[duplicateCount++];
+            }
+        }
     }
 }

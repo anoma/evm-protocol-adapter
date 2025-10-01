@@ -246,6 +246,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    function test_random_transactions_execute(TxGen.TransactionParams memory params) public {
+        _mockPa.execute(vm.transaction(_mockVerifier, params));
+    }
+
     function test_execute_reverts_on_pre_existing_nullifier() public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1});
 
