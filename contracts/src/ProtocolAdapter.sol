@@ -45,6 +45,7 @@ contract ProtocolAdapter is
     struct AggregatedArguments {
         bytes32 commitmentTreeRoot;
         bytes32[] tags;
+        bytes32[] complianceTags;
         bytes32[] logicRefs;
         uint256 tagCounter;
         uint256[2] transactionDelta;
@@ -97,6 +98,7 @@ contract ProtocolAdapter is
         AggregatedArguments memory args = AggregatedArguments({
             commitmentTreeRoot: bytes32(0),
             tags: new bytes32[](tagCounter),
+            complianceTags: new bytes32[](0),
             logicRefs: new bytes32[](tagCounter),
             tagCounter: 0,
             transactionDelta: [uint256(0), uint256(0)],
@@ -109,17 +111,21 @@ contract ProtocolAdapter is
 
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
-            bytes32[] memory tagList = new bytes32[](action.logicVerifierInputs.length);
+            uint256 logicInputCount = action.logicVerifierInputs.length;
+            bytes32[] memory tagList = new bytes32[](logicInputCount);
+            args.complianceTags = tagList;
 
-            // Make Compliance-level Checks
-            // Returns global arguments and the list of all tags in the action ordered by compliance units.
-            (args, tagList) = _processComplianceUnits(action.complianceVerifierInputs, args, isProofAggregated);
+            for (uint256 j = 0; j < (logicInputCount / 2); ++j) {
+                args = _processComplianceUnit(action.complianceVerifierInputs[j], args, j, isProofAggregated);
+            }
 
-            bytes32 actionTreeRoot = tagList.computeRoot();
+            bytes32 actionTreeRoot = args.complianceTags.computeRoot();
 
-            // Make Action-level Checks.
-            // Returns global arguments with aggregated.
-            args = _processLogicInputs(action.logicVerifierInputs, args, isProofAggregated, actionTreeRoot, tagList);
+            for (uint256 k = 0; k < logicInputCount; ++k) {
+                args = _processLogicInputs(
+                    action.logicVerifierInputs[k], args, isProofAggregated, actionTreeRoot, args.complianceTags
+                );
+            }
 
             emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: action.logicVerifierInputs.length});
         }
@@ -255,98 +261,84 @@ contract ProtocolAdapter is
         }
     }
 
-
-    function _processComplianceUnits(
-        Compliance.VerifierInput[] calldata units,
+    function _processComplianceUnit(
+        Compliance.VerifierInput calldata complianceVerifierInput,
         AggregatedArguments memory args,
+        uint256 order,
         bool isProofAggregated
-    ) internal view returns (AggregatedArguments memory newArgs, bytes32[] memory tagList) {
-        uint256 complianceUnitCount = units.length;
-        tagList = new bytes32[](complianceUnitCount * 2);
-        for (uint256 j = 0; j < complianceUnitCount; ++j) {
-            // Compliance Proof
-            Compliance.VerifierInput calldata complianceVerifierInput = units[j];
-
-            bytes32 root = complianceVerifierInput.instance.consumed.commitmentTreeRoot;
-            if (!_isCommitmentTreeRootContained(root)) {
-                revert NonExistingRoot(root);
-            }
-
-            if (isProofAggregated) {
-                args.complianceInstances[args.tagCounter / 2] = complianceVerifierInput.instance;
-            } else {
-                // slither-disable-next-line calls-loop
-                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                    seal: complianceVerifierInput.proof,
-                    imageId: Compliance._VERIFYING_KEY,
-                    journalDigest: sha256(complianceVerifierInput.instance.toJournal())
-                });
-            }
-
-            // Consumed resource logic proof.
-            bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
-            bytes32 cm = complianceVerifierInput.instance.created.commitment;
-
-            args.tags[args.tagCounter] = nf;
-            args.logicRefs[args.tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
-            tagList[2 * j] = nf;
-
-            args.tags[args.tagCounter] = cm;
-            args.logicRefs[args.tagCounter++] = complianceVerifierInput.instance.created.logicRef;
-            tagList[(2 * j) + 1] = cm;
-
-            // Compute transaction delta.
-            args.transactionDelta = args.transactionDelta.add(
-                [
-                    uint256(complianceVerifierInput.instance.unitDeltaX),
-                    uint256(complianceVerifierInput.instance.unitDeltaY)
-                ]
-            );
+    ) internal view returns (AggregatedArguments memory newArgs) {
+        bytes32 root = complianceVerifierInput.instance.consumed.commitmentTreeRoot;
+        if (!_isCommitmentTreeRootContained(root)) {
+            revert NonExistingRoot(root);
         }
+
+        if (isProofAggregated) {
+            args.complianceInstances[args.tagCounter / 2] = complianceVerifierInput.instance;
+        } else {
+            // slither-disable-next-line calls-loop
+            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                seal: complianceVerifierInput.proof,
+                imageId: Compliance._VERIFYING_KEY,
+                journalDigest: sha256(complianceVerifierInput.instance.toJournal())
+            });
+        }
+
+        // Consumed resource logic proof.
+        bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
+        bytes32 cm = complianceVerifierInput.instance.created.commitment;
+
+        args.tags[args.tagCounter] = nf;
+        args.logicRefs[args.tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
+        args.complianceTags[2 * order] = nf;
+
+        args.tags[args.tagCounter] = cm;
+        args.logicRefs[args.tagCounter++] = complianceVerifierInput.instance.created.logicRef;
+        args.complianceTags[(2 * order) + 1] = cm;
+
+        // Compute transaction delta.
+        args.transactionDelta = args.transactionDelta.add(
+            [uint256(complianceVerifierInput.instance.unitDeltaX), uint256(complianceVerifierInput.instance.unitDeltaY)]
+        );
         newArgs = args;
     }
 
     function _processLogicInputs(
-        Logic.VerifierInput[] calldata inputs,
+        Logic.VerifierInput calldata logicInput,
         AggregatedArguments memory args,
         bool isProofAggregated,
         bytes32 actionTreeRoot,
         bytes32[] memory tagList
     ) internal returns (AggregatedArguments memory newArgs) {
-        for (uint256 k = 0; k < inputs.length; ++k) {
-            Logic.VerifierInput calldata logicInput = inputs[k];
-            uint256 position = _lookup(tagList, logicInput.tag);
-            bool isConsumed = (position % 2 == 0);
-            uint256 globalPosition = args.tagCounter + position - tagList.length;
+        uint256 position = _lookup(tagList, logicInput.tag);
+        bool isConsumed = (position % 2 == 0);
+        uint256 globalPosition = args.tagCounter + position - tagList.length;
 
-            if (args.logicRefs[globalPosition] != logicInput.verifyingKey) {
-                revert LogicRefMismatch({expected: logicInput.verifyingKey, actual: args.logicRefs[globalPosition]});
-            }
+        if (args.logicRefs[globalPosition] != logicInput.verifyingKey) {
+            revert LogicRefMismatch({expected: logicInput.verifyingKey, actual: args.logicRefs[globalPosition]});
+        }
 
-            Logic.Instance memory instance = Logic.Instance(logicInput.tag, isConsumed, actionTreeRoot, logicInput.appData);
-            if (isProofAggregated) {
-                args.logicInstances[globalPosition] = instance;
-            } else {
-                  _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+        Logic.Instance memory instance = Logic.Instance(logicInput.tag, isConsumed, actionTreeRoot, logicInput.appData);
+        if (isProofAggregated) {
+            args.logicInstances[globalPosition] = instance;
+        } else {
+            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                 seal: logicInput.proof,
                 imageId: logicInput.verifyingKey,
-                journalDigest: sha256(instance.toJournal()
-                )
+                journalDigest: sha256(instance.toJournal())
             });
-            }
-
-            // Execute external calls.
-            _executeForwarderCalls(logicInput);
-
-            if (isConsumed) {
-                _addNullifier(logicInput.tag);
-            } else {
-                args.commitmentTreeRoot = _addCommitment(logicInput.tag);
-            }
-
-            // Emit app-data blobs.
-            _emitAppDataBlobs(logicInput.appData, logicInput.tag);
         }
+
+        // Execute external calls.
+        _executeForwarderCalls(logicInput);
+
+        if (isConsumed) {
+            _addNullifier(logicInput.tag);
+        } else {
+            args.commitmentTreeRoot = _addCommitment(logicInput.tag);
+        }
+
+        // Emit app-data blobs.
+        _emitAppDataBlobs(logicInput.appData, logicInput.tag);
         newArgs = args;
     }
 
