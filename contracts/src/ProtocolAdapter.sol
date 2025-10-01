@@ -463,7 +463,7 @@ contract ProtocolAdapter is
         for (uint256 j = 0; j < complianceUnitCount; ++j) {
             Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
-            actionTreeTags[2 * j] = complianceVerifierInput.instance.consumed.nullifier;
+            actionTreeTags[(2 * j)] = complianceVerifierInput.instance.consumed.nullifier;
             actionTreeTags[(2 * j) + 1] = complianceVerifierInput.instance.created.commitment;
         }
 
