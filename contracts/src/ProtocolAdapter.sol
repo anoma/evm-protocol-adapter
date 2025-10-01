@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {console} from "forge-std/console.sol";
-
 import {Ownable} from "@openzeppelin-contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
@@ -148,7 +146,6 @@ contract ProtocolAdapter is
 
             for (uint256 k = 0; k < action.logicVerifierInputs.length; ++k) {
                 Logic.VerifierInput calldata logicInput = action.logicVerifierInputs[k];
-                console.logBytes32(tagList[1]);
                 uint256 position = Compliance.lookup(tagList, logicInput.tag);
 
                 _processLogicProof({
@@ -158,9 +155,6 @@ contract ProtocolAdapter is
                     isConsumed: (position % 2 == 0),
                     isProofAggregated: isProofAggregated
                 });
-
-                console.logUint(tagCounter);
-                console.log("position", position);
 
                 if (isProofAggregated) {
                     args.logicInstances[tagCounter + position - tagList.length] =
@@ -175,8 +169,6 @@ contract ProtocolAdapter is
                 } else {
                     args.commitmentTreeRoot = _addCommitment(logicInput.tag);
                 }
-
-                console.logString("aggregated");
 
                 // Emit app-data blobs.
                 _emitAppDataBlobs(logicInput.appData, logicInput.tag);
