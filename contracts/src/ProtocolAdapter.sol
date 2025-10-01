@@ -97,7 +97,7 @@ contract ProtocolAdapter is
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
-        (uint256 actionCount, uint256 tagCount) = _getCounts(transaction);
+        (uint256 actionCount, uint256 tagCount) = _computeCounts(transaction);
 
         InternalVariables memory vars = InternalVariables({
             commitmentTreeRoot: bytes32(0),
@@ -113,7 +113,6 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
 
-            _checkActionPartitioning(action);
 
             bytes32 actionTreeRoot = _computeActionTreeRoot(action);
 
@@ -358,7 +357,7 @@ contract ProtocolAdapter is
         _emitAppDataBlobs(input);
     }
 
-    function _getCounts(Transaction calldata transaction)
+    function _computeCounts(Transaction calldata transaction)
         internal
         pure
         returns (uint256 actionCount, uint256 tagCount)
@@ -367,19 +366,17 @@ contract ProtocolAdapter is
 
         // Count the total number of tags in the transaction.
         for (uint256 i = 0; i < actionCount; ++i) {
-            tagCount += transaction.actions[i].logicVerifierInputs.length;
-        }
-    }
+            Action calldata action = transaction.actions[i];
 
-    /// @notice Checks the compliance units partition the action.
-    /// @param action The action to check.
-    function _checkActionPartitioning(Action calldata action) internal pure {
-        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
-        uint256 actionTagCount = action.logicVerifierInputs.length;
+            uint256 complianceUnitCount = action.complianceVerifierInputs.length;
+            uint256 actionTagCount = action.logicVerifierInputs.length;
 
-        // Check that the tag count in the action and compliance units match.
-        if (actionTagCount != complianceUnitCount * 2) {
-            revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
+            // Check that the tag count in the action and compliance units match.
+            if (actionTagCount != complianceUnitCount * 2) {
+                revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
+            }
+
+            tagCount += action.logicVerifierInputs.length;
         }
     }
 
