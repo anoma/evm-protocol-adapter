@@ -279,12 +279,11 @@ library TxGen {
         returns (Transaction memory aggregatedTxn)
     {
         aggregatedTxn = txn;
-        Aggregation.Instance memory instance = aggregatedInstanceGeneration(txn);
 
-        bytes32 digest = sha256(instance.toJournal());
-
-        aggregatedTxn.aggregationProof =
-            mockVerifier.mockProve({imageId: Aggregation._VERIFYING_KEY, journalDigest: digest}).seal;
+        aggregatedTxn.aggregationProof = mockVerifier.mockProve({
+            imageId: Aggregation._VERIFYING_KEY,
+            journalDigest: sha256(aggregatedInstanceGeneration(txn).toJournal())
+        }).seal;
     }
 
     function logicVerifierInput(
