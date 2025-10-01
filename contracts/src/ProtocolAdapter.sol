@@ -248,10 +248,14 @@ contract ProtocolAdapter is
         }
     }
 
-    function _verifyGlobalProofs(Transaction calldata transaction, InternalVariables memory vars) internal view {
+    function _verifyGlobalProofs(
+        bytes calldata deltaProof,
+        bytes calldata aggregationProof,
+        InternalVariables memory vars
+    ) internal view {
         // Check the delta proof.
         Delta.verify({
-            proof: transaction.deltaProof,
+            proof: deltaProof,
             instance: vars.transactionDelta,
             verifyingKey: Delta.computeVerifyingKey(vars.tags)
         });
@@ -260,7 +264,7 @@ contract ProtocolAdapter is
         if (vars.isProofAggregated) {
             // slither-disable-next-line calls-loop
             _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                seal: transaction.aggregationProof,
+                seal: aggregationProof,
                 imageId: Aggregation._VERIFYING_KEY,
                 journalDigest: sha256(
                     Aggregation.Instance({
