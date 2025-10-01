@@ -26,6 +26,22 @@ library Logic {
         bytes proof;
     }
 
+    struct Instance {
+        bytes32 tag;
+        bool isConsumed;
+        bytes32 actionTreeRoot;
+        AppData appData;
+    }
+
+    function getInstance(Logic.VerifierInput memory input, bytes32 actionTreeRoot, bool isConsumed)
+        internal
+        pure
+        returns (Instance memory instance)
+    {
+        instance =
+            Instance({tag: input.tag, isConsumed: isConsumed, actionTreeRoot: actionTreeRoot, appData: input.appData});
+    }
+
     /// @notice A struct containing payloads of different kinds.
     /// @param resourcePayload A list of blobs for encoding plaintext info connected to resources.
     /// @param discoveryPayload A list of blobs for encoding data with public keys for discovery.

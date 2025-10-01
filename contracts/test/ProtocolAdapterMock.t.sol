@@ -477,7 +477,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         txn.actions[actionIndex].logicVerifierInputs[tagIndex].verifyingKey = fakeLogic;
 
         // Expect a logic mismatch.
-        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.LogicRefMismatch.selector, fakeLogic, consumed.logicRef));
+        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.LogicRefMismatch.selector, consumed.logicRef, fakeLogic));
         _mockPa.execute(txn);
     }
 
@@ -508,7 +508,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         txn.actions[actionIndex].logicVerifierInputs[tagIndex].verifyingKey = fakeLogic;
 
         // Expect a logic mismatch.
-        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.LogicRefMismatch.selector, fakeLogic, created.logicRef));
+        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.LogicRefMismatch.selector, created.logicRef, fakeLogic));
         _mockPa.execute(txn);
     }
 

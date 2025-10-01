@@ -10,6 +10,8 @@ import {Logic} from "../proving/Logic.sol";
 /// @notice A library containing utility functions to convert and encode types for RISC Zero.
 /// @custom:security-contact security@anoma.foundation
 library RiscZeroUtils {
+    using RiscZeroUtils for Compliance.Instance;
+    using RiscZeroUtils for Logic.Instance;
     using RiscZeroUtils for uint32;
     using RiscZeroUtils for bytes;
     using RiscZeroUtils for bool;
@@ -31,18 +33,12 @@ library RiscZeroUtils {
 
     /// @notice Converts the logic instance to the RISC Zero journal format.
     /// @param input The logic verifier input.
-    /// @param actionTreeRoot The action tree root computed per-action.
-    /// @param isConsumed Whether the logic instance belongs to a consumed or created resource.
     /// @return converted The converted journal.
-    function toJournal(Logic.VerifierInput memory input, bytes32 actionTreeRoot, bool isConsumed)
-        internal
-        pure
-        returns (bytes memory converted)
-    {
+    function toJournal(Logic.Instance memory input) internal pure returns (bytes memory converted) {
         converted = abi.encodePacked(
             input.tag,
-            isConsumed.toRiscZero(),
-            actionTreeRoot,
+            input.isConsumed.toRiscZero(),
+            input.actionTreeRoot,
             encodePayload(input.appData.resourcePayload),
             encodePayload(input.appData.discoveryPayload),
             encodePayload(input.appData.externalPayload),
@@ -59,13 +55,35 @@ library RiscZeroUtils {
         bytes4 complianceCountPadding = uint32(tagCount / 2).toRiscZero();
         bytes4 tagCountPadding = uint32(tagCount).toRiscZero();
 
+        bytes memory packedComplianceJournals = "";
+        bytes memory packedLogicJournals = "";
+
+        for (uint256 i = 0; i < (tagCount / 2); ++i) {
+            packedComplianceJournals =
+                abi.encodePacked(packedComplianceJournals, instance.complianceInstances[i].toJournal());
+        }
+
+        for (uint256 j = 0; j < (tagCount / 2); ++j) {
+            Logic.Instance memory nfInstance = instance.logicInstances[j * 2];
+            Logic.Instance memory cmInstance = instance.logicInstances[(j * 2) + 1];
+            bytes memory nfJournal = nfInstance.toJournal();
+            bytes memory cmJournal = cmInstance.toJournal();
+            packedLogicJournals = abi.encodePacked(
+                packedLogicJournals,
+                uint32(nfJournal.length / 4).toRiscZero(),
+                nfJournal,
+                uint32(cmJournal.length / 4).toRiscZero(),
+                cmJournal
+            );
+        }
+
         journal = abi.encodePacked(
             complianceCountPadding,
-            instance.packedComplianceProofJournals,
+            packedComplianceJournals,
             Compliance._VERIFYING_KEY,
             //
             tagCountPadding,
-            instance.packedLogicProofJournals,
+            packedLogicJournals,
             //
             tagCountPadding,
             instance.logicRefs
