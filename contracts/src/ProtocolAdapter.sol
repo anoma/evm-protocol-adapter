@@ -127,51 +127,32 @@ contract ProtocolAdapter is
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
                 // Compliance proof
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-                {
-                    args = _processComplianceProof({
-                        input: complianceVerifierInput,
-                        isProofAggregated: isProofAggregated,
-                        args: args
-                    });
-                }
+                args = _processComplianceProof({
+                    input: complianceVerifierInput,
+                    isProofAggregated: isProofAggregated,
+                    args: args
+                });
 
                 // Consumed logic proof
-                {
-                    Logic.VerifierInput calldata consumedLogicInput =
-                        action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.consumed.nullifier});
 
-                    _checkLogicRefConsistency({
-                        fromLogicProof: consumedLogicInput.verifyingKey,
-                        fromComplianceProof: complianceVerifierInput.instance.consumed.logicRef
-                    });
-
-                    args = _processLogicProof({
-                        input: consumedLogicInput,
-                        isConsumed: true,
-                        isProofAggregated: isProofAggregated,
-                        actionTreeRoot: actionTreeRoot,
-                        args: args
-                    });
-                }
+                args = _processLogicProof({
+                    input: action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.consumed.nullifier}),
+                    complianceLogicRef: complianceVerifierInput.instance.consumed.logicRef,
+                    isConsumed: true,
+                    isProofAggregated: isProofAggregated,
+                    actionTreeRoot: actionTreeRoot,
+                    args: args
+                });
 
                 // Created logic proof
-                {
-                    Logic.VerifierInput calldata createdLogicInput =
-                        action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.created.commitment});
-
-                    _checkLogicRefConsistency({
-                        fromLogicProof: createdLogicInput.verifyingKey,
-                        fromComplianceProof: complianceVerifierInput.instance.created.logicRef
-                    });
-
-                    args = _processLogicProof({
-                        input: createdLogicInput,
-                        isConsumed: false,
-                        isProofAggregated: isProofAggregated,
-                        actionTreeRoot: actionTreeRoot,
-                        args: args
-                    });
-                }
+                args = _processLogicProof({
+                    input: action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.created.commitment}),
+                    complianceLogicRef: complianceVerifierInput.instance.created.logicRef,
+                    isConsumed: false,
+                    isProofAggregated: isProofAggregated,
+                    actionTreeRoot: actionTreeRoot,
+                    args: args
+                });
 
                 // Delta Proof
                 args.transactionDelta = args.transactionDelta.add(
@@ -345,12 +326,15 @@ contract ProtocolAdapter is
 
     function _processLogicProof(
         Logic.VerifierInput calldata input,
+        bytes32 complianceLogicRef,
         bool isConsumed,
         bool isProofAggregated,
         bytes32 actionTreeRoot,
         AggregatedArguments memory args
     ) internal returns (AggregatedArguments memory updatedArgs) {
         updatedArgs = args;
+
+        _checkLogicRefConsistency({fromLogicProof: input.verifyingKey, fromComplianceProof: complianceLogicRef});
 
         {
             // Process logic proof.
