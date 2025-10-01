@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {EllipticCurve} from "@elliptic-curve-solidity/contracts/EllipticCurve.sol";
 import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
 import {EfficientHashLib} from "@solady/utils/EfficientHashLib.sol";
-
-import {EllipticCurveK256} from "../libs/EllipticCurveK256.sol";
 
 /// @title Delta
 /// @author Anoma Foundation, 2025
@@ -21,6 +20,12 @@ library Delta {
         uint256 y;
     }
 
+    /// @notice The constant of the secp256k1 (K-256) elliptic curve.
+    uint256 internal constant _AA = 0;
+
+    /// @notice The modulus of the secp256k1 (K-256) elliptic curve.
+    uint256 internal constant _PP = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
+
     /// @notice Thrown if the recovered delta public key doesn't match the delta instance.
     error DeltaMismatch(address expected, address actual);
 
@@ -35,7 +40,7 @@ library Delta {
     /// @param p2 The second curve point.
     /// @return sum The resulting curve point.
     function add(CurvePoint memory p1, CurvePoint memory p2) internal pure returns (CurvePoint memory sum) {
-        (sum.x, sum.y) = EllipticCurveK256.ecAdd(p1.x, p1.y, p2.x, p2.y);
+        (sum.x, sum.y) = EllipticCurve.ecAdd({_x1: p1.x, _y1: p1.y, _x2: p2.x, _y2: p2.y, _aa: _AA, _pp: _PP});
     }
 
     /// @notice Converts an elliptic curve point to an Ethereum account address.

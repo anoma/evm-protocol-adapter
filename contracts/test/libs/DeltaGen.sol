@@ -3,12 +3,10 @@ pragma solidity ^0.8.30;
 
 import {VmSafe} from "forge-std/Vm.sol";
 
-import {EllipticCurveK256} from "../../src/libs/EllipticCurveK256.sol";
 import {Delta} from "../../src/proving/Delta.sol";
 import {SignMagnitude} from "./SignMagnitude.sol";
 
 library DeltaGen {
-    using EllipticCurveK256 for uint256;
     using SignMagnitude for SignMagnitude.Number;
     using DeltaGen for uint256;
 

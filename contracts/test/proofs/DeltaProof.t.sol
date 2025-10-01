@@ -3,7 +3,6 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
 
-import {EllipticCurveK256} from "../../src/libs/EllipticCurveK256.sol";
 import {Delta} from "../../src/proving/Delta.sol";
 import {Transaction} from "../../src/Types.sol";
 
@@ -28,7 +27,6 @@ library DeltaFuzzing {
 
 contract DeltaProofTest is Test {
     using SignMagnitude for SignMagnitude.Number;
-    using EllipticCurveK256 for uint256;
     using Delta for Delta.CurvePoint;
     using DeltaGen for DeltaGen.InstanceInputs[];
     using DeltaGen for DeltaGen.InstanceInputs;

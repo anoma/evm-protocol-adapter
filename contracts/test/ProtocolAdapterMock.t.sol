@@ -5,20 +5,20 @@ import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEme
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
-import {Test} from "forge-std/Test.sol";
-import {Vm} from "forge-std/Vm.sol";
+import {Test, Vm} from "forge-std/Test.sol";
 
-import {IProtocolAdapter} from "./../src/interfaces/IProtocolAdapter.sol";
-import {MerkleTree} from "./../src/libs/MerkleTree.sol";
-import {SHA256} from "./../src/libs/SHA256.sol";
+import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
+import {MerkleTree} from "../src/libs/MerkleTree.sol";
+import {SHA256} from "../src/libs/SHA256.sol";
 
-import {ProtocolAdapter} from "./../src/ProtocolAdapter.sol";
-import {Delta} from "./../src/proving/Delta.sol";
-import {Compliance} from "./../src/proving/Compliance.sol";
-import {Logic} from "./../src/proving/Logic.sol";
-import {CommitmentTree} from "./../src/state/CommitmentTree.sol";
-import {NullifierSet} from "./../src/state/NullifierSet.sol";
-import {Transaction, Action} from "./../src/Types.sol";
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {Compliance} from "../src/proving/Compliance.sol";
+import {Delta} from "../src/proving/Delta.sol";
+
+import {Logic} from "../src/proving/Logic.sol";
+import {CommitmentTree} from "../src/state/CommitmentTree.sol";
+import {NullifierSet} from "../src/state/NullifierSet.sol";
+import {Transaction, Action} from "../src/Types.sol";
 
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
 import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
@@ -536,15 +536,15 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     function testFuzz_execute_reverts_on_ubalanced_delta(uint128 createdQuantity, uint128 consumedQuantity) public {
         vm.assume(createdQuantity != consumedQuantity);
-         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 0});
 
-         // Make transaction unbalanced by offsettig the deltas.
-         created[0].resource.quantity = createdQuantity;
-         consumed[0].resource.quantity = consumedQuantity;
+        // Make transaction unbalanced by offsettig the deltas.
+        created[0].resource.quantity = createdQuantity;
+        consumed[0].resource.quantity = consumedQuantity;
 
-         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
-         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
 
         Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
