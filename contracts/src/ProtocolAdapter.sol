@@ -59,6 +59,7 @@ contract ProtocolAdapter is
     error TagCountMismatch(uint256 expected, uint256 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
     error RiscZeroVerifierStopped();
+    error TagNotFound(bytes32 tag);
 
     /// @notice Constructs the protocol adapter contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
@@ -146,25 +147,27 @@ contract ProtocolAdapter is
 
             for (uint256 k = 0; k < action.logicVerifierInputs.length; ++k) {
                 Logic.VerifierInput calldata logicInput = action.logicVerifierInputs[k];
-                uint256 position = Compliance.lookup(tagList, logicInput.tag);
+                uint256 position = _lookup(tagList, logicInput.tag);
+                bool isConsumed = (position % 2 == 0);
+                uint256 globalPosition = tagCounter + position - tagList.length;
 
                 _processLogicProof({
                     input: logicInput,
                     actionTreeRoot: actionTreeRoot,
-                    logicRef: args.logicRefs[tagCounter + position - tagList.length],
-                    isConsumed: (position % 2 == 0),
+                    logicRef: args.logicRefs[globalPosition],
+                    isConsumed: isConsumed,
                     isProofAggregated: isProofAggregated
                 });
 
                 if (isProofAggregated) {
-                    args.logicInstances[tagCounter + position - tagList.length] =
-                        Logic.Instance(logicInput.tag, (position % 2 == 0), actionTreeRoot, logicInput.appData);
+                    args.logicInstances[globalPosition] =
+                        Logic.Instance(logicInput.tag, isConsumed, actionTreeRoot, logicInput.appData);
                 }
 
                 // Execute external calls.
                 _executeForwarderCalls(logicInput);
 
-                if (position % 2 == 0) {
+                if (isConsumed) {
                     _addNullifier(logicInput.tag);
                 } else {
                     args.commitmentTreeRoot = _addCommitment(logicInput.tag);
@@ -364,6 +367,16 @@ contract ProtocolAdapter is
                 });
             }
         }
+    }
+
+    function _lookup(bytes32[] memory list, bytes32 tag) internal pure returns (uint256 position) {
+        uint256 len = list.length;
+        for (uint256 i = 0; i < len; ++i) {
+            if (list[i] == tag) {
+                return position = i;
+            }
+        }
+        revert TagNotFound(tag);
     }
 
     /// @notice Checks the compliance units partition the action.
