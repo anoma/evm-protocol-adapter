@@ -97,14 +97,7 @@ contract ProtocolAdapter is
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
-        uint256 actionCount = transaction.actions.length;
-
-        uint256 tagCount = 0;
-
-        // Count the total number of tags in the transaction.
-        for (uint256 i = 0; i < actionCount; ++i) {
-            tagCount += transaction.actions[i].logicVerifierInputs.length;
-        }
+        (uint256 actionCount, uint256 tagCount) = _getCounts(transaction);
 
         AggregatedArguments memory args = AggregatedArguments({
             commitmentTreeRoot: bytes32(0),
@@ -363,6 +356,19 @@ contract ProtocolAdapter is
         updatedArgs.logicRefs[updatedArgs.tagCounter++] = input.verifyingKey;
 
         _emitAppDataBlobs(input);
+    }
+
+    function _getCounts(Transaction calldata transaction)
+        internal
+        pure
+        returns (uint256 actionCount, uint256 tagCount)
+    {
+        actionCount = transaction.actions.length;
+
+        // Count the total number of tags in the transaction.
+        for (uint256 i = 0; i < actionCount; ++i) {
+            tagCount += transaction.actions[i].logicVerifierInputs.length;
+        }
     }
 
     /// @notice Checks the compliance units partition the action.
