@@ -274,7 +274,7 @@ library TxGen {
 
         input.proof = mockVerifier.mockProve({
             imageId: resource.logicRef,
-            journalDigest: sha256(input.getInstance(actionTreeRoot, isConsumed).toJournal())
+            journalDigest: sha256(input.toInstance(actionTreeRoot, isConsumed).toJournal())
         }).seal;
     }
 

@@ -117,7 +117,7 @@ contract ProtocolAdapter is
                 // Consumed logic proof
                 vars = _processLogic({
                     isConsumed: true,
-                    input: action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.consumed.nullifier}),
+                    input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.consumed.nullifier),
                     complianceLogicRef: complianceVerifierInput.instance.consumed.logicRef,
                     actionTreeRoot: actionTreeRoot,
                     vars: vars
@@ -126,7 +126,7 @@ contract ProtocolAdapter is
                 // Created logic proof
                 vars = _processLogic({
                     isConsumed: false,
-                    input: action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.created.commitment}),
+                    input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.created.commitment),
                     complianceLogicRef: complianceVerifierInput.instance.created.logicRef,
                     actionTreeRoot: actionTreeRoot,
                     vars: vars
@@ -264,9 +264,9 @@ contract ProtocolAdapter is
                 imageId: Aggregation._VERIFYING_KEY,
                 journalDigest: sha256(
                     Aggregation.Instance({
+                        logicRefs: vars.logicRefs,
                         complianceInstances: vars.complianceInstances,
-                        logicInstances: vars.logicInstances,
-                        logicRefs: vars.logicRefs
+                        logicInstances: vars.logicInstances
                     }).toJournal()
                 )
             });
@@ -319,7 +319,7 @@ contract ProtocolAdapter is
 
         {
             // Process logic proof.
-            Logic.Instance memory instance = input.getInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
+            Logic.Instance memory instance = input.toInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
 
             // Aggregate the logic instance.
             if (updatedVars.isProofAggregated) {
