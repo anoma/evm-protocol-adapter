@@ -146,28 +146,7 @@ contract ProtocolAdapter is
 
         // Check if the transaction induces a state change.
         if (vars.tagCounter != 0) {
-            // Check the delta proof.
-            Delta.verify({
-                proof: transaction.deltaProof,
-                instance: vars.transactionDelta,
-                verifyingKey: Delta.computeVerifyingKey(vars.tags)
-            });
-
-            // Verify aggregation proof.
-            if (vars.isProofAggregated) {
-                // slither-disable-next-line calls-loop
-                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                    seal: transaction.aggregationProof,
-                    imageId: Aggregation._VERIFYING_KEY,
-                    journalDigest: sha256(
-                        Aggregation.Instance({
-                            complianceInstances: vars.complianceInstances,
-                            logicInstances: vars.logicInstances,
-                            logicRefs: vars.logicRefs
-                        }).toJournal()
-                    )
-                });
-            }
+            _verifyGlobalProofs(transaction, vars);
 
             // Store the final commitment tree root
             _addCommitmentTreeRoot(vars.commitmentTreeRoot);
@@ -265,6 +244,31 @@ contract ProtocolAdapter is
             _executeForwarderCall({
                 carrierLogicRef: verifierInput.verifyingKey,
                 callBlob: verifierInput.appData.externalPayload[i].blob
+            });
+        }
+    }
+
+    function _verifyGlobalProofs(Transaction calldata transaction, InternalVariables memory vars) internal view {
+        // Check the delta proof.
+        Delta.verify({
+            proof: transaction.deltaProof,
+            instance: vars.transactionDelta,
+            verifyingKey: Delta.computeVerifyingKey(vars.tags)
+        });
+
+        // Verify aggregation proof.
+        if (vars.isProofAggregated) {
+            // slither-disable-next-line calls-loop
+            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                seal: transaction.aggregationProof,
+                imageId: Aggregation._VERIFYING_KEY,
+                journalDigest: sha256(
+                    Aggregation.Instance({
+                        complianceInstances: vars.complianceInstances,
+                        logicInstances: vars.logicInstances,
+                        logicRefs: vars.logicRefs
+                    }).toJournal()
+                )
             });
         }
     }
