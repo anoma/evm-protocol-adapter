@@ -140,7 +140,6 @@ contract ProtocolAdapter is
                     })
                 );
             }
-
             emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: action.logicVerifierInputs.length});
         }
 
