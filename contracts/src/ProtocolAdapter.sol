@@ -140,6 +140,11 @@ contract ProtocolAdapter is
                     Logic.VerifierInput calldata consumedLogicInput =
                         action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.consumed.nullifier});
 
+                    _checkLogicRefConsistency({
+                        fromLogicProof: consumedLogicInput.verifyingKey,
+                        fromComplianceProof: complianceVerifierInput.instance.consumed.logicRef
+                    });
+
                     args = _processLogicProof({
                         input: consumedLogicInput,
                         isConsumed: true,
@@ -153,6 +158,11 @@ contract ProtocolAdapter is
                 {
                     Logic.VerifierInput calldata createdLogicInput =
                         action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.created.commitment});
+
+                    _checkLogicRefConsistency({
+                        fromLogicProof: createdLogicInput.verifyingKey,
+                        fromComplianceProof: complianceVerifierInput.instance.created.logicRef
+                    });
 
                     args = _processLogicProof({
                         input: createdLogicInput,
@@ -300,6 +310,12 @@ contract ProtocolAdapter is
         }
     }
 
+    function _checkLogicRefConsistency(bytes32 fromLogicProof, bytes32 fromComplianceProof) internal pure {
+        if (fromLogicProof != fromComplianceProof) {
+            revert LogicRefMismatch({expected: fromComplianceProof, actual: fromLogicProof});
+        }
+    }
+
     function _processComplianceProof(
         Compliance.VerifierInput calldata input,
         bool isProofAggregated,
@@ -342,7 +358,7 @@ contract ProtocolAdapter is
 
             // Aggregate the logic instance.
             if (isProofAggregated) {
-                args.logicInstances[updatedArgs.tagCounter] = instance;
+                updatedArgs.logicInstances[updatedArgs.tagCounter] = instance;
             }
             // Verify the logic proof.
             else {
@@ -360,7 +376,7 @@ contract ProtocolAdapter is
         if (isConsumed) {
             _addNullifier(input.tag);
         } else {
-            args.commitmentTreeRoot = _addCommitment(input.tag);
+            updatedArgs.commitmentTreeRoot = _addCommitment(input.tag);
         }
 
         // Transition the resource machine state.
