@@ -12,6 +12,8 @@ import {Logic} from "../proving/Logic.sol";
 library RiscZeroUtils {
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
+    using RiscZeroUtils for uint32;
+    using RiscZeroUtils for bool;
 
     /// @notice Converts the compliance instance to the RISC Zero journal format.
     /// @param instance The compliance instance.
