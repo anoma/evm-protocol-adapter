@@ -19,18 +19,20 @@ The `bindings` folder contains bindings in [Rust](https://www.rust-lang.org/) to
 convert [Rust](https://www.rust-lang.org/) and [RISC Zero](https://risczero.com/) types into EVM types using the [
 `alloy-rs` library](https://github.com/alloy-rs).
 
-## Prerequisites
+## Security
 
-1. Get an up-to-date version of [Rust](https://www.rust-lang.org/)
-   with
-
-   ```sh
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
-
-2. Clone this repo
+If you believe you've found a security issue, we encourage you to notify us via Email at [security@anoma.foundation](mailto:security@anoma.foundation). Please do not use the issue tracker for security issues. We welcome working with you to resolve the issue promptly.
 
 ## Solidity Contracts
+
+### Prerequisites
+
+Get an up-to-date version of [Foundry](https://github.com/foundry-rs/foundry) with
+
+```sh
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
 
 ### Installation
 
@@ -44,7 +46,7 @@ forge install
 
 #### Build
 
-To build the contracts run
+To build the contracts, run
 
 ```sh
 forge build
@@ -52,7 +54,7 @@ forge build
 
 #### Tests
 
-To run the tests run
+To run the tests, run
 
 ```sh
 forge test
@@ -65,7 +67,7 @@ As a prerequisite, install the
 - `solhint` linter (see https://github.com/protofire/solhint)
 - `slither` static analyzer (see https://github.com/crytic/slither)
 
-Run the linter and analysis with
+To run the linter and static analyzer, run
 
 ```sh
 npx solhint --config .solhint.json 'src/**/*.sol' && \
@@ -113,37 +115,65 @@ after replacing `<ADDRESS>` with the respective contract address.
 
 ### Benchmarks
 
-Benchmark of the protocol adapter execution costs without and with proof aggregation.
+The following benchmark shows the transaction execution costs without and with proof aggregation for the current protocol adapter implementation:
 
 <img src=".assets/Benchmark.png" width=67% alt="Protocol adapter benchmark.">
 
-The protocol adapter utilizes a Merkle tree of dynamic depth being empty in the beginning.
+The current protocol adapter implementation utilizes a Merkle tree of dynamic depth starting at depth 0.
 
 ## Rust Bindings
 
-### Installation
+## Prerequisites
 
-Change the directory to the `bindings` folder with `cd bindings` and run
+1. Get an up-to-date version of [Rust](https://www.rust-lang.org/) with
 
-1. Install `rzup` by running the following command:
+   ```sh
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
+
+2. Install [RISC Zero `rzup`](https://github.com/risc0/risc0) with
 
    ```sh
    curl -L https://risczero.com/install | bash
    ```
 
-2. Run `rzup` to install RISC Zero:
+3. Install the latest RISC Zero version with
 
    ```sh
    rzup install
    ```
 
-3. Go to the `bindings` directory with `cd bindings` and run
+   or a specific version (e.g., `3.0.3`) with
 
    ```sh
-   cargo build
+   rzup install cargo-risczero <version>
    ```
 
+### Installation
+
+Change the directory to the `bindings` folder with `cd bindings` and run
+
+```sh
+forge install
+```
+
 ### Usage
+
+#### Build
+
+To build the bindings, run
+
+```sh
+cargo build
+```
+
+#### Test
+
+To test the build, run
+
+```sh
+cargo test
+```
 
 To print a test transaction with aggregated proofs run
 
