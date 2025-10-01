@@ -94,6 +94,7 @@ contract ProtocolAdapter is
         // Reverts if number of tags in actions and compliance units mismatch.
         tagCounter = _computeTagCount(transaction.actions);
 
+        // Initial global tags.
         AggregatedArguments memory args = AggregatedArguments({
             commitmentTreeRoot: bytes32(0),
             tags: new bytes32[](tagCounter),
@@ -143,7 +144,10 @@ contract ProtocolAdapter is
         }
     }
 
-    function _processTransaction(Transaction calldata transaction, AggregatedArguments memory args) internal returns (AggregatedArguments memory newArgs) {
+    function _processTransaction(Transaction calldata transaction, AggregatedArguments memory args)
+        internal
+        returns (AggregatedArguments memory newArgs)
+    {
         // If there is an aggregated proof present, we will skip all individual resource logic and compliance checks.
         bool isProofAggregated = transaction.aggregationProof.length != 0;
 
@@ -160,25 +164,31 @@ contract ProtocolAdapter is
         }
     }
 
-    function _processActions(Action[] calldata actions, AggregatedArguments memory args, bool isProofAggregated) internal returns (AggregatedArguments memory newArgs) {
-         uint256 actionCount = actions.length;
-            for (uint256 i = 0; i < actionCount; ++i) {
-                newArgs = _processAction(actions[i], args, isProofAggregated);
-            }
+    function _processActions(Action[] calldata actions, AggregatedArguments memory args, bool isProofAggregated)
+        internal
+        returns (AggregatedArguments memory newArgs)
+    {
+        uint256 actionCount = actions.length;
+        for (uint256 i = 0; i < actionCount; ++i) {
+            newArgs = _processAction(actions[i], args, isProofAggregated);
+        }
     }
 
-    function _processAction(Action calldata action, AggregatedArguments memory args, bool isProofAggregated) internal returns (AggregatedArguments memory newArgs) {
+    function _processAction(Action calldata action, AggregatedArguments memory args, bool isProofAggregated)
+        internal
+        returns (AggregatedArguments memory newArgs)
+    {
         uint256 logicInputCount = action.logicVerifierInputs.length;
-            bytes32[] memory tagList = new bytes32[](logicInputCount);
-            args.complianceTags = tagList;
+        bytes32[] memory tagList = new bytes32[](logicInputCount);
+        args.complianceTags = tagList;
 
-            newArgs = _processComplianceUnits(action.complianceVerifierInputs, args, isProofAggregated);
+        newArgs = _processComplianceUnits(action.complianceVerifierInputs, args, isProofAggregated);
 
-            bytes32 actionTreeRoot = args.complianceTags.computeRoot();
+        bytes32 actionTreeRoot = args.complianceTags.computeRoot();
 
-            newArgs = _processLogicInputs(action.logicVerifierInputs, args, actionTreeRoot, isProofAggregated);
+        newArgs = _processLogicInputs(action.logicVerifierInputs, args, actionTreeRoot, isProofAggregated);
 
-            emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: logicInputCount});
+        emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: logicInputCount});
     }
 
     /// @inheritdoc IProtocolAdapter
