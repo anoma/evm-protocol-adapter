@@ -328,7 +328,7 @@ contract ProtocolAdapter is
             Logic.Instance memory instance = input.getInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
 
             // Aggregate the logic instance.
-            if (vars.isProofAggregated) {
+            if (updatedVars.isProofAggregated) {
                 updatedVars.logicInstances[updatedVars.tagCounter] = instance;
             }
             // Verify the logic proof.
