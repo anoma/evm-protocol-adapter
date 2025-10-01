@@ -373,14 +373,15 @@ contract ProtocolAdapter is
 
         _executeForwarderCalls(input);
 
+        bytes32 tag = input.tag;
         if (isConsumed) {
-            _addNullifier(input.tag);
+            _addNullifier(tag);
         } else {
-            updatedArgs.commitmentTreeRoot = _addCommitment(input.tag);
+            updatedArgs.commitmentTreeRoot = _addCommitment(tag);
         }
 
         // Transition the resource machine state.
-        updatedArgs.tags[updatedArgs.tagCounter] = input.tag;
+        updatedArgs.tags[updatedArgs.tagCounter] = tag;
         updatedArgs.logicRefs[updatedArgs.tagCounter++] = input.verifyingKey;
 
         _emitAppDataBlobs(input);
