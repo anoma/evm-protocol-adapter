@@ -116,41 +116,17 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
             bytes32[] memory tagList = new bytes32[](action.logicVerifierInputs.length);
-            (args, tagList, tagCounter) = _processComplianceUnits(action.complianceVerifierInputs, args, isProofAggregated, tagCounter);
+
+            // Make Compliance-level Checks
+            (args, tagList, tagCounter) =
+                _processComplianceUnits(action.complianceVerifierInputs, args, isProofAggregated, tagCounter);
 
             bytes32 actionTreeRoot = tagList.computeRoot();
 
-            for (uint256 k = 0; k < action.logicVerifierInputs.length; ++k) {
-                Logic.VerifierInput calldata logicInput = action.logicVerifierInputs[k];
-                uint256 position = _lookup(tagList, logicInput.tag);
-                bool isConsumed = (position % 2 == 0);
-                uint256 globalPosition = tagCounter + position - tagList.length;
-
-                _processLogicProof({
-                    input: logicInput,
-                    actionTreeRoot: actionTreeRoot,
-                    logicRef: args.logicRefs[globalPosition],
-                    isConsumed: isConsumed,
-                    isProofAggregated: isProofAggregated
-                });
-
-                if (isProofAggregated) {
-                    args.logicInstances[globalPosition] =
-                        Logic.Instance(logicInput.tag, isConsumed, actionTreeRoot, logicInput.appData);
-                }
-
-                // Execute external calls.
-                _executeForwarderCalls(logicInput);
-
-                if (isConsumed) {
-                    _addNullifier(logicInput.tag);
-                } else {
-                    args.commitmentTreeRoot = _addCommitment(logicInput.tag);
-                }
-
-                // Emit app-data blobs.
-                _emitAppDataBlobs(logicInput.appData, logicInput.tag);
-            }
+            // Make Action-level Checks
+            args = _processLogicInputs(
+                action.logicVerifierInputs, args, isProofAggregated, tagCounter, actionTreeRoot, tagList
+            );
 
             emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: action.logicVerifierInputs.length});
         }
@@ -344,43 +320,89 @@ contract ProtocolAdapter is
         }
     }
 
-    function _processComplianceUnits(Compliance.VerifierInput[] calldata units, AggregatedArguments memory args, bool isProofAggregated, uint256 tagCounter) internal view returns (AggregatedArguments memory newArgs, bytes32[] memory tagList, uint256 newTagCounter) {
+    function _processComplianceUnits(
+        Compliance.VerifierInput[] calldata units,
+        AggregatedArguments memory args,
+        bool isProofAggregated,
+        uint256 tagCounter
+    ) internal view returns (AggregatedArguments memory newArgs, bytes32[] memory tagList, uint256 newTagCounter) {
         uint256 complianceUnitCount = units.length;
         tagList = new bytes32[](complianceUnitCount * 2);
         for (uint256 j = 0; j < complianceUnitCount; ++j) {
-        // Compliance Proof
-                Compliance.VerifierInput calldata complianceVerifierInput = units[j];
+            // Compliance Proof
+            Compliance.VerifierInput calldata complianceVerifierInput = units[j];
 
-                _processComplianceProof(complianceVerifierInput, isProofAggregated);
+            _processComplianceProof(complianceVerifierInput, isProofAggregated);
 
-                if (isProofAggregated) {
-                    args.complianceInstances[tagCounter / 2] = complianceVerifierInput.instance;
-                }
-
-                // Consumed resource logic proof.
-                bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
-                bytes32 cm = complianceVerifierInput.instance.created.commitment;
-
-                args.tags[tagCounter] = nf;
-                args.logicRefs[tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
-                tagList[2 * j] = nf;
-
-                args.tags[tagCounter] = cm;
-                args.logicRefs[tagCounter++] = complianceVerifierInput.instance.created.logicRef;
-                tagList[(2 * j) + 1] = cm;
-
-                // Compute transaction delta.
-                args.transactionDelta = args.transactionDelta.add(
-                    [
-                        uint256(complianceVerifierInput.instance.unitDeltaX),
-                        uint256(complianceVerifierInput.instance.unitDeltaY)
-                    ]
-                );
+            if (isProofAggregated) {
+                args.complianceInstances[tagCounter / 2] = complianceVerifierInput.instance;
             }
-         newArgs = args;
-         newTagCounter = tagCounter;
+
+            // Consumed resource logic proof.
+            bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
+            bytes32 cm = complianceVerifierInput.instance.created.commitment;
+
+            args.tags[tagCounter] = nf;
+            args.logicRefs[tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
+            tagList[2 * j] = nf;
+
+            args.tags[tagCounter] = cm;
+            args.logicRefs[tagCounter++] = complianceVerifierInput.instance.created.logicRef;
+            tagList[(2 * j) + 1] = cm;
+
+            // Compute transaction delta.
+            args.transactionDelta = args.transactionDelta.add(
+                [
+                    uint256(complianceVerifierInput.instance.unitDeltaX),
+                    uint256(complianceVerifierInput.instance.unitDeltaY)
+                ]
+            );
+        }
+        newArgs = args;
+        newTagCounter = tagCounter;
     }
 
+    function _processLogicInputs(
+        Logic.VerifierInput[] calldata inputs,
+        AggregatedArguments memory args,
+        bool isProofAggregated,
+        uint256 tagCounter,
+        bytes32 actionTreeRoot,
+        bytes32[] memory tagList
+    ) internal returns (AggregatedArguments memory newArgs) {
+        for (uint256 k = 0; k < inputs.length; ++k) {
+            Logic.VerifierInput calldata logicInput = inputs[k];
+            uint256 position = _lookup(tagList, logicInput.tag);
+            bool isConsumed = (position % 2 == 0);
+            uint256 globalPosition = tagCounter + position - tagList.length;
+
+            _processLogicProof({
+                input: logicInput,
+                actionTreeRoot: actionTreeRoot,
+                logicRef: args.logicRefs[globalPosition],
+                isConsumed: isConsumed,
+                isProofAggregated: isProofAggregated
+            });
+
+            if (isProofAggregated) {
+                args.logicInstances[globalPosition] =
+                    Logic.Instance(logicInput.tag, isConsumed, actionTreeRoot, logicInput.appData);
+            }
+
+            // Execute external calls.
+            _executeForwarderCalls(logicInput);
+
+            if (isConsumed) {
+                _addNullifier(logicInput.tag);
+            } else {
+                args.commitmentTreeRoot = _addCommitment(logicInput.tag);
+            }
+
+            // Emit app-data blobs.
+            _emitAppDataBlobs(logicInput.appData, logicInput.tag);
+        }
+        newArgs = args;
+    }
 
     function _lookup(bytes32[] memory list, bytes32 tag) internal pure returns (uint256 position) {
         uint256 len = list.length;
