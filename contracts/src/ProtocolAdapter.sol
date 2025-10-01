@@ -58,6 +58,7 @@ contract ProtocolAdapter is
         Delta.CurvePoint transactionDelta;
         Compliance.Instance[] complianceInstances;
         Logic.Instance[] logicInstances;
+        uint256 tagCounter;
     }
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
@@ -108,7 +109,8 @@ contract ProtocolAdapter is
             logicRefs: new bytes32[](tagCounter),
             transactionDelta: Delta.zero(),
             complianceInstances: new Compliance.Instance[](tagCounter / 2),
-            logicInstances: new Logic.Instance[](tagCounter)
+            logicInstances: new Logic.Instance[](tagCounter),
+            tagCounter: 0
         });
 
         bool isProofAggregated = transaction.aggregationProof.length != 0;
@@ -123,114 +125,45 @@ contract ProtocolAdapter is
 
             uint256 complianceUnitCount = action.complianceVerifierInputs.length;
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
-                // Compliance Proof
+                // Compliance proof
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-
-                // Process compliance proof.
                 {
-                    bytes32 root = complianceVerifierInput.instance.consumed.commitmentTreeRoot;
-                    if (!_isCommitmentTreeRootContained(root)) {
-                        revert NonExistingRoot(root);
-                    }
-
-                    // Aggregate the compliance instance
-                    if (isProofAggregated) {
-                        args.complianceInstances[tagCounter / 2] = complianceVerifierInput.instance;
-                    }
-                    // Verify the compliance proof.
-                    else {
-                        // slither-disable-next-line calls-loop
-                        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                            seal: complianceVerifierInput.proof,
-                            imageId: Compliance._VERIFYING_KEY,
-                            journalDigest: sha256(complianceVerifierInput.instance.toJournal())
-                        });
-                    }
+                    args = _processComplianceProof({
+                        input: complianceVerifierInput,
+                        isProofAggregated: isProofAggregated,
+                        args: args
+                    });
                 }
 
-                // Consumed resource logic proof.
+                // Consumed logic proof
                 {
-                    bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
-                    Logic.VerifierInput calldata consumedLogicInput = action.logicVerifierInputs.lookup(nf);
+                    Logic.VerifierInput calldata consumedLogicInput =
+                        action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.consumed.nullifier});
 
-                    // Check verifying key correspondence.
-                    if (consumedLogicInput.verifyingKey != complianceVerifierInput.instance.consumed.logicRef) {
-                        revert LogicRefMismatch({
-                            expected: complianceVerifierInput.instance.consumed.logicRef,
-                            actual: consumedLogicInput.verifyingKey
-                        });
-                    }
-
-                    // Process logic proof.
-                    {
-                        Logic.Instance memory consumedInstance =
-                            consumedLogicInput.getInstance({actionTreeRoot: actionTreeRoot, isConsumed: true});
-                        // Aggregate the logic instance.
-                        if (isProofAggregated) {
-                            args.logicInstances[tagCounter] = consumedInstance;
-                        }
-                        // Verify the logic proof.
-                        else {
-                            // slither-disable-next-line calls-loop
-                            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                                seal: consumedLogicInput.proof,
-                                imageId: consumedLogicInput.verifyingKey,
-                                journalDigest: sha256(consumedInstance.toJournal())
-                            });
-                        }
-                    }
-
-                    _executeForwarderCalls(consumedLogicInput);
-
-                    // Transition the resource machine state.
-                    _addNullifier(nf);
-                    args.tags[tagCounter] = nf;
-                    args.logicRefs[tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
-
-                    _emitAppDataBlobs(consumedLogicInput.appData, nf);
+                    args = _processLogicProof({
+                        input: consumedLogicInput,
+                        isConsumed: true,
+                        isProofAggregated: isProofAggregated,
+                        actionTreeRoot: actionTreeRoot,
+                        args: args
+                    });
                 }
 
-                // Consumed resource logic proof.
+                // Created logic proof
                 {
-                    bytes32 cm = complianceVerifierInput.instance.created.commitment;
-                    Logic.VerifierInput calldata createdLogicInput = action.logicVerifierInputs.lookup(cm);
+                    Logic.VerifierInput calldata createdLogicInput =
+                        action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.created.commitment});
 
-                    // Check verifying key correspondence.
-                    if (createdLogicInput.verifyingKey != complianceVerifierInput.instance.created.logicRef) {
-                        revert LogicRefMismatch({
-                            expected: complianceVerifierInput.instance.created.logicRef,
-                            actual: createdLogicInput.verifyingKey
-                        });
-                    }
-
-                    // Process logic proof.
-                    {
-                        Logic.Instance memory createdInstance =
-                            createdLogicInput.getInstance({actionTreeRoot: actionTreeRoot, isConsumed: false});
-                        // Aggregate the logic instance.
-                        if (isProofAggregated) {
-                            args.logicInstances[tagCounter] = createdInstance;
-                        }
-                        // Verify the logic proof.
-                        else {
-                            // slither-disable-next-line calls-loop
-                            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                                seal: createdLogicInput.proof,
-                                imageId: createdLogicInput.verifyingKey,
-                                journalDigest: sha256(createdInstance.toJournal())
-                            });
-                        }
-                    }
-
-                    _executeForwarderCalls(createdLogicInput);
-
-                    args.commitmentTreeRoot = _addCommitment(cm);
-                    args.tags[tagCounter] = cm;
-                    args.logicRefs[tagCounter++] = complianceVerifierInput.instance.created.logicRef;
-
-                    _emitAppDataBlobs(createdLogicInput.appData, cm);
+                    args = _processLogicProof({
+                        input: createdLogicInput,
+                        isConsumed: false,
+                        isProofAggregated: isProofAggregated,
+                        actionTreeRoot: actionTreeRoot,
+                        args: args
+                    });
                 }
 
+                // Delta Proof
                 args.transactionDelta = args.transactionDelta.add(
                     Delta.CurvePoint({
                         x: uint256(complianceVerifierInput.instance.unitDeltaX),
@@ -320,38 +253,36 @@ contract ProtocolAdapter is
     }
 
     /// @notice Emits app data blobs based on their deletion criterion.
-    /// @param appData The logic verifier input containing the app data.
-    /// @param tag The tag of the associated resource.
-    function _emitAppDataBlobs(Logic.AppData calldata appData, bytes32 tag) internal {
-        Logic.ExpirableBlob[] calldata payload = appData.resourcePayload;
+    function _emitAppDataBlobs(Logic.VerifierInput calldata input) internal {
+        Logic.ExpirableBlob[] calldata payload = input.appData.resourcePayload;
         uint256 n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ResourcePayload({tag: tag, index: i, blob: payload[i].blob});
+                emit ResourcePayload({tag: input.tag, index: i, blob: payload[i].blob});
             }
         }
 
-        payload = appData.discoveryPayload;
+        payload = input.appData.discoveryPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit DiscoveryPayload({tag: tag, index: i, blob: payload[i].blob});
+                emit DiscoveryPayload({tag: input.tag, index: i, blob: payload[i].blob});
             }
         }
 
-        payload = appData.externalPayload;
+        payload = input.appData.externalPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ExternalPayload({tag: tag, index: i, blob: payload[i].blob});
+                emit ExternalPayload({tag: input.tag, index: i, blob: payload[i].blob});
             }
         }
 
-        payload = appData.applicationPayload;
+        payload = input.appData.applicationPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
+                emit ApplicationPayload({tag: input.tag, index: i, blob: payload[i].blob});
             }
         }
     }
@@ -369,75 +300,49 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Processes a resource machine compliance proof by
-    /// * checking that the commitment tree root is an historical root, and
-    /// * verifying or the compliance proof or computing the compliance proof RISC Zero journal.
-    /// @param input The logic verifier input for processing.
-    /// @param isProofAggregated Whether the proof is aggregated or not.
-    /// @return encodedJournal The encoded RISC Zero journal if the proof is aggregated or the empty array.
-    function _processComplianceProof(Compliance.VerifierInput calldata input, bool isProofAggregated)
-        internal
-        view
-        returns (bytes memory encodedJournal)
-    {
-        // Unused
-        /*
+    function _processComplianceProof(
+        Compliance.VerifierInput calldata input,
+        bool isProofAggregated,
+        AggregatedArguments memory args
+    ) internal view returns (AggregatedArguments memory updatedArgs) {
+        updatedArgs = args;
+
         bytes32 root = input.instance.consumed.commitmentTreeRoot;
         if (!_isCommitmentTreeRootContained(root)) {
             revert NonExistingRoot(root);
         }
 
-        // Process compliance proof.
-        {
-            bytes memory journal = input.instance.toJournal();
-
-            // Aggregate the compliance instance
-            if (isProofAggregated) {
-                encodedJournal = journal;
-            }
-            // Verify the compliance proof.
-            else {
-                // slither-disable-next-line calls-loop
-                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                    seal: input.proof,
-                    imageId: Compliance._VERIFYING_KEY,
-                    journalDigest: sha256(journal)
-                });
-            }
-        }*/
+        // Aggregate the compliance instance
+        if (isProofAggregated) {
+            updatedArgs.complianceInstances[args.tagCounter / 2] = input.instance;
+        }
+        // Verify the compliance proof.
+        else {
+            // slither-disable-next-line calls-loop
+            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                seal: input.proof,
+                imageId: Compliance._VERIFYING_KEY,
+                journalDigest: sha256(input.instance.toJournal())
+            });
+        }
     }
 
-    /// @notice Processes a resource logic proof by
-    /// * checking the verifying key correspondence,
-    /// * checking the resource logic proof, and
-    /// * executing external calls.
-    /// @param input The logic verifier input for processing.
-    /// @param actionTreeRoot The action tree root.
-    /// @param logicRef The logic reference that was verified in the compliance proof.
-    /// @param isConsumed Whether the proof belongs to a consumed or created resource.
-    /// @param isProofAggregated Whether the proof is aggregated or not.
-    /// @return encodedJournal The encoded RISC Zero journal if the proof is aggregated or the empty array.
     function _processLogicProof(
         Logic.VerifierInput calldata input,
-        bytes32 actionTreeRoot,
-        bytes32 logicRef,
         bool isConsumed,
-        bool isProofAggregated
-    ) internal view returns (bytes memory encodedJournal) {
-        // Unused
-        /*
-        // Check verifying key correspondence.
-        if (logicRef != input.verifyingKey) {
-            revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
-        }
+        bool isProofAggregated,
+        bytes32 actionTreeRoot,
+        AggregatedArguments memory args
+    ) internal returns (AggregatedArguments memory updatedArgs) {
+        updatedArgs = args;
 
-        // Process logic proof.
         {
-            bytes memory journal = input.toJournal({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
+            // Process logic proof.
+            Logic.Instance memory instance = input.getInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
 
             // Aggregate the logic instance.
             if (isProofAggregated) {
-                encodedJournal = abi.encodePacked(uint32(journal.length / 4).toRiscZero(), journal);
+                args.logicInstances[updatedArgs.tagCounter] = instance;
             }
             // Verify the logic proof.
             else {
@@ -445,10 +350,24 @@ contract ProtocolAdapter is
                 _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                     seal: input.proof,
                     imageId: input.verifyingKey,
-                    journalDigest: sha256(journal)
+                    journalDigest: sha256(instance.toJournal())
                 });
             }
-        }*/
+        }
+
+        _executeForwarderCalls(input);
+
+        if (isConsumed) {
+            _addNullifier(input.tag);
+        } else {
+            args.commitmentTreeRoot = _addCommitment(input.tag);
+        }
+
+        // Transition the resource machine state.
+        updatedArgs.tags[updatedArgs.tagCounter] = input.tag;
+        updatedArgs.logicRefs[updatedArgs.tagCounter++] = input.verifyingKey;
+
+        _emitAppDataBlobs(input);
     }
 
     /// @notice Checks the compliance units partition the action.
