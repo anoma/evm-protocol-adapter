@@ -379,18 +379,15 @@ library TxGen {
                 bytes32 actionTreeRoot = computeActionTreeRoot(txn.actions[i]);
 
                 {
-                    {
-                        uint256 nullifierIndex = getTagIndex(txn.actions[i], complianceUnit.instance.consumed.nullifier);
-                        logicInstances[n++] =
-                            Logic.toInstance(txn.actions[i].logicVerifierInputs[nullifierIndex], actionTreeRoot, true);
-                    }
+                    uint256 nullifierIndex = getTagIndex(txn.actions[i], complianceUnit.instance.consumed.nullifier);
+                    logicInstances[n++] =
+                        Logic.toInstance(txn.actions[i].logicVerifierInputs[nullifierIndex], actionTreeRoot, true);
+                }
 
-                    {
-                        uint256 commitmentIndex =
-                            getTagIndex(txn.actions[i], complianceUnit.instance.created.commitment);
-                        logicInstances[n++] =
-                            Logic.toInstance(txn.actions[i].logicVerifierInputs[commitmentIndex], actionTreeRoot, false);
-                    }
+                {
+                    uint256 commitmentIndex = getTagIndex(txn.actions[i], complianceUnit.instance.created.commitment);
+                    logicInstances[n++] =
+                        Logic.toInstance(txn.actions[i].logicVerifierInputs[commitmentIndex], actionTreeRoot, false);
                 }
             }
         }
