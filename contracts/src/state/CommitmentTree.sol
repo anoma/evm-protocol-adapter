@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Arrays} from "@openzeppelin-contracts/utils/Arrays.sol";
 import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 
 import {ICommitmentTree} from "../interfaces/ICommitmentTree.sol";
@@ -17,7 +16,6 @@ contract CommitmentTree is ICommitmentTree {
     using MerkleTree for MerkleTree.Tree;
     using MerkleTree for bytes32[];
     using EnumerableSet for EnumerableSet.Bytes32Set;
-    using Arrays for bytes32[];
 
     MerkleTree.Tree internal _merkleTree;
     EnumerableSet.Bytes32Set internal _roots;

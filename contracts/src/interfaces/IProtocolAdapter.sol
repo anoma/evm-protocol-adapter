@@ -56,6 +56,12 @@ interface IProtocolAdapter {
     /// @notice Stops the protocol adapter permanently in case of an emergency.
     function emergencyStop() external;
 
+    /// @notice Returns whether the protocol adapter has been stopped or not. This can have two reasons:
+    /// 1. The RISC Zero verifier associated with the protocol adapter has been stopped.
+    /// 2. The protocol adapter itself was stopped by the owner.
+    /// @return isStopped Whether the protocol adapter has been stopped or not.
+    function isEmergencyStopped() external view returns (bool isStopped);
+
     /// @notice Returns the semantic version number of the protocol adapter.
     /// @return version The semantic version number.
     function getProtocolAdapterVersion() external view returns (bytes32 version);
@@ -63,10 +69,4 @@ interface IProtocolAdapter {
     /// @notice Returns the RISC Zero verifier selector associated with the protocol adapter.
     /// @return verifierSelector The RISC Zero verifier selector.
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
-
-    /// @notice Returns whether the protocol adapter has been stopped or not. This can have two reasons:
-    /// 1. The RISC Zero verifier associated with the protocol adapter has been stopped.
-    /// 2. The protocol adapter itself was stopped by the owner.
-    /// @return isStopped Whether the protocol adapter has been stopped or not.
-    function isEmergencyStopped() external view returns (bool isStopped);
 }

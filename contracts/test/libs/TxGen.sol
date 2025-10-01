@@ -15,9 +15,9 @@ import {DeltaGen} from "./../proofs/DeltaProof.t.sol";
 library TxGen {
     using MerkleTree for bytes32[];
     using RiscZeroUtils for Compliance.Instance;
-    using RiscZeroUtils for Logic.VerifierInput;
+    using RiscZeroUtils for Logic.Instance;
     using Logic for Logic.VerifierInput[];
-    using Delta for uint256[2];
+    using Logic for Logic.VerifierInput;
 
     struct ActionConfig {
         uint256 complianceUnitCount;
@@ -274,7 +274,7 @@ library TxGen {
 
         input.proof = mockVerifier.mockProve({
             imageId: resource.logicRef,
-            journalDigest: sha256(input.toJournal(actionTreeRoot, isConsumed))
+            journalDigest: sha256(input.toInstance(actionTreeRoot, isConsumed).toJournal())
         }).seal;
     }
 
