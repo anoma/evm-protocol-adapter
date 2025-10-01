@@ -2,24 +2,6 @@
 
 # EVM Protocol Adapter
 
-For more information on the EVM protocol adapter, find the related
-
-- [Anoma Research Day talk](https://www.youtube.com/watch?v=rKFZsOw360U)
-- [Anoma Specs Page](https://specs.anoma.net/latest/arch/integrations/adapters/evm.html)
-
-<div align="left">
-  <a href="https://www.youtube.com/watch?v=rKFZsOw360U">
-     <img src=".assets/Youtube_preview.png"
-       alt="The EVM Protocol Adapter: Bringing Intent-Centric Apps to Ethereum - Anoma Research Day"
-       border=1,
-       style="width:67%;">
-  </a>
-</div>
-
-> [!WARNING]
-> This repo features a prototype and is work in progress. Do NOT use in
-> production.
-
 ## Project Structure
 
 ```sh
@@ -62,15 +44,15 @@ forge install
 
 #### Build
 
-Build the contracts with following flags: //TODO! confirm this is needed
+To build the contracts run
 
 ```sh
-forge build --ast
+forge build
 ```
 
 #### Tests
 
-Run
+To run the tests run
 
 ```sh
 forge test
@@ -78,35 +60,12 @@ forge test
 
 #### Linting & Static Analysis
 
-As a pre-requisite, install `solhint` with
+As a prerequisite, install the
 
-```sh
-bun install solhint
-```
-
-or
-
-```sh
-bun install solhint
-```
-
-and `slither`
-
-via
-
-```sh
-python3 -m pip install slither-analyzer
-```
+- `solhint` linter (see https://github.com/protofire/solhint)
+- `slither` static analyzer (see https://github.com/crytic/slither)
 
 Run the linter and analysis with
-
-```sh
-bunx --bun solhint --config .solhint.json 'src/**/*.sol' && \
-bunx --bun solhint --config .solhint.other.json 'script/**/*.sol' 'test/**/*.sol' && \
-slither .
-```
-
-or
 
 ```sh
 npx solhint --config .solhint.json 'src/**/*.sol' && \
@@ -114,12 +73,22 @@ npx solhint --config .solhint.other.json 'script/**/*.sol' 'test/**/*.sol' && \
 slither .
 ```
 
+#### Documentation
+
+Run
+
+```sh
+forge doc
+```
+
 #### Deployment
 
 To simulate deployment on sepolia, run
 
 ```sh
-forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter --rpc-url sepolia
+forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
+  --sig "run(bool,address)" <IS_TEST_DEPLOYMENT> <EMERGENCY_STOP_CALLER> \
+  --rpc-url sepolia
 ```
 
 Append the
@@ -129,7 +98,7 @@ Append the
 - `--account <ACCOUNT_NAME>` flag to use a previously imported keystore (see
   `cast wallet --help` for more info)
 
-##### Block Explorer Verification
+#### Block Explorer Verification
 
 For post-deployment verification on Etherscan run
 
@@ -137,19 +106,18 @@ For post-deployment verification on Etherscan run
 forge verify-contract \
    <ADDRESS> \
    src/ProtocolAdapter.sol:ProtocolAdapter \
-   --chain sepolia \
-   --constructor-args-path script/constructor-args.txt
+   --chain sepolia
 ```
 
 after replacing `<ADDRESS>` with the respective contract address.
 
 ### Benchmarks
 
-Parameters:
+Benchmark of the protocol adapter execution costs without and with proof aggregation.
 
-- Commitment accumulator `treeDepth = 32`
+<img src=".assets/Benchmark.png" width=67% alt="Protocol adapter benchmark.">
 
-<img src=".assets/Benchmark.png" width=67% alt="Protocol adapter benchmark for a Merkle tree depth of 32.">
+The protocol adapter utilizes a Merkle tree of dynamic depth being empty in the beginning.
 
 ## Rust Bindings
 
@@ -177,8 +145,8 @@ Change the directory to the `bindings` folder with `cd bindings` and run
 
 ### Usage
 
-Print a test transaction with
+To print a test transaction with aggregated proofs run
 
 ```sh
-cargo test -- conversion::tests::print_tx --exact --show-output --ignored
+cargo test -- conversion::tests::generate_tx_agg --exact --show-output --ignored
 ```
