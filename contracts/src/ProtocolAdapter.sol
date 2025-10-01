@@ -317,12 +317,7 @@ contract ProtocolAdapter is
     /// * verifying or the compliance proof or computing the compliance proof RISC Zero journal.
     /// @param input The logic verifier input for processing.
     /// @param isProofAggregated Whether the proof is aggregated or not.
-    /// @return encodedJournal The encoded RISC Zero journal if the proof is aggregated or the empty array.
-    function _processComplianceProof(Compliance.VerifierInput calldata input, bool isProofAggregated)
-        internal
-        view
-        returns (bytes memory encodedJournal)
-    {
+    function _processComplianceProof(Compliance.VerifierInput calldata input, bool isProofAggregated) internal view {
         bytes32 root = input.instance.consumed.commitmentTreeRoot;
         if (!_isCommitmentTreeRootContained(root)) {
             revert NonExistingRoot(root);
@@ -330,14 +325,10 @@ contract ProtocolAdapter is
 
         // Process compliance proof.
         {
-            bytes memory journal = input.instance.toJournal();
-
             // Aggregate the compliance instance
-            if (isProofAggregated) {
-                encodedJournal = journal;
-            }
-            // Verify the compliance proof.
-            else {
+            if (!isProofAggregated) {
+                bytes memory journal = input.instance.toJournal();
+
                 // slither-disable-next-line calls-loop
                 _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                     seal: input.proof,
@@ -357,14 +348,13 @@ contract ProtocolAdapter is
     /// @param logicRef The logic reference that was verified in the compliance proof.
     /// @param isConsumed Whether the proof belongs to a consumed or created resource.
     /// @param isProofAggregated Whether the proof is aggregated or not.
-    /// @return encodedJournal The encoded RISC Zero journal if the proof is aggregated or the empty array.
     function _processLogicProof(
         Logic.VerifierInput calldata input,
         bytes32 actionTreeRoot,
         bytes32 logicRef,
         bool isConsumed,
         bool isProofAggregated
-    ) internal view returns (bytes memory encodedJournal) {
+    ) internal view {
         // Check verifying key correspondence.
         if (logicRef != input.verifyingKey) {
             revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
@@ -372,19 +362,13 @@ contract ProtocolAdapter is
 
         // Process logic proof.
         {
-            bytes memory journal = input.toJournal({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
-
             // Aggregate the logic instance.
-            if (isProofAggregated) {
-                encodedJournal = abi.encodePacked(uint32(journal.length / 4).toRiscZero(), journal);
-            }
-            // Verify the logic proof.
-            else {
+            if (!isProofAggregated) {
                 // slither-disable-next-line calls-loop
                 _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                     seal: input.proof,
                     imageId: input.verifyingKey,
-                    journalDigest: sha256(journal)
+                    journalDigest: sha256(input.toJournal({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed}))
                 });
             }
         }
