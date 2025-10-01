@@ -108,11 +108,13 @@ contract ProtocolAdapter is
         // If there is an aggregated proof present, we will skip all individual resource logic and compliance checks.
         bool isProofAggregated = transaction.aggregationProof.length != 0;
 
+        // Check that all actions are valid
         args = _processActions(transaction.actions, args, isProofAggregated);
 
         // Check if the transaction induces a state change.
         if (args.tagCounter != 0) {
             // Verify delta and aggregation proofs.
+            // That is, check that the transaction is balanced.
             _processGlobalProofs(transaction, args);
             // Store the final commitment tree root
             _addCommitmentTreeRoot(args.commitmentTreeRoot);
