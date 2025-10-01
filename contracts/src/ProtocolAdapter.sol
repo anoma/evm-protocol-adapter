@@ -165,7 +165,7 @@ contract ProtocolAdapter is
 
     function _computeTagCount(Action[] calldata actions) internal view returns (uint256 tagCount) {
         uint256 actionCount = actions.length;
-         for (uint256 i = 0; i < actionCount; ++i) {
+        for (uint256 i = 0; i < actionCount; ++i) {
             uint256 complianceUnitCount = actions[i].complianceVerifierInputs.length;
             uint256 actionTagCount = actions[i].logicVerifierInputs.length;
 
@@ -326,7 +326,8 @@ contract ProtocolAdapter is
                         isConsumed: isConsumed,
                         actionTreeRoot: actionTreeRoot,
                         appData: input.appData
-                        }).toJournal())
+                    }).toJournal()
+                )
             });
         }
     }

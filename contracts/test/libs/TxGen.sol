@@ -16,6 +16,7 @@ library TxGen {
     using MerkleTree for bytes32[];
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.VerifierInput;
+    using RiscZeroUtils for Logic.Instance;
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
 
@@ -274,7 +275,14 @@ library TxGen {
 
         input.proof = mockVerifier.mockProve({
             imageId: resource.logicRef,
-            journalDigest: sha256(input.toJournal(actionTreeRoot, isConsumed))
+            journalDigest: sha256(
+                Logic.Instance({
+                    tag: input.tag,
+                    isConsumed: isConsumed,
+                    actionTreeRoot: actionTreeRoot,
+                    appData: input.appData
+                }).toJournal()
+            )
         }).seal;
     }
 

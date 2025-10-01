@@ -32,26 +32,8 @@ library RiscZeroUtils {
     }
 
     /// @notice Converts the logic instance to the RISC Zero journal format.
-    /// @param input The logic verifier input.
-    /// @param actionTreeRoot The action tree root computed per-action.
-    /// @param isConsumed Whether the logic instance belongs to a consumed or created resource.
+    /// @param input The resource logic instance.
     /// @return converted The converted journal.
-    function toJournal(Logic.VerifierInput memory input, bytes32 actionTreeRoot, bool isConsumed)
-        internal
-        pure
-        returns (bytes memory converted)
-    {
-        converted = abi.encodePacked(
-            input.tag,
-            isConsumed.toRiscZero(),
-            actionTreeRoot,
-            encodePayload(input.appData.resourcePayload),
-            encodePayload(input.appData.discoveryPayload),
-            encodePayload(input.appData.externalPayload),
-            encodePayload(input.appData.applicationPayload)
-        );
-    }
-
     function toJournal(Logic.Instance memory input) internal pure returns (bytes memory converted) {
         converted = abi.encodePacked(
             input.tag,
