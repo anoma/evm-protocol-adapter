@@ -58,16 +58,19 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _carrierLabelRef = sha256(abi.encode(_fwd));
     }
 
-    function testFuzz_execute_emits_the_TransactionExecuted_event(uint8 actionCount, uint8 complianceUnitCount)
-        public
-    {
+    function testFuzz_execute_emits_the_TransactionExecuted_event(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        bool aggregated
+    ) public {
         actionCount = uint8(bound(actionCount, 0, 10));
         complianceUnitCount = uint8(bound(complianceUnitCount, 0, 10));
 
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: aggregated
         });
 
         vm.expectEmit(address(_mockPa));
@@ -78,16 +81,19 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function testFuzz_execute_emits_ActionExecuted_events_for_each_action(uint8 actionCount, uint8 complianceUnitCount)
-        public
-    {
+    function testFuzz_execute_emits_ActionExecuted_events_for_each_action(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        bool aggregated
+    ) public {
         actionCount = uint8(bound(actionCount, 0, 10));
         complianceUnitCount = uint8(bound(complianceUnitCount, 0, 10));
 
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: aggregated
         });
 
         for (uint256 i = 0; i < actionCount; ++i) {
@@ -100,13 +106,13 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource() public {
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource(bool aggregated) public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists, aggregated);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -117,13 +123,15 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
+    function testFuzz_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource(bool aggregated)
+        public
+    {
         TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList});
         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists, aggregated);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -135,7 +143,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_all_ForwarderCallExecuted_events() public {
+    function testFuzz_execute_emits_all_ForwarderCallExecuted_events(bool aggregated) public {
         address fwd2 = address(
             new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
         );
@@ -150,7 +158,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists, aggregated);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -169,56 +177,73 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_1_txn_with_2_action_with_1_and_0_cus() public {
+    function testFuzz_execute_1_txn_with_2_action_with_1_and_0_cus(bool aggregated) public {
         TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](2);
         configs[0] = TxGen.ActionConfig({complianceUnitCount: 1});
         configs[1] = TxGen.ActionConfig({complianceUnitCount: 0});
 
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs, isProofAggregated: aggregated});
 
         _mockPa.execute(txn);
     }
 
-    function test_execute_1_txn_with_up_to_3_empty_actions(bool[3] memory isEmpty) public {
+    function testFuzz_execute_1_txn_with_up_to_3_empty_actions(bool[3] memory isEmpty, bool aggregated) public {
         TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](3);
 
         for (uint256 i = 0; i < isEmpty.length; ++i) {
             configs[i] = TxGen.ActionConfig({complianceUnitCount: isEmpty[i] ? 0 : 1});
         }
 
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs, isProofAggregated: aggregated});
 
         _mockPa.execute(txn);
     }
 
-    function test_execute_1_txn_with_n_actions_and_n_cus(uint8 actionCount, uint8 complianceUnitCount) public {
+    function testFuzz_execute_1_txn_with_n_actions_and_n_cus(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        bool aggregated
+    ) public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
             actionCount: uint8(bound(actionCount, 0, 5)),
             complianceUnitCount: uint8(bound(complianceUnitCount, 0, 5))
         });
 
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs, isProofAggregated: aggregated});
         _mockPa.execute(txn);
     }
 
-    function test_execute_2_txns_with_n_actions_and_n_cus(uint8 actionCount, uint8 complianceUnitCount) public {
+    function testFuzz_execute_2_txns_with_n_actions_and_n_cus(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        bool aggregated
+    ) public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
             actionCount: uint8(bound(actionCount, 0, 5)),
             complianceUnitCount: uint8(bound(complianceUnitCount, 0, 5))
         });
 
         (Transaction memory txn, bytes32 updatedNonce) =
-            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs, isProofAggregated: aggregated});
         _mockPa.execute(txn);
 
-        (txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: updatedNonce, configs: configs});
+        (txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: updatedNonce,
+            configs: configs,
+            isProofAggregated: aggregated
+        });
         _mockPa.execute(txn);
     }
 
-    function test_execute_reverts_on_pre_existing_nullifier() public {
+    function testFuzz_execute_reverts_on_pre_existing_nullifier(bool aggregated) public {
         TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1});
 
-        (Transaction memory tx1,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory tx1,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs, isProofAggregated: aggregated});
         bytes32 preExistingNf = tx1.actions[0].complianceVerifierInputs[0].instance.consumed.nullifier;
         _mockPa.execute(tx1);
 
@@ -228,12 +253,13 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(tx1);
     }
 
-    function test_execute_reverts_on_resource_count_mismatch(uint8 complianceUnitCount) public {
+    function testFuzz_execute_reverts_on_resource_count_mismatch(uint8 complianceUnitCount, bool aggregated) public {
         complianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: uint8(bound(complianceUnitCount, 1, 5))});
 
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs, isProofAggregated: aggregated});
 
         txn.actions[0].logicVerifierInputs = new Logic.VerifierInput[](0);
 
@@ -257,7 +283,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 complianceUnitCount,
         uint8 actionIndex,
         uint8 complianceIndex,
-        bytes32 fakeRoot
+        bytes32 fakeRoot,
+        bool aggregated
     ) public {
         // Assume the proposed commitment tree root is not already contained.
         vm.assume(!_mockPa.isCommitmentTreeRootContained(fakeRoot));
@@ -269,7 +296,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: aggregated
         });
 
         // Assign the proposed commitment tree root into the transaction.
@@ -300,7 +328,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: false
         });
 
         // Replace the selected compliance unit's proof with a fake one.
@@ -318,7 +347,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 complianceUnitCount,
         uint8 actionIndex,
         uint8 complianceIndex,
-        bytes32 nonce
+        bytes32 nonce,
+        bool aggregated
     ) public {
         // Choose random compliance unit among the actions.
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
@@ -327,7 +357,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: aggregated
         });
 
         bytes32 tag = txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.nullifier;
@@ -351,7 +382,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 complianceUnitCount,
         uint8 actionIndex,
         uint8 complianceIndex,
-        bytes32 nonce
+        bytes32 nonce,
+        bool aggregated
     ) public {
         // Choose random compliance unit among the actions.
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
@@ -360,7 +392,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: aggregated
         });
 
         // Generate a different tag with the nonce.
@@ -386,7 +419,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 actionCount,
         uint8 complianceUnitCount,
         uint8 actionIndex,
-        uint8 fakeComplianceCount
+        uint8 fakeComplianceCount,
+        bool aggregated
     ) public {
         // Choose a random action whose resource count we will mutate.
         (actionCount, complianceUnitCount, actionIndex, /* complianceIndex */ ) =
@@ -398,7 +432,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: aggregated
         });
 
         // Set the compliance unit count to the fake number.
@@ -422,7 +457,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 actionCount,
         uint8 complianceUnitCount,
         uint8 actionIndex,
-        uint8 fakeLogicVerifierCount
+        uint8 fakeLogicVerifierCount,
+        bool aggregated
     ) public {
         // Choose a random action whose resource count we will mutate.
         (actionCount, complianceUnitCount, actionIndex, /* complianceIndex */ ) =
@@ -434,7 +470,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
 
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (Transaction memory txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs, isProofAggregated: aggregated});
 
         // Set the logic verifier inputs length based on wrong count.
         txn.actions[actionIndex].logicVerifierInputs = new Logic.VerifierInput[](fakeLogicVerifierCount);
@@ -456,7 +493,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 complianceUnitCount,
         uint8 actionIndex,
         uint8 complianceIndex,
-        bytes32 nonce
+        bytes32 nonce,
+        bool aggregated
     ) public {
         // Choose a random compliance unit whose commitment logicRef we will mutate.
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
@@ -465,7 +503,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: aggregated
         });
 
         Compliance.ConsumedRefs memory consumed =
@@ -487,7 +526,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 complianceUnitCount,
         uint8 actionIndex,
         uint8 complianceIndex,
-        bytes32 nonce
+        bytes32 nonce,
+        bool aggregated
     ) public {
         // Choose a random compliance whose commitment logicRef we will mutate.
         (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
@@ -496,7 +536,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount})
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: aggregated
         });
 
         Compliance.CreatedRefs memory created =
@@ -513,7 +554,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function testFuzz_execute_reverts_on_unexpected_forwarder_call_output(bytes memory fakeOutput) public {
+    function testFuzz_execute_reverts_on_unexpected_forwarder_call_output(bytes memory fakeOutput, bool aggregated)
+        public
+    {
         vm.assume(keccak256(fakeOutput) != keccak256(EXPECTED_OUTPUT));
 
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
@@ -525,7 +568,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
 
         // Create a transaction with two resources, the created calling the forwarder.
-        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists, aggregated);
 
         // Expect output mismatch.
         vm.expectRevert(
@@ -534,7 +577,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function testFuzz_execute_reverts_on_ubalanced_delta(uint128 createdQuantity, uint128 consumedQuantity) public {
+    function testFuzz_execute_reverts_on_ubalanced_delta(
+        uint128 createdQuantity,
+        uint128 consumedQuantity,
+        bool aggregated
+    ) public {
         vm.assume(createdQuantity != consumedQuantity);
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 0});
@@ -546,7 +593,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
 
-        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists, aggregated);
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         _mockPa.execute(txn);
     }
