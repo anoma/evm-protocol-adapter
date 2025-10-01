@@ -264,6 +264,8 @@ contract ProtocolAdapter is
 
         _checkLogicRefConsistency({fromLogicProof: input.verifyingKey, fromComplianceProof: complianceLogicRef});
 
+        _executeForwarderCalls(input);
+
         {
             // Process logic proof.
             Logic.Instance memory instance = input.toInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
@@ -283,18 +285,16 @@ contract ProtocolAdapter is
             }
         }
 
-        _executeForwarderCalls(input);
-
         bytes32 tag = input.tag;
+        updatedVars.tags[updatedVars.tagCounter] = tag;
+        updatedVars.logicRefs[updatedVars.tagCounter++] = input.verifyingKey;
+
+        // Transition the resource machine state.
         if (isConsumed) {
             _addNullifier(tag);
         } else {
             updatedVars.commitmentTreeRoot = _addCommitment(tag);
         }
-
-        // Transition the resource machine state.
-        updatedVars.tags[updatedVars.tagCounter] = tag;
-        updatedVars.logicRefs[updatedVars.tagCounter++] = input.verifyingKey;
 
         _emitAppDataBlobs(input);
     }
@@ -313,7 +313,7 @@ contract ProtocolAdapter is
         }
 
         // Aggregate the compliance instance
-        if (vars.isProofAggregated) {
+        if (updatedVars.isProofAggregated) {
             updatedVars.complianceInstances[vars.tagCounter / 2] = input.instance;
         }
         // Verify the compliance proof.
