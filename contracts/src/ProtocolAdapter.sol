@@ -38,6 +38,7 @@ contract ProtocolAdapter is
     using MerkleTree for bytes32[];
     using Logic for Logic.VerifierInput[];
     using Logic for Logic.VerifierInput;
+    using Logic for bytes32[];
     using RiscZeroUtils for Aggregation.Instance;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
@@ -59,6 +60,7 @@ contract ProtocolAdapter is
         Compliance.Instance[] complianceInstances;
         Logic.Instance[] logicInstances;
         uint256 tagCounter;
+        bool isProofAggregated;
     }
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
@@ -111,10 +113,9 @@ contract ProtocolAdapter is
             transactionDelta: Delta.zero(),
             complianceInstances: new Compliance.Instance[](tagCount / 2),
             logicInstances: new Logic.Instance[](tagCount),
-            tagCounter: 0
+            tagCounter: 0,
+            isProofAggregated: transaction.aggregationProof.length != 0
         });
-
-        bool isProofAggregated = transaction.aggregationProof.length != 0;
 
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
@@ -128,28 +129,22 @@ contract ProtocolAdapter is
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
                 // Compliance proof
-                args = _processComplianceProof({
-                    input: complianceVerifierInput,
-                    isProofAggregated: isProofAggregated,
-                    args: args
-                });
+                args = _processComplianceProof({input: complianceVerifierInput, args: args});
 
                 // Consumed logic proof
                 args = _processLogicProof({
+                    isConsumed: true,
                     input: action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.consumed.nullifier}),
                     complianceLogicRef: complianceVerifierInput.instance.consumed.logicRef,
-                    isConsumed: true,
-                    isProofAggregated: isProofAggregated,
                     actionTreeRoot: actionTreeRoot,
                     args: args
                 });
 
                 // Created logic proof
                 args = _processLogicProof({
+                    isConsumed: false,
                     input: action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.created.commitment}),
                     complianceLogicRef: complianceVerifierInput.instance.created.logicRef,
-                    isConsumed: false,
-                    isProofAggregated: isProofAggregated,
                     actionTreeRoot: actionTreeRoot,
                     args: args
                 });
@@ -176,7 +171,7 @@ contract ProtocolAdapter is
             });
 
             // Verify aggregation proof.
-            if (isProofAggregated) {
+            if (args.isProofAggregated) {
                 // slither-disable-next-line calls-loop
                 _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                     seal: transaction.aggregationProof,
@@ -297,11 +292,11 @@ contract ProtocolAdapter is
         }
     }
 
-    function _processComplianceProof(
-        Compliance.VerifierInput calldata input,
-        bool isProofAggregated,
-        AggregatedArguments memory args
-    ) internal view returns (AggregatedArguments memory updatedArgs) {
+    function _processComplianceProof(Compliance.VerifierInput calldata input, AggregatedArguments memory args)
+        internal
+        view
+        returns (AggregatedArguments memory updatedArgs)
+    {
         updatedArgs = args;
 
         bytes32 root = input.instance.consumed.commitmentTreeRoot;
@@ -310,7 +305,7 @@ contract ProtocolAdapter is
         }
 
         // Aggregate the compliance instance
-        if (isProofAggregated) {
+        if (args.isProofAggregated) {
             updatedArgs.complianceInstances[args.tagCounter / 2] = input.instance;
         }
         // Verify the compliance proof.
@@ -325,10 +320,9 @@ contract ProtocolAdapter is
     }
 
     function _processLogicProof(
+        bool isConsumed,
         Logic.VerifierInput calldata input,
         bytes32 complianceLogicRef,
-        bool isConsumed,
-        bool isProofAggregated,
         bytes32 actionTreeRoot,
         AggregatedArguments memory args
     ) internal returns (AggregatedArguments memory updatedArgs) {
@@ -341,7 +335,7 @@ contract ProtocolAdapter is
             Logic.Instance memory instance = input.getInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
 
             // Aggregate the logic instance.
-            if (isProofAggregated) {
+            if (args.isProofAggregated) {
                 updatedArgs.logicInstances[updatedArgs.tagCounter] = instance;
             }
             // Verify the logic proof.

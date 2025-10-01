@@ -82,4 +82,16 @@ library Logic {
         }
         revert TagNotFound(tag);
     }
+
+    function lastN(bytes32[] memory arr, uint256 n) internal pure returns (bytes32[] memory tail) {
+        tail = new bytes32[](n);
+
+        uint256 start = arr.length - n;
+        // The order in which the tags are added to the tree is provided by the compliance units.
+        for (uint256 i = 0; i < n; ++i) {
+            tail[i] = arr[start + i];
+        }
+
+        // TODO add errors
+    }
 }
