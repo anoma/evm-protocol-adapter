@@ -115,17 +115,11 @@ contract ProtocolAdapter is
             bytes32[] memory tagList = new bytes32[](logicInputCount);
             args.complianceTags = tagList;
 
-            for (uint256 j = 0; j < (logicInputCount / 2); ++j) {
-                args = _processComplianceUnit(action.complianceVerifierInputs[j], args, j, isProofAggregated);
-            }
+            args = _processComplianceUnits(action.complianceVerifierInputs, args, isProofAggregated);
 
             bytes32 actionTreeRoot = args.complianceTags.computeRoot();
 
-            for (uint256 k = 0; k < logicInputCount; ++k) {
-                args = _processLogicInputs(
-                    action.logicVerifierInputs[k], args, isProofAggregated, actionTreeRoot, args.complianceTags
-                );
-            }
+            args = _processLogicInputs(action.logicVerifierInputs, args, actionTreeRoot, isProofAggregated);
 
             emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: action.logicVerifierInputs.length});
         }
@@ -261,6 +255,16 @@ contract ProtocolAdapter is
         }
     }
 
+    function _processComplianceUnits(
+        Compliance.VerifierInput[] calldata units,
+        AggregatedArguments memory args,
+        bool isProofAggregated
+    ) internal returns (AggregatedArguments memory newArgs) {
+        for (uint256 j = 0; j < units.length; ++j) {
+            newArgs = _processComplianceUnit(units[j], args, j, isProofAggregated);
+        }
+    }
+
     function _processComplianceUnit(
         Compliance.VerifierInput calldata complianceVerifierInput,
         AggregatedArguments memory args,
@@ -303,15 +307,25 @@ contract ProtocolAdapter is
     }
 
     function _processLogicInputs(
+        Logic.VerifierInput[] calldata inputs,
+        AggregatedArguments memory args,
+        bytes32 actionTreeRoot,
+        bool isProofAggregated
+    ) internal returns (AggregatedArguments memory newArgs) {
+        for (uint256 k = 0; k < inputs.length; ++k) {
+            newArgs = _processLogicInput(inputs[k], args, isProofAggregated, actionTreeRoot);
+        }
+    }
+
+    function _processLogicInput(
         Logic.VerifierInput calldata logicInput,
         AggregatedArguments memory args,
         bool isProofAggregated,
-        bytes32 actionTreeRoot,
-        bytes32[] memory tagList
+        bytes32 actionTreeRoot
     ) internal returns (AggregatedArguments memory newArgs) {
-        uint256 position = _lookup(tagList, logicInput.tag);
+        uint256 position = _lookup(args.complianceTags, logicInput.tag);
         bool isConsumed = (position % 2 == 0);
-        uint256 globalPosition = args.tagCounter + position - tagList.length;
+        uint256 globalPosition = args.tagCounter + position - args.complianceTags.length;
 
         if (args.logicRefs[globalPosition] != logicInput.verifyingKey) {
             revert LogicRefMismatch({expected: logicInput.verifyingKey, actual: args.logicRefs[globalPosition]});
