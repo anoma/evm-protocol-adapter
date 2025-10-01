@@ -252,68 +252,7 @@ contract ProtocolAdapter is
         }
     }
 
-    function _verifyGlobalProofs(
-        bytes calldata deltaProof,
-        bytes calldata aggregationProof,
-        InternalVariables memory vars
-    ) internal view {
-        // Check the delta proof.
-        Delta.verify({
-            proof: deltaProof,
-            instance: vars.transactionDelta,
-            verifyingKey: Delta.computeVerifyingKey(vars.tags)
-        });
-
-        // Verify aggregation proof.
-        if (vars.isProofAggregated) {
-            // slither-disable-next-line calls-loop
-            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                seal: aggregationProof,
-                imageId: Aggregation._VERIFYING_KEY,
-                journalDigest: sha256(
-                    Aggregation.Instance({
-                        logicRefs: vars.logicRefs,
-                        complianceInstances: vars.complianceInstances,
-                        logicInstances: vars.logicInstances
-                    }).toJournal()
-                )
-            });
-        }
-    }
-
-    function _checkLogicRefConsistency(bytes32 fromLogicProof, bytes32 fromComplianceProof) internal pure {
-        if (fromLogicProof != fromComplianceProof) {
-            revert LogicRefMismatch({expected: fromComplianceProof, actual: fromLogicProof});
-        }
-    }
-
-    function _processCompliance(Compliance.VerifierInput calldata input, InternalVariables memory vars)
-        internal
-        view
-        returns (InternalVariables memory updatedVars)
-    {
-        updatedVars = vars;
-
-        bytes32 root = input.instance.consumed.commitmentTreeRoot;
-        if (!_isCommitmentTreeRootContained(root)) {
-            revert NonExistingRoot(root);
-        }
-
-        // Aggregate the compliance instance
-        if (vars.isProofAggregated) {
-            updatedVars.complianceInstances[vars.tagCounter / 2] = input.instance;
-        }
-        // Verify the compliance proof.
-        else {
-            // slither-disable-next-line calls-loop
-            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                seal: input.proof,
-                imageId: Compliance._VERIFYING_KEY,
-                journalDigest: sha256(input.instance.toJournal())
-            });
-        }
-    }
-
+    /// @param vars Internal variables to read from.
     function _processLogic(
         bool isConsumed,
         Logic.VerifierInput calldata input,
@@ -360,6 +299,86 @@ contract ProtocolAdapter is
         _emitAppDataBlobs(input);
     }
 
+    /// @param vars Internal variables to read from.
+    function _processCompliance(Compliance.VerifierInput calldata input, InternalVariables memory vars)
+        internal
+        view
+        returns (InternalVariables memory updatedVars)
+    {
+        updatedVars = vars;
+
+        bytes32 root = input.instance.consumed.commitmentTreeRoot;
+        if (!_isCommitmentTreeRootContained(root)) {
+            revert NonExistingRoot(root);
+        }
+
+        // Aggregate the compliance instance
+        if (vars.isProofAggregated) {
+            updatedVars.complianceInstances[vars.tagCounter / 2] = input.instance;
+        }
+        // Verify the compliance proof.
+        else {
+            // slither-disable-next-line calls-loop
+            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                seal: input.proof,
+                imageId: Compliance._VERIFYING_KEY,
+                journalDigest: sha256(input.instance.toJournal())
+            });
+        }
+    }
+
+    /// @notice Verifies global proofs:
+    /// @param deltaProof The delta proof to verify.
+    /// @param aggregationProof The aggregation proof to verify if existent.
+    /// @param vars Internal variables to read from.
+    function _verifyGlobalProofs(
+        bytes calldata deltaProof,
+        bytes calldata aggregationProof,
+        InternalVariables memory vars
+    ) internal view {
+        // Check the delta proof.
+        Delta.verify({
+            proof: deltaProof,
+            instance: vars.transactionDelta,
+            verifyingKey: Delta.computeVerifyingKey(vars.tags)
+        });
+
+        // Verify aggregation proof.
+        if (vars.isProofAggregated) {
+            // slither-disable-next-line calls-loop
+            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                seal: aggregationProof,
+                imageId: Aggregation._VERIFYING_KEY,
+                journalDigest: sha256(
+                    Aggregation.Instance({
+                        logicRefs: vars.logicRefs,
+                        complianceInstances: vars.complianceInstances,
+                        logicInstances: vars.logicInstances
+                    }).toJournal()
+                )
+            });
+        }
+    }
+
+    function _initializeVars(uint256 tagCount, bool isProofAggregated)
+        internal
+        pure
+        returns (InternalVariables memory vars)
+    {
+        vars = InternalVariables({
+            // Initialize regular variables.
+            commitmentTreeRoot: bytes32(0),
+            tags: new bytes32[](tagCount),
+            logicRefs: new bytes32[](tagCount),
+            transactionDelta: Delta.zero(),
+            tagCounter: 0,
+            // Initialize proof aggregation-related variables.
+            isProofAggregated: isProofAggregated,
+            complianceInstances: new Compliance.Instance[](isProofAggregated ? tagCount / 2 : 0),
+            logicInstances: new Logic.Instance[](isProofAggregated ? tagCount : 0)
+        });
+    }
+
     function _computeCounts(Transaction calldata transaction)
         internal
         pure
@@ -383,23 +402,10 @@ contract ProtocolAdapter is
         }
     }
 
-    function _initializeVars(uint256 tagCount, bool isProofAggregated)
-        internal
-        pure
-        returns (InternalVariables memory vars)
-    {
-        vars = InternalVariables({
-            // Initialize regular variables.
-            commitmentTreeRoot: bytes32(0),
-            tags: new bytes32[](tagCount),
-            logicRefs: new bytes32[](tagCount),
-            transactionDelta: Delta.zero(),
-            tagCounter: 0,
-            // Initialize proof aggregation-related variables.
-            isProofAggregated: isProofAggregated,
-            complianceInstances: new Compliance.Instance[](isProofAggregated ? tagCount / 2 : 0),
-            logicInstances: new Logic.Instance[](isProofAggregated ? tagCount : 0)
-        });
+    function _checkLogicRefConsistency(bytes32 fromLogicProof, bytes32 fromComplianceProof) internal pure {
+        if (fromLogicProof != fromComplianceProof) {
+            revert LogicRefMismatch({expected: fromComplianceProof, actual: fromLogicProof});
+        }
     }
 
     /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.

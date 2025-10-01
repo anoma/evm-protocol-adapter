@@ -33,15 +33,6 @@ library Logic {
         AppData appData;
     }
 
-    function toInstance(Logic.VerifierInput memory input, bytes32 actionTreeRoot, bool isConsumed)
-        internal
-        pure
-        returns (Instance memory instance)
-    {
-        instance =
-            Instance({tag: input.tag, isConsumed: isConsumed, actionTreeRoot: actionTreeRoot, appData: input.appData});
-    }
-
     /// @notice A struct containing payloads of different kinds.
     /// @param resourcePayload A list of blobs for encoding plaintext info connected to resources.
     /// @param discoveryPayload A list of blobs for encoding data with public keys for discovery.
@@ -64,6 +55,21 @@ library Logic {
 
     /// @notice Thrown if a tag is not found in a list of verifier inputs.
     error TagNotFound(bytes32 tag);
+
+    /// @notice Returns a logic instance given a logic verifier input, an action tree root, and depending on if the
+    /// associated resource is consumed or not.
+    /// @param input The logic verifier input to construct the instance from.
+    /// @param actionTreeRoot The action tree root to put into the instance.
+    /// @param isConsumed Whether the associated resource is consumed or not.
+    /// @return instance The resulting instance.
+    function toInstance(Logic.VerifierInput memory input, bytes32 actionTreeRoot, bool isConsumed)
+        internal
+        pure
+        returns (Instance memory instance)
+    {
+        instance =
+            Instance({tag: input.tag, isConsumed: isConsumed, actionTreeRoot: actionTreeRoot, appData: input.appData});
+    }
 
     /// @notice Looks up a `VerifierInput` element from a list by its tag.
     /// @param list The list of verifier inputs.
