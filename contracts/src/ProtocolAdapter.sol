@@ -44,22 +44,25 @@ contract ProtocolAdapter is
     using RiscZeroUtils for Logic.Instance;
     using RiscZeroUtils for uint32;
 
-    /// @notice A data structure containing internal variables being updated while iterating over the actions and
-    ///  compliance units of the transaction to execute.
-    /// @param commitmentTreeRoot The commitment tree root for the root update.
+    /// @notice A data structure containing general and proof aggregation-related internal variables being updated while
+    // iterating over the actions and compliance units during the `execute` function call.
     /// @param tags A variable to aggregate tags over the actions.
     /// @param logicRefs A variable to aggregate logic references over the actions.
+    /// @param latestCommitmentTreeRoot The latest commitment tree root to be stored in the set of historical roots at
+    /// the end of the `execute` function call.
     /// @param transactionDelta A variable to aggregate the unit deltas over the actions.
-    /// @param packedComplianceProofJournals A variable to aggregate RISC Zero compliance proof journals.
-    /// @param packedLogicProofJournals A variable to aggregate RISC Zero logic proof journals.
+    /// @param tagCounter A counter representing the index of the next resource tag to visit
+    /// @param isProofAggregated Whether the transaction to execute contains an aggregated proof or not.
+    /// @param complianceInstances A variable to aggregate RISC Zero compliance proof instances.
+    /// @param logicInstances A variable to aggregate RISC Zero logic proof instances.
     struct InternalVariables {
-        // Regular variables.
+        /* General variables */
         bytes32[] tags;
         bytes32[] logicRefs;
-        bytes32 commitmentTreeRoot;
+        bytes32 latestCommitmentTreeRoot;
         Delta.CurvePoint transactionDelta;
         uint256 tagCounter;
-        // Proof aggregation-related variables.
+        /* Proof aggregation-related variables */
         bool isProofAggregated;
         Compliance.Instance[] complianceInstances;
         Logic.Instance[] logicInstances;
@@ -98,7 +101,7 @@ contract ProtocolAdapter is
 
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
-    /// @dev This function cannot be called anymore after emergency stop has been called.
+    /// @dev This function cannot be called anymore once `emergencyStop()` has been called.
     function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
         InternalVariables memory vars = _initializeVars(transaction);
 
@@ -154,7 +157,7 @@ contract ProtocolAdapter is
             });
 
             // Store the final commitment tree root
-            _addCommitmentTreeRoot(vars.commitmentTreeRoot);
+            _addCommitmentTreeRoot(vars.latestCommitmentTreeRoot);
         }
 
         // Emit the event containing the transaction and new root
@@ -256,7 +259,23 @@ contract ProtocolAdapter is
         }
     }
 
+    /// @notice Processes the a resource logic proof by
+    /// * checking that the logic reference matches the one with the corresponding tag in the compliance unit,
+    /// * aggregating the logic instance OR verifying the RISC Zero logic proof,
+    /// * executing external forwarder calls,
+    /// * adding the consumed or created resource tag to the commitment tree or nullifier set,
+    /// * emitting the blobs contained in the app data payloads, and
+    /// * updating the internal variables
+    ///   * adding the tag to the `tags `array
+    ///   * adding the logic reference to the `logicRefs` array
+    ///   * incrementing the tag counter
+    ///   * updating the current commitment tree root
+    /// @param isConsumed Whether the logic belongs to a consumed or created resource.
+    /// @param input The logic verifier input.
+    /// @param complianceLogicRef The logic references as found in the corresponding compliance unit.
+    /// @param actionTreeRoot The action tree root.
     /// @param vars Internal variables to read from.
+    /// @return updatedVars The updated internal variables.
     function _processLogic(
         bool isConsumed,
         Logic.VerifierInput calldata input,
@@ -266,9 +285,10 @@ contract ProtocolAdapter is
     ) internal returns (InternalVariables memory updatedVars) {
         updatedVars = vars;
 
-        _checkLogicRefConsistency({fromLogicProof: input.verifyingKey, fromComplianceProof: complianceLogicRef});
-
-        _executeForwarderCalls(input);
+        _checkLogicRefConsistency({
+            logicRefFromLogicContext: input.verifyingKey,
+            logicRefFromComplianceUnit: complianceLogicRef
+        });
 
         {
             // Process logic proof.
@@ -289,6 +309,8 @@ contract ProtocolAdapter is
             }
         }
 
+        _executeForwarderCalls(input);
+
         bytes32 tag = input.tag;
         updatedVars.tags[updatedVars.tagCounter] = tag;
         updatedVars.logicRefs[updatedVars.tagCounter++] = input.verifyingKey;
@@ -297,13 +319,18 @@ contract ProtocolAdapter is
         if (isConsumed) {
             _addNullifier(tag);
         } else {
-            updatedVars.commitmentTreeRoot = _addCommitment(tag);
+            updatedVars.latestCommitmentTreeRoot = _addCommitment(tag);
         }
 
         _emitAppDataBlobs(input);
     }
 
+    /// @notice Processes the a resource machine compliance proof by
+    /// * checking that the commitment tree root references by the consumed resource is in the set of historical roots,
+    /// *
+    /// @param input The compliance verifier input.
     /// @param vars Internal variables to read from.
+    /// @return updatedVars The updated internal variables.
     function _processCompliance(Compliance.VerifierInput calldata input, InternalVariables memory vars)
         internal
         view
@@ -371,26 +398,30 @@ contract ProtocolAdapter is
     function _initializeVars(Transaction calldata transaction) internal pure returns (InternalVariables memory vars) {
         // Compute the tag count.
         //Note that this function ensures that the tag count is a multiple of two.
-        uint256 tagCount = _computeTagCount(transaction);
+        uint256 tagCount = _countTags(transaction);
 
         bool isProofAggregated = transaction.aggregationProof.length > 0;
 
         // Initialize
         vars = InternalVariables({
-            // Initialize regular variables.
+            /* General variables */
             tags: new bytes32[](tagCount),
             logicRefs: new bytes32[](tagCount),
-            commitmentTreeRoot: bytes32(0),
+            latestCommitmentTreeRoot: bytes32(0),
             transactionDelta: Delta.zero(),
             tagCounter: 0,
-            // Initialize proof aggregation-related variables.
+            /* Proof aggregation-related variables */
             isProofAggregated: isProofAggregated,
             complianceInstances: new Compliance.Instance[](isProofAggregated ? tagCount / 2 : 0),
             logicInstances: new Logic.Instance[](isProofAggregated ? tagCount : 0)
         });
     }
 
-    function _computeTagCount(Transaction calldata transaction) internal pure returns (uint256 tagCount) {
+    /// @notice Counts the resource tags in the transaction and checks for each action that the tag count within is
+    /// twice the number of compliance units.
+    /// @param transaction The transaction to count and check the tags for.
+    /// @return tagCount The computed tag count.
+    function _countTags(Transaction calldata transaction) internal pure returns (uint256 tagCount) {
         uint256 actionCount = transaction.actions.length;
 
         // Count the total number of tags in the transaction.
@@ -409,9 +440,16 @@ contract ProtocolAdapter is
         }
     }
 
-    function _checkLogicRefConsistency(bytes32 fromLogicProof, bytes32 fromComplianceProof) internal pure {
-        if (fromLogicProof != fromComplianceProof) {
-            revert LogicRefMismatch({expected: fromComplianceProof, actual: fromLogicProof});
+    /// @notice Checks that two logic references, one from the resource logic and the other from the compliance unit,
+    /// match.
+    /// @param logicRefFromLogicContext The logic references from the logic context.
+    /// @param logicRefFromComplianceUnit The logic references from the compliance unit.
+    function _checkLogicRefConsistency(bytes32 logicRefFromLogicContext, bytes32 logicRefFromComplianceUnit)
+        internal
+        pure
+    {
+        if (logicRefFromLogicContext != logicRefFromComplianceUnit) {
+            revert LogicRefMismatch({expected: logicRefFromComplianceUnit, actual: logicRefFromLogicContext});
         }
     }
 
