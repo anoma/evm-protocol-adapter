@@ -44,15 +44,15 @@ contract ProtocolAdapter is
     using RiscZeroUtils for Logic.Instance;
     using RiscZeroUtils for uint32;
 
-    /// @notice A data structure containing variables being updated while iterating over the actions and compliance
-    /// units within a transaction.
+    /// @notice A data structure containing internal variables being updated while iterating over the actions and
+    ///  compliance units of the transaction to execute.
     /// @param commitmentTreeRoot The commitment tree root for the root update.
     /// @param tags A variable to aggregate tags over the actions.
     /// @param logicRefs A variable to aggregate logic references over the actions.
     /// @param transactionDelta A variable to aggregate the unit deltas over the actions.
     /// @param packedComplianceProofJournals A variable to aggregate RISC Zero compliance proof journals.
     /// @param packedLogicProofJournals A variable to aggregate RISC Zero logic proof journals.
-    struct AggregatedArguments {
+    struct InternalVariables {
         bytes32 commitmentTreeRoot;
         bytes32[] tags;
         bytes32[] logicRefs;
@@ -99,7 +99,7 @@ contract ProtocolAdapter is
     function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
         (uint256 actionCount, uint256 tagCount) = _getCounts(transaction);
 
-        AggregatedArguments memory args = AggregatedArguments({
+        InternalVariables memory vars = InternalVariables({
             commitmentTreeRoot: bytes32(0),
             tags: new bytes32[](tagCount),
             logicRefs: new bytes32[](tagCount),
@@ -122,28 +122,28 @@ contract ProtocolAdapter is
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
                 // Compliance proof
-                args = _processCompliance({input: complianceVerifierInput, args: args});
+                vars = _processCompliance({input: complianceVerifierInput, vars: vars});
 
                 // Consumed logic proof
-                args = _processLogic({
+                vars = _processLogic({
                     isConsumed: true,
                     input: action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.consumed.nullifier}),
                     complianceLogicRef: complianceVerifierInput.instance.consumed.logicRef,
                     actionTreeRoot: actionTreeRoot,
-                    args: args
+                    vars: vars
                 });
 
                 // Created logic proof
-                args = _processLogic({
+                vars = _processLogic({
                     isConsumed: false,
                     input: action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.created.commitment}),
                     complianceLogicRef: complianceVerifierInput.instance.created.logicRef,
                     actionTreeRoot: actionTreeRoot,
-                    args: args
+                    vars: vars
                 });
 
                 // Add unit delta
-                args.transactionDelta = args.transactionDelta.add(
+                vars.transactionDelta = vars.transactionDelta.add(
                     Delta.CurvePoint({
                         x: uint256(complianceVerifierInput.instance.unitDeltaX),
                         y: uint256(complianceVerifierInput.instance.unitDeltaY)
@@ -155,36 +155,36 @@ contract ProtocolAdapter is
         }
 
         // Check if the transaction induces a state change.
-        if (args.tagCounter != 0) {
+        if (vars.tagCounter != 0) {
             // Check the delta proof.
             Delta.verify({
                 proof: transaction.deltaProof,
-                instance: args.transactionDelta,
-                verifyingKey: Delta.computeVerifyingKey(args.tags)
+                instance: vars.transactionDelta,
+                verifyingKey: Delta.computeVerifyingKey(vars.tags)
             });
 
             // Verify aggregation proof.
-            if (args.isProofAggregated) {
+            if (vars.isProofAggregated) {
                 // slither-disable-next-line calls-loop
                 _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                     seal: transaction.aggregationProof,
                     imageId: Aggregation._VERIFYING_KEY,
                     journalDigest: sha256(
                         Aggregation.Instance({
-                            complianceInstances: args.complianceInstances,
-                            logicInstances: args.logicInstances,
-                            logicRefs: args.logicRefs
+                            complianceInstances: vars.complianceInstances,
+                            logicInstances: vars.logicInstances,
+                            logicRefs: vars.logicRefs
                         }).toJournal()
                     )
                 });
             }
 
             // Store the final commitment tree root
-            _addCommitmentTreeRoot(args.commitmentTreeRoot);
+            _addCommitmentTreeRoot(vars.commitmentTreeRoot);
         }
 
         // Emit the event containing the transaction and new root
-        emit TransactionExecuted({tags: args.tags, logicRefs: args.logicRefs});
+        emit TransactionExecuted({tags: vars.tags, logicRefs: vars.logicRefs});
     }
     // slither-disable-end reentrancy-no-eth
 
@@ -285,12 +285,12 @@ contract ProtocolAdapter is
         }
     }
 
-    function _processCompliance(Compliance.VerifierInput calldata input, AggregatedArguments memory args)
+    function _processCompliance(Compliance.VerifierInput calldata input, InternalVariables memory vars)
         internal
         view
-        returns (AggregatedArguments memory updatedArgs)
+        returns (InternalVariables memory updatedVars)
     {
-        updatedArgs = args;
+        updatedVars = vars;
 
         bytes32 root = input.instance.consumed.commitmentTreeRoot;
         if (!_isCommitmentTreeRootContained(root)) {
@@ -298,8 +298,8 @@ contract ProtocolAdapter is
         }
 
         // Aggregate the compliance instance
-        if (args.isProofAggregated) {
-            updatedArgs.complianceInstances[args.tagCounter / 2] = input.instance;
+        if (vars.isProofAggregated) {
+            updatedVars.complianceInstances[vars.tagCounter / 2] = input.instance;
         }
         // Verify the compliance proof.
         else {
@@ -317,9 +317,9 @@ contract ProtocolAdapter is
         Logic.VerifierInput calldata input,
         bytes32 complianceLogicRef,
         bytes32 actionTreeRoot,
-        AggregatedArguments memory args
-    ) internal returns (AggregatedArguments memory updatedArgs) {
-        updatedArgs = args;
+        InternalVariables memory vars
+    ) internal returns (InternalVariables memory updatedVars) {
+        updatedVars = vars;
 
         _checkLogicRefConsistency({fromLogicProof: input.verifyingKey, fromComplianceProof: complianceLogicRef});
 
@@ -328,8 +328,8 @@ contract ProtocolAdapter is
             Logic.Instance memory instance = input.getInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
 
             // Aggregate the logic instance.
-            if (args.isProofAggregated) {
-                updatedArgs.logicInstances[updatedArgs.tagCounter] = instance;
+            if (vars.isProofAggregated) {
+                updatedVars.logicInstances[updatedVars.tagCounter] = instance;
             }
             // Verify the logic proof.
             else {
@@ -348,12 +348,12 @@ contract ProtocolAdapter is
         if (isConsumed) {
             _addNullifier(tag);
         } else {
-            updatedArgs.commitmentTreeRoot = _addCommitment(tag);
+            updatedVars.commitmentTreeRoot = _addCommitment(tag);
         }
 
         // Transition the resource machine state.
-        updatedArgs.tags[updatedArgs.tagCounter] = tag;
-        updatedArgs.logicRefs[updatedArgs.tagCounter++] = input.verifyingKey;
+        updatedVars.tags[updatedVars.tagCounter] = tag;
+        updatedVars.logicRefs[updatedVars.tagCounter++] = input.verifyingKey;
 
         _emitAppDataBlobs(input);
     }
