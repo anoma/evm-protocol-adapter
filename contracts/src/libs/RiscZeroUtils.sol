@@ -38,7 +38,7 @@ library RiscZeroUtils {
     function toJournal(Logic.Instance memory input) internal pure returns (bytes memory converted) {
         converted = abi.encodePacked(
             input.tag,
-            input.isConsumed.toRiscZero(),
+            input.isConsumed ? uint32(0x01000000) : uint32(0x00000000),
             input.actionTreeRoot,
             encodePayload(input.appData.resourcePayload),
             encodePayload(input.appData.discoveryPayload),
@@ -105,12 +105,5 @@ library RiscZeroUtils {
                 reverseByteOrderUint32(uint32(payload[i].deletionCriterion))
             );
         }
-    }
-
-    /// @notice Converts a `bool` to the RISC Zero format to `bytes4` by appending three zero bytes.
-    /// @param value The value.
-    /// @return converted The converted value.
-    function toRiscZero(bool value) internal pure returns (uint32 converted) {
-        converted = value ? 0x01000000 : 0x00000000;
     }
 }
