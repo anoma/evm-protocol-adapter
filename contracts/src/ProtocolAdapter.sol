@@ -38,6 +38,7 @@ contract ProtocolAdapter is
     using RiscZeroUtils for Aggregation.Instance;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.VerifierInput;
+    using RiscZeroUtils for Logic.Instance;
     using RiscZeroUtils for uint32;
     using Logic for Logic.VerifierInput[];
     using Delta for uint256[2];
@@ -305,16 +306,20 @@ contract ProtocolAdapter is
         }
 
         // Process logic proof.
-        {
-            // Aggregate the logic instance.
-            if (!isProofAggregated) {
-                // slither-disable-next-line calls-loop
-                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                    seal: input.proof,
-                    imageId: input.verifyingKey,
-                    journalDigest: sha256(input.toJournal({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed}))
-                });
-            }
+
+        if (!isProofAggregated) {
+            // slither-disable-next-line calls-loop
+            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                seal: input.proof,
+                imageId: input.verifyingKey,
+                journalDigest: sha256(
+                    Logic.Instance({
+                        tag: input.tag,
+                        isConsumed: isConsumed,
+                        actionTreeRoot: actionTreeRoot,
+                        appData: input.appData
+                        }).toJournal())
+            });
         }
     }
 
