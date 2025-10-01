@@ -38,11 +38,9 @@ contract ProtocolAdapter is
     using MerkleTree for bytes32[];
     using Logic for Logic.VerifierInput[];
     using Logic for Logic.VerifierInput;
-    using Logic for bytes32[];
     using RiscZeroUtils for Aggregation.Instance;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
-    using RiscZeroUtils for uint32;
 
     /// @notice A data structure containing general and proof aggregation-related internal variables being updated while
     // iterating over the actions and compliance units during the `execute` function call.
