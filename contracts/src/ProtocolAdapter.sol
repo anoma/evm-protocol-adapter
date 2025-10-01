@@ -46,6 +46,7 @@ contract ProtocolAdapter is
         bytes32 commitmentTreeRoot;
         bytes32[] tags;
         bytes32[] logicRefs;
+        uint256 tagCounter;
         uint256[2] transactionDelta;
         Compliance.Instance[] complianceInstances;
         Logic.Instance[] logicInstances;
@@ -105,6 +106,7 @@ contract ProtocolAdapter is
             commitmentTreeRoot: bytes32(0),
             tags: new bytes32[](tagCounter),
             logicRefs: new bytes32[](tagCounter),
+            tagCounter: 0,
             transactionDelta: [uint256(0), uint256(0)],
             complianceInstances: new Compliance.Instance[](tagCounter / 2),
             logicInstances: new Logic.Instance[](tagCounter)
@@ -112,27 +114,23 @@ contract ProtocolAdapter is
 
         bool isProofAggregated = transaction.aggregationProof.length != 0;
 
-        tagCounter = 0;
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
             bytes32[] memory tagList = new bytes32[](action.logicVerifierInputs.length);
 
             // Make Compliance-level Checks
-            (args, tagList, tagCounter) =
-                _processComplianceUnits(action.complianceVerifierInputs, args, isProofAggregated, tagCounter);
+            (args, tagList) = _processComplianceUnits(action.complianceVerifierInputs, args, isProofAggregated);
 
             bytes32 actionTreeRoot = tagList.computeRoot();
 
             // Make Action-level Checks
-            args = _processLogicInputs(
-                action.logicVerifierInputs, args, isProofAggregated, tagCounter, actionTreeRoot, tagList
-            );
+            args = _processLogicInputs(action.logicVerifierInputs, args, isProofAggregated, actionTreeRoot, tagList);
 
             emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: action.logicVerifierInputs.length});
         }
 
         // Check if the transaction induces a state change.
-        if (tagCounter != 0) {
+        if (args.tagCounter != 0) {
             // Check the delta proof.
             Delta.verify({
                 proof: transaction.deltaProof,
@@ -323,9 +321,8 @@ contract ProtocolAdapter is
     function _processComplianceUnits(
         Compliance.VerifierInput[] calldata units,
         AggregatedArguments memory args,
-        bool isProofAggregated,
-        uint256 tagCounter
-    ) internal view returns (AggregatedArguments memory newArgs, bytes32[] memory tagList, uint256 newTagCounter) {
+        bool isProofAggregated
+    ) internal view returns (AggregatedArguments memory newArgs, bytes32[] memory tagList) {
         uint256 complianceUnitCount = units.length;
         tagList = new bytes32[](complianceUnitCount * 2);
         for (uint256 j = 0; j < complianceUnitCount; ++j) {
@@ -335,19 +332,19 @@ contract ProtocolAdapter is
             _processComplianceProof(complianceVerifierInput, isProofAggregated);
 
             if (isProofAggregated) {
-                args.complianceInstances[tagCounter / 2] = complianceVerifierInput.instance;
+                args.complianceInstances[args.tagCounter / 2] = complianceVerifierInput.instance;
             }
 
             // Consumed resource logic proof.
             bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
             bytes32 cm = complianceVerifierInput.instance.created.commitment;
 
-            args.tags[tagCounter] = nf;
-            args.logicRefs[tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
+            args.tags[args.tagCounter] = nf;
+            args.logicRefs[args.tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
             tagList[2 * j] = nf;
 
-            args.tags[tagCounter] = cm;
-            args.logicRefs[tagCounter++] = complianceVerifierInput.instance.created.logicRef;
+            args.tags[args.tagCounter] = cm;
+            args.logicRefs[args.tagCounter++] = complianceVerifierInput.instance.created.logicRef;
             tagList[(2 * j) + 1] = cm;
 
             // Compute transaction delta.
@@ -359,14 +356,12 @@ contract ProtocolAdapter is
             );
         }
         newArgs = args;
-        newTagCounter = tagCounter;
     }
 
     function _processLogicInputs(
         Logic.VerifierInput[] calldata inputs,
         AggregatedArguments memory args,
         bool isProofAggregated,
-        uint256 tagCounter,
         bytes32 actionTreeRoot,
         bytes32[] memory tagList
     ) internal returns (AggregatedArguments memory newArgs) {
@@ -374,7 +369,7 @@ contract ProtocolAdapter is
             Logic.VerifierInput calldata logicInput = inputs[k];
             uint256 position = _lookup(tagList, logicInput.tag);
             bool isConsumed = (position % 2 == 0);
-            uint256 globalPosition = tagCounter + position - tagList.length;
+            uint256 globalPosition = args.tagCounter + position - tagList.length;
 
             _processLogicProof({
                 input: logicInput,
