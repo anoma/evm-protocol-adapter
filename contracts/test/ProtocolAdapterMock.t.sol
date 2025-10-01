@@ -13,6 +13,7 @@ import {MerkleTree} from "./../src/libs/MerkleTree.sol";
 import {SHA256} from "./../src/libs/SHA256.sol";
 
 import {ProtocolAdapter} from "./../src/ProtocolAdapter.sol";
+import {Delta} from "./../src/proving/Delta.sol";
 import {Compliance} from "./../src/proving/Compliance.sol";
 import {Logic} from "./../src/proving/Logic.sol";
 import {CommitmentTree} from "./../src/state/CommitmentTree.sol";
@@ -530,6 +531,23 @@ contract ProtocolAdapterMockVerifierTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(ProtocolAdapter.ForwarderCallOutputMismatch.selector, fakeOutput, EXPECTED_OUTPUT)
         );
+        _mockPa.execute(txn);
+    }
+
+    function testFuzz_execute_reverts_on_ubalanced_delta(uint128 createdQuantity, uint128 consumedQuantity) public {
+        vm.assume(createdQuantity != consumedQuantity);
+         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 0});
+
+         // Make transaction unbalanced by offsettig the deltas.
+         created[0].resource.quantity = createdQuantity;
+         consumed[0].resource.quantity = consumedQuantity;
+
+         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+
+        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         _mockPa.execute(txn);
     }
 
