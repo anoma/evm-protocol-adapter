@@ -122,10 +122,10 @@ contract ProtocolAdapter is
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
                 // Compliance proof
-                args = _processComplianceProof({input: complianceVerifierInput, args: args});
+                args = _processCompliance({input: complianceVerifierInput, args: args});
 
                 // Consumed logic proof
-                args = _processLogicProof({
+                args = _processLogic({
                     isConsumed: true,
                     input: action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.consumed.nullifier}),
                     complianceLogicRef: complianceVerifierInput.instance.consumed.logicRef,
@@ -134,7 +134,7 @@ contract ProtocolAdapter is
                 });
 
                 // Created logic proof
-                args = _processLogicProof({
+                args = _processLogic({
                     isConsumed: false,
                     input: action.logicVerifierInputs.lookup({tag: complianceVerifierInput.instance.created.commitment}),
                     complianceLogicRef: complianceVerifierInput.instance.created.logicRef,
@@ -285,7 +285,7 @@ contract ProtocolAdapter is
         }
     }
 
-    function _processComplianceProof(Compliance.VerifierInput calldata input, AggregatedArguments memory args)
+    function _processCompliance(Compliance.VerifierInput calldata input, AggregatedArguments memory args)
         internal
         view
         returns (AggregatedArguments memory updatedArgs)
@@ -312,7 +312,7 @@ contract ProtocolAdapter is
         }
     }
 
-    function _processLogicProof(
+    function _processLogic(
         bool isConsumed,
         Logic.VerifierInput calldata input,
         bytes32 complianceLogicRef,
