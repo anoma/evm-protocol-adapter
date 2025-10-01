@@ -314,17 +314,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Test that transactions with nonexistent rotts fail
     function testFuzz_execute_non_existing_root_fails(
-        uint8 actionCount,
-        uint8 complianceUnitCount,
-        NonExistingRootFailsParams memory params
+        TxGen.TransactionParams memory txParams,
+        NonExistingRootFailsParams memory mutParams
     ) public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
-            actionCount: uint8(bound(actionCount, 1, 5)),
-            complianceUnitCount: uint8(bound(complianceUnitCount, 1, 5))
-        });
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutationTestExecuteNonExistingRootFails(txn, params);
+        mutationTestExecuteNonExistingRootFails(vm.transaction(_mockVerifier, txParams), mutParams);
     }
 
     /// @notice Make transaction fail by giving it a proof that's too short
@@ -352,17 +345,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Test that transactions with short proofs fail
     function testFuzz_execute_short_proof_fails(
-        uint8 actionCount,
-        uint8 complianceUnitCount,
-        GenericFailParams memory params
+        TxGen.TransactionParams memory txParams,
+        GenericFailParams memory mutParams
     ) public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
-            actionCount: uint8(bound(actionCount, 1, 5)),
-            complianceUnitCount: uint8(bound(complianceUnitCount, 1, 5))
-        });
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        this.mutationTestExecuteShortProofFails(txn, params);
+        this.mutationTestExecuteShortProofFails(vm.transaction(_mockVerifier, txParams), mutParams);
     }
 
     /// @notice Make transaction fail by giving it an unknown selector.
@@ -393,17 +379,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Test that transactions with unknown selectors fail
     function testFuzz_execute_unknown_selector_fails(
-        uint8 actionCount,
-        uint8 complianceUnitCount,
-        UnknownSelectorFailsParams memory params
+        TxGen.TransactionParams memory txParams,
+        UnknownSelectorFailsParams memory mutParams
     ) public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
-            actionCount: uint8(bound(actionCount, 1, 5)),
-            complianceUnitCount: uint8(bound(complianceUnitCount, 1, 5))
-        });
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutationTestExecuteUnknownSelectorFails(txn, params);
+        mutationTestExecuteUnknownSelectorFails(vm.transaction(_mockVerifier, txParams), mutParams);
     }
 
     /// @notice Make transaction fail by ensuring unknown tag
@@ -436,17 +415,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Test that transactions with unknown tags fail
     function testFuzz_execute_unknown_tag_fails(
-        uint8 actionCount,
-        uint8 complianceUnitCount,
-        UnknownTagFailsParams memory params
+        TxGen.TransactionParams memory txParams,
+        UnknownTagFailsParams memory mutParams
     ) public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
-            actionCount: uint8(bound(actionCount, 1, 5)),
-            complianceUnitCount: uint8(bound(complianceUnitCount, 1, 5))
-        });
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        this.mutationTestExecuteUnknownTagFails(txn, params);
+        this.mutationTestExecuteUnknownTagFails(vm.transaction(_mockVerifier, txParams), mutParams);
     }
 
     /// @notice Make transaction fail by ensuring that it has less compliance verifier inputs
@@ -482,17 +454,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Test that transactions with a missing compliance verifier input fail
     function testFuzz_execute_missing_compliance_verifier_input_fail(
-        uint8 actionCount,
-        uint8 complianceUnitCount,
-        GenericFailParams memory params
+        TxGen.TransactionParams memory txParams,
+        GenericFailParams memory mutParams
     ) public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
-            actionCount: uint8(bound(actionCount, 1, 5)),
-            complianceUnitCount: uint8(bound(complianceUnitCount, 1, 5))
-        });
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutationTestExecuteMissingComplianceVerifierInputFail(txn, params);
+        mutationTestExecuteMissingComplianceVerifierInputFail(vm.transaction(_mockVerifier, txParams), mutParams);
     }
 
     /// @notice Make transaction fail by ensuring that it has less logic verifier inputs
@@ -528,17 +493,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Test that transactions with a missing logic verifier input fail
     function testFuzz_execute_missing_logic_verifier_input_fail(
-        uint8 actionCount,
-        uint8 complianceUnitCount,
-        GenericFailParams memory params
+        TxGen.TransactionParams memory txParams,
+        GenericFailParams memory mutParams
     ) public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
-            actionCount: uint8(bound(actionCount, 1, 5)),
-            complianceUnitCount: uint8(bound(complianceUnitCount, 1, 5))
-        });
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutationTestExecuteMissingLogicVerifierInputFail(txn, params);
+        mutationTestExecuteMissingLogicVerifierInputFail(vm.transaction(_mockVerifier, txParams), mutParams);
     }
 
     /// @notice Make transaction fail by making logic reference mismatch
@@ -562,17 +520,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Test that transactions with mismatching logic references fail
     function testFuzz_execute_mismatching_logic_refs_fail(
-        uint8 actionCount,
-        uint8 complianceUnitCount,
-        MismatchingLogicRefsFailParams memory params
+        TxGen.TransactionParams memory txParams,
+        MismatchingLogicRefsFailParams memory mutParams
     ) public {
-        TxGen.ActionConfig[] memory configs = TxGen.generateActionConfigs({
-            actionCount: uint8(bound(actionCount, 1, 5)),
-            complianceUnitCount: uint8(bound(complianceUnitCount, 1, 5))
-        });
-
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        mutationTestExecuteMismatchingLogicRefsFail(txn, params);
+        mutationTestExecuteMismatchingLogicRefsFail(vm.transaction(_mockVerifier, txParams), mutParams);
     }
 
     /// @notice Make transaction fail by ensuring that one of its forwarder call outputs mismatch.
