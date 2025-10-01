@@ -100,7 +100,7 @@ contract ProtocolAdapter is
         (uint256 actionCount, uint256 tagCount) = _computeCounts(transaction);
 
         InternalVariables memory vars =
-            _initializeVars({tagCount: tagCount, isProofAggregated: transaction.aggregationProof.length != 0});
+            _initializeVars({tagCount: tagCount, isProofAggregated: transaction.aggregationProof.length > 0});
 
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
@@ -145,8 +145,12 @@ contract ProtocolAdapter is
         }
 
         // Check if the transaction induces a state change.
-        if (vars.tagCounter != 0) {
-            _verifyGlobalProofs(transaction, vars);
+        if (vars.tagCounter > 0) {
+            _verifyGlobalProofs({
+                deltaProof: transaction.deltaProof,
+                aggregationProof: transaction.aggregationProof,
+                vars: vars
+            });
 
             // Store the final commitment tree root
             _addCommitmentTreeRoot(vars.commitmentTreeRoot);
