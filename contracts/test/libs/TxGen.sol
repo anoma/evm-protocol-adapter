@@ -37,6 +37,7 @@ library TxGen {
 
     error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
     error NonExistingTag(bytes32 tag);
+    error TransactionTagCountMismatch();
 
     function complianceVerifierInput(
         VmSafe vm,
@@ -370,6 +371,11 @@ library TxGen {
     {
         uint256 n = 0;
         bytes32[] memory logicRefs = collectLogicRefs(txn.actions);
+
+        if (countComplianceUnits(txn.actions) * 2 != logicRefs.length) {
+            revert TransactionTagCountMismatch();
+        }
+
         Compliance.Instance[] memory complianceInstances = new Compliance.Instance[](logicRefs.length / 2);
         Logic.Instance[] memory logicInstances = new Logic.Instance[](logicRefs.length);
         for (uint256 i = 0; i < txn.actions.length; ++i) {
