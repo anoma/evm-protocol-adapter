@@ -125,29 +125,8 @@ contract ProtocolAdapter is
 
         // Check if the transaction induces a state change.
         if (args.tagCounter != 0) {
-            // Check the delta proof.
-            Delta.verify({
-                proof: transaction.deltaProof,
-                instance: args.transactionDelta,
-                verifyingKey: Delta.computeVerifyingKey(args.tags)
-            });
-
-            // Verify aggregation proof.
-            if (isProofAggregated) {
-                // slither-disable-next-line calls-loop
-                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                    seal: transaction.aggregationProof,
-                    imageId: Aggregation._VERIFYING_KEY,
-                    journalDigest: sha256(
-                        Aggregation.Instance({
-                            complianceInstances: args.complianceInstances,
-                            logicInstances: args.logicInstances,
-                            logicRefs: args.logicRefs
-                        }).toJournal()
-                    )
-                });
-            }
-
+            // Verify delta and aggregation proofs.
+            _processGlobalProofs(transaction, args);
             // Store the final commitment tree root
             _addCommitmentTreeRoot(args.commitmentTreeRoot);
         }
@@ -162,17 +141,28 @@ contract ProtocolAdapter is
         _pause();
     }
 
-    function _computeTagCount(Action[] calldata actions) internal view returns (uint256 tagCount) {
-        uint256 actionCount = actions.length;
-        for (uint256 i = 0; i < actionCount; ++i) {
-            uint256 complianceUnitCount = actions[i].complianceVerifierInputs.length;
-            uint256 actionTagCount = actions[i].logicVerifierInputs.length;
+    function _processGlobalProofs(Transaction calldata transaction, AggregatedArguments memory args) internal view {
+        // Check the delta proof.
+        Delta.verify({
+            proof: transaction.deltaProof,
+            instance: args.transactionDelta,
+            verifyingKey: Delta.computeVerifyingKey(args.tags)
+        });
 
-            // Check that the tag count in the action and compliance units match.
-            if (actionTagCount != complianceUnitCount * 2) {
-                revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
-            }
-            tagCount += actions[i].logicVerifierInputs.length;
+        // Verify aggregation proof.
+        if (transaction.aggregationProof.length != 0) {
+            // slither-disable-next-line calls-loop
+            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                seal: transaction.aggregationProof,
+                imageId: Aggregation._VERIFYING_KEY,
+                journalDigest: sha256(
+                    Aggregation.Instance({
+                        complianceInstances: args.complianceInstances,
+                        logicInstances: args.logicInstances,
+                        logicRefs: args.logicRefs
+                    }).toJournal()
+                )
+            });
         }
     }
 
@@ -410,6 +400,20 @@ contract ProtocolAdapter is
             _emitAppDataBlobs(logicInput.appData, logicInput.tag);
         }
         newArgs = args;
+    }
+
+    function _computeTagCount(Action[] calldata actions) internal pure returns (uint256 tagCount) {
+        uint256 actionCount = actions.length;
+        for (uint256 i = 0; i < actionCount; ++i) {
+            uint256 complianceUnitCount = actions[i].complianceVerifierInputs.length;
+            uint256 actionTagCount = actions[i].logicVerifierInputs.length;
+
+            // Check that the tag count in the action and compliance units match.
+            if (actionTagCount != complianceUnitCount * 2) {
+                revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
+            }
+            tagCount += actions[i].logicVerifierInputs.length;
+        }
     }
 
     function _lookup(bytes32[] memory list, bytes32 tag) internal pure returns (uint256 position) {
