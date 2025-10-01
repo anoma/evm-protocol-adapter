@@ -85,7 +85,13 @@ library RiscZeroUtils {
             Logic.Instance memory cmInstance = instance.logicInstances[(j * 2) + 1];
             bytes memory nfJournal = nfInstance.toJournal();
             bytes memory cmJournal = cmInstance.toJournal();
-            logicsJournal = abi.encodePacked(logicsJournal, uint32(nfJournal.length / 4).toRiscZero(), nfJournal,  uint32(cmJournal.length / 4).toRiscZero(), cmJournal);
+            logicsJournal = abi.encodePacked(
+                logicsJournal,
+                uint32(nfJournal.length / 4).toRiscZero(),
+                nfJournal,
+                uint32(cmJournal.length / 4).toRiscZero(),
+                cmJournal
+            );
         }
 
         journal = abi.encodePacked(

@@ -91,6 +91,13 @@ contract ProtocolAdapter is
 
         // Count the total number of tags in the transaction.
         for (uint256 i = 0; i < actionCount; ++i) {
+            uint256 complianceUnitCount = transaction.actions[i].complianceVerifierInputs.length;
+            uint256 actionTagCount = transaction.actions[i].logicVerifierInputs.length;
+
+            // Check that the tag count in the action and compliance units match.
+            if (actionTagCount != complianceUnitCount * 2) {
+                revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
+            }
             tagCounter += transaction.actions[i].logicVerifierInputs.length;
         }
 
@@ -108,40 +115,8 @@ contract ProtocolAdapter is
         tagCounter = 0;
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
-
-            _checkActionPartitioning(action);
-            uint256 complianceUnitCount = action.complianceVerifierInputs.length;
-            bytes32[] memory tagList = new bytes32[](complianceUnitCount * 2);
-            for (uint256 j = 0; j < complianceUnitCount; ++j) {
-                // Compliance Proof
-                Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-
-                _processComplianceProof(complianceVerifierInput, isProofAggregated);
-
-                if (isProofAggregated) {
-                    args.complianceInstances[tagCounter / 2] = complianceVerifierInput.instance;
-                }
-
-                // Consumed resource logic proof.
-                bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
-                bytes32 cm = complianceVerifierInput.instance.created.commitment;
-
-                args.tags[tagCounter] = nf;
-                args.logicRefs[tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
-                tagList[2 * j] = nf;
-
-                args.tags[tagCounter] = cm;
-                args.logicRefs[tagCounter++] = complianceVerifierInput.instance.created.logicRef;
-                tagList[(2 * j) + 1] = cm;
-
-                // Compute transaction delta.
-                args.transactionDelta = args.transactionDelta.add(
-                    [
-                        uint256(complianceVerifierInput.instance.unitDeltaX),
-                        uint256(complianceVerifierInput.instance.unitDeltaY)
-                    ]
-                );
-            }
+            bytes32[] memory tagList = new bytes32[](action.logicVerifierInputs.length);
+            (args, tagList, tagCounter) = _processComplianceUnits(action.complianceVerifierInputs, args, isProofAggregated, tagCounter);
 
             bytes32 actionTreeRoot = tagList.computeRoot();
 
@@ -369,6 +344,44 @@ contract ProtocolAdapter is
         }
     }
 
+    function _processComplianceUnits(Compliance.VerifierInput[] calldata units, AggregatedArguments memory args, bool isProofAggregated, uint256 tagCounter) internal view returns (AggregatedArguments memory newArgs, bytes32[] memory tagList, uint256 newTagCounter) {
+        uint256 complianceUnitCount = units.length;
+        tagList = new bytes32[](complianceUnitCount * 2);
+        for (uint256 j = 0; j < complianceUnitCount; ++j) {
+        // Compliance Proof
+                Compliance.VerifierInput calldata complianceVerifierInput = units[j];
+
+                _processComplianceProof(complianceVerifierInput, isProofAggregated);
+
+                if (isProofAggregated) {
+                    args.complianceInstances[tagCounter / 2] = complianceVerifierInput.instance;
+                }
+
+                // Consumed resource logic proof.
+                bytes32 nf = complianceVerifierInput.instance.consumed.nullifier;
+                bytes32 cm = complianceVerifierInput.instance.created.commitment;
+
+                args.tags[tagCounter] = nf;
+                args.logicRefs[tagCounter++] = complianceVerifierInput.instance.consumed.logicRef;
+                tagList[2 * j] = nf;
+
+                args.tags[tagCounter] = cm;
+                args.logicRefs[tagCounter++] = complianceVerifierInput.instance.created.logicRef;
+                tagList[(2 * j) + 1] = cm;
+
+                // Compute transaction delta.
+                args.transactionDelta = args.transactionDelta.add(
+                    [
+                        uint256(complianceVerifierInput.instance.unitDeltaX),
+                        uint256(complianceVerifierInput.instance.unitDeltaY)
+                    ]
+                );
+            }
+         newArgs = args;
+         newTagCounter = tagCounter;
+    }
+
+
     function _lookup(bytes32[] memory list, bytes32 tag) internal pure returns (uint256 position) {
         uint256 len = list.length;
         for (uint256 i = 0; i < len; ++i) {
@@ -377,17 +390,5 @@ contract ProtocolAdapter is
             }
         }
         revert TagNotFound(tag);
-    }
-
-    /// @notice Checks the compliance units partition the action.
-    /// @param action The action to check.
-    function _checkActionPartitioning(Action calldata action) internal pure {
-        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
-        uint256 actionTagCount = action.logicVerifierInputs.length;
-
-        // Check that the tag count in the action and compliance units match.
-        if (actionTagCount != complianceUnitCount * 2) {
-            revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
-        }
     }
 }
