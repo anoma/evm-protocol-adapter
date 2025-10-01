@@ -120,7 +120,7 @@ contract ProtocolAdapter is
                 vars = _processLogic({
                     isConsumed: true,
                     input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.consumed.nullifier),
-                    complianceLogicRef: complianceVerifierInput.instance.consumed.logicRef,
+                    logicRefFromComplianceUnit: complianceVerifierInput.instance.consumed.logicRef,
                     actionTreeRoot: actionTreeRoot,
                     vars: vars
                 });
@@ -129,7 +129,7 @@ contract ProtocolAdapter is
                 vars = _processLogic({
                     isConsumed: false,
                     input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.created.commitment),
-                    complianceLogicRef: complianceVerifierInput.instance.created.logicRef,
+                    logicRefFromComplianceUnit: complianceVerifierInput.instance.created.logicRef,
                     actionTreeRoot: actionTreeRoot,
                     vars: vars
                 });
@@ -270,23 +270,24 @@ contract ProtocolAdapter is
     ///   * updating the current commitment tree root
     /// @param isConsumed Whether the logic belongs to a consumed or created resource.
     /// @param input The logic verifier input.
-    /// @param complianceLogicRef The logic references as found in the corresponding compliance unit.
+    /// @param logicRefFromComplianceUnit The logic references as found in the corresponding compliance unit.
     /// @param actionTreeRoot The action tree root.
     /// @param vars Internal variables to read from.
     /// @return updatedVars The updated internal variables.
     function _processLogic(
         bool isConsumed,
         Logic.VerifierInput calldata input,
-        bytes32 complianceLogicRef,
+        bytes32 logicRefFromComplianceUnit,
         bytes32 actionTreeRoot,
         InternalVariables memory vars
     ) internal returns (InternalVariables memory updatedVars) {
         updatedVars = vars;
 
-        _checkLogicRefConsistency({
-            logicRefFromLogicContext: input.verifyingKey,
-            logicRefFromComplianceUnit: complianceLogicRef
-        });
+        bytes32 logicRef = input.verifyingKey;
+
+        if (logicRef != logicRefFromComplianceUnit) {
+            revert LogicRefMismatch({expected: logicRefFromComplianceUnit, actual: logicRef});
+        }
 
         {
             // Process logic proof.
@@ -301,7 +302,7 @@ contract ProtocolAdapter is
                 // slither-disable-next-line calls-loop
                 _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                     seal: input.proof,
-                    imageId: input.verifyingKey,
+                    imageId: logicRef,
                     journalDigest: sha256(instance.toJournal())
                 });
             }
@@ -311,7 +312,7 @@ contract ProtocolAdapter is
 
         bytes32 tag = input.tag;
         updatedVars.tags[updatedVars.tagCounter] = tag;
-        updatedVars.logicRefs[updatedVars.tagCounter++] = input.verifyingKey;
+        updatedVars.logicRefs[updatedVars.tagCounter++] = logicRef;
 
         // Transition the resource machine state.
         if (isConsumed) {
@@ -435,19 +436,6 @@ contract ProtocolAdapter is
             }
 
             tagCount += action.logicVerifierInputs.length;
-        }
-    }
-
-    /// @notice Checks that two logic references, one from the resource logic and the other from the compliance unit,
-    /// match.
-    /// @param logicRefFromLogicContext The logic references from the logic context.
-    /// @param logicRefFromComplianceUnit The logic references from the compliance unit.
-    function _checkLogicRefConsistency(bytes32 logicRefFromLogicContext, bytes32 logicRefFromComplianceUnit)
-        internal
-        pure
-    {
-        if (logicRefFromLogicContext != logicRefFromComplianceUnit) {
-            revert LogicRefMismatch({expected: logicRefFromComplianceUnit, actual: logicRefFromLogicContext});
         }
     }
 
