@@ -154,7 +154,7 @@ contract ProtocolAdapter is
                     args: args
                 });
 
-                // AggregatAdde unit delta
+                // Add unit delta
                 args.transactionDelta = args.transactionDelta.add(
                     Delta.CurvePoint({
                         x: uint256(complianceVerifierInput.instance.unitDeltaX),
