@@ -189,8 +189,8 @@ contract ProtocolAdapter is
 
     /// @notice Executes a call to a forwarder contracts.
     /// @param carrierLogicRef The logic reference of the carrier resource.
-    /// @param callBlob The blob containing the call instruction.
-    function _executeForwarderCall(bytes32 carrierLogicRef, bytes memory callBlob) internal {
+    /// @param callBlob The blob containing the external call instruction.
+    function _executeForwarderCall(bytes32 carrierLogicRef, bytes calldata callBlob) internal {
         (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
             abi.decode(callBlob, (address, bytes, bytes));
 
