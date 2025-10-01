@@ -92,6 +92,7 @@ contract ProtocolAdapter is
         uint256 tagCounter = 0;
 
         // Count the total number of tags in the transaction.
+        // Reverts if number of tags in actions and compliance units mismatch.
         tagCounter = _computeTagCount(transaction.actions);
 
         AggregatedArguments memory args = AggregatedArguments({
@@ -104,6 +105,7 @@ contract ProtocolAdapter is
             logicInstances: new Logic.Instance[](tagCounter)
         });
 
+        // If there is an aggregated proof present, we will skip all individual resource logic and compliance checks.
         bool isProofAggregated = transaction.aggregationProof.length != 0;
 
         for (uint256 i = 0; i < actionCount; ++i) {
@@ -111,6 +113,7 @@ contract ProtocolAdapter is
             bytes32[] memory tagList = new bytes32[](action.logicVerifierInputs.length);
 
             // Make Compliance-level Checks
+            // Returns global arguments and the list of all tags in the action ordered by compliance units.
             (args, tagList) = _processComplianceUnits(action.complianceVerifierInputs, args, isProofAggregated);
 
             bytes32 actionTreeRoot = tagList.computeRoot();
