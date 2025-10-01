@@ -92,16 +92,7 @@ contract ProtocolAdapter is
         uint256 tagCounter = 0;
 
         // Count the total number of tags in the transaction.
-        for (uint256 i = 0; i < actionCount; ++i) {
-            uint256 complianceUnitCount = transaction.actions[i].complianceVerifierInputs.length;
-            uint256 actionTagCount = transaction.actions[i].logicVerifierInputs.length;
-
-            // Check that the tag count in the action and compliance units match.
-            if (actionTagCount != complianceUnitCount * 2) {
-                revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
-            }
-            tagCounter += transaction.actions[i].logicVerifierInputs.length;
-        }
+        tagCounter = _computeTagCount(transaction.actions);
 
         AggregatedArguments memory args = AggregatedArguments({
             commitmentTreeRoot: bytes32(0),
@@ -167,6 +158,20 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function emergencyStop() external override onlyOwner whenNotPaused {
         _pause();
+    }
+
+    function _computeTagCount(Action[] calldata actions) internal view returns (uint256 tagCount) {
+        uint256 actionCount = actions.length;
+         for (uint256 i = 0; i < actionCount; ++i) {
+            uint256 complianceUnitCount = actions[i].complianceVerifierInputs.length;
+            uint256 actionTagCount = actions[i].logicVerifierInputs.length;
+
+            // Check that the tag count in the action and compliance units match.
+            if (actionTagCount != complianceUnitCount * 2) {
+                revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
+            }
+            tagCount += actions[i].logicVerifierInputs.length;
+        }
     }
 
     /// @inheritdoc IProtocolAdapter
