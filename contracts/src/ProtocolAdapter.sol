@@ -53,14 +53,16 @@ contract ProtocolAdapter is
     /// @param packedComplianceProofJournals A variable to aggregate RISC Zero compliance proof journals.
     /// @param packedLogicProofJournals A variable to aggregate RISC Zero logic proof journals.
     struct InternalVariables {
-        bytes32 commitmentTreeRoot;
+        // Regular variables.
         bytes32[] tags;
         bytes32[] logicRefs;
+        bytes32 commitmentTreeRoot;
         Delta.CurvePoint transactionDelta;
+        uint256 tagCounter;
+        // Proof aggregation-related variables.
+        bool isProofAggregated;
         Compliance.Instance[] complianceInstances;
         Logic.Instance[] logicInstances;
-        uint256 tagCounter;
-        bool isProofAggregated;
     }
 
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
@@ -96,12 +98,11 @@ contract ProtocolAdapter is
 
     // slither-disable-start reentrancy-no-eth
     /// @inheritdoc IProtocolAdapter
+    /// @dev This function cannot be called anymore after emergency stop has been called.
     function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
-        (uint256 actionCount, uint256 tagCount) = _computeCounts(transaction);
+        InternalVariables memory vars = _initializeVars(transaction);
 
-        InternalVariables memory vars =
-            _initializeVars({tagCount: tagCount, isProofAggregated: transaction.aggregationProof.length > 0});
-
+        uint256 actionCount = transaction.actions.length;
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
 
@@ -111,10 +112,10 @@ contract ProtocolAdapter is
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
                 Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
 
-                // Compliance proof
+                // Process the compliance related checks and proofs.
                 vars = _processCompliance({input: complianceVerifierInput, vars: vars});
 
-                // Consumed logic proof
+                // Process the logic proof of the consumed resource.
                 vars = _processLogic({
                     isConsumed: true,
                     input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.consumed.nullifier),
@@ -123,7 +124,7 @@ contract ProtocolAdapter is
                     vars: vars
                 });
 
-                // Created logic proof
+                // Process the logic proof of the created resource.
                 vars = _processLogic({
                     isConsumed: false,
                     input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.created.commitment),
@@ -132,7 +133,7 @@ contract ProtocolAdapter is
                     vars: vars
                 });
 
-                // Add unit delta
+                // Add the unit delta to the transaction delta.
                 vars.transactionDelta = vars.transactionDelta.add(
                     Delta.CurvePoint({
                         x: uint256(complianceVerifierInput.instance.unitDeltaX),
@@ -204,13 +205,16 @@ contract ProtocolAdapter is
         emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
     }
 
-    /// @notice Emits app data blobs based on their deletion criterion.
+    /// @notice Emits app data blobs together with the associated resource tag based on their deletion criterion.
+    /// @param input The logic verifier input of a resource making the call.
     function _emitAppDataBlobs(Logic.VerifierInput calldata input) internal {
+        bytes32 tag = input.tag;
+
         Logic.ExpirableBlob[] calldata payload = input.appData.resourcePayload;
         uint256 n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ResourcePayload({tag: input.tag, index: i, blob: payload[i].blob});
+                emit ResourcePayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
 
@@ -218,7 +222,7 @@ contract ProtocolAdapter is
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit DiscoveryPayload({tag: input.tag, index: i, blob: payload[i].blob});
+                emit DiscoveryPayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
 
@@ -226,7 +230,7 @@ contract ProtocolAdapter is
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ExternalPayload({tag: input.tag, index: i, blob: payload[i].blob});
+                emit ExternalPayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
 
@@ -234,7 +238,7 @@ contract ProtocolAdapter is
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ApplicationPayload({tag: input.tag, index: i, blob: payload[i].blob});
+                emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
     }
@@ -360,16 +364,23 @@ contract ProtocolAdapter is
         }
     }
 
-    function _initializeVars(uint256 tagCount, bool isProofAggregated)
-        internal
-        pure
-        returns (InternalVariables memory vars)
-    {
+    /// @notice Initializes internal variables based on the tag count of the transaction and whether it contains an
+    /// aggregation proof or not.
+    /// @param transaction The transaction object.
+    /// @return vars The initialized internal variables.
+    function _initializeVars(Transaction calldata transaction) internal pure returns (InternalVariables memory vars) {
+        // Compute the tag count.
+        //Note that this function ensures that the tag count is a multiple of two.
+        uint256 tagCount = _computeTagCount(transaction);
+
+        bool isProofAggregated = transaction.aggregationProof.length > 0;
+
+        // Initialize
         vars = InternalVariables({
             // Initialize regular variables.
-            commitmentTreeRoot: bytes32(0),
             tags: new bytes32[](tagCount),
             logicRefs: new bytes32[](tagCount),
+            commitmentTreeRoot: bytes32(0),
             transactionDelta: Delta.zero(),
             tagCounter: 0,
             // Initialize proof aggregation-related variables.
@@ -379,12 +390,8 @@ contract ProtocolAdapter is
         });
     }
 
-    function _computeCounts(Transaction calldata transaction)
-        internal
-        pure
-        returns (uint256 actionCount, uint256 tagCount)
-    {
-        actionCount = transaction.actions.length;
+    function _computeTagCount(Transaction calldata transaction) internal pure returns (uint256 tagCount) {
+        uint256 actionCount = transaction.actions.length;
 
         // Count the total number of tags in the transaction.
         for (uint256 i = 0; i < actionCount; ++i) {
