@@ -51,30 +51,30 @@ library RiscZeroUtils {
     /// @param instance The aggregation instance.
     /// @return journal The resulting RISC Zero journal.
     function toJournal(Aggregation.Instance memory instance) internal pure returns (bytes memory journal) {
-        uint32 tagCount = uint32(instance.logicRefs.length);
+        uint256 complianceUnitCount = uint32(instance.complianceInstances.length);
 
-        uint32 complianceCountPadding = reverseByteOrderUint32(tagCount / 2);
-        uint32 tagCountPadding = reverseByteOrderUint32(tagCount);
+        uint32 complianceCountPadding = reverseByteOrderUint32(uint32(complianceUnitCount));
+        uint32 tagCountPadding = reverseByteOrderUint32(uint32(complianceUnitCount * 2));
 
         bytes memory packedComplianceJournals = "";
         bytes memory packedLogicJournals = "";
 
-        for (uint256 i = 0; i < (tagCount / 2); ++i) {
+        for (uint256 i = 0; i < complianceUnitCount; ++i) {
             packedComplianceJournals =
                 abi.encodePacked(packedComplianceJournals, instance.complianceInstances[i].toJournal());
-        }
 
-        for (uint256 i = 0; i < (tagCount / 2); ++i) {
-            bytes memory nfJournal = instance.logicInstances[(i * 2)].toJournal();
-            bytes memory cmJournal = instance.logicInstances[(i * 2) + 1].toJournal();
+            {
+                bytes memory consumedJournal = instance.logicInstances[(i * 2)].toJournal();
+                bytes memory createdJournal = instance.logicInstances[(i * 2) + 1].toJournal();
 
-            packedLogicJournals = abi.encodePacked(
-                packedLogicJournals,
-                reverseByteOrderUint32(uint32(nfJournal.length / 4)),
-                nfJournal,
-                reverseByteOrderUint32(uint32(cmJournal.length / 4)),
-                cmJournal
-            );
+                packedLogicJournals = abi.encodePacked(
+                    packedLogicJournals,
+                    reverseByteOrderUint32(uint32(consumedJournal.length / 4)),
+                    consumedJournal,
+                    reverseByteOrderUint32(uint32(createdJournal.length / 4)),
+                    createdJournal
+                );
+            }
         }
 
         journal = abi.encodePacked(
