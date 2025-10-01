@@ -76,14 +76,16 @@ library RiscZeroUtils {
         bytes memory compliancesJournal = "";
         bytes memory logicsJournal = "";
 
-        for (uint256 i = 0; i < instance.complianceInstances.length; ++i) {
+        for (uint256 i = 0; i < (tagCount / 2); ++i) {
             compliancesJournal = abi.encodePacked(compliancesJournal, instance.complianceInstances[i].toJournal());
         }
 
-        for (uint256 j = 0; j < instance.logicInstances.length; ++j) {
-            Logic.Instance memory logicInstance = instance.logicInstances[j];
-            bytes memory logicJournal = logicInstance.toJournal();
-            logicsJournal = abi.encodePacked(logicsJournal, uint32(logicJournal.length / 4).toRiscZero(), logicJournal);
+        for (uint256 j = 0; j < (tagCount / 2); ++j) {
+            Logic.Instance memory nfInstance = instance.logicInstances[j * 2];
+            Logic.Instance memory cmInstance = instance.logicInstances[(j * 2) + 1];
+            bytes memory nfJournal = nfInstance.toJournal();
+            bytes memory cmJournal = cmInstance.toJournal();
+            logicsJournal = abi.encodePacked(logicsJournal, uint32(nfJournal.length / 4).toRiscZero(), nfJournal,  uint32(cmJournal.length / 4).toRiscZero(), cmJournal);
         }
 
         journal = abi.encodePacked(
