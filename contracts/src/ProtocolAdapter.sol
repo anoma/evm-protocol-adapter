@@ -96,26 +96,26 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
         uint256 actionCount = transaction.actions.length;
-        uint256 tagCounter = 0;
+
+        uint256 tagCount = 0;
 
         // Count the total number of tags in the transaction.
         for (uint256 i = 0; i < actionCount; ++i) {
-            tagCounter += transaction.actions[i].logicVerifierInputs.length;
+            tagCount += transaction.actions[i].logicVerifierInputs.length;
         }
 
         AggregatedArguments memory args = AggregatedArguments({
             commitmentTreeRoot: bytes32(0),
-            tags: new bytes32[](tagCounter),
-            logicRefs: new bytes32[](tagCounter),
+            tags: new bytes32[](tagCount),
+            logicRefs: new bytes32[](tagCount),
             transactionDelta: Delta.zero(),
-            complianceInstances: new Compliance.Instance[](tagCounter / 2),
-            logicInstances: new Logic.Instance[](tagCounter),
+            complianceInstances: new Compliance.Instance[](tagCount / 2),
+            logicInstances: new Logic.Instance[](tagCount),
             tagCounter: 0
         });
 
         bool isProofAggregated = transaction.aggregationProof.length != 0;
 
-        tagCounter = 0;
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
 
@@ -186,7 +186,7 @@ contract ProtocolAdapter is
         }
 
         // Check if the transaction induces a state change.
-        if (tagCounter != 0) {
+        if (args.tagCounter != 0) {
             // Check the delta proof.
             Delta.verify({
                 proof: transaction.deltaProof,
