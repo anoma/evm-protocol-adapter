@@ -117,7 +117,8 @@ contract ProtocolAdapter is
 
             bytes32 actionTreeRoot = tagList.computeRoot();
 
-            // Make Action-level Checks
+            // Make Action-level Checks.
+            // Returns global arguments with aggregated.
             args = _processLogicInputs(action.logicVerifierInputs, args, isProofAggregated, actionTreeRoot, tagList);
 
             emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: action.logicVerifierInputs.length});
@@ -254,72 +255,6 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Processes a resource machine compliance proof by
-    /// * checking that the commitment tree root is an historical root, and
-    /// * verifying or the compliance proof or computing the compliance proof RISC Zero journal.
-    /// @param input The logic verifier input for processing.
-    /// @param isProofAggregated Whether the proof is aggregated or not.
-    function _processComplianceProof(Compliance.VerifierInput calldata input, bool isProofAggregated) internal view {
-        bytes32 root = input.instance.consumed.commitmentTreeRoot;
-        if (!_isCommitmentTreeRootContained(root)) {
-            revert NonExistingRoot(root);
-        }
-
-        // Process compliance proof.
-        {
-            // Aggregate the compliance instance
-            if (!isProofAggregated) {
-                bytes memory journal = input.instance.toJournal();
-
-                // slither-disable-next-line calls-loop
-                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                    seal: input.proof,
-                    imageId: Compliance._VERIFYING_KEY,
-                    journalDigest: sha256(journal)
-                });
-            }
-        }
-    }
-
-    /// @notice Processes a resource logic proof by
-    /// * checking the verifying key correspondence,
-    /// * checking the resource logic proof, and
-    /// * executing external calls.
-    /// @param input The logic verifier input for processing.
-    /// @param actionTreeRoot The action tree root.
-    /// @param logicRef The logic reference that was verified in the compliance proof.
-    /// @param isConsumed Whether the proof belongs to a consumed or created resource.
-    /// @param isProofAggregated Whether the proof is aggregated or not.
-    function _processLogicProof(
-        Logic.VerifierInput calldata input,
-        bytes32 actionTreeRoot,
-        bytes32 logicRef,
-        bool isConsumed,
-        bool isProofAggregated
-    ) internal view {
-        // Check verifying key correspondence.
-        if (logicRef != input.verifyingKey) {
-            revert LogicRefMismatch({expected: input.verifyingKey, actual: logicRef});
-        }
-
-        // Process logic proof.
-
-        if (!isProofAggregated) {
-            // slither-disable-next-line calls-loop
-            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                seal: input.proof,
-                imageId: input.verifyingKey,
-                journalDigest: sha256(
-                    Logic.Instance({
-                        tag: input.tag,
-                        isConsumed: isConsumed,
-                        actionTreeRoot: actionTreeRoot,
-                        appData: input.appData
-                    }).toJournal()
-                )
-            });
-        }
-    }
 
     function _processComplianceUnits(
         Compliance.VerifierInput[] calldata units,
@@ -332,10 +267,20 @@ contract ProtocolAdapter is
             // Compliance Proof
             Compliance.VerifierInput calldata complianceVerifierInput = units[j];
 
-            _processComplianceProof(complianceVerifierInput, isProofAggregated);
+            bytes32 root = complianceVerifierInput.instance.consumed.commitmentTreeRoot;
+            if (!_isCommitmentTreeRootContained(root)) {
+                revert NonExistingRoot(root);
+            }
 
             if (isProofAggregated) {
                 args.complianceInstances[args.tagCounter / 2] = complianceVerifierInput.instance;
+            } else {
+                // slither-disable-next-line calls-loop
+                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                    seal: complianceVerifierInput.proof,
+                    imageId: Compliance._VERIFYING_KEY,
+                    journalDigest: sha256(complianceVerifierInput.instance.toJournal())
+                });
             }
 
             // Consumed resource logic proof.
@@ -374,17 +319,20 @@ contract ProtocolAdapter is
             bool isConsumed = (position % 2 == 0);
             uint256 globalPosition = args.tagCounter + position - tagList.length;
 
-            _processLogicProof({
-                input: logicInput,
-                actionTreeRoot: actionTreeRoot,
-                logicRef: args.logicRefs[globalPosition],
-                isConsumed: isConsumed,
-                isProofAggregated: isProofAggregated
-            });
+            if (args.logicRefs[globalPosition] != logicInput.verifyingKey) {
+                revert LogicRefMismatch({expected: logicInput.verifyingKey, actual: args.logicRefs[globalPosition]});
+            }
 
+            Logic.Instance memory instance = Logic.Instance(logicInput.tag, isConsumed, actionTreeRoot, logicInput.appData);
             if (isProofAggregated) {
-                args.logicInstances[globalPosition] =
-                    Logic.Instance(logicInput.tag, isConsumed, actionTreeRoot, logicInput.appData);
+                args.logicInstances[globalPosition] = instance;
+            } else {
+                  _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                seal: logicInput.proof,
+                imageId: logicInput.verifyingKey,
+                journalDigest: sha256(instance.toJournal()
+                )
+            });
             }
 
             // Execute external calls.
