@@ -109,6 +109,8 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
 
+            // The action tree root is placed in the resource logic instance, informing a resource of all the
+            // created and consumed resources in the same action.
             bytes32 actionTreeRoot = action.collectTags().computeRoot();
 
             uint256 complianceUnitCount = action.complianceVerifierInputs.length;
@@ -121,6 +123,7 @@ contract ProtocolAdapter is
                 // Process the logic proof of the consumed resource.
                 vars = _processLogic({
                     isConsumed: true,
+                    // Note that the `lookup` function reverts if the nullifier is not part of the logic verifier inputs.
                     input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.consumed.nullifier),
                     logicRefFromComplianceUnit: complianceVerifierInput.instance.consumed.logicRef,
                     actionTreeRoot: actionTreeRoot,
@@ -130,11 +133,15 @@ contract ProtocolAdapter is
                 // Process the logic proof of the created resource.
                 vars = _processLogic({
                     isConsumed: false,
+                    // Note that the `lookup` function reverts if the commitment is not part of the logic verifier inputs.
                     input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.created.commitment),
                     logicRefFromComplianceUnit: complianceVerifierInput.instance.created.logicRef,
                     actionTreeRoot: actionTreeRoot,
                     vars: vars
                 });
+
+                // After all tags in the action are looked up, we are ensured that the logic verifier input tags are
+                // a subset of the tags as presented in the compliance unit.
 
                 // Add the unit delta to the transaction delta.
                 vars.transactionDelta = vars.transactionDelta.add(
@@ -156,11 +163,11 @@ contract ProtocolAdapter is
                 vars: vars
             });
 
-            // Store the final commitment tree root
+            // Store the final commitment tree root.
             _addCommitmentTreeRoot(vars.latestCommitmentTreeRoot);
         }
 
-        // Emit the event containing the transaction and new root
+        // Emit the event containing the transaction and new root.
         emit TransactionExecuted({tags: vars.tags, logicRefs: vars.logicRefs});
     }
     // slither-disable-end reentrancy-no-eth
@@ -285,22 +292,24 @@ contract ProtocolAdapter is
     ) internal returns (InternalVariables memory updatedVars) {
         updatedVars = vars;
 
+        // In this RM implementation the logicRef is the verifying key.
         bytes32 logicRef = input.verifyingKey;
 
+        // Check that the logic reference from the logic verifier input matches the expected reference from the
+        // compliance unit.
         if (logicRef != logicRefFromComplianceUnit) {
             revert LogicRefMismatch({expected: logicRefFromComplianceUnit, actual: logicRef});
         }
 
         {
-            // Process logic proof.
+            // Obtain the logic instance from the verifier input, action tree root, and consumed flag.
             Logic.Instance memory instance = input.toInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
 
-            // Aggregate the logic instance.
             if (updatedVars.isProofAggregated) {
+                // Aggregate the logic instance.
                 updatedVars.logicInstances[updatedVars.tagCounter] = instance;
-            }
-            // Verify the logic proof.
-            else {
+            } else {
+                // Verify the logic proof.
                 // slither-disable-next-line calls-loop
                 _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                     seal: input.proof,
@@ -313,13 +322,23 @@ contract ProtocolAdapter is
         _executeForwarderCalls(input);
 
         bytes32 tag = input.tag;
+        // Populate the tags array for use as a verification key for the delta proof.
+        // Note that the order of the compliance units dictate the delta verifying key.
         updatedVars.tags[updatedVars.tagCounter] = tag;
+
+        // Populate an array containg all the logic references.
+        // This is used both for events and aggregation proofs.
         updatedVars.logicRefs[updatedVars.tagCounter++] = logicRef;
 
         // Transition the resource machine state.
         if (isConsumed) {
+            // The function reverts if a repeating tag is added to the set.
+            // If the final nullifier stored in the action gets added to the set succesfully, this ensured that
+            // the compliance units partition the action.
             _addNullifier(tag);
         } else {
+            // The commitment does not error if a leaf was present before in the tree.
+            // Uniqueness of commitments are grated by the compliance circuit, assuming that nullifiers are unique.
             updatedVars.latestCommitmentTreeRoot = _addCommitment(tag);
         }
 
@@ -344,12 +363,11 @@ contract ProtocolAdapter is
             revert NonExistingRoot(root);
         }
 
-        // Aggregate the compliance instance
         if (updatedVars.isProofAggregated) {
+            // Aggregate the compliance instance
             updatedVars.complianceInstances[vars.tagCounter / 2] = input.instance;
-        }
-        // Verify the compliance proof.
-        else {
+        } else {
+            // Verify the compliance proof.
             // slither-disable-next-line calls-loop
             _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                 seal: input.proof,
@@ -375,8 +393,8 @@ contract ProtocolAdapter is
             verifyingKey: Delta.computeVerifyingKey(vars.tags)
         });
 
-        // Verify aggregation proof.
         if (vars.isProofAggregated) {
+            // Verify aggregation proof.
             // slither-disable-next-line calls-loop
             _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
                 seal: aggregationProof,
