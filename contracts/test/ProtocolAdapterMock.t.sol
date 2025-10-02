@@ -10,6 +10,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
 import {SHA256} from "../src/libs/SHA256.sol";
+import {TagUtils} from "../src/libs/TagUtils.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Compliance} from "../src/proving/Compliance.sol";
@@ -270,8 +271,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint256 expectedResourceCount = txn.actions[0].complianceVerifierInputs.length * 2;
 
         vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.TagCountMismatch.selector, 0, expectedResourceCount),
-            address(_mockPa)
+            abi.encodeWithSelector(TagUtils.TagCountMismatch.selector, 0, expectedResourceCount), address(_mockPa)
         );
 
         _mockPa.execute(txn);
@@ -443,7 +443,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         // Expect revert based on wrong resource computation.
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapter.TagCountMismatch.selector,
+                TagUtils.TagCountMismatch.selector,
                 txn.actions[actionIndex].logicVerifierInputs.length,
                 uint256(fakeComplianceCount) * 2
             )
@@ -479,7 +479,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         // Expect revert based on wrong resource computation.
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapter.TagCountMismatch.selector,
+                TagUtils.TagCountMismatch.selector,
                 fakeLogicVerifierCount,
                 txn.actions[actionIndex].complianceVerifierInputs.length * 2
             )

@@ -339,14 +339,16 @@ library TxGen {
         }
     }
 
+    /// @dev This function is a duplicated from `TagUtils.sol` with the difference that it uses `memory`.
     function collectTags(Action memory action) internal pure returns (bytes32[] memory tags) {
         uint256 complianceUnitCount = action.complianceVerifierInputs.length;
 
         tags = new bytes32[](complianceUnitCount * 2);
 
         for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            tags[i * 2] = action.complianceVerifierInputs[i].instance.consumed.nullifier;
-            tags[(i * 2) + 1] = action.complianceVerifierInputs[i].instance.created.commitment;
+            Compliance.Instance memory instance = action.complianceVerifierInputs[i].instance;
+            tags[(i * 2)] = instance.consumed.nullifier;
+            tags[(i * 2) + 1] = instance.created.commitment;
         }
     }
 
