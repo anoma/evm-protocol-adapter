@@ -12,6 +12,7 @@ import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
+import {TagUtils} from "./libs/TagUtils.sol";
 import {Versioning} from "./libs/Versioning.sol";
 
 import {Aggregation} from "./proving/Aggregation.sol";
@@ -41,6 +42,8 @@ contract ProtocolAdapter is
     using RiscZeroUtils for Aggregation.Instance;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
+    using TagUtils for Action;
+    using TagUtils for Transaction;
 
     /// @notice A data structure containing general and proof aggregation-related internal variables being updated while
     // iterating over the actions and compliance units during the `execute` function call.
@@ -71,7 +74,6 @@ contract ProtocolAdapter is
 
     error ZeroNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
-    error TagCountMismatch(uint256 expected, uint256 actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
     error RiscZeroVerifierStopped();
 
@@ -107,7 +109,7 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
 
-            bytes32 actionTreeRoot = _computeActionTreeRoot(action);
+            bytes32 actionTreeRoot = action.collectTags().computeRoot();
 
             uint256 complianceUnitCount = action.complianceVerifierInputs.length;
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
@@ -397,7 +399,7 @@ contract ProtocolAdapter is
     function _initializeVars(Transaction calldata transaction) internal pure returns (InternalVariables memory vars) {
         // Compute the tag count.
         //Note that this function ensures that the tag count is a multiple of two.
-        uint256 tagCount = _countTags(transaction);
+        uint256 tagCount = transaction.countTags();
 
         bool isProofAggregated = transaction.aggregationProof.length > 0;
 
@@ -414,47 +416,5 @@ contract ProtocolAdapter is
             complianceInstances: new Compliance.Instance[](isProofAggregated ? tagCount / 2 : 0),
             logicInstances: new Logic.Instance[](isProofAggregated ? tagCount : 0)
         });
-    }
-
-    /// @notice Counts the resource tags in the transaction and checks for each action that the tag count within is
-    /// twice the number of compliance units.
-    /// @param transaction The transaction to count and check the tags for.
-    /// @return tagCount The computed tag count.
-    function _countTags(Transaction calldata transaction) internal pure returns (uint256 tagCount) {
-        uint256 actionCount = transaction.actions.length;
-
-        // Count the total number of tags in the transaction.
-        for (uint256 i = 0; i < actionCount; ++i) {
-            Action calldata action = transaction.actions[i];
-
-            uint256 complianceUnitCount = action.complianceVerifierInputs.length;
-            uint256 actionTagCount = action.logicVerifierInputs.length;
-
-            // Check that the tag count in the action and compliance units match.
-            if (actionTagCount != complianceUnitCount * 2) {
-                revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
-            }
-
-            tagCount += action.logicVerifierInputs.length;
-        }
-    }
-
-    /// @notice Computes the action tree root of an action constituted by all its nullifiers and commitments.
-    /// @param action The action whose root we compute.
-    /// @return root The root of the corresponding tree.
-    function _computeActionTreeRoot(Action calldata action) internal pure returns (bytes32 root) {
-        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
-
-        bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * 2);
-
-        // The order in which the tags are added to the tree is provided by the compliance units.
-        for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            Compliance.VerifierInput calldata input = action.complianceVerifierInputs[i];
-
-            actionTreeTags[(2 * i)] = input.instance.consumed.nullifier;
-            actionTreeTags[(2 * i) + 1] = input.instance.created.commitment;
-        }
-
-        root = actionTreeTags.computeRoot();
     }
 }

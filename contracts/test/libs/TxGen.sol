@@ -5,6 +5,7 @@ import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.so
 import {VmSafe} from "forge-std/Vm.sol";
 import {MerkleTree} from "./../../src/libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./../../src/libs/RiscZeroUtils.sol";
+
 import {SHA256} from "./../../src/libs/SHA256.sol";
 import {Aggregation} from "./../../src/proving/Aggregation.sol";
 import {Compliance} from "./../../src/proving/Compliance.sol";
@@ -339,14 +340,16 @@ library TxGen {
         }
     }
 
+    /// @dev This function is a duplicated from `TagUtils.sol` with the difference that it uses `memory`.
     function collectTags(Action memory action) internal pure returns (bytes32[] memory tags) {
         uint256 complianceUnitCount = action.complianceVerifierInputs.length;
 
         tags = new bytes32[](complianceUnitCount * 2);
 
         for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            tags[i * 2] = action.complianceVerifierInputs[i].instance.consumed.nullifier;
-            tags[(i * 2) + 1] = action.complianceVerifierInputs[i].instance.created.commitment;
+            Compliance.Instance memory instance = action.complianceVerifierInputs[i].instance;
+            tags[(i * 2)] = instance.consumed.nullifier;
+            tags[(i * 2) + 1] = instance.created.commitment;
         }
     }
 
