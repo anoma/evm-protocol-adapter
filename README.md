@@ -21,7 +21,9 @@ convert [Rust](https://www.rust-lang.org/) and [RISC Zero](https://risczero.com/
 
 ## Security
 
-If you believe you've found a security issue, we encourage you to notify us via Email at [security@anoma.foundation](mailto:security@anoma.foundation). Please do not use the issue tracker for security issues. We welcome working with you to resolve the issue promptly.
+If you believe you've found a security issue, we encourage you to notify us via Email at [security@anoma.foundation](mailto:security@anoma.foundation).
+
+Please do not use the issue tracker for security issues. We welcome working with you to resolve the issue promptly.
 
 ## Solidity Contracts
 
