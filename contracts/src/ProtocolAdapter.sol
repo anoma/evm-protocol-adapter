@@ -123,7 +123,7 @@ contract ProtocolAdapter is
                 // Process the logic proof of the consumed resource.
                 vars = _processLogic({
                     isConsumed: true,
-                    // Note that the `lookup` function reverts if the nullifier is not part of the logic verifier inputs.
+                    // The `lookup` function reverts if the nullifier is not part of the logic verifier inputs.
                     input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.consumed.nullifier),
                     logicRefFromComplianceUnit: complianceVerifierInput.instance.consumed.logicRef,
                     actionTreeRoot: actionTreeRoot,
@@ -133,7 +133,7 @@ contract ProtocolAdapter is
                 // Process the logic proof of the created resource.
                 vars = _processLogic({
                     isConsumed: false,
-                    // Note that the `lookup` function reverts if the commitment is not part of the logic verifier inputs.
+                    // The `lookup` function reverts if the commitment is not part of the logic verifier inputs.
                     input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.created.commitment),
                     logicRefFromComplianceUnit: complianceVerifierInput.instance.created.logicRef,
                     actionTreeRoot: actionTreeRoot,
@@ -199,7 +199,7 @@ contract ProtocolAdapter is
     /// @notice Executes a call to a an external, untrusted forwarder contract.
     /// @param carrierLogicRef The logic reference of the carrier resource.
     /// @param callBlob The blob containing the external call instruction.
-    /// @dev This function allows arbitrary code execution through the protocol adapter but is constraint through
+    /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
     /// the associated carrier resource logic.
     function _executeForwarderCall(bytes32 carrierLogicRef, bytes calldata callBlob) internal {
         (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
@@ -268,7 +268,7 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Processes the a resource logic proof by
+    /// @notice Processes a resource logic proof by
     /// * checking that the logic reference matches the one with the corresponding tag in the compliance unit,
     /// * aggregating the logic instance OR verifying the RISC Zero logic proof,
     /// * executing external forwarder calls,
@@ -335,19 +335,19 @@ contract ProtocolAdapter is
         // Transition the resource machine state.
         if (isConsumed) {
             // The function reverts if a repeating tag is added to the set.
-            // If the final nullifier stored in the action gets added to the set succesfully, this ensured that
+            // If the final nullifier stored in the action gets added to the set succesfully,
             // the compliance units partition the action.
             _addNullifier(tag);
         } else {
-            // The commitment does not error if a leaf was present before in the tree.
-            // Uniqueness of commitments are grated by the compliance circuit, assuming that nullifiers are unique.
+            // `_addCommitment` does not error if a repeating leaf is added to the tree.
+            // Uniqueness of commitments is grated by the compliance circuit, assuming that nullifiers are unique.
             updatedVars.latestCommitmentTreeRoot = _addCommitment(tag);
         }
 
         _emitAppDataBlobs(input);
     }
 
-    /// @notice Processes the a resource machine compliance proof by
+    /// @notice Processes a resource machine compliance proof by
     /// * checking that the commitment tree root references by the consumed resource is in the set of historical roots,
     /// * aggregating the compliance instance OR verifying the RISC Zero compliance proof
     /// @param input The compliance verifier input.
@@ -381,7 +381,7 @@ contract ProtocolAdapter is
 
     /// @notice Verifies global proofs:
     /// * the mandatory delta proof ensuring that the transaction is balanced,
-    /// * the optional aggregation proof if existent.
+    /// * the optional aggregation proof if present.
     /// @param deltaProof The delta proof to verify.
     /// @param aggregationProof The aggregation proof to verify if existent.
     /// @param vars Internal variables to read from.

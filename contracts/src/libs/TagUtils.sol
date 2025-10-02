@@ -14,7 +14,7 @@ library TagUtils {
     error TagCountMismatch(uint256 expected, uint256 actual);
 
     /// @notice Collects the resource tags in an action as ordered by the compliance units.
-    /// @param action The action to collect the tags frm.
+    /// @param action The action to collect the tags from.
     /// @return tags The collected tags.
     function collectTags(Action calldata action) internal pure returns (bytes32[] memory tags) {
         uint256 complianceUnitCount = action.complianceVerifierInputs.length;

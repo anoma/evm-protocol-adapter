@@ -9,6 +9,11 @@ import {Logic} from "./Logic.sol";
 /// @notice A library containing type definitions of the aggregation proving system.
 /// @custom:security-contact security@anoma.foundation
 library Aggregation {
+    /// @notice An instance struct containing aggregated instances of all resources and compliance
+    /// units in a given transaction.
+    /// @param loficRefs The logic references of all resources in a transaction.
+    /// @param complianceInstances The aggregated compliance instances of a transaction.
+    /// @param logicInstances The instances for checking logic proofs in a transaction.
     struct Instance {
         bytes32[] logicRefs;
         Compliance.Instance[] complianceInstances;
