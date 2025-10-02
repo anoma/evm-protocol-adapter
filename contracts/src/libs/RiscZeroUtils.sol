@@ -66,7 +66,7 @@ library RiscZeroUtils {
     /// @param instance The aggregation instance.
     /// @return journal The resulting RISC Zero journal.
     /// @dev Payload, blob, and journal lengths (divided by 4) can safely be assumed to not exceed the
-    /// `type(uint32).max` as this would exceed Ethereum's block gas limit. Note that safe-math is still applied.
+    /// `type(uint32).max` as this would exceed Ethereum's block gas limit.
     function toJournal(Aggregation.Instance memory instance) internal pure returns (bytes memory journal) {
         uint256 complianceUnitCount = instance.complianceInstances.length;
 
@@ -123,7 +123,8 @@ library RiscZeroUtils {
     /// @notice Encodes a payload to the RISC Zero journal format.
     /// @param payload The payload.
     /// @return encoded The encoded bytes of the payload.
-    /// @dev See https://dev.risczero.com/api/zkvm/optimization#unaligned-data-access-is-significantly-more-expensive.
+    /// @dev The blob length divided by 4 can safely be assumed to not exceed the `type(uint32).max` as this
+    /// would exceed Ethereum's block gas limit.
     function encodePayload(Logic.ExpirableBlob[] memory payload) internal pure returns (bytes memory encoded) {
         uint256 blobCount = payload.length;
         for (uint256 i = 0; i < blobCount; ++i) {
@@ -131,8 +132,6 @@ library RiscZeroUtils {
                 encoded,
                 // Encode the blob length (which is a multiple of `32 bytes`) divided by 4 (bytes) representing the
                 // number of RISC Zero words in reverse (little-endian) byte order.
-                // The blob length divided by 4 can safely be assumed to not exceed the `type(uint32).max` as this
-                // would exceed Ethereum's block gas limit.
                 reverseByteOrderUint32(uint32(payload[i].blob.length / 4)),
                 payload[i].blob,
                 // Encode the blob deletion criterion as a `uint32` in reverse (little-endian) byte order.
