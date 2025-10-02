@@ -9,7 +9,7 @@ import {Logic} from "../proving/Logic.sol";
 
 /// @title RiscZeroUtils
 /// @author Anoma Foundation, 2025
-/// @notice A library containing utility functions to convert and encode types for RISC Zero.
+/// @notice A library containing utility functions to encode resource machine types to the RISC Zero journal format.
 /// @custom:security-contact security@anoma.foundation
 library RiscZeroUtils {
     using RiscZeroUtils for Compliance.Instance;
@@ -43,7 +43,7 @@ library RiscZeroUtils {
             // Encode the `isConsumed` boolean as a `uint32` in reverse (little-endian) byte order.
             input.isConsumed ? uint32(0x01000000) : uint32(0x00000000),
             input.actionTreeRoot,
-            ///
+            //
             // Encode the resource payload length as a `uint32` in reverse byte order.
             reverseByteOrderUint32(uint32(appData.resourcePayload.length)),
             encodePayload(appData.resourcePayload),

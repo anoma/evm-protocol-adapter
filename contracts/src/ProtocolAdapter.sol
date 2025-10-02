@@ -46,13 +46,13 @@ contract ProtocolAdapter is
     using TagUtils for Transaction;
 
     /// @notice A data structure containing general and proof aggregation-related internal variables being updated while
-    // iterating over the actions and compliance units during the `execute` function call.
+    /// iterating over the actions and compliance units during the `execute` function call.
     /// @param tags A variable to aggregate tags over the actions.
     /// @param logicRefs A variable to aggregate logic references over the actions.
     /// @param latestCommitmentTreeRoot The latest commitment tree root to be stored in the set of historical roots at
     /// the end of the `execute` function call.
     /// @param transactionDelta A variable to aggregate the unit deltas over the actions.
-    /// @param tagCounter A counter representing the index of the next resource tag to visit
+    /// @param tagCounter A counter representing the index of the next resource tag to visit.
     /// @param isProofAggregated Whether the transaction to execute contains an aggregated proof or not.
     /// @param complianceInstances A variable to aggregate RISC Zero compliance proof instances.
     /// @param logicInstances A variable to aggregate RISC Zero logic proof instances.
@@ -196,9 +196,11 @@ contract ProtocolAdapter is
         version = Versioning._PROTOCOL_ADAPTER_VERSION;
     }
 
-    /// @notice Executes a call to a forwarder contracts.
+    /// @notice Executes a call to a an external, untrusted forwarder contract.
     /// @param carrierLogicRef The logic reference of the carrier resource.
     /// @param callBlob The blob containing the external call instruction.
+    /// @dev This function allows arbitrary code execution through the protocol adapter but is constraint through
+    /// the associated carrier resource logic.
     function _executeForwarderCall(bytes32 carrierLogicRef, bytes calldata callBlob) internal {
         (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
             abi.decode(callBlob, (address, bytes, bytes));
@@ -347,7 +349,7 @@ contract ProtocolAdapter is
 
     /// @notice Processes the a resource machine compliance proof by
     /// * checking that the commitment tree root references by the consumed resource is in the set of historical roots,
-    /// *
+    /// * aggregating the compliance instance OR verifying the RISC Zero compliance proof
     /// @param input The compliance verifier input.
     /// @param vars Internal variables to read from.
     /// @return updatedVars The updated internal variables.
@@ -378,6 +380,8 @@ contract ProtocolAdapter is
     }
 
     /// @notice Verifies global proofs:
+    /// * the mandatory delta proof ensuring that the transaction is balanced,
+    /// * the optional aggregation proof if existent.
     /// @param deltaProof The delta proof to verify.
     /// @param aggregationProof The aggregation proof to verify if existent.
     /// @param vars Internal variables to read from.

@@ -6,7 +6,7 @@ import {Transaction, Action} from "../Types.sol";
 
 /// @title TagUtils
 /// @author Anoma Foundation, 2025
-/// @notice A library containing utility function to handle tags.
+/// @notice A library containing utility functions to collect and count tags.
 /// @custom:security-contact security@anoma.foundation
 library TagUtils {
     using TagUtils for Action;

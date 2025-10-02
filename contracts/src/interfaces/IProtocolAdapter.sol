@@ -5,7 +5,7 @@ import {Transaction} from "../Types.sol";
 
 /// @title IProtocolAdapter
 /// @author Anoma Foundation, 2025
-/// @notice The interface of the protocol adapter contract.
+/// @notice The interface of the protocol adapter contract verifying and executing resource machine transactions.
 /// @custom:security-contact security@anoma.foundation
 interface IProtocolAdapter {
     /// @notice Emitted when a transaction is executed.

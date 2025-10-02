@@ -47,7 +47,7 @@ library Delta {
     /// @param delta The elliptic curve point.
     /// @return account The associated account.
     function toAccount(CurvePoint memory delta) internal pure returns (address account) {
-        // Hash the public key with Keccak-256
+        // Hash the public key with Keccak-256.
         bytes32 hashedKey = EfficientHashLib.hash(delta.x, delta.y);
 
         // Take the last 20 bytes to obtain an Ethereum address.
@@ -58,8 +58,6 @@ library Delta {
     /// as ordered in the compliance units.
     /// @param tags The list of nullifiers and commitments to compute the verifying key from.
     /// @return verifyingKey The verifying key obtained from hashing the nullifiers and commitments.
-    /// @dev The tags are encoded in packed form to remove the array header.
-    /// Since all the tags are 32 bytes in size, tight variable packing will not occur.
     function computeVerifyingKey(bytes32[] memory tags) internal pure returns (bytes32 verifyingKey) {
         verifyingKey = EfficientHashLib.hash(tags);
     }

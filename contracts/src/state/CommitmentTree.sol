@@ -8,7 +8,7 @@ import {MerkleTree} from "../libs/MerkleTree.sol";
 
 /// @title CommitmentTree
 /// @author Anoma Foundation, 2025
-/// @notice A commitment accumulator being inherited by the protocol adapter.
+/// @notice A commitment tree being inherited by the protocol adapter.
 /// @dev The contract is based on a modified version of OZ's `MerkleTree` implementation and and the unchanged OZ
 /// `EnumerableSet` implementation.
 /// @custom:security-contact security@anoma.foundation
@@ -96,13 +96,13 @@ contract CommitmentTree is ICommitmentTree {
         (index, newRoot) = _merkleTree.push(commitment);
     }
 
-    /// @notice Adds a root to the set of historical roots and emits the `CommitmentTreeRootStored` event.
+    /// @notice Adds a root to the set of historical roots and emits the `CommitmentTreeRootAdded` event.
     /// @param root The root to store.
     function _addCommitmentTreeRoot(bytes32 root) internal {
         if (!_roots.add(root)) {
             revert PreExistingRoot(root);
         }
-        emit CommitmentTreeRootStored(root);
+        emit CommitmentTreeRootAdded(root);
     }
 
     /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.
