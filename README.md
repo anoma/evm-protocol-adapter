@@ -14,7 +14,7 @@ A protocol adapter contract written in Solidity enabling Anoma Resource Machine 
 └── README.md
 ```
 
-The `contracts` folder contains the contracts written in [Solidity](https://soliditylang.org/) contracts as well
+The `contracts` folder contains the contracts written in [Solidity](https://soliditylang.org/) as well
 as [Foundry forge](https://book.getfoundry.sh/forge/) tests and deploy scripts.
 
 The `bindings` folder contains bindings in [Rust](https://www.rust-lang.org/) to
