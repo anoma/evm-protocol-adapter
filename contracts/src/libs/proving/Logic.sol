@@ -27,8 +27,8 @@ library Logic {
     /// @notice The logic instance containing the data required to verify a resource logic proof.
     /// @param tag The nullifier or commitment of the resource depending on whether the resource is consumed or not.
     /// @param isConsumed Whether the resource is consumed or not.
+    /// @param actionTreeRoot The root of the tree containing all resources present in an action.
     /// @param appData The application data associated with the resource.
-    /// @param proof The logic proof.
     struct Instance {
         bytes32 tag;
         bool isConsumed;
@@ -59,7 +59,7 @@ library Logic {
     /// @notice Thrown if a tag is not found in a list of verifier inputs.
     error TagNotFound(bytes32 tag);
 
-    /// @notice Returns a logic instance given a logic verifier input, an action tree root, and depending on if the
+    /// @notice Returns a logic instance given a logic verifier input, an action tree root, and depending on whether
     /// associated resource is consumed or not.
     /// @param input The logic verifier input to construct the instance from.
     /// @param actionTreeRoot The action tree root to put into the instance.
