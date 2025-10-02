@@ -11,14 +11,14 @@ import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
 import {MerkleTree} from "./libs/MerkleTree.sol";
+import {Aggregation} from "./libs/proving/Aggregation.sol";
+import {Compliance} from "./libs/proving/Compliance.sol";
+import {Delta} from "./libs/proving/Delta.sol";
+import {Logic} from "./libs/proving/Logic.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 import {TagUtils} from "./libs/TagUtils.sol";
 import {Versioning} from "./libs/Versioning.sol";
 
-import {Aggregation} from "./proving/Aggregation.sol";
-import {Compliance} from "./proving/Compliance.sol";
-import {Delta} from "./proving/Delta.sol";
-import {Logic} from "./proving/Logic.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 import {Action, Transaction} from "./Types.sol";

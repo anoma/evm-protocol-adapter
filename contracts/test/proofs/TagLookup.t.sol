@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
 
-import {Logic} from "../../src/proving/Logic.sol";
+import {Logic} from "../../src/libs/proving/Logic.sol";
 
 contract TagLookupTest is Test {
     using Logic for Logic.VerifierInput[];

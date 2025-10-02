@@ -9,14 +9,14 @@ import {Test, Vm} from "forge-std/Test.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
+import {Compliance} from "../src/libs/proving/Compliance.sol";
+import {Delta} from "../src/libs/proving/Delta.sol";
+import {Logic} from "../src/libs/proving/Logic.sol";
 import {SHA256} from "../src/libs/SHA256.sol";
 import {TagUtils} from "../src/libs/TagUtils.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Compliance} from "../src/proving/Compliance.sol";
-import {Delta} from "../src/proving/Delta.sol";
 
-import {Logic} from "../src/proving/Logic.sol";
 import {CommitmentTree} from "../src/state/CommitmentTree.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {Transaction, Action} from "../src/Types.sol";

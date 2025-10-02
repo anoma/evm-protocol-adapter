@@ -2,9 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {MerkleTree} from "../../../src/libs/MerkleTree.sol";
+import {Compliance} from "../../../src/libs/proving/Compliance.sol";
+import {Logic} from "../../../src/libs/proving/Logic.sol";
+
 import {SHA256} from "../../../src/libs/SHA256.sol";
-import {Compliance} from "../../../src/proving/Compliance.sol";
-import {Logic} from "../../../src/proving/Logic.sol";
 import {Transaction, Action} from "../../../src/Types.sol";
 
 library TransactionExample {
