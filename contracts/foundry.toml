@@ -40,9 +40,10 @@ auto_detect_solc = false
 evm_version = "prague"
 gas_reports = [
     "ProtocolAdapter",
-    "CommitmentAccumulatorMock",
+    "CommitmentTreeMock",
     "NullifierSetMock",
-    "BlobStorageMock",
+    "BlockTimeForwarder",
+    "ERC20Forwarder",
 ]
 optimizer = true
 via_ir = true

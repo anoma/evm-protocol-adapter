@@ -16,8 +16,6 @@ library Logic {
     /// @param tag The nullifier or commitment of the resource depending on if the resource is consumed or not.
     /// @param verifyingKey The logic verifying key (i.e., the hash of the logic function).
     /// @param appData The application data associated with the resource.
-    /// @dev In the future and to achieve function privacy, the logic circuit validity will be proven
-    //  in another circuit and can be hard-coded similar to the compliance proof verifying key.
     /// @param proof The logic proof.
     struct VerifierInput {
         bytes32 tag;
@@ -26,6 +24,11 @@ library Logic {
         bytes proof;
     }
 
+    /// @notice The logic instance containing the data required to verify the a resource logic proof.
+    /// @param tag The nullifier or commitment of the resource depending on if the resource is consumed or not.
+    /// @param isConsumed Whether the resource is consumed or not.
+    /// @param appData The application data associated with the resource.
+    /// @param proof The logic proof.
     struct Instance {
         bytes32 tag;
         bool isConsumed;

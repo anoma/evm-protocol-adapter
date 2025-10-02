@@ -3,10 +3,11 @@ pragma solidity ^0.8.30;
 
 /// @title Compliance
 /// @author Anoma Foundation, 2025
-/// @notice A library containing type definitions of the compliance proving system.
+/// @notice A library containing type definitions and verifying key of the compliance proving system.
 /// @custom:security-contact security@anoma.foundation
 library Compliance {
-    /// @notice The compliance instance containing the data required to verify the compliance unit.
+    /// @notice The compliance instance containing the data required to verify the compliance unit being constituted by
+    /// one consumed and one created resource.
     /// @param consumed References associated with the consumed resource in the compliance unit.
     /// @param created References associated with the created resource in the compliance unit.
     /// @param unitDeltaX The x-coordinate of the delta value of this unit.
@@ -19,7 +20,7 @@ library Compliance {
     }
 
     /// @notice A struct containing references associated with the consumed resource of the compliance unit.
-    /// @param nullifier The nullifier t associated with the resource.
+    /// @param nullifier The nullifier associated with the resource.
     /// @param logicRef A reference to the logic function associated with the consumed resource.
     /// @param commitmentTreeRoot The root of the commitment tree from which this resource is derived.
     struct ConsumedRefs {

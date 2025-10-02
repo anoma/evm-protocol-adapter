@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
 import {NullifierSet} from "../../src/state/NullifierSet.sol";
-import {NullifierSetMock} from "../mocks/NullifierSetMock.sol";
+import {NullifierSetMock} from "../mocks/NullifierSet.m.sol";
 
 contract NullifierSetTest is Test {
     bytes32 internal constant _EXAMPLE_NF = bytes32(uint256(1));

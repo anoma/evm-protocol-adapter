@@ -60,11 +60,11 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), true);
     }
 
-    function test_addCommitmentTreeRoot_emits_the_CommitmentTreeRootStored_event() public {
+    function test_addCommitmentTreeRoot_emits_the_CommitmentTreeRootAdded_event() public {
         bytes32 rootToStore = bytes32(type(uint256).max);
 
         vm.expectEmit(address(_cmAcc));
-        emit ICommitmentTree.CommitmentTreeRootStored({root: rootToStore});
+        emit ICommitmentTree.CommitmentTreeRootAdded({root: rootToStore});
 
         _cmAcc.storeCommitmentTreeRoot(rootToStore);
     }

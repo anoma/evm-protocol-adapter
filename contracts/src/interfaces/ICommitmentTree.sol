@@ -3,12 +3,12 @@ pragma solidity ^0.8.30;
 
 /// @title ICommitmentTree
 /// @author Anoma Foundation, 2025
-/// @notice The interface of the commitment accumulator contract.
+/// @notice The interface of the commitment tree contract.
 /// @custom:security-contact security@anoma.foundation
 interface ICommitmentTree {
-    /// @notice Emitted when a commitment tree root is stored in the set of historical roots.
-    /// @param root The root that was stored.
-    event CommitmentTreeRootStored(bytes32 root);
+    /// @notice Emitted when a commitment tree root is added to the set of historical roots.
+    /// @param root The commitment tree root being stored.
+    event CommitmentTreeRootAdded(bytes32 root);
 
     /// @notice Returns the number of commitments that have been added to the tree.
     /// @return count The number of commitments in the tree.
@@ -18,15 +18,15 @@ interface ICommitmentTree {
     /// @return depth The depth of the tree.
     function commitmentTreeDepth() external view returns (uint8 depth);
 
-    /// @notice Computes the capacity of the tree based on the depth.
+    /// @notice Computes the capacity of the tree based on the current tree depth.
     /// @return capacity The computed tree capacity.
     function commitmentTreeCapacity() external view returns (uint256 capacity);
 
-    /// @notice Returns the latest  commitment tree state root.
-    /// @return root The latest commitment tree state root.
+    /// @notice Returns the latest  commitment tree root.
+    /// @return root The latest commitment tree root.
     function latestCommitmentTreeRoot() external view returns (bytes32 root);
 
-    /// @notice Checks if a commitment tree root is contained in the set of historical roots.
+    /// @notice Returns whether a commitment tree root is contained in the set of historical roots or not.
     /// @param root The root to check.
     /// @return isContained Whether the root exists or not.
     function isCommitmentTreeRootContained(bytes32 root) external view returns (bool isContained);
