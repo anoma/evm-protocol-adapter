@@ -314,7 +314,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 complianceUnitCount,
         uint8 actionIndex,
         uint8 complianceIndex,
-        bytes memory fakeProof
+        bytes memory fakeProof,
+        bool aggregated
     ) public {
         // Ensure that the first 4 bytes of the proof are invalid.
         // The mock router only accepts one selector we deploy with.
@@ -329,11 +330,16 @@ contract ProtocolAdapterMockVerifierTest is Test {
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
-            isProofAggregated: false
+            isProofAggregated: aggregated
         });
 
-        // Replace the selected compliance unit's proof with a fake one.
-        txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].proof = fakeProof;
+        if (aggregated) {
+            // If aggregated, replace the aggregation proof.
+            txn.aggregationProof = fakeProof;
+        } else {
+            // Otherwise, replace the selected compliance unit's proof with a fake one.
+            txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].proof = fakeProof;
+        }
 
         // With an unknown selector, we expect failure.
         vm.expectRevert(
