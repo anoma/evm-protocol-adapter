@@ -33,16 +33,32 @@ library RiscZeroUtils {
     /// @notice Converts the logic instance to the RISC Zero journal format.
     /// @param input The logic verifier input.
     /// @return converted The converted journal.
+    /// @dev Blob counts / payload lengths can safely be assumed to not exceed the `type(uint32).max` as this would
+    /// exceed Ethereum's block gas limit. Note that safe-math is still applied.
     function toJournal(Logic.Instance memory input) internal pure returns (bytes memory converted) {
+        Logic.AppData memory appData = input.appData;
+
         converted = abi.encodePacked(
             input.tag,
             // Encode the `isConsumed` boolean as a `uint32` in reverse (little-endian) byte order.
             input.isConsumed ? uint32(0x01000000) : uint32(0x00000000),
             input.actionTreeRoot,
-            encodePayload(input.appData.resourcePayload),
-            encodePayload(input.appData.discoveryPayload),
-            encodePayload(input.appData.externalPayload),
-            encodePayload(input.appData.applicationPayload)
+            ///
+            // Encode the resource payload length as a `uint32` in reverse byte order.
+            reverseByteOrderUint32(uint32(appData.resourcePayload.length)),
+            encodePayload(appData.resourcePayload),
+            //
+            // Encode the discovery payload length as a `uint32` in reverse byte order.
+            reverseByteOrderUint32(uint32(appData.discoveryPayload.length)),
+            encodePayload(appData.discoveryPayload),
+            //
+            // Encode the external payload length as a `uint32` in reverse byte order.
+            reverseByteOrderUint32(uint32(appData.externalPayload.length)),
+            encodePayload(appData.externalPayload),
+            //
+            // Encode the application payload length as a `uint32` in reverse byte order.
+            reverseByteOrderUint32(uint32(appData.applicationPayload.length)),
+            encodePayload(appData.applicationPayload)
         );
     }
 
@@ -109,14 +125,7 @@ library RiscZeroUtils {
     /// @return encoded The encoded bytes of the payload.
     /// @dev See https://dev.risczero.com/api/zkvm/optimization#unaligned-data-access-is-significantly-more-expensive.
     function encodePayload(Logic.ExpirableBlob[] memory payload) internal pure returns (bytes memory encoded) {
-        // Cache the payload length / blob count before looping.
         uint256 blobCount = payload.length;
-
-        // Encode the payload length as a `uint32` in reverse byte order. The blob count can safely be assumed to not
-        // exceed the `type(uint32).max` as this would exceed Ethereum's block gas limit.
-        encoded = abi.encodePacked(reverseByteOrderUint32(uint32(blobCount)));
-
-        // Iterate over the blobs.
         for (uint256 i = 0; i < blobCount; ++i) {
             encoded = abi.encodePacked(
                 encoded,
