@@ -21,13 +21,13 @@ contract Benchmark is Test {
     ProtocolAdapter internal _pa;
 
     Transaction internal _txnEmpty;
-    Transaction[5] internal _txnsReg;
-    Transaction[5] internal _txnsAgg;
+    Transaction[6] internal _txnsReg;
+    Transaction[6] internal _txnsAgg;
 
     function setUp() public {
         _txnEmpty = Transaction({actions: new Action[](0), deltaProof: "", aggregationProof: ""});
 
-        string[5] memory suffixes = ["01", "05", "10", "15", "20"];
+        string[6] memory suffixes = ["01_01", "05_01", "10_01", "15_01", "20_01", "02_02"];
 
         for (uint256 i = 0; i < suffixes.length; ++i) {
             _txnsReg[i] =
@@ -51,44 +51,52 @@ contract Benchmark is Test {
         _pa.execute(_txnEmpty);
     }
 
-    function test_execute_01_reg() public {
+    function test_execute_01_01_reg() public {
         _pa.execute(_txnsReg[0]);
     }
 
-    function test_execute_05_reg() public {
+    function test_execute_05_01_reg() public {
         _pa.execute(_txnsReg[1]);
     }
 
-    function test_execute_10_reg() public {
+    function test_execute_10_01_reg() public {
         _pa.execute(_txnsReg[2]);
     }
 
-    function test_execute_15_reg() public {
+    function test_execute_15_01_reg() public {
         _pa.execute(_txnsReg[3]);
     }
 
-    function test_execute_20_reg() public {
+    function test_execute_20_01_reg() public {
         _pa.execute(_txnsReg[4]);
     }
 
-    function test_execute_01_agg() public {
+    function test_execute_02_02_reg() public {
+        _pa.execute(_txnsReg[5]);
+    }
+
+    function test_execute_01_01_agg() public {
         _pa.execute(_txnsAgg[0]);
     }
 
-    function test_execute_05_agg() public {
+    function test_execute_05_01_agg() public {
         _pa.execute(_txnsAgg[1]);
     }
 
-    function test_execute_10_agg() public {
+    function test_execute_10_01_agg() public {
         _pa.execute(_txnsAgg[2]);
     }
 
-    function test_execute_15_agg() public {
+    function test_execute_15_01_agg() public {
         _pa.execute(_txnsAgg[3]);
     }
 
-    function test_execute_20_agg() public {
+    function test_execute_20_01_agg() public {
         _pa.execute(_txnsAgg[4]);
+    }
+
+    function test_execute_02_02_agg() public {
+        _pa.execute(_txnsAgg[5]);
     }
 
     function test_print_calldata_reg() public view {
