@@ -605,7 +605,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function testFuzz_execute_updates_root(uint8 actionCount, uint8 complianceUnitCount, bool aggregated) public {
-        (actionCount, complianceUnitCount, /* actionIndex */, /* complianceIndex */) =
+        (actionCount, complianceUnitCount, /* actionIndex */, /* complianceIndex */ ) =
             _bindParameters(actionCount, complianceUnitCount, 0, 0);
         bytes32 oldRoot = _mockPa.latestCommitmentTreeRoot();
         (Transaction memory txn,) = vm.transaction({
