@@ -165,7 +165,7 @@ mod tests {
     fn generate_tx_reg() {
         let n_actions = 1;
 
-        let tx = arm_risc0::tests::generate_test_transaction(n_actions);
+        let tx = arm_risc0::tests::generate_test_transaction(n_actions, 1);
 
         to_evm_bin_file(ProtocolAdapter::Transaction::from(tx), "tx_reg");
     }
@@ -175,7 +175,7 @@ mod tests {
     fn generate_tx_agg() {
         let n_actions = 1;
 
-        let mut tx = arm_risc0::tests::generate_test_transaction(n_actions);
+        let mut tx = arm_risc0::tests::generate_test_transaction(n_actions, 1);
 
         tx.aggregate_with_strategy(AggregationStrategy::Batch)
             .unwrap();
