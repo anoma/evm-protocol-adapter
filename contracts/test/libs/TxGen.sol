@@ -5,7 +5,6 @@ import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.so
 import {VmSafe} from "forge-std/Vm.sol";
 import {MerkleTree} from "./../../src/libs/MerkleTree.sol";
 import {RiscZeroUtils} from "./../../src/libs/RiscZeroUtils.sol";
-
 import {SHA256} from "./../../src/libs/SHA256.sol";
 import {Aggregation} from "./../../src/proving/Aggregation.sol";
 import {Compliance} from "./../../src/proving/Compliance.sol";
