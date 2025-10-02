@@ -604,6 +604,24 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    function testFuzz_execute_updates_root(uint8 actionCount, uint8 complianceUnitCount, bool aggregated) public {
+        (actionCount, complianceUnitCount, /* actionIndex */, /* complianceIndex */) =
+            _bindParameters(actionCount, complianceUnitCount, 0, 0);
+        bytes32 oldRoot = _mockPa.latestCommitmentTreeRoot();
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: aggregated
+        });
+
+        _mockPa.execute(txn);
+
+        bytes32 newRoot = _mockPa.latestCommitmentTreeRoot();
+
+        assert(oldRoot != newRoot);
+    }
+
     function _exampleResourceAndEmptyAppData(uint256 nonce)
         private
         view
