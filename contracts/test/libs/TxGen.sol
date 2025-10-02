@@ -3,13 +3,13 @@ pragma solidity ^0.8.30;
 
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 import {VmSafe} from "forge-std/Vm.sol";
-import {MerkleTree} from "./../../src/libs/MerkleTree.sol";
-import {RiscZeroUtils} from "./../../src/libs/RiscZeroUtils.sol";
-import {SHA256} from "./../../src/libs/SHA256.sol";
-import {Aggregation} from "./../../src/proving/Aggregation.sol";
-import {Compliance} from "./../../src/proving/Compliance.sol";
-import {Delta} from "./../../src/proving/Delta.sol";
-import {Logic} from "./../../src/proving/Logic.sol";
+import {MerkleTree} from "../../src/libs/MerkleTree.sol";
+import {Aggregation} from "../../src/libs/proving/Aggregation.sol";
+import {Compliance} from "../../src/libs/proving/Compliance.sol";
+import {Delta} from "../../src/libs/proving/Delta.sol";
+import {Logic} from "../../src/libs/proving/Logic.sol";
+import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
 import {Transaction, Action, Resource} from "./../../src/Types.sol";
 import {DeltaGen} from "./../proofs/DeltaProof.t.sol";
 

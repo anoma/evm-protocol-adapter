@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {VmSafe} from "forge-std/Vm.sol";
 
-import {Delta} from "../../src/proving/Delta.sol";
+import {Delta} from "../../src/libs/proving/Delta.sol";
 import {SignMagnitude} from "./SignMagnitude.sol";
 
 library DeltaGen {

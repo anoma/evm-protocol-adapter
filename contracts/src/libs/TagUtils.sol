@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Compliance} from "../proving/Compliance.sol";
 import {Transaction, Action} from "../Types.sol";
+import {Compliance} from "./proving/Compliance.sol";
 
 /// @title TagUtils
 /// @author Anoma Foundation, 2025

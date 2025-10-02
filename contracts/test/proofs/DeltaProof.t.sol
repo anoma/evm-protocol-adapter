@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
 
-import {Delta} from "../../src/proving/Delta.sol";
+import {Delta} from "../../src/libs/proving/Delta.sol";
 import {Transaction} from "../../src/Types.sol";
 
 import {TransactionExample} from "../examples/transactions/Transaction.e.sol";

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Compliance} from "./proving/Compliance.sol";
-import {Logic} from "./proving/Logic.sol";
+import {Compliance} from "./libs/proving/Compliance.sol";
+import {Logic} from "./libs/proving/Logic.sol";
 
 /// @notice The resource object constituting the atomic unit of state in the Anoma protocol.
 /// @param  logicRef The hash of the resource logic function.
