@@ -34,7 +34,7 @@ Please do not use the issue tracker for security issues. We welcome working with
 Get an up-to-date version of [Foundry](https://github.com/foundry-rs/foundry) with
 
 ```sh
-curl -L https://foundry.paradigm.xyz | bash
+curl -L https://foundry.paradigm.xyz | sh
 foundryup
 ```
 
@@ -130,7 +130,7 @@ The current protocol adapter implementation utilizes a Merkle tree of dynamic de
 2. Install [RISC Zero `rzup`](https://github.com/risc0/risc0) with
 
    ```sh
-   curl -L https://risczero.com/install | bash
+   curl -L https://risczero.com/install | sh
    ```
 
 3. Install the latest RISC Zero version with
