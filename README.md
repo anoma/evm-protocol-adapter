@@ -59,12 +59,12 @@ forge test
 To show the coverage report, run
 
 ```sh
-forge coverage --ir-minimum --no-match-coverage "(script|test|drafts)"
+forge coverage --ir-minimum
 ```
 
 Append the
 
-- `--no-match-coverage "(script|test|drafts)"` to exclude scripts, tests, and drafts,
+- `--no-match-coverage "(script|test|draft)"` to exclude scripts, tests, and drafts,
 - `--report lcov` to generate the `lcov.info` file that can be used by code review tooling.
 
 #### Linting & Static Analysis
