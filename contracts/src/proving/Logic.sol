@@ -24,7 +24,7 @@ library Logic {
         bytes proof;
     }
 
-    /// @notice The logic instance containing the data required to verify the a resource logic proof.
+    /// @notice The logic instance containing the data required to verify a resource logic proof.
     /// @param tag The nullifier or commitment of the resource depending on if the resource is consumed or not.
     /// @param isConsumed Whether the resource is consumed or not.
     /// @param appData The application data associated with the resource.
