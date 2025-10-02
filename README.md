@@ -2,6 +2,8 @@
 
 # EVM Protocol Adapter
 
+A protocol adapter contract written in Solidity enabling Anoma Resource Machine transaction settlement on EVM-compatible chains.
+
 ## Project Structure
 
 ```sh
