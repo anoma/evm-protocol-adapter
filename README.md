@@ -34,19 +34,11 @@ curl -L https://foundry.paradigm.xyz | bash
 foundryup
 ```
 
-### Installation
-
-Change the directory to the `contracts` folder with `cd contracts` and run
-
-```sh
-forge install
-```
-
 ### Usage
 
 #### Build
 
-To build the contracts, run
+Change the directory to the `contracts` folder with `cd contracts` and run
 
 ```sh
 forge build
@@ -149,19 +141,11 @@ The current protocol adapter implementation utilizes a Merkle tree of dynamic de
    rzup install cargo-risczero <version>
    ```
 
-### Installation
-
-Change the directory to the `bindings` folder with `cd bindings` and run
-
-```sh
-forge install
-```
-
 ### Usage
 
 #### Build
 
-To build the bindings, run
+Change the directory to the `bindings` folder with `cd bindings` and run
 
 ```sh
 cargo build
