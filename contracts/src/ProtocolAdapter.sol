@@ -52,7 +52,7 @@ contract ProtocolAdapter is
     /// @param latestCommitmentTreeRoot The latest commitment tree root to be stored in the set of historical roots at
     /// the end of the `execute` function call.
     /// @param transactionDelta A variable to aggregate the unit deltas over the actions.
-    /// @param tagCounter A counter representing the index of the next resource tag to visit
+    /// @param tagCounter A counter representing the index of the next resource tag to visit.
     /// @param isProofAggregated Whether the transaction to execute contains an aggregated proof or not.
     /// @param complianceInstances A variable to aggregate RISC Zero compliance proof instances.
     /// @param logicInstances A variable to aggregate RISC Zero logic proof instances.
@@ -348,8 +348,8 @@ contract ProtocolAdapter is
     }
 
     /// @notice Processes the a resource machine compliance proof by
-    /// * checking that the commitment tree root referenced by the consumed resource is in the set of historical roots,
-    /// * aggregating the logic instance OR verifying the RISC Zero compliance proof.
+    /// * checking that the commitment tree root references by the consumed resource is in the set of historical roots,
+    /// * aggregating the compliance instance OR verifying the RISC Zero compliance proof
     /// @param input The compliance verifier input.
     /// @param vars Internal variables to read from.
     /// @return updatedVars The updated internal variables.
