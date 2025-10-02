@@ -48,13 +48,21 @@ Change the directory to the `contracts` folder with `cd contracts` and run
 forge build
 ```
 
-#### Tests
+#### Tests & Coverage
 
 To run the tests, run
 
 ```sh
 forge test
 ```
+
+To show the coverage report, run
+
+```sh
+forge coverage --ir-minimum
+```
+
+Append the `--report lcov` to generate the `lcov.info` file that can be used by code review tooling.
 
 #### Linting & Static Analysis
 
