@@ -27,11 +27,11 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
 
         _merkleTree.push(_leaves[7][0]);
         assertEq(_merkleTree.leafCount(), 1);
-        assertEq(_merkleTree.depth(), 1);
+        assertEq(_merkleTree.depth(), 0);
 
         _merkleTree.push(_leaves[7][1]);
         assertEq(_merkleTree.leafCount(), 2);
-        assertEq(_merkleTree.depth(), 2);
+        assertEq(_merkleTree.depth(), 1);
 
         _merkleTree.push(_leaves[7][2]);
         assertEq(_merkleTree.leafCount(), 3);
@@ -39,7 +39,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
 
         _merkleTree.push(_leaves[7][3]);
         assertEq(_merkleTree.leafCount(), 4);
-        assertEq(_merkleTree.depth(), 3);
+        assertEq(_merkleTree.depth(), 2);
 
         _merkleTree.push(_leaves[7][4]);
         assertEq(_merkleTree.leafCount(), 5);
@@ -62,7 +62,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         // First compute what tree depth is required to store leaves
         uint8 treeDepth = 0;
         // Essentially compute the logarithm of the leaf count base 2
-        for (uint256 i = leaves.length; i > 0; i >>= 1) {
+        for (uint256 i = 1; i < leaves.length; i <<= 1) {
             treeDepth++;
         }
         // Set up a protocol adapter Merkle tree and an OpenZeppelin one
