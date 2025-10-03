@@ -118,7 +118,9 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         */
 
         bytes32 commitment = bytes32(uint256(1));
-        bytes32 newRoot = _cmAcc.addCommitment(commitment);
+        _cmAcc.addCommitment(commitment);
+        bytes32 existingCommitment = bytes32(uint256(3));
+        bytes32 newRoot = _cmAcc.addCommitment(existingCommitment);
         _cmAcc.storeCommitmentTreeRoot(newRoot);
 
         bytes32 nonExistingCommitment = bytes32(uint256(2));
