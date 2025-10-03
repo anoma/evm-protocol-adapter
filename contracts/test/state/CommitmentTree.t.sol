@@ -80,10 +80,10 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
     function test_should_produce_an_invalid_root_for_a_non_existent_leaf() public {
         bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
 
-        for (uint256 i = 0; i < _N_LEAVES; ++i) {
+        for (uint256 i = 1; i < _N_LEAVES; ++i) {
             bytes32 root = _cmAcc.addCommitment(_leaves[i + 1][i]);
 
-            for (uint256 j = 0; j <= i; ++j) {
+            for (uint256 j = 0; j < i; ++j) {
                 bytes32 computedRoot = MerkleTree.processProof({
                     siblings: _siblings[i + 1][j],
                     directionBits: _directionBits[_cmAcc.commitmentTreeCapacity()][j],
@@ -118,7 +118,9 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         */
 
         bytes32 commitment = bytes32(uint256(1));
-        bytes32 newRoot = _cmAcc.addCommitment(commitment);
+        _cmAcc.addCommitment(commitment);
+        bytes32 existingCommitment = bytes32(uint256(3));
+        bytes32 newRoot = _cmAcc.addCommitment(existingCommitment);
         _cmAcc.storeCommitmentTreeRoot(newRoot);
 
         bytes32 nonExistingCommitment = bytes32(uint256(2));
@@ -153,6 +155,8 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
 
     function test_verifyMerkleProof_reverts_on_wrong_path() public {
         bytes32 commitment = sha256("SOMETHING");
+        bytes32 commitment2 = sha256("ELSE");
+        _cmAcc.addCommitment(commitment2);
         bytes32 newRoot = _cmAcc.addCommitment(commitment);
         _cmAcc.storeCommitmentTreeRoot(newRoot);
 
