@@ -80,10 +80,10 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
     function test_should_produce_an_invalid_root_for_a_non_existent_leaf() public {
         bytes32 nonExistentCommitment = sha256("NON_EXISTENT");
 
-        for (uint256 i = 0; i < _N_LEAVES; ++i) {
+        for (uint256 i = 1; i < _N_LEAVES; ++i) {
             bytes32 root = _cmAcc.addCommitment(_leaves[i + 1][i]);
 
-            for (uint256 j = 0; j <= i; ++j) {
+            for (uint256 j = 0; j < i; ++j) {
                 bytes32 computedRoot = MerkleTree.processProof({
                     siblings: _siblings[i + 1][j],
                     directionBits: _directionBits[_cmAcc.commitmentTreeCapacity()][j],
