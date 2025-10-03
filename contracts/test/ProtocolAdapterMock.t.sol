@@ -24,6 +24,7 @@ import {Transaction, Action} from "../src/Types.sol";
 import {ForwarderExample} from "./examples/Forwarder.e.sol";
 import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./libs/TxGen.sol";
+import {CommitmentTreeMock} from "./mocks/CommitmentTree.m.sol";
 import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
 
 contract ProtocolAdapterMockVerifierTest is Test {
@@ -620,6 +621,62 @@ contract ProtocolAdapterMockVerifierTest is Test {
         bytes32 newRoot = _mockPa.latestCommitmentTreeRoot();
 
         assert(oldRoot != newRoot);
+    }
+
+    function testFuzz_execute_updates_commitment_root_exactly_with_desired_commitments(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        bool aggregated
+    ) public {
+        (actionCount, complianceUnitCount, /* actionIndex */, /* complianceIndex */ ) =
+            _bindParameters(actionCount, complianceUnitCount, 0, 0);
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: aggregated
+        });
+
+        _mockPa.execute(txn);
+
+        CommitmentTreeMock newCmTree = new CommitmentTreeMock();
+
+        bytes32[] memory cms = TxGen.collectCommitments(txn);
+        bytes32 newRoot = newCmTree.initialRoot();
+
+        for (uint256 i = 0; i < cms.length; ++i) {
+            newRoot = newCmTree.addCommitment(cms[i]);
+        }
+
+        newCmTree.storeCommitmentTreeRoot(newRoot);
+
+        assert(_mockPa.latestCommitmentTreeRoot() == newCmTree.latestCommitmentTreeRoot());
+    }
+
+    function testFuzz_execute_updates_nullifier_set_exactly_with_desired_nullifiers(
+        uint8 actionCount,
+        uint8 complianceUnitCount,
+        bool aggregated
+    ) public {
+        (actionCount, complianceUnitCount, /* actionIndex */, /* complianceIndex */ ) =
+            _bindParameters(actionCount, complianceUnitCount, 0, 0);
+        assertEq(_mockPa.nullifierCount(), 0);
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
+            isProofAggregated: aggregated
+        });
+
+        _mockPa.execute(txn);
+
+        bytes32[] memory nlfs = TxGen.collectNullifiers(txn);
+
+        assertEq(_mockPa.nullifierCount(), nlfs.length);
+
+        for (uint256 i = 0; i < nlfs.length; ++i) {
+            assert(_mockPa.isNullifierContained(nlfs[i]));
+        }
     }
 
     function _exampleResourceAndEmptyAppData(uint256 nonce)

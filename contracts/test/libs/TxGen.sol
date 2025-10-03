@@ -352,6 +352,24 @@ library TxGen {
         }
     }
 
+    function collectNullifiers(Transaction memory txn) internal pure returns (bytes32[] memory nullifiers) {
+        nullifiers = new bytes32[](countComplianceUnits(txn.actions));
+        bytes32[] memory tagList = collectTags(txn.actions);
+
+        for (uint256 i = 0; i < nullifiers.length; ++i) {
+            nullifiers[i] = tagList[i * 2];
+        }
+    }
+
+    function collectCommitments(Transaction memory txn) internal pure returns (bytes32[] memory commitments) {
+        commitments = new bytes32[](countComplianceUnits(txn.actions));
+        bytes32[] memory tagList = collectTags(txn.actions);
+
+        for (uint256 i = 0; i < commitments.length; ++i) {
+            commitments[i] = tagList[(i * 2) + 1];
+        }
+    }
+
     function collectLogicRefs(Action[] memory actions) internal pure returns (bytes32[] memory logicRefs) {
         logicRefs = new bytes32[](countComplianceUnits(actions) * 2);
 
