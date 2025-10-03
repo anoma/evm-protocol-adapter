@@ -124,7 +124,7 @@ contract ProtocolAdapter is
                 vars = _processLogic({
                     isConsumed: true,
                     // The `lookup` function reverts if the nullifier is not part of the logic verifier inputs.
-                    input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.consumed.nullifier),
+                    input: action.logicVerifierInputs[action.logicVerifierInputs.lookup(complianceVerifierInput.instance.consumed.nullifier)],
                     logicRefFromComplianceUnit: complianceVerifierInput.instance.consumed.logicRef,
                     actionTreeRoot: actionTreeRoot,
                     vars: vars
@@ -134,7 +134,7 @@ contract ProtocolAdapter is
                 vars = _processLogic({
                     isConsumed: false,
                     // The `lookup` function reverts if the commitment is not part of the logic verifier inputs.
-                    input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.created.commitment),
+                    input: action.logicVerifierInputs[action.logicVerifierInputs.lookup(complianceVerifierInput.instance.created.commitment)],
                     logicRefFromComplianceUnit: complianceVerifierInput.instance.created.logicRef,
                     actionTreeRoot: actionTreeRoot,
                     vars: vars

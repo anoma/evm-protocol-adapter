@@ -17,7 +17,7 @@ contract TagLookupTest is Test {
         pure
         returns (Logic.VerifierInput calldata found)
     {
-        found = list.lookup(tag);
+        found = list[list.lookup(tag)];
     }
 
     function setUp() public {

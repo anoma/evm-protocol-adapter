@@ -77,16 +77,16 @@ library Logic {
     /// @notice Looks up a `VerifierInput` element from a list by its tag.
     /// @param list The list of verifier inputs.
     /// @param tag The tag to look up.
-    /// @return foundElement The found `VerifierInput` element.
+    /// @return foundElementIdx The index of the found `VerifierInput` element.
     function lookup(VerifierInput[] calldata list, bytes32 tag)
         internal
         pure
-        returns (VerifierInput calldata foundElement)
+        returns (uint256 foundElementIdx)
     {
         uint256 len = list.length;
         for (uint256 i = 0; i < len; ++i) {
             if (list[i].tag == tag) {
-                return foundElement = list[i];
+                return foundElementIdx = i;
             }
         }
         revert TagNotFound(tag);

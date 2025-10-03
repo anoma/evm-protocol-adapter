@@ -9,6 +9,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {MerkleTree} from "../src/libs/MerkleTree.sol";
+import {RiscZeroUtils} from "./../src/libs/RiscZeroUtils.sol";
 import {Compliance} from "../src/libs/proving/Compliance.sol";
 import {Delta} from "../src/libs/proving/Delta.sol";
 import {Logic} from "../src/libs/proving/Logic.sol";
@@ -31,6 +32,53 @@ contract ProtocolAdapterMockVerifierTest is Test {
     using TxGen for Action[];
     using TxGen for Action;
     using TxGen for Vm;
+    using RiscZeroUtils for Logic.Instance;
+    using Logic for Logic.VerifierInput[];
+    using Logic for Logic.VerifierInput;
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct NonExistingRootFailsParams {
+        uint256 actionIdx;
+        uint256 inputIdx;
+        bytes32 commitmentTreeRoot;
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct UnknownSelectorFailsParams {
+        uint256 actionIdx;
+        uint256 inputIdx;
+        bytes proof;
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct UnknownTagFailsParams {
+        uint256 actionIdx;
+        uint256 inputIdx;
+        bytes32 tag;
+        bool consumed;
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct GenericFailParams {
+        uint256 actionIdx;
+        uint256 inputIdx;
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct MismatchingLogicRefsFailParams {
+        uint256 actionIdx;
+        uint256 inputIdx;
+        bytes32 logicRef;
+    }
+
+    /// @notice The parameters necessary to make a failing mutation to a transaction
+    struct MismatchingForwarderCallOutputsFailParams {
+        uint256 actionIdx;
+        uint256 inputIdx;
+        uint256 payloadIdx;
+        bytes output;
+        bool consumed;
+    }
 
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
     bytes32 internal constant _CARRIER_LOGIC_REF = bytes32(uint256(123));
@@ -624,6 +672,327 @@ contract ProtocolAdapterMockVerifierTest is Test {
         bytes32 newRoot = _mockPa.latestCommitmentTreeRoot();
 
         assert(oldRoot != newRoot);
+    }
+
+    /// @notice Make transaction fail by giving it an incorrect commitment tree root.
+    function mutationTestExecuteNonExistingRootFails(
+        Transaction memory transaction,
+        NonExistingRootFailsParams memory params
+    ) public {
+        // Wrap the action index into range
+        vm.assume(transaction.actions.length > 0);
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Compliance.VerifierInput[] memory complianceVerifierInputs =
+            transaction.actions[params.actionIdx].complianceVerifierInputs;
+        // Assume the proposed commitment tree root is not already contained
+        vm.assume(!_mockPa.isCommitmentTreeRootContained(params.commitmentTreeRoot));
+        // Wrap the compliance verifier input index into range
+        vm.assume(complianceVerifierInputs.length > 0);
+        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
+        // Finally assign the proposed commitment tree root into the transaction
+        complianceVerifierInputs[params.inputIdx].instance.consumed.commitmentTreeRoot = params.commitmentTreeRoot;
+        // With an incorrect commitment tree root, we expect failure
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitmentTree.NonExistingRoot.selector, params.commitmentTreeRoot)
+        );
+        // Finally, execute the transaction to make sure that it fails
+        _mockPa.execute(transaction);
+    }
+
+    /// @notice Test that transactions with nonexistent rotts fail
+    function testFuzz_execute_non_existing_root_fails(
+        TxGen.TransactionParams memory txParams,
+        NonExistingRootFailsParams memory mutParams
+    ) public {
+        mutationTestExecuteNonExistingRootFails(vm.transaction(_mockVerifier, txParams), mutParams);
+    }
+
+    /// @notice Make transaction fail by giving it a proof that's too short
+    function mutationTestExecuteShortProofFails(
+        Transaction calldata transactionCalldata,
+        GenericFailParams memory params
+    ) public {
+        Transaction memory transaction = transactionCalldata;
+        uint256 minProofLen = 4;
+        // Wrap the action index into range
+        vm.assume(transaction.actions.length > 0);
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Compliance.VerifierInput[] memory complianceVerifierInputs =
+            transaction.actions[params.actionIdx].complianceVerifierInputs;
+        // Wrap the compliance verifier input index into range
+        vm.assume(complianceVerifierInputs.length > 0);
+        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
+        // Finally truncate the compliance proof to below the minimum
+        bytes calldata proof =
+            transactionCalldata.actions[params.actionIdx].complianceVerifierInputs[params.inputIdx].proof;
+        complianceVerifierInputs[params.inputIdx].proof = proof[0:(proof.length % minProofLen)];
+        // With a short proof, we expect an EVM error (which is message-less)
+        vm.expectRevert(bytes(""), address(_router));
+        // Finally, execute the transaction to make sure that it fails
+        _mockPa.execute(transaction);
+    }
+
+    /// @notice Test that transactions with short proofs fail
+    function testFuzz_execute_short_proof_fails(
+        TxGen.TransactionParams memory txParams,
+        GenericFailParams memory mutParams
+    ) public {
+        this.mutationTestExecuteShortProofFails(vm.transaction(_mockVerifier, txParams), mutParams);
+    }
+
+    /// @notice Make transaction fail by giving it an unknown selector.
+    function mutationTestExecuteUnknownSelectorFails(
+        Transaction memory transaction,
+        UnknownSelectorFailsParams memory params
+    ) public {
+        // Make sure that the chosen verifier selector does not exist
+        uint256 minProofLen = 4;
+        vm.assume(params.proof.length >= minProofLen);
+        vm.assume(address(_router.verifiers(bytes4(params.proof))) == address(0));
+        // Wrap the action index into range
+        vm.assume(transaction.actions.length > 0);
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Compliance.VerifierInput[] memory complianceVerifierInputs =
+            transaction.actions[params.actionIdx].complianceVerifierInputs;
+        // Wrap the compliance verifier input index into range
+        vm.assume(complianceVerifierInputs.length > 0);
+        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
+        // Finally, corrupt the verifier selector
+        complianceVerifierInputs[params.inputIdx].proof = params.proof;
+        // With an unknown selector, we expect failure
+        vm.expectRevert(
+            abi.encodeWithSelector(RiscZeroVerifierRouter.SelectorUnknown.selector, bytes4(params.proof)),
+            address(_router)
+        );
+        // Finally, execute the transaction to make sure that it fails
+        _mockPa.execute(transaction);
+    }
+
+    /// @notice Test that transactions with unknown selectors fail
+    function testFuzz_execute_unknown_selector_fails(
+        TxGen.TransactionParams memory txParams,
+        UnknownSelectorFailsParams memory mutParams
+    ) public {
+        mutationTestExecuteUnknownSelectorFails(vm.transaction(_mockVerifier, txParams), mutParams);
+    }
+
+    /// @notice Make transaction fail by ensuring unknown tag
+    function mutationTestExecuteUnknownTagFails(
+        Transaction calldata transactionCalldata,
+        UnknownTagFailsParams memory params
+    ) public {
+        Transaction memory transaction = transactionCalldata;
+        // Wrap the action index into range
+        vm.assume(transaction.actions.length > 0);
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Action calldata actionCalldata = transactionCalldata.actions[params.actionIdx];
+        Action memory action = transaction.actions[params.actionIdx];
+        Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
+        // Wrap the compliance verifier input index into range
+        vm.assume(complianceVerifierInputs.length > 0);
+        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
+        Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
+        // Make sure that the planned corruption will change something
+        bytes32 tag = params.consumed
+            ? complianceVerifierInput.instance.consumed.nullifier
+            : complianceVerifierInput.instance.created.commitment;
+        vm.assume(tag != params.tag);
+        // Finally, corrupt the corresponding logic verifier input tag
+        uint256 logicVerifierInputIdx = actionCalldata.logicVerifierInputs.lookup(tag);
+        action.logicVerifierInputs[logicVerifierInputIdx].tag = params.tag;
+        // With an unknown tag, we expect failure
+        vm.expectRevert(abi.encodeWithSelector(Logic.TagNotFound.selector, tag));
+        // Finally, execute the transaction to make sure that it fails
+        _mockPa.execute(transaction);
+    }
+
+    /// @notice Test that transactions with unknown tags fail
+    function testFuzz_execute_unknown_tag_fails(
+        TxGen.TransactionParams memory txParams,
+        UnknownTagFailsParams memory mutParams
+    ) public {
+        this.mutationTestExecuteUnknownTagFails(vm.transaction(_mockVerifier, txParams), mutParams);
+    }
+
+    /// @notice Make transaction fail by ensuring that it has less compliance verifier inputs
+    function mutationTestExecuteMissingComplianceVerifierInputFail(
+        Transaction memory transaction,
+        GenericFailParams memory params
+    ) public {
+        // Wrap the action index into range
+        vm.assume(transaction.actions.length > 0);
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Action memory action = transaction.actions[params.actionIdx];
+        Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
+        // Wrap the compliance verifier input index into range
+        vm.assume(complianceVerifierInputs.length > 0);
+        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
+        // Now delete the array entry
+        // Replace the target position with the last element
+        complianceVerifierInputs[params.inputIdx] = complianceVerifierInputs[complianceVerifierInputs.length - 1];
+        // Then make a shorter array of compliance verifier inputs
+        Compliance.VerifierInput[] memory shorter = new Compliance.VerifierInput[](complianceVerifierInputs.length - 1);
+        for (uint256 i = 0; i < shorter.length; i++) {
+            shorter[i] = complianceVerifierInputs[i];
+        }
+        // Finally, replace the compliance verifier inputs with the shorter array
+        transaction.actions[params.actionIdx].complianceVerifierInputs = shorter;
+        // With mismatching resource counts, we expect failure
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TagUtils.TagCountMismatch.selector, action.logicVerifierInputs.length, shorter.length * 2
+            )
+        );
+        // Finally, execute the transaction to make sure that it fails
+        _mockPa.execute(transaction);
+    }
+
+    /// @notice Test that transactions with a missing compliance verifier input fail
+    function testFuzz_execute_missing_compliance_verifier_input_fail(
+        TxGen.TransactionParams memory txParams,
+        GenericFailParams memory mutParams
+    ) public {
+        mutationTestExecuteMissingComplianceVerifierInputFail(vm.transaction(_mockVerifier, txParams), mutParams);
+    }
+
+    /// @notice Make transaction fail by ensuring that it has less logic verifier inputs
+    function mutationTestExecuteMissingLogicVerifierInputFail(
+        Transaction memory transaction,
+        GenericFailParams memory params
+    ) public {
+        // Wrap the action index into range
+        vm.assume(transaction.actions.length > 0);
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Action memory action = transaction.actions[params.actionIdx];
+        Logic.VerifierInput[] memory logicVerifierInputs = action.logicVerifierInputs;
+        // Wrap the logic verifier input index into range
+        vm.assume(logicVerifierInputs.length > 0);
+        params.inputIdx = params.inputIdx % logicVerifierInputs.length;
+        // Now delete the array entry
+        // Replace the target position with the last element
+        logicVerifierInputs[params.inputIdx] = logicVerifierInputs[logicVerifierInputs.length - 1];
+        // Then make a shorter array of logic verifier inputs
+        Logic.VerifierInput[] memory shorter = new Logic.VerifierInput[](logicVerifierInputs.length - 1);
+        for (uint256 i = 0; i < shorter.length; i++) {
+            shorter[i] = logicVerifierInputs[i];
+        }
+        // Finally, replace the logic verifier inputs with the shorter array
+        transaction.actions[params.actionIdx].logicVerifierInputs = shorter;
+        // With mismatching resource counts, we expect failure
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TagUtils.TagCountMismatch.selector, shorter.length, action.complianceVerifierInputs.length * 2
+            )
+        );
+        // Finally, execute the transaction to make sure that it fails
+        _mockPa.execute(transaction);
+    }
+
+    /// @notice Test that transactions with a missing logic verifier input fail
+    function testFuzz_execute_missing_logic_verifier_input_fail(
+        TxGen.TransactionParams memory txParams,
+        GenericFailParams memory mutParams
+    ) public {
+        mutationTestExecuteMissingLogicVerifierInputFail(vm.transaction(_mockVerifier, txParams), mutParams);
+    }
+
+    /// @notice Make transaction fail by making logic reference mismatch
+    function mutationTestExecuteMismatchingLogicRefsFail(
+        Transaction memory transaction,
+        MismatchingLogicRefsFailParams memory params
+    ) public {
+        // Wrap the action index into range
+        vm.assume(transaction.actions.length > 0);
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Logic.VerifierInput[] memory logicVerifierInputs = transaction.actions[params.actionIdx].logicVerifierInputs;
+        // Wrap the logic verifier input index into range
+        vm.assume(logicVerifierInputs.length > 0);
+        params.inputIdx = params.inputIdx % logicVerifierInputs.length;
+        // Now corrupt the logic reference
+        vm.assume(logicVerifierInputs[params.inputIdx].verifyingKey != params.logicRef);
+        logicVerifierInputs[params.inputIdx].verifyingKey = params.logicRef;
+        // With mismatching logic references, we expect failure
+        vm.expectPartialRevert(ProtocolAdapter.LogicRefMismatch.selector);
+        // Finally, execute the transaction to make sure that it fails
+        _mockPa.execute(transaction);
+    }
+
+    /// @notice Test that transactions with mismatching logic references fail
+    function testFuzz_execute_mismatching_logic_refs_fail(
+        TxGen.TransactionParams memory txParams,
+        MismatchingLogicRefsFailParams memory mutParams
+    ) public {
+        mutationTestExecuteMismatchingLogicRefsFail(vm.transaction(_mockVerifier, txParams), mutParams);
+    }
+
+    /// @notice Make transaction fail by ensuring that one of its forwarder call outputs mismatch.
+    function mutationTestExecuteMismatchingForwarderCallOutputsFail(
+        Transaction calldata transactionCalldata,
+        MismatchingForwarderCallOutputsFailParams memory params
+    ) public {
+        Transaction memory transaction = transactionCalldata;
+        // Wrap the action index into range
+        vm.assume(transaction.actions.length > 0);
+        params.actionIdx = params.actionIdx % transaction.actions.length;
+        Action calldata actionCalldata = transactionCalldata.actions[params.actionIdx];
+        Action memory action = transaction.actions[params.actionIdx];
+        Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
+        // Wrap the logic verifier input index into range
+        vm.assume(complianceVerifierInputs.length > 0);
+        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
+        Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
+        bytes32 tag = params.consumed
+            ? complianceVerifierInput.instance.consumed.nullifier
+            : complianceVerifierInput.instance.created.commitment;
+        uint256 logicVerifierInputIdx = actionCalldata.logicVerifierInputs.lookup(tag);
+        Logic.VerifierInput memory logicVerifierInput = action.logicVerifierInputs[logicVerifierInputIdx];
+        Logic.ExpirableBlob[] memory externalPayloads = logicVerifierInput.appData.externalPayload;
+        // Cannot do the mutation if transaction has no external payloads
+        vm.assume(externalPayloads.length > 0);
+        // Wrap the external payload index into range
+        params.payloadIdx = params.payloadIdx % externalPayloads.length;
+        // Now corrupt the calldata output
+        (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
+            abi.decode(externalPayloads[params.payloadIdx].blob, (address, bytes, bytes));
+        vm.assume(
+            expectedOutput.length != params.output.length || keccak256(expectedOutput) != keccak256(params.output)
+        );
+        // Re-encode the calldata and replace the value in the external payloads
+        externalPayloads[params.payloadIdx].blob = abi.encode(untrustedForwarder, input, params.output);
+        // Recompute the logic verifier input proof
+        logicVerifierInput.proof = _mockVerifier.mockProve({
+            imageId: logicVerifierInput.verifyingKey,
+            journalDigest: sha256(logicVerifierInput.toInstance(action.collectTags().computeRoot(), params.consumed).toJournal())
+        }).seal;
+        // With mismatching forwarder call outputs, we expect failure
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.ForwarderCallOutputMismatch.selector, params.output, expectedOutput)
+        );
+        // Finally, execute the transaction to make sure that it fails
+        _mockPa.execute(transaction);
+    }
+
+    /// @notice Test that transactions with mismatching forwarder call outputs fails
+    function testFuzz_execute_mismatching_forwarder_call_outputs_fail(
+        bool aggregated,
+        MismatchingForwarderCallOutputsFailParams memory params
+    ) public {
+        bytes32 carrierLogicRef = bytes32(uint256(123));
+        address fwd2 =
+            address(new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: carrierLogicRef}));
+        assertNotEq(_fwd, fwd2);
+
+        address[] memory fwdList = new address[](2);
+        fwdList[0] = _fwd;
+        fwdList[1] = fwd2;
+
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: fwdList});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists, aggregated);
+        this.mutationTestExecuteMismatchingForwarderCallOutputsFail(txn, params);
     }
 
     function _exampleResourceAndEmptyAppData(uint256 nonce)
