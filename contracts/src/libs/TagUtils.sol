@@ -23,8 +23,9 @@ library TagUtils {
 
         for (uint256 i = 0; i < complianceUnitCount; ++i) {
             Compliance.Instance calldata instance = action.complianceVerifierInputs[i].instance;
-            tags[(i * 2)] = instance.consumed.nullifier;
-            tags[(i * 2) + 1] = instance.created.commitment;
+            uint256 index = i * 2;
+            tags[index] = instance.consumed.nullifier;
+            tags[index + 1] = instance.created.commitment;
         }
     }
 

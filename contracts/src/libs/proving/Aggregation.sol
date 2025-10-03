@@ -11,7 +11,7 @@ import {Logic} from "./Logic.sol";
 library Aggregation {
     /// @notice An instance struct containing aggregated instances of all resources and compliance
     /// units in a given transaction.
-    /// @param loficRefs The logic references of all resources in a transaction.
+    /// @param logicRefs The logic references of all resources in a transaction.
     /// @param complianceInstances The aggregated compliance instances of a transaction.
     /// @param logicInstances The instances for checking logic proofs in a transaction.
     struct Instance {
