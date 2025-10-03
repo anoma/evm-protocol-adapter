@@ -712,11 +712,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         Transaction calldata transactionCalldata,
         GenericFailParams memory params
     ) public {
-        Transaction memory transaction = transactionCalldata;
         uint256 minProofLen = 4;
         // Wrap the action index into range
-        vm.assume(transaction.actions.length > 0);
-        params.actionIdx = params.actionIdx % transaction.actions.length;
+        vm.assume(transactionCalldata.actions.length > 0);
+        params.actionIdx = params.actionIdx % transactionCalldata.actions.length;
+        Transaction memory transaction = transactionCalldata;
         Compliance.VerifierInput[] memory complianceVerifierInputs =
             transaction.actions[params.actionIdx].complianceVerifierInputs;
         // Wrap the compliance verifier input index into range
@@ -735,8 +735,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// @notice Test that transactions with short proofs fail
     function testFuzz_execute_short_proof_fails(
         TxGen.TransactionParams memory txParams,
-        GenericFailParams memory mutParams
+        GenericFailParams calldata mutParams
     ) public {
+        txParams.isProofAggregated = false;
         this.mutationTestExecuteShortProofFails(vm.transaction(_mockVerifier, txParams), mutParams);
     }
 
@@ -771,8 +772,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// @notice Test that transactions with unknown selectors fail
     function testFuzz_execute_unknown_selector_fails(
         TxGen.TransactionParams memory txParams,
-        UnknownSelectorFailsParams memory mutParams
+        UnknownSelectorFailsParams calldata mutParams
     ) public {
+        txParams.isProofAggregated = false;
         mutationTestExecuteUnknownSelectorFails(vm.transaction(_mockVerifier, txParams), mutParams);
     }
 
@@ -781,17 +783,15 @@ contract ProtocolAdapterMockVerifierTest is Test {
         Transaction calldata transactionCalldata,
         UnknownTagFailsParams memory params
     ) public {
-        Transaction memory transaction = transactionCalldata;
         // Wrap the action index into range
-        vm.assume(transaction.actions.length > 0);
-        params.actionIdx = params.actionIdx % transaction.actions.length;
+        vm.assume(transactionCalldata.actions.length > 0);
+        params.actionIdx = params.actionIdx % transactionCalldata.actions.length;
         Action calldata actionCalldata = transactionCalldata.actions[params.actionIdx];
-        Action memory action = transaction.actions[params.actionIdx];
-        Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
+        Compliance.VerifierInput[] calldata complianceVerifierInputs = actionCalldata.complianceVerifierInputs;
         // Wrap the compliance verifier input index into range
         vm.assume(complianceVerifierInputs.length > 0);
         params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
-        Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
+        Compliance.VerifierInput calldata complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
         // Make sure that the planned corruption will change something
         bytes32 tag = params.consumed
             ? complianceVerifierInput.instance.consumed.nullifier
@@ -799,7 +799,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         vm.assume(tag != params.tag);
         // Finally, corrupt the corresponding logic verifier input tag
         uint256 logicVerifierInputIdx = actionCalldata.logicVerifierInputs.lookup(tag);
-        action.logicVerifierInputs[logicVerifierInputIdx].tag = params.tag;
+        Transaction memory transaction = transactionCalldata;
+        transaction.actions[params.actionIdx].logicVerifierInputs[logicVerifierInputIdx].tag = params.tag;
         // With an unknown tag, we expect failure
         vm.expectRevert(abi.encodeWithSelector(Logic.TagNotFound.selector, tag));
         // Finally, execute the transaction to make sure that it fails
@@ -808,8 +809,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Test that transactions with unknown tags fail
     function testFuzz_execute_unknown_tag_fails(
-        TxGen.TransactionParams memory txParams,
-        UnknownTagFailsParams memory mutParams
+        TxGen.TransactionParams calldata txParams,
+        UnknownTagFailsParams calldata mutParams
     ) public {
         this.mutationTestExecuteUnknownTagFails(vm.transaction(_mockVerifier, txParams), mutParams);
     }
