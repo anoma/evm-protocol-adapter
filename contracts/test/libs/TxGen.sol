@@ -48,6 +48,7 @@ library TxGen {
     struct TransactionParams {
         ActionParams[MAX_ACTIONS] actionParams;
         uint256 targetActionsLen;
+        bool isProofAggregated;
     }
 
     error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
@@ -409,6 +410,9 @@ library TxGen {
         }
         // Generate transaction
         txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
+        if (params.isProofAggregated) {
+            txn = transactionAggregation(mockVerifier, txn);
+        }
     }
 
     function logicVerifierInput(
