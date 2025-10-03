@@ -51,9 +51,8 @@ contract MerkleTreeExample {
 
         // State 1
         {
-            _leaves[1] = new bytes32[](2);
+            _leaves[1] = new bytes32[](1);
             _leaves[1][0] = bytes32(uint256(1));
-            _leaves[1][1] = SHA256.EMPTY_HASH;
 
             _heightOneNodes[1] = _calculateNextLevel(_leaves[1]);
 
@@ -61,19 +60,14 @@ contract MerkleTreeExample {
 
             _roots[1] = _leaves[1].computeRoot();
 
-            _siblings[1] = new bytes32[][](1);
-
-            _siblings[1][0] = new bytes32[](1);
-            _siblings[1][0][0] = _leaves[1][1];
+            _siblings[1] = new bytes32[][](0);
         }
 
         // State 2
         {
-            _leaves[2] = new bytes32[](4);
+            _leaves[2] = new bytes32[](2);
             _leaves[2][0] = _leaves[1][0];
             _leaves[2][1] = bytes32(uint256(2));
-            _leaves[2][2] = SHA256.EMPTY_HASH;
-            _leaves[2][3] = SHA256.EMPTY_HASH;
 
             _heightOneNodes[2] = _calculateNextLevel(_leaves[2]);
 
@@ -83,13 +77,11 @@ contract MerkleTreeExample {
 
             _siblings[2] = new bytes32[][](2);
 
-            _siblings[2][0] = new bytes32[](2);
+            _siblings[2][0] = new bytes32[](1);
             _siblings[2][0][0] = _leaves[2][1];
-            _siblings[2][0][1] = _heightOneNodes[2][1];
 
-            _siblings[2][1] = new bytes32[](2);
+            _siblings[2][1] = new bytes32[](1);
             _siblings[2][1][0] = _leaves[2][0];
-            _siblings[2][1][1] = _heightOneNodes[2][1];
         }
 
         // State 3
@@ -108,7 +100,7 @@ contract MerkleTreeExample {
 
             _siblings[3] = new bytes32[][](3);
 
-            _siblings[3][0] = new bytes32[](3);
+            _siblings[3][0] = new bytes32[](2);
             _siblings[3][0][0] = _leaves[3][1];
             _siblings[3][0][1] = _heightOneNodes[3][1];
 
@@ -123,18 +115,11 @@ contract MerkleTreeExample {
 
         // State 4
         {
-            _leaves[4] = new bytes32[](8);
+            _leaves[4] = new bytes32[](4);
             _leaves[4][0] = _leaves[3][0];
             _leaves[4][1] = _leaves[3][1];
             _leaves[4][2] = _leaves[3][2];
             _leaves[4][3] = bytes32(uint256(4));
-            _leaves[4][4] = SHA256.EMPTY_HASH;
-
-            _leaves[4][5] = SHA256.EMPTY_HASH;
-
-            _leaves[4][6] = SHA256.EMPTY_HASH;
-
-            _leaves[4][7] = SHA256.EMPTY_HASH;
 
             _heightOneNodes[4] = _calculateNextLevel(_leaves[4]);
 
@@ -144,25 +129,21 @@ contract MerkleTreeExample {
 
             _siblings[4] = new bytes32[][](4);
 
-            _siblings[4][0] = new bytes32[](3);
+            _siblings[4][0] = new bytes32[](2);
             _siblings[4][0][0] = _leaves[4][1];
             _siblings[4][0][1] = _heightOneNodes[4][1];
-            _siblings[4][0][2] = _heightTwoNodes[4][1];
 
-            _siblings[4][1] = new bytes32[](3);
+            _siblings[4][1] = new bytes32[](2);
             _siblings[4][1][0] = _leaves[4][0];
             _siblings[4][1][1] = _heightOneNodes[4][1];
-            _siblings[4][1][2] = _heightTwoNodes[4][1];
 
-            _siblings[4][2] = new bytes32[](3);
+            _siblings[4][2] = new bytes32[](2);
             _siblings[4][2][0] = _leaves[4][3];
             _siblings[4][2][1] = _heightOneNodes[4][0];
-            _siblings[4][2][2] = _heightTwoNodes[4][1];
 
-            _siblings[4][3] = new bytes32[](3);
+            _siblings[4][3] = new bytes32[](2);
             _siblings[4][3][0] = _leaves[4][2];
             _siblings[4][3][1] = _heightOneNodes[4][0];
-            _siblings[4][3][2] = _heightTwoNodes[4][1];
         }
 
         // State 5
@@ -306,7 +287,7 @@ contract MerkleTreeExample {
             _siblings[7][3][2] = _heightTwoNodes[7][1];
 
             _siblings[7][4] = new bytes32[](3);
-            _siblings[7][4][0] = _leaves[7][4];
+            _siblings[7][4][0] = _leaves[7][5];
             _siblings[7][4][1] = _heightOneNodes[7][3];
             _siblings[7][4][2] = _heightTwoNodes[7][0];
 
