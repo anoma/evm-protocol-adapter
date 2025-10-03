@@ -153,6 +153,8 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
 
     function test_verifyMerkleProof_reverts_on_wrong_path() public {
         bytes32 commitment = sha256("SOMETHING");
+        bytes32 commitment2 = sha256("ELSE");
+        _cmAcc.addCommitment(commitment2);
         bytes32 newRoot = _cmAcc.addCommitment(commitment);
         _cmAcc.storeCommitmentTreeRoot(newRoot);
 
