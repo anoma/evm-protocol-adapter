@@ -5,7 +5,7 @@ pragma solidity ^0.8.30;
 /// @author Anoma Foundation, 2025
 /// @notice A library for computing SHA256 hashes.
 /// @custom:security-contact security@anoma.foundation
-library SHA256 {
+library SHA256Utils {
     /// @notice The hash of the string "EMPTY".
     /// @dev Obtained from `sha256("EMPTY")` (`0xcc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06`).
     bytes32 public constant EMPTY_HASH = 0xcc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06;

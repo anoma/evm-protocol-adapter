@@ -3,9 +3,9 @@ pragma solidity ^0.8.30;
 
 import {reverseByteOrderUint32} from "@risc0-ethereum/Util.sol";
 
-import {Aggregation} from "./proving/Aggregation.sol";
-import {Compliance} from "./proving/Compliance.sol";
-import {Logic} from "./proving/Logic.sol";
+import {Aggregation} from "../proving/Aggregation.sol";
+import {Compliance} from "../proving/Compliance.sol";
+import {Logic} from "../proving/Logic.sol";
 
 /// @title RiscZeroUtils
 /// @author Anoma Foundation, 2025
