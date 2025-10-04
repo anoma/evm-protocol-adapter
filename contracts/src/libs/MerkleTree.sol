@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Arrays} from "@openzeppelin-contracts/utils/Arrays.sol";
 
-import {SHA256} from "../libs/SHA256.sol";
+import {SHA256Utils} from "../libs/utils/SHA256Utils.sol";
 
 /// @title MerkleTree
 /// @author Anoma Foundation, 2025
@@ -27,16 +27,16 @@ library MerkleTree {
     /// @param self The tree data structure.
     /// @return initialRoot The initial root of the empty tree.
     function setup(Tree storage self) internal returns (bytes32 initialRoot) {
-        initialRoot = SHA256.EMPTY_HASH;
+        initialRoot = SHA256Utils.EMPTY_HASH;
 
         // Store depth in the dynamic array
         Arrays.unsafeSetLength(self._zeros, 256);
 
         // Build each root of zero-filled subtrees
-        bytes32 currentZero = SHA256.EMPTY_HASH;
+        bytes32 currentZero = SHA256Utils.EMPTY_HASH;
         for (uint256 i = 0; i < 256; ++i) {
             Arrays.unsafeAccess(self._zeros, i).value = currentZero;
-            currentZero = SHA256.hash(currentZero, currentZero);
+            currentZero = SHA256Utils.hash(currentZero, currentZero);
         }
 
         self._nextLeafIndex = 0;
@@ -65,10 +65,10 @@ library MerkleTree {
                 Arrays.unsafeAccess(self._sides, i).value = currentLevelHash;
 
                 // Compute the current level hash using the right sibling, which is the zero hash of this level.
-                currentLevelHash = SHA256.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, i).value);
+                currentLevelHash = SHA256Utils.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, i).value);
             } else {
                 // Compute the current level hash using the left sibling (side).
-                currentLevelHash = SHA256.hash(Arrays.unsafeAccess(self._sides, i).value, currentLevelHash);
+                currentLevelHash = SHA256Utils.hash(Arrays.unsafeAccess(self._sides, i).value, currentLevelHash);
             }
 
             currentIndex >>= 1;
@@ -80,7 +80,7 @@ library MerkleTree {
             self._sides.push(currentLevelHash);
 
             // Compute the new current level hash.
-            currentLevelHash = SHA256.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, treeDepth).value);
+            currentLevelHash = SHA256Utils.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, treeDepth).value);
         }
 
         newRoot = currentLevelHash;
@@ -130,10 +130,10 @@ library MerkleTree {
         for (uint256 i = 0; i < treeDepth; ++i) {
             if (isLeftSibling(directionBits, i)) {
                 // Left sibling
-                computedHash = SHA256.hash(siblings[i], computedHash);
+                computedHash = SHA256Utils.hash(siblings[i], computedHash);
             } else {
                 // Right sibling
-                computedHash = SHA256.hash(computedHash, siblings[i]);
+                computedHash = SHA256Utils.hash(computedHash, siblings[i]);
             }
         }
         root = computedHash;
@@ -161,7 +161,7 @@ library MerkleTree {
             if (i < leaves.length) {
                 nodes[i] = leaves[i];
             } else {
-                nodes[i] = SHA256.EMPTY_HASH;
+                nodes[i] = SHA256Utils.EMPTY_HASH;
             }
         }
 
@@ -171,7 +171,7 @@ library MerkleTree {
             currentLevelCapacity /= 2;
 
             for (uint256 i = 0; i < currentLevelCapacity; ++i) {
-                nodes[i] = SHA256.hash(nodes[2 * i], nodes[2 * i + 1]);
+                nodes[i] = SHA256Utils.hash(nodes[2 * i], nodes[2 * i + 1]);
             }
         }
 

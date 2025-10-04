@@ -15,8 +15,8 @@ import {Aggregation} from "./libs/proving/Aggregation.sol";
 import {Compliance} from "./libs/proving/Compliance.sol";
 import {Delta} from "./libs/proving/Delta.sol";
 import {Logic} from "./libs/proving/Logic.sol";
-import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
-import {TagUtils} from "./libs/TagUtils.sol";
+import {RiscZeroUtils} from "./libs/utils/RiscZeroUtils.sol";
+import {TagUtils} from "./libs/utils/TagUtils.sol";
 import {Versioning} from "./libs/Versioning.sol";
 
 import {CommitmentTree} from "./state/CommitmentTree.sol";

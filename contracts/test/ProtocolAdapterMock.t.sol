@@ -12,8 +12,8 @@ import {MerkleTree} from "../src/libs/MerkleTree.sol";
 import {Compliance} from "../src/libs/proving/Compliance.sol";
 import {Delta} from "../src/libs/proving/Delta.sol";
 import {Logic} from "../src/libs/proving/Logic.sol";
-import {SHA256} from "../src/libs/SHA256.sol";
-import {TagUtils} from "../src/libs/TagUtils.sol";
+import {SHA256Utils} from "../src/libs/utils/SHA256Utils.sol";
+import {TagUtils} from "../src/libs/utils/TagUtils.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
@@ -371,8 +371,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint256 tagIndex = TxGen.getTagIndex(txn.actions[actionIndex], tag);
 
         // Generate a different tag with the nonce.
-        // We assume that the tags are generated using sha256. Hence the tag is different modulo hash-breaking.
-        bytes32 fakeTag = SHA256.hash(tag, nonce);
+        // We assume that the tags are generated using SHA256Utils. Hence the tag is different modulo hash-breaking.
+        bytes32 fakeTag = SHA256Utils.hash(tag, nonce);
 
         // Replace the nullifier corresponding to the selected compliance unit with a fake one.
         txn.actions[actionIndex].logicVerifierInputs[tagIndex].tag = fakeTag;
@@ -403,8 +403,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
 
         // Generate a different tag with the nonce.
-        // We assume that the tags are generated using sha256. Hence the tag is different modulo hash-breaking.
-        bytes32 fakeTag = SHA256.hash(
+        // We assume that the tags are generated using SHA256Utils. Hence the tag is different modulo hash-breaking.
+        bytes32 fakeTag = SHA256Utils.hash(
             txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.created.commitment, nonce
         );
 
@@ -518,7 +518,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint256 tagIndex = TxGen.getTagIndex(txn.actions[actionIndex], consumed.nullifier);
 
         // Generate a fake logic using a nonce.
-        bytes32 fakeLogic = SHA256.hash(consumed.logicRef, nonce);
+        bytes32 fakeLogic = SHA256Utils.hash(consumed.logicRef, nonce);
         // Replace the original logic.
         txn.actions[actionIndex].logicVerifierInputs[tagIndex].verifyingKey = fakeLogic;
 
@@ -551,7 +551,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint256 tagIndex = TxGen.getTagIndex(txn.actions[actionIndex], created.commitment);
 
         // Generate a fake logic using a nonce.
-        bytes32 fakeLogic = SHA256.hash(created.logicRef, nonce);
+        bytes32 fakeLogic = SHA256Utils.hash(created.logicRef, nonce);
         // Replace the original logic.
         txn.actions[actionIndex].logicVerifierInputs[tagIndex].verifyingKey = fakeLogic;
 

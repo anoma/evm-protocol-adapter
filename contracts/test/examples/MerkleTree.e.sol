@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
-import {SHA256} from "../../src/libs/SHA256.sol";
+import {SHA256Utils} from "../../src/libs/utils/SHA256Utils.sol";
 
 contract MerkleTreeExample {
     using MerkleTree for bytes32[];
@@ -38,7 +38,7 @@ contract MerkleTreeExample {
         // State 0
         {
             _leaves[0] = new bytes32[](1);
-            _leaves[0][0] = SHA256.EMPTY_HASH;
+            _leaves[0][0] = SHA256Utils.EMPTY_HASH;
 
             _heightOneNodes[0] = _calculateNextLevel(_leaves[0]);
 
@@ -53,7 +53,7 @@ contract MerkleTreeExample {
         {
             _leaves[1] = new bytes32[](2);
             _leaves[1][0] = bytes32(uint256(1));
-            _leaves[1][1] = SHA256.EMPTY_HASH;
+            _leaves[1][1] = SHA256Utils.EMPTY_HASH;
 
             _heightOneNodes[1] = _calculateNextLevel(_leaves[1]);
 
@@ -72,8 +72,8 @@ contract MerkleTreeExample {
             _leaves[2] = new bytes32[](4);
             _leaves[2][0] = _leaves[1][0];
             _leaves[2][1] = bytes32(uint256(2));
-            _leaves[2][2] = SHA256.EMPTY_HASH;
-            _leaves[2][3] = SHA256.EMPTY_HASH;
+            _leaves[2][2] = SHA256Utils.EMPTY_HASH;
+            _leaves[2][3] = SHA256Utils.EMPTY_HASH;
 
             _heightOneNodes[2] = _calculateNextLevel(_leaves[2]);
 
@@ -98,7 +98,7 @@ contract MerkleTreeExample {
             _leaves[3][0] = _leaves[2][0];
             _leaves[3][1] = _leaves[2][1];
             _leaves[3][2] = bytes32(uint256(3));
-            _leaves[3][3] = SHA256.EMPTY_HASH;
+            _leaves[3][3] = SHA256Utils.EMPTY_HASH;
 
             _heightOneNodes[3] = _calculateNextLevel(_leaves[3]);
 
@@ -128,13 +128,13 @@ contract MerkleTreeExample {
             _leaves[4][1] = _leaves[3][1];
             _leaves[4][2] = _leaves[3][2];
             _leaves[4][3] = bytes32(uint256(4));
-            _leaves[4][4] = SHA256.EMPTY_HASH;
+            _leaves[4][4] = SHA256Utils.EMPTY_HASH;
 
-            _leaves[4][5] = SHA256.EMPTY_HASH;
+            _leaves[4][5] = SHA256Utils.EMPTY_HASH;
 
-            _leaves[4][6] = SHA256.EMPTY_HASH;
+            _leaves[4][6] = SHA256Utils.EMPTY_HASH;
 
-            _leaves[4][7] = SHA256.EMPTY_HASH;
+            _leaves[4][7] = SHA256Utils.EMPTY_HASH;
 
             _heightOneNodes[4] = _calculateNextLevel(_leaves[4]);
 
@@ -173,11 +173,11 @@ contract MerkleTreeExample {
             _leaves[5][2] = _leaves[4][2];
             _leaves[5][3] = _leaves[4][3];
             _leaves[5][4] = bytes32(uint256(5));
-            _leaves[5][5] = SHA256.EMPTY_HASH;
+            _leaves[5][5] = SHA256Utils.EMPTY_HASH;
 
-            _leaves[5][6] = SHA256.EMPTY_HASH;
+            _leaves[5][6] = SHA256Utils.EMPTY_HASH;
 
-            _leaves[5][7] = SHA256.EMPTY_HASH;
+            _leaves[5][7] = SHA256Utils.EMPTY_HASH;
 
             _heightOneNodes[5] = _calculateNextLevel(_leaves[5]);
 
@@ -222,9 +222,9 @@ contract MerkleTreeExample {
             _leaves[6][3] = _leaves[5][3];
             _leaves[6][4] = _leaves[5][4];
             _leaves[6][5] = bytes32(uint256(6));
-            _leaves[6][6] = SHA256.EMPTY_HASH;
+            _leaves[6][6] = SHA256Utils.EMPTY_HASH;
 
-            _leaves[6][7] = SHA256.EMPTY_HASH;
+            _leaves[6][7] = SHA256Utils.EMPTY_HASH;
 
             _heightOneNodes[6] = _calculateNextLevel(_leaves[6]);
 
@@ -275,7 +275,7 @@ contract MerkleTreeExample {
             _leaves[7][4] = _leaves[6][4];
             _leaves[7][5] = _leaves[6][5];
             _leaves[7][6] = bytes32(uint256(7));
-            _leaves[7][7] = SHA256.EMPTY_HASH;
+            _leaves[7][7] = SHA256Utils.EMPTY_HASH;
 
             _heightOneNodes[7] = _calculateNextLevel(_leaves[7]);
 
@@ -351,7 +351,7 @@ contract MerkleTreeExample {
         uint256 len = x.length / 2;
         y = new bytes32[](len);
         for (uint256 i = 0; i < len; ++i) {
-            y[i] = SHA256.hash(x[i * 2], x[(i * 2) + 1]);
+            y[i] = SHA256Utils.hash(x[i * 2], x[(i * 2) + 1]);
         }
     }
 }

@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
-import {SHA256} from "../../src/libs/SHA256.sol";
+import {SHA256Utils} from "../../src/libs/utils/SHA256Utils.sol";
 import {CommitmentTree} from "../../src/state/CommitmentTree.sol";
 import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
 import {CommitmentTreeMock} from "../mocks/CommitmentTree.m.sol";
@@ -21,7 +21,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
     }
 
     function test_the_initial_root_is_the_empty_leaf_hash() public {
-        assertEq(new CommitmentTree().latestCommitmentTreeRoot(), SHA256.EMPTY_HASH);
+        assertEq(new CommitmentTree().latestCommitmentTreeRoot(), SHA256Utils.EMPTY_HASH);
     }
 
     function test_addCommitment_returns_correct_roots() public {
@@ -122,7 +122,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         _cmAcc.storeCommitmentTreeRoot(newRoot);
 
         bytes32 nonExistingCommitment = bytes32(uint256(2));
-        bytes32 nonExistingRoot = SHA256.hash(commitment, nonExistingCommitment);
+        bytes32 nonExistingRoot = SHA256Utils.hash(commitment, nonExistingCommitment);
         bytes32[] memory siblingsCorrespondingToNonExistingRoot = new bytes32[](1);
         siblingsCorrespondingToNonExistingRoot[0] = commitment;
         uint256 directionBitsCorrespondingToNonExistingRoot = 0;
@@ -187,7 +187,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         // Check merkle path verification for initial root works
         _cmAcc.verifyMerkleProof({
             commitmentTreeRoot: oldRoot,
-            commitment: SHA256.EMPTY_HASH,
+            commitment: SHA256Utils.EMPTY_HASH,
             path: new bytes32[](0),
             directionBits: 0
         });
@@ -208,7 +208,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
     function test_verifyMerkleProof_verifies_the_empty_tree_with_depth_zero() public view {
         _cmAcc.verifyMerkleProof({
             commitmentTreeRoot: _cmAcc.latestCommitmentTreeRoot(),
-            commitment: SHA256.EMPTY_HASH,
+            commitment: SHA256Utils.EMPTY_HASH,
             path: new bytes32[](0),
             directionBits: 0
         });

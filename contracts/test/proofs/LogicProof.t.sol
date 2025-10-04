@@ -7,7 +7,7 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 import {Test} from "forge-std/Test.sol";
 
 import {Logic} from "../../src/libs/proving/Logic.sol";
-import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
+import {RiscZeroUtils} from "../../src/libs/utils/RiscZeroUtils.sol";
 import {TransactionExample} from "../examples/transactions/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 

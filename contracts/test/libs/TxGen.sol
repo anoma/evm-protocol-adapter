@@ -8,8 +8,8 @@ import {Aggregation} from "../../src/libs/proving/Aggregation.sol";
 import {Compliance} from "../../src/libs/proving/Compliance.sol";
 import {Delta} from "../../src/libs/proving/Delta.sol";
 import {Logic} from "../../src/libs/proving/Logic.sol";
-import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
-import {SHA256} from "../../src/libs/SHA256.sol";
+import {RiscZeroUtils} from "../../src/libs/utils/RiscZeroUtils.sol";
+import {SHA256Utils} from "../../src/libs/utils/SHA256Utils.sol";
 import {Transaction, Action, Resource} from "./../../src/Types.sol";
 import {DeltaGen} from "./../proofs/DeltaProof.t.sol";
 
@@ -461,7 +461,7 @@ library TxGen {
     }
 
     function initialRoot() internal pure returns (bytes32 root) {
-        root = SHA256.EMPTY_HASH;
+        root = SHA256Utils.EMPTY_HASH;
     }
 
     function computeActionTreeRoot(Action memory action) internal pure returns (bytes32 root) {
