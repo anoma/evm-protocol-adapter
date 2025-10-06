@@ -674,21 +674,51 @@ contract ProtocolAdapterMockVerifierTest is Test {
         assert(oldRoot != newRoot);
     }
 
+    /// @notice Select a compliance verifier input by wrapping the given indices into range
+    function selectComplianceVerifierInput(
+        Transaction calldata transaction,
+        uint256 actionIdx,
+        uint256 inputIdx
+    ) public returns (uint256, uint256) {
+        // Wrap the action index into range
+        vm.assume(transaction.actions.length > 0);
+        actionIdx = actionIdx % transaction.actions.length;
+        Compliance.VerifierInput[] calldata complianceVerifierInputs =
+            transaction.actions[actionIdx].complianceVerifierInputs;
+        // Wrap the compliance verifier input index into range
+        vm.assume(complianceVerifierInputs.length > 0);
+        inputIdx = inputIdx % complianceVerifierInputs.length;
+        return (actionIdx, inputIdx);
+    }
+
+    /// @notice Select a logic verifier input by wrapping the given indices into range
+    function selectLogicVerifierInput(
+        Transaction calldata transaction,
+        uint256 actionIdx,
+        uint256 inputIdx
+    ) public returns (uint256, uint256) {
+        // Wrap the action index into range
+        vm.assume(transaction.actions.length > 0);
+        actionIdx = actionIdx % transaction.actions.length;
+        Logic.VerifierInput[] calldata logicVerifierInputs =
+            transaction.actions[actionIdx].logicVerifierInputs;
+        // Wrap the logic verifier input index into range
+        vm.assume(logicVerifierInputs.length > 0);
+        inputIdx = inputIdx % logicVerifierInputs.length;
+        return (actionIdx, inputIdx);
+    }
+
     /// @notice Make transaction fail by giving it an incorrect commitment tree root.
     function mutationTestExecuteNonExistingRootFails(
         Transaction memory transaction,
         NonExistingRootFailsParams memory params
     ) public {
-        // Wrap the action index into range
-        vm.assume(transaction.actions.length > 0);
-        params.actionIdx = params.actionIdx % transaction.actions.length;
+        // Wrap the parameters into range
+        (params.actionIdx, params.inputIdx) = this.selectComplianceVerifierInput(transaction, params.actionIdx, params.inputIdx);
         Compliance.VerifierInput[] memory complianceVerifierInputs =
             transaction.actions[params.actionIdx].complianceVerifierInputs;
         // Assume the proposed commitment tree root is not already contained
         vm.assume(!_mockPa.isCommitmentTreeRootContained(params.commitmentTreeRoot));
-        // Wrap the compliance verifier input index into range
-        vm.assume(complianceVerifierInputs.length > 0);
-        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         // Finally assign the proposed commitment tree root into the transaction
         complianceVerifierInputs[params.inputIdx].instance.consumed.commitmentTreeRoot = params.commitmentTreeRoot;
         // With an incorrect commitment tree root, we expect failure
@@ -713,15 +743,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         GenericFailParams memory params
     ) public {
         uint256 minProofLen = 4;
-        // Wrap the action index into range
-        vm.assume(transactionCalldata.actions.length > 0);
-        params.actionIdx = params.actionIdx % transactionCalldata.actions.length;
+        // Wrap the parameters into range
+        (params.actionIdx, params.inputIdx) = this.selectComplianceVerifierInput(transactionCalldata, params.actionIdx, params.inputIdx);
         Transaction memory transaction = transactionCalldata;
         Compliance.VerifierInput[] memory complianceVerifierInputs =
             transaction.actions[params.actionIdx].complianceVerifierInputs;
-        // Wrap the compliance verifier input index into range
-        vm.assume(complianceVerifierInputs.length > 0);
-        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         // Finally truncate the compliance proof to below the minimum
         bytes calldata proof =
             transactionCalldata.actions[params.actionIdx].complianceVerifierInputs[params.inputIdx].proof;
@@ -750,14 +776,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint256 minProofLen = 4;
         vm.assume(params.proof.length >= minProofLen);
         vm.assume(address(_router.verifiers(bytes4(params.proof))) == address(0));
-        // Wrap the action index into range
-        vm.assume(transaction.actions.length > 0);
-        params.actionIdx = params.actionIdx % transaction.actions.length;
+        // Wrap the parameters into range
+        (params.actionIdx, params.inputIdx) = this.selectComplianceVerifierInput(transaction, params.actionIdx, params.inputIdx);
         Compliance.VerifierInput[] memory complianceVerifierInputs =
             transaction.actions[params.actionIdx].complianceVerifierInputs;
-        // Wrap the compliance verifier input index into range
-        vm.assume(complianceVerifierInputs.length > 0);
-        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         // Finally, corrupt the verifier selector
         complianceVerifierInputs[params.inputIdx].proof = params.proof;
         // With an unknown selector, we expect failure
@@ -783,15 +805,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         Transaction calldata transactionCalldata,
         UnknownTagFailsParams memory params
     ) public {
-        // Wrap the action index into range
-        vm.assume(transactionCalldata.actions.length > 0);
-        params.actionIdx = params.actionIdx % transactionCalldata.actions.length;
+        // Wrap the parameters into range
+        (params.actionIdx, params.inputIdx) = this.selectComplianceVerifierInput(transactionCalldata, params.actionIdx, params.inputIdx);
         Action calldata actionCalldata = transactionCalldata.actions[params.actionIdx];
-        Compliance.VerifierInput[] calldata complianceVerifierInputs = actionCalldata.complianceVerifierInputs;
-        // Wrap the compliance verifier input index into range
-        vm.assume(complianceVerifierInputs.length > 0);
-        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
-        Compliance.VerifierInput calldata complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
+        Compliance.VerifierInput calldata complianceVerifierInput = actionCalldata.complianceVerifierInputs[params.inputIdx];
         // Make sure that the planned corruption will change something
         bytes32 tag = params.consumed
             ? complianceVerifierInput.instance.consumed.nullifier
@@ -820,14 +837,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         Transaction memory transaction,
         GenericFailParams memory params
     ) public {
-        // Wrap the action index into range
-        vm.assume(transaction.actions.length > 0);
-        params.actionIdx = params.actionIdx % transaction.actions.length;
+        // Wrap the parameters into range
+        (params.actionIdx, params.inputIdx) = this.selectComplianceVerifierInput(transaction, params.actionIdx, params.inputIdx);
         Action memory action = transaction.actions[params.actionIdx];
         Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
-        // Wrap the compliance verifier input index into range
-        vm.assume(complianceVerifierInputs.length > 0);
-        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         // Now delete the array entry
         // Replace the target position with the last element
         complianceVerifierInputs[params.inputIdx] = complianceVerifierInputs[complianceVerifierInputs.length - 1];
@@ -861,14 +874,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         Transaction memory transaction,
         GenericFailParams memory params
     ) public {
-        // Wrap the action index into range
-        vm.assume(transaction.actions.length > 0);
-        params.actionIdx = params.actionIdx % transaction.actions.length;
+        // Wrap the parameters into range
+        (params.actionIdx, params.inputIdx) = this.selectLogicVerifierInput(transaction, params.actionIdx, params.inputIdx);
         Action memory action = transaction.actions[params.actionIdx];
         Logic.VerifierInput[] memory logicVerifierInputs = action.logicVerifierInputs;
-        // Wrap the logic verifier input index into range
-        vm.assume(logicVerifierInputs.length > 0);
-        params.inputIdx = params.inputIdx % logicVerifierInputs.length;
         // Now delete the array entry
         // Replace the target position with the last element
         logicVerifierInputs[params.inputIdx] = logicVerifierInputs[logicVerifierInputs.length - 1];
@@ -902,13 +911,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         Transaction memory transaction,
         MismatchingLogicRefsFailParams memory params
     ) public {
-        // Wrap the action index into range
-        vm.assume(transaction.actions.length > 0);
-        params.actionIdx = params.actionIdx % transaction.actions.length;
+        // Wrap the parameters into range
+        (params.actionIdx, params.inputIdx) = this.selectLogicVerifierInput(transaction, params.actionIdx, params.inputIdx);
         Logic.VerifierInput[] memory logicVerifierInputs = transaction.actions[params.actionIdx].logicVerifierInputs;
-        // Wrap the logic verifier input index into range
-        vm.assume(logicVerifierInputs.length > 0);
-        params.inputIdx = params.inputIdx % logicVerifierInputs.length;
         // Now corrupt the logic reference
         vm.assume(logicVerifierInputs[params.inputIdx].verifyingKey != params.logicRef);
         logicVerifierInputs[params.inputIdx].verifyingKey = params.logicRef;
@@ -932,15 +937,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         MismatchingForwarderCallOutputsFailParams memory params
     ) public {
         Transaction memory transaction = transactionCalldata;
-        // Wrap the action index into range
-        vm.assume(transaction.actions.length > 0);
-        params.actionIdx = params.actionIdx % transaction.actions.length;
+        // Wrap the parameters into range
+        (params.actionIdx, params.inputIdx) = this.selectComplianceVerifierInput(transaction, params.actionIdx, params.inputIdx);
         Action calldata actionCalldata = transactionCalldata.actions[params.actionIdx];
         Action memory action = transaction.actions[params.actionIdx];
         Compliance.VerifierInput[] memory complianceVerifierInputs = action.complianceVerifierInputs;
-        // Wrap the logic verifier input index into range
-        vm.assume(complianceVerifierInputs.length > 0);
-        params.inputIdx = params.inputIdx % complianceVerifierInputs.length;
         Compliance.VerifierInput memory complianceVerifierInput = complianceVerifierInputs[params.inputIdx];
         bytes32 tag = params.consumed
             ? complianceVerifierInput.instance.consumed.nullifier
