@@ -1218,7 +1218,7 @@ dependencies = [
  "ark-ff 0.5.0",
  "ark-std 0.5.0",
  "tracing",
- "tracing-subscriber",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -1310,8 +1310,8 @@ dependencies = [
 
 [[package]]
 name = "arm"
-version = "0.6.0"
-source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.6.0#d2fbbc234e4af302e9c91d72b3e6efeb53643a36"
+version = "0.8.1"
+source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.8.1#a0cca9cdc8e87508b97f6afc65a3b7582aa3e59d"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",
@@ -1324,7 +1324,11 @@ dependencies = [
  "rand 0.8.5",
  "risc0-zkvm",
  "serde",
+ "serde_with",
  "sha3",
+ "slab",
+ "thiserror 2.0.16",
+ "tracing-subscriber 0.3.20",
 ]
 
 [[package]]
@@ -2775,7 +2779,7 @@ dependencies = [
 
 [[package]]
 name = "evm_protocol_adapter_bindings"
-version = "1.0.0-beta"
+version = "1.0.0-rc.1"
 dependencies = [
  "alloy",
  "arm",
@@ -4206,6 +4210,15 @@ name = "no_std_strings"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a5b0c77c1b780822bc749a33e39aeb2c07584ab93332303babeabb645298a76e"
+
+[[package]]
+name = "nu-ansi-term"
+version = "0.50.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4a28e057d01f97e61255210fcff094d74ed0466038633e95017f5beb68e4399"
+dependencies = [
+ "windows-sys 0.52.0",
+]
 
 [[package]]
 name = "num-bigint"
@@ -5982,9 +5995,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "3.14.0"
+version = "3.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2c45cd61fefa9db6f254525d46e392b852e0e61d9a1fd36e5bd183450a556d5"
+checksum = "c522100790450cf78eeac1507263d0a350d4d5b30df0c8e1fe051a10c22b376e"
 dependencies = [
  "base64",
  "chrono",
@@ -6002,11 +6015,11 @@ dependencies = [
 
 [[package]]
 name = "serde_with_macros"
-version = "3.14.0"
+version = "3.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de90945e6565ce0d9a25098082ed4ee4002e047cb59892c318d66821e14bb30f"
+checksum = "327ada00f7d64abaac1e55a6911e90cf665aa051b9a561c7006c157f4633135e"
 dependencies = [
- "darling 0.20.11",
+ "darling 0.21.3",
  "proc-macro2",
  "quote",
  "syn 2.0.106",
@@ -6065,6 +6078,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sharded-slab"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6"
+dependencies = [
+ "lazy_static",
+]
+
+[[package]]
 name = "shlex"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6089,7 +6111,7 @@ checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 [[package]]
 name = "simple-transfer-app"
 version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.6.0#d2fbbc234e4af302e9c91d72b3e6efeb53643a36"
+source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.8.1#a0cca9cdc8e87508b97f6afc65a3b7582aa3e59d"
 dependencies = [
  "arm",
  "hex",
@@ -6103,7 +6125,7 @@ dependencies = [
 [[package]]
 name = "simple-transfer-witness"
 version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.6.0#d2fbbc234e4af302e9c91d72b3e6efeb53643a36"
+source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.8.1#a0cca9cdc8e87508b97f6afc65a3b7582aa3e59d"
 dependencies = [
  "arm",
  "rand 0.8.5",
@@ -6342,6 +6364,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.106",
+]
+
+[[package]]
+name = "thread_local"
+version = "1.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f60246a4944f24f6e018aa17cdeffb7818b76356965d03b07d6a9886e8962185"
+dependencies = [
+ "cfg-if",
 ]
 
 [[package]]
@@ -6674,12 +6705,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-log"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee855f1f400bd0e5c02d150ae5de3840039a3f54b025156404e34c23c03f47c3"
+dependencies = [
+ "log",
+ "once_cell",
+ "tracing-core",
+]
+
+[[package]]
 name = "tracing-subscriber"
 version = "0.2.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e0d2eaa99c3c2e41547cfa109e910a68ea03823cccad4a0525dcbc9b01e8c71"
 dependencies = [
  "tracing-core",
+]
+
+[[package]]
+name = "tracing-subscriber"
+version = "0.3.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2054a14f5307d601f88daf0553e1cbf472acc4f2c51afab632431cdcd72124d5"
+dependencies = [
+ "nu-ansi-term",
+ "sharded-slab",
+ "smallvec",
+ "thread_local",
+ "tracing-core",
+ "tracing-log",
 ]
 
 [[package]]

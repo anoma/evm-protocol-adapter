@@ -3,7 +3,8 @@ pragma solidity ^0.8.30;
 
 /// @title IForwarder
 /// @author Anoma Foundation, 2025
-/// @notice The interface of the forwarder base contract.
+/// @notice The interface for forwarder contracts that can be called from the protocol adapter and allow the resource
+/// machine to interoperate with external EVM state.
 /// @custom:security-contact security@anoma.foundation
 interface IForwarder {
     /// @notice Forwards an external call to read or write EVM state. This function can only be called by the

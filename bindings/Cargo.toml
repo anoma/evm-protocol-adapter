@@ -1,18 +1,20 @@
 [package]
 name = "evm_protocol_adapter_bindings"
-version = "1.0.0-beta"
+version = "1.0.0-rc.1"
 edition = "2024"
 
 [dependencies]
-arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.6.0", package = "arm", features = [
-    "groth16_prover",
-    "bonsai"
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.8.1", package = "arm", features = [
+    #"groth16_prover", # Add this feature to generate regular transactions. Note that proof aggregation won't work.
+    "groth16_aggregation",
+    "bonsai",
+    "test"
 ] }
 alloy = { version = "1.0.30", features = ["contract", "full", "eip712", "node-bindings", "sol-types"] }
 tokio = { version = "1.44", features = ["rt-multi-thread"] }
 serde = { version = "1.0.197", default-features = false }
 sha2 = { version = "0.10.9" }
-simple_transfer_app = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.6.0", package = "simple-transfer-app" }
+simple_transfer_app = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.8.1", package = "simple-transfer-app" }
 reqwest = { version = "0.12", default-features = false }
 url = { version = "2.4", default-features = false }
 async-trait = "0.1.89"

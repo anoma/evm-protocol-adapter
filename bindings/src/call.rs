@@ -30,10 +30,26 @@ pub trait Client {
     async fn get_risc_zero_verifier_selector(&self) -> Result<[u8; 4], alloy::contract::Error>;
     /// Get the protocol adapter version
     async fn get_protocol_adapter_version(&self) -> Result<[u8; 32], alloy::contract::Error>;
+    /// Get the number of commitments in the tree
+    async fn commitment_count(&self) -> Result<U256, alloy::contract::Error>;
+    /// Get the commitment tree depth.
+    async fn commitment_tree_depth(&self) -> Result<u8, alloy::contract::Error>;
+    /// Get the capacity of the tree based on the current tree depth.
+    async fn commitment_tree_capacity(&self) -> Result<U256, alloy::contract::Error>;
     /// Get the latest commitment tree state root
-    async fn latest_root(&self) -> Result<[u8; 32], alloy::contract::Error>;
+    async fn latest_commitment_tree_root(&self) -> Result<[u8; 32], alloy::contract::Error>;
     /// Check if the commitment tree state root exists
-    async fn contains_root(&self, root: &[u8; 32]) -> Result<bool, alloy::contract::Error>;
+    async fn is_commitment_tree_root_contained(
+        &self,
+        root: &[u8; 32],
+    ) -> Result<bool, alloy::contract::Error>;
+    /// Get the length of the commitment tree root set
+    async fn commitment_tree_root_count(&self) -> Result<U256, alloy::contract::Error>;
+    /// Get the commitment tree root at the given index in the set
+    async fn commitment_tree_root_at_index(
+        &self,
+        index: U256,
+    ) -> Result<[u8; 32], alloy::contract::Error>;
     ///Verifies that a Merkle path and a commitment leaf reproduce a given root
     async fn verify_merkle_proof(
         &self,
@@ -43,11 +59,14 @@ pub trait Client {
         direction_bits: U256,
     ) -> Result<(), alloy::contract::Error>;
     /// Check if the nullifier set contains the given nullifier
-    async fn contains(&self, nullifier: &[u8; 32]) -> Result<bool, alloy::contract::Error>;
+    async fn is_nullifier_contained(
+        &self,
+        nullifier: &[u8; 32],
+    ) -> Result<bool, alloy::contract::Error>;
     /// Get the length of the nullifier set
-    async fn length(&self) -> Result<U256, alloy::contract::Error>;
+    async fn nullifier_count(&self) -> Result<U256, alloy::contract::Error>;
     /// Get the nullifier at the given index in the set
-    async fn at_index(&self, index: U256) -> Result<[u8; 32], alloy::contract::Error>;
+    async fn nullifier_at_index(&self, index: U256) -> Result<[u8; 32], alloy::contract::Error>;
 }
 
 /// An Ethereum network and RPC endpoint to connect to it with
@@ -160,26 +179,32 @@ mod tests {
     async fn contains_initial_root() {
         assert!(
             sepolia_protocol_adapter()
-                .contains_root(&initial_root())
+                .is_commitment_tree_root_contained(&initial_root())
                 .await
                 .unwrap()
         );
     }
 
     #[tokio::test]
-    #[ignore = "This test requires updatng the protocol adapter address in .env"]
+    #[ignore = "This test requires updating the protocol adapter address in .env"]
     async fn call_latest_root() {
-        let root = sepolia_protocol_adapter().latest_root().await.unwrap();
+        let root = sepolia_protocol_adapter()
+            .latest_commitment_tree_root()
+            .await
+            .unwrap();
         assert_ne!(root, initial_root());
     }
 
     #[tokio::test]
-    #[ignore = "This test requires updatng the protocol adapter address in .env"]
+    #[ignore = "This test requires updating the protocol adapter address in .env"]
     async fn call_execute() {
         let empty_tx = Transaction {
             actions: vec![],
-            delta_proof: Delta::Proof(DeltaProof::prove(&vec![], &DeltaWitness::from_scalars(&[]))),
+            delta_proof: Delta::Proof(
+                DeltaProof::prove(&vec![], &DeltaWitness::from_scalars(&[])).unwrap(),
+            ),
             expected_balance: None,
+            aggregation_proof: None,
         };
         let result = sepolia_protocol_adapter().execute(empty_tx).await;
         assert!(result.is_ok());

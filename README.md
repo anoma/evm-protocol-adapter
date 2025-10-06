@@ -2,23 +2,7 @@
 
 # EVM Protocol Adapter
 
-For more information on the EVM protocol adapter, find the related
-
-- [Anoma Research Day talk](https://www.youtube.com/watch?v=rKFZsOw360U)
-- [Anoma Specs Page](https://specs.anoma.net/latest/arch/integrations/adapters/evm.html)
-
-<div align="left">
-  <a href="https://www.youtube.com/watch?v=rKFZsOw360U">
-     <img src=".assets/Youtube_preview.png"
-       alt="The EVM Protocol Adapter: Bringing Intent-Centric Apps to Ethereum - Anoma Research Day"
-       border=1,
-       style="width:67%;">
-  </a>
-</div>
-
-> [!WARNING]
-> This repo features a prototype and is work in progress. Do NOT use in
-> production.
+A protocol adapter contract written in Solidity enabling Anoma Resource Machine transaction settlement on EVM-compatible chains.
 
 ## Project Structure
 
@@ -30,83 +14,67 @@ For more information on the EVM protocol adapter, find the related
 └── README.md
 ```
 
-The `contracts` folder contains the contracts written in [Solidity](https://soliditylang.org/) contracts as well
+The `contracts` folder contains the contracts written in [Solidity](https://soliditylang.org/) as well
 as [Foundry forge](https://book.getfoundry.sh/forge/) tests and deploy scripts.
 
 The `bindings` folder contains bindings in [Rust](https://www.rust-lang.org/) to
 convert [Rust](https://www.rust-lang.org/) and [RISC Zero](https://risczero.com/) types into EVM types using the [
 `alloy-rs` library](https://github.com/alloy-rs).
 
-## Prerequisites
+## Security
 
-1. Get an up-to-date version of [Rust](https://www.rust-lang.org/)
-   with
+If you believe you've found a security issue, we encourage you to notify us via Email at [security@anoma.foundation](mailto:security@anoma.foundation).
 
-   ```sh
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
-
-2. Clone this repo
+Please do not use the issue tracker for security issues. We welcome working with you to resolve the issue promptly.
 
 ## Solidity Contracts
 
-### Installation
+### Prerequisites
 
-Change the directory to the `contracts` folder with `cd contracts` and run
+Get an up-to-date version of [Foundry](https://github.com/foundry-rs/foundry) with
 
 ```sh
-forge install
+curl -L https://foundry.paradigm.xyz | sh
+foundryup
 ```
 
 ### Usage
 
 #### Build
 
-Build the contracts with following flags: //TODO! confirm this is needed
+Change the directory to the `contracts` folder with `cd contracts` and run
 
 ```sh
-forge build --ast
+forge build
 ```
 
-#### Tests
+#### Tests & Coverage
 
-Run
+To run the tests, run
 
 ```sh
 forge test
 ```
 
+To show the coverage report, run
+
+```sh
+forge coverage --ir-minimum
+```
+
+Append the
+
+- `--no-match-coverage "(script|test|draft)"` to exclude scripts, tests, and drafts,
+- `--report lcov` to generate the `lcov.info` file that can be used by code review tooling.
+
 #### Linting & Static Analysis
 
-As a pre-requisite, install `solhint` with
+As a prerequisite, install the
 
-```sh
-bun install solhint
-```
+- `solhint` linter (see https://github.com/protofire/solhint)
+- `slither` static analyzer (see https://github.com/crytic/slither)
 
-or
-
-```sh
-bun install solhint
-```
-
-and `slither`
-
-via
-
-```sh
-python3 -m pip install slither-analyzer
-```
-
-Run the linter and analysis with
-
-```sh
-bunx --bun solhint --config .solhint.json 'src/**/*.sol' && \
-bunx --bun solhint --config .solhint.other.json 'script/**/*.sol' 'test/**/*.sol' && \
-slither .
-```
-
-or
+To run the linter and static analyzer, run
 
 ```sh
 npx solhint --config .solhint.json 'src/**/*.sol' && \
@@ -114,12 +82,22 @@ npx solhint --config .solhint.other.json 'script/**/*.sol' 'test/**/*.sol' && \
 slither .
 ```
 
+#### Documentation
+
+Run
+
+```sh
+forge doc
+```
+
 #### Deployment
 
 To simulate deployment on sepolia, run
 
 ```sh
-forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter --rpc-url sepolia
+forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
+  --sig "run(bool,address)" <IS_TEST_DEPLOYMENT> <EMERGENCY_STOP_CALLER> \
+  --rpc-url sepolia
 ```
 
 Append the
@@ -129,7 +107,7 @@ Append the
 - `--account <ACCOUNT_NAME>` flag to use a previously imported keystore (see
   `cast wallet --help` for more info)
 
-##### Block Explorer Verification
+#### Block Explorer Verification
 
 For post-deployment verification on Etherscan run
 
@@ -137,48 +115,67 @@ For post-deployment verification on Etherscan run
 forge verify-contract \
    <ADDRESS> \
    src/ProtocolAdapter.sol:ProtocolAdapter \
-   --chain sepolia \
-   --constructor-args-path script/constructor-args.txt
+   --chain sepolia
 ```
 
 after replacing `<ADDRESS>` with the respective contract address.
 
 ### Benchmarks
 
-Parameters:
+The following benchmark shows the transaction execution costs without and with proof aggregation for the current protocol adapter implementation:
 
-- Commitment accumulator `treeDepth = 32`
+<img src=".assets/Benchmark.png" width=67% alt="Protocol adapter benchmark.">
 
-<img src=".assets/Benchmark.png" width=67% alt="Protocol adapter benchmark for a Merkle tree depth of 32.">
+The current protocol adapter implementation utilizes a Merkle tree of dynamic depth starting at depth 0.
 
 ## Rust Bindings
 
-### Installation
+## Prerequisites
 
-Change the directory to the `bindings` folder with `cd bindings` and run
-
-1. Install `rzup` by running the following command:
+1. Get an up-to-date version of [Rust](https://www.rust-lang.org/) with
 
    ```sh
-   curl -L https://risczero.com/install | bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
 
-2. Run `rzup` to install RISC Zero:
+2. Install [RISC Zero `rzup`](https://github.com/risc0/risc0) with
+
+   ```sh
+   curl -L https://risczero.com/install | sh
+   ```
+
+3. Install the latest RISC Zero version with
 
    ```sh
    rzup install
    ```
 
-3. Go to the `bindings` directory with `cd bindings` and run
+   or a specific version (e.g., `3.0.3`) with
 
    ```sh
-   cargo build
+   rzup install cargo-risczero <version>
    ```
 
 ### Usage
 
-Print a test transaction with
+#### Build
+
+Change the directory to the `bindings` folder with `cd bindings` and run
 
 ```sh
-cargo test -- conversion::tests::print_tx --exact --show-output --ignored
+cargo build
+```
+
+#### Test
+
+To test the build, run
+
+```sh
+cargo test
+```
+
+To print a test transaction with aggregated proofs run
+
+```sh
+cargo test -- conversion::tests::generate_tx_agg --exact --show-output --ignored
 ```

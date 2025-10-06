@@ -3,10 +3,11 @@ pragma solidity ^0.8.30;
 
 /// @title Compliance
 /// @author Anoma Foundation, 2025
-/// @notice A library containing type definitions of the compliance proving system.
+/// @notice A library containing type definitions and verifying key of the compliance proving system.
 /// @custom:security-contact security@anoma.foundation
 library Compliance {
-    /// @notice The compliance instance containing the data required to verify the compliance unit.
+    /// @notice The compliance instance containing the data required to verify the compliance unit being constituted by
+    /// one consumed and one created resource.
     /// @param consumed References associated with the consumed resource in the compliance unit.
     /// @param created References associated with the created resource in the compliance unit.
     /// @param unitDeltaX The x-coordinate of the delta value of this unit.
@@ -19,7 +20,7 @@ library Compliance {
     }
 
     /// @notice A struct containing references associated with the consumed resource of the compliance unit.
-    /// @param nullifier The nullifier t associated with the resource.
+    /// @param nullifier The nullifier associated with the resource.
     /// @param logicRef A reference to the logic function associated with the consumed resource.
     /// @param commitmentTreeRoot The root of the commitment tree from which this resource is derived.
     struct ConsumedRefs {
@@ -39,7 +40,7 @@ library Compliance {
     /// @notice A struct containing all information required to verify a compliance unit.
     /// @param proof The compliance proof.
     /// @param instance The instance to the compliance proof.
-    /// @dev Since the verifying key (i.e., the compliance circuit ID) is fixed, it is hard coded below.
+    /// @dev Since the verifying key (i.e., the compliance circuit ID) is fixed, it is hardcoded below.
     struct VerifierInput {
         bytes proof;
         Instance instance;
@@ -47,5 +48,7 @@ library Compliance {
 
     /// @notice The compliance verifying key.
     /// @dev The key is fixed as long as the compliance circuit binary is not changed.
-    bytes32 internal constant _VERIFYING_KEY = 0x706468196fd92568220f5271e843c608126f7a8f204205d42ceef1f2c69f91df;
+    /// The compliance circuit should ensure that the created resources use the consumed resource's nullifier
+    /// as nonce.
+    bytes32 internal constant _VERIFYING_KEY = 0x5e12ee6aeaa338ff28ae3efe563704e0439b358c75895e98fee8feb2acac697b;
 }

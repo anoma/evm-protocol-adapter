@@ -6,13 +6,14 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test} from "forge-std/Test.sol";
 
+import {Logic} from "../../src/libs/proving/Logic.sol";
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
-import {Logic} from "../../src/proving/Logic.sol";
 import {TransactionExample} from "../examples/transactions/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
 contract LogicProofTest is Test {
-    using RiscZeroUtils for Logic.VerifierInput;
+    using Logic for Logic.VerifierInput;
+    using RiscZeroUtils for Logic.Instance;
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
@@ -23,21 +24,21 @@ contract LogicProofTest is Test {
 
     function test_verify_example_logic_proof_consumed() public view {
         Logic.VerifierInput memory input = TransactionExample.logicVerifierInput({isConsumed: true});
-        bytes32 root = TransactionExample.treeRoot();
+        bytes32 root = TransactionExample.commitmentTreeRoot();
         _router.verify({
             seal: input.proof,
             imageId: input.verifyingKey,
-            journalDigest: input.toJournalDigest(root, true)
+            journalDigest: sha256(input.toInstance(root, true).toJournal())
         });
     }
 
     function test_verify_example_logic_proof_created() public view {
         Logic.VerifierInput memory input = TransactionExample.logicVerifierInput({isConsumed: false});
-        bytes32 root = TransactionExample.treeRoot();
+        bytes32 root = TransactionExample.commitmentTreeRoot();
         _router.verify({
             seal: input.proof,
             imageId: input.verifyingKey,
-            journalDigest: input.toJournalDigest(root, false)
+            journalDigest: sha256(input.toInstance(root, false).toJournal())
         });
     }
 
@@ -54,7 +55,7 @@ contract LogicProofTest is Test {
 
         // Generate digest where only resource payload is filled.
         input.appData.resourcePayload = payloadList;
-        bytes32 resourcePayloadDigest = input.toJournalDigest(root, consumed);
+        bytes32 resourcePayloadDigest = sha256(input.toInstance(root, consumed).toJournal());
         assertEq(input.appData.resourcePayload.length, 1);
         assertEq(input.appData.discoveryPayload.length, 0);
         assertEq(input.appData.externalPayload.length, 0);
@@ -63,7 +64,7 @@ contract LogicProofTest is Test {
 
         // Generate digest where only discovery payload is filled.
         input.appData.discoveryPayload = payloadList;
-        bytes32 discoveryPayloadDigest = input.toJournalDigest(root, consumed);
+        bytes32 discoveryPayloadDigest = sha256(input.toInstance(root, consumed).toJournal());
         assertEq(input.appData.resourcePayload.length, 0);
         assertEq(input.appData.discoveryPayload.length, 1);
         assertEq(input.appData.externalPayload.length, 0);
@@ -72,7 +73,7 @@ contract LogicProofTest is Test {
 
         // Generate digest where only external payload is filled.
         input.appData.externalPayload = payloadList;
-        bytes32 externalPayloadDigest = input.toJournalDigest(root, consumed);
+        bytes32 externalPayloadDigest = sha256(input.toInstance(root, consumed).toJournal());
         assertEq(input.appData.resourcePayload.length, 0);
         assertEq(input.appData.discoveryPayload.length, 0);
         assertEq(input.appData.externalPayload.length, 1);
@@ -81,7 +82,7 @@ contract LogicProofTest is Test {
 
         // Generate digest where only application payload is filled.
         input.appData.applicationPayload = payloadList;
-        bytes32 applicationPayloadDigest = input.toJournalDigest(root, consumed);
+        bytes32 applicationPayloadDigest = sha256(input.toInstance(root, consumed).toJournal());
         assertEq(input.appData.resourcePayload.length, 0);
         assertEq(input.appData.discoveryPayload.length, 0);
         assertEq(input.appData.externalPayload.length, 0);

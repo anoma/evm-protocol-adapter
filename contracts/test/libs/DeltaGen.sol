@@ -3,12 +3,10 @@ pragma solidity ^0.8.30;
 
 import {VmSafe} from "forge-std/Vm.sol";
 
-import {EllipticCurveK256} from "../../src/libs/EllipticCurveK256.sol";
-
+import {Delta} from "../../src/libs/proving/Delta.sol";
 import {SignMagnitude} from "./SignMagnitude.sol";
 
 library DeltaGen {
-    using EllipticCurveK256 for uint256;
     using SignMagnitude for SignMagnitude.Number;
     using DeltaGen for uint256;
 
@@ -51,7 +49,7 @@ library DeltaGen {
     /// @return instance The delta instance corresponding to the parameters
     function generateInstance(VmSafe vm, InstanceInputs memory deltaInputs)
         internal
-        returns (uint256[2] memory instance)
+        returns (Delta.CurvePoint memory instance)
     {
         deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
         if (deltaInputs.valueCommitmentRandomness == 0) {
@@ -71,8 +69,7 @@ library DeltaGen {
         VmSafe.Wallet memory valueWallet = vm.createWallet(preDelta);
 
         // Extract the transaction delta from the wallet
-        instance[0] = valueWallet.publicKeyX;
-        instance[1] = valueWallet.publicKeyY;
+        instance = Delta.CurvePoint({x: valueWallet.publicKeyX, y: valueWallet.publicKeyY});
     }
 
     /// @notice Generates a transaction delta proof by signing verifyingKey with

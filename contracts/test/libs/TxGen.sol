@@ -3,21 +3,23 @@ pragma solidity ^0.8.30;
 
 import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
 import {VmSafe} from "forge-std/Vm.sol";
-import {MerkleTree} from "./../../src/libs/MerkleTree.sol";
-import {RiscZeroUtils} from "./../../src/libs/RiscZeroUtils.sol";
-import {SHA256} from "./../../src/libs/SHA256.sol";
-import {Compliance} from "./../../src/proving/Compliance.sol";
-import {Delta} from "./../../src/proving/Delta.sol";
-import {Logic} from "./../../src/proving/Logic.sol";
+import {MerkleTree} from "../../src/libs/MerkleTree.sol";
+import {Aggregation} from "../../src/libs/proving/Aggregation.sol";
+import {Compliance} from "../../src/libs/proving/Compliance.sol";
+import {Delta} from "../../src/libs/proving/Delta.sol";
+import {Logic} from "../../src/libs/proving/Logic.sol";
+import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
 import {Transaction, Action, Resource} from "./../../src/Types.sol";
 import {DeltaGen} from "./../proofs/DeltaProof.t.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
+    using RiscZeroUtils for Aggregation.Instance;
     using RiscZeroUtils for Compliance.Instance;
-    using RiscZeroUtils for Logic.VerifierInput;
+    using RiscZeroUtils for Logic.Instance;
     using Logic for Logic.VerifierInput[];
-    using Delta for uint256[2];
+    using Logic for Logic.VerifierInput;
 
     struct ActionConfig {
         uint256 complianceUnitCount;
@@ -34,6 +36,8 @@ library TxGen {
     }
 
     error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
+    error NonExistingTag(bytes32 tag);
+    error TransactionTagCountMismatch();
 
     function complianceVerifierInput(
         VmSafe vm,
@@ -46,7 +50,7 @@ library TxGen {
         bytes32 cm = commitment(created);
 
         // Construct the delta for consumption based on kind and quantity
-        uint256[2] memory unitDelta = DeltaGen.generateInstance(
+        Delta.CurvePoint memory unitDelta = DeltaGen.generateInstance(
             vm,
             DeltaGen.InstanceInputs({
                 kind: kind(consumed),
@@ -76,12 +80,12 @@ library TxGen {
                 logicRef: consumed.logicRef
             }),
             created: Compliance.CreatedRefs({commitment: cm, logicRef: created.logicRef}),
-            unitDeltaX: bytes32(unitDelta[0]),
-            unitDeltaY: bytes32(unitDelta[1])
+            unitDeltaX: bytes32(unitDelta.x),
+            unitDeltaY: bytes32(unitDelta.y)
         });
 
         unit = Compliance.VerifierInput({
-            proof: mockVerifier.mockProve({imageId: Compliance._VERIFYING_KEY, journalDigest: instance.toJournalDigest()})
+            proof: mockVerifier.mockProve({imageId: Compliance._VERIFYING_KEY, journalDigest: sha256(instance.toJournal())})
                 .seal,
             instance: instance
         });
@@ -188,10 +192,12 @@ library TxGen {
         action = createAction({vm: vm, mockVerifier: mockVerifier, consumed: consumed, created: created});
     }
 
-    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, ResourceLists[] memory actionResources)
-        internal
-        returns (Transaction memory txn)
-    {
+    function transaction(
+        VmSafe vm,
+        RiscZeroMockVerifier mockVerifier,
+        ResourceLists[] memory actionResources,
+        bool isProofAggregated
+    ) internal returns (Transaction memory txn) {
         Action[] memory actions = new Action[](actionResources.length);
 
         for (uint256 i = 0; i < actionResources.length; ++i) {
@@ -222,13 +228,20 @@ library TxGen {
                 })
             );
         }
-        txn = Transaction({actions: actions, deltaProof: proof});
+        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
+
+        if (isProofAggregated) {
+            txn = transactionAggregation(mockVerifier, txn);
+        }
     }
 
-    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
-        internal
-        returns (Transaction memory txn, bytes32 updatedNonce)
-    {
+    function transaction(
+        VmSafe vm,
+        RiscZeroMockVerifier mockVerifier,
+        bytes32 nonce,
+        ActionConfig[] memory configs,
+        bool isProofAggregated
+    ) internal returns (Transaction memory txn, bytes32 updatedNonce) {
         updatedNonce = nonce;
 
         Action[] memory actions = new Action[](configs.length);
@@ -254,7 +267,24 @@ library TxGen {
                 })
             );
         }
-        txn = Transaction({actions: actions, deltaProof: proof});
+        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
+
+        if (isProofAggregated) {
+            txn = transactionAggregation(mockVerifier, txn);
+        }
+    }
+
+    function transactionAggregation(RiscZeroMockVerifier mockVerifier, Transaction memory txn)
+        internal
+        view
+        returns (Transaction memory aggregatedTxn)
+    {
+        aggregatedTxn = txn;
+
+        aggregatedTxn.aggregationProof = mockVerifier.mockProve({
+            imageId: Aggregation._VERIFYING_KEY,
+            journalDigest: sha256(aggregatedInstanceGeneration(txn).toJournal())
+        }).seal;
     }
 
     function logicVerifierInput(
@@ -273,7 +303,7 @@ library TxGen {
 
         input.proof = mockVerifier.mockProve({
             imageId: resource.logicRef,
-            journalDigest: input.toJournalDigest(actionTreeRoot, isConsumed)
+            journalDigest: sha256(input.toInstance(actionTreeRoot, isConsumed).toJournal())
         }).seal;
     }
 
@@ -309,14 +339,16 @@ library TxGen {
         }
     }
 
+    /// @dev This function is a duplicated from `TagUtils.sol` with the difference that it uses `memory`.
     function collectTags(Action memory action) internal pure returns (bytes32[] memory tags) {
         uint256 complianceUnitCount = action.complianceVerifierInputs.length;
 
         tags = new bytes32[](complianceUnitCount * 2);
 
         for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            tags[i * 2] = action.complianceVerifierInputs[i].instance.consumed.nullifier;
-            tags[(i * 2) + 1] = action.complianceVerifierInputs[i].instance.created.commitment;
+            Compliance.Instance memory instance = action.complianceVerifierInputs[i].instance;
+            tags[(i * 2)] = instance.consumed.nullifier;
+            tags[(i * 2) + 1] = instance.created.commitment;
         }
     }
 
@@ -334,6 +366,47 @@ library TxGen {
         }
     }
 
+    function aggregatedInstanceGeneration(Transaction memory txn)
+        internal
+        pure
+        returns (Aggregation.Instance memory aggregationInstance)
+    {
+        uint256 n = 0;
+        bytes32[] memory logicRefs = collectLogicRefs(txn.actions);
+
+        if (countComplianceUnits(txn.actions) * 2 != logicRefs.length) {
+            revert TransactionTagCountMismatch();
+        }
+
+        Compliance.Instance[] memory complianceInstances = new Compliance.Instance[](logicRefs.length / 2);
+        Logic.Instance[] memory logicInstances = new Logic.Instance[](logicRefs.length);
+        for (uint256 i = 0; i < txn.actions.length; ++i) {
+            for (uint256 j = 0; j < txn.actions[i].complianceVerifierInputs.length; ++j) {
+                Compliance.VerifierInput memory complianceUnit = txn.actions[i].complianceVerifierInputs[j];
+                complianceInstances[n / 2] = complianceUnit.instance;
+                bytes32 actionTreeRoot = computeActionTreeRoot(txn.actions[i]);
+
+                {
+                    uint256 nullifierIndex = getTagIndex(txn.actions[i], complianceUnit.instance.consumed.nullifier);
+                    logicInstances[n++] =
+                        Logic.toInstance(txn.actions[i].logicVerifierInputs[nullifierIndex], actionTreeRoot, true);
+                }
+
+                {
+                    uint256 commitmentIndex = getTagIndex(txn.actions[i], complianceUnit.instance.created.commitment);
+                    logicInstances[n++] =
+                        Logic.toInstance(txn.actions[i].logicVerifierInputs[commitmentIndex], actionTreeRoot, false);
+                }
+            }
+        }
+
+        aggregationInstance = Aggregation.Instance({
+            logicRefs: logicRefs,
+            complianceInstances: complianceInstances,
+            logicInstances: logicInstances
+        });
+    }
+
     function mockResource(bytes32 nonce, bytes32 logicRef, bytes32 labelRef, uint128 quantity)
         internal
         pure
@@ -349,6 +422,18 @@ library TxGen {
             randSeed: 0,
             ephemeral: true
         });
+    }
+
+    function getTagIndex(Action memory action, bytes32 tag) internal pure returns (uint256 index) {
+        uint256 logicVerifierInputCount = action.logicVerifierInputs.length;
+
+        for (uint256 i = 0; i < logicVerifierInputCount; ++i) {
+            if (tag == action.logicVerifierInputs[i].tag) {
+                return (index = i);
+            }
+        }
+
+        revert NonExistingTag(tag);
     }
 
     function commitment(Resource memory resource) internal pure returns (bytes32 hash) {
@@ -377,5 +462,21 @@ library TxGen {
 
     function initialRoot() internal pure returns (bytes32 root) {
         root = SHA256.EMPTY_HASH;
+    }
+
+    function computeActionTreeRoot(Action memory action) internal pure returns (bytes32 root) {
+        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
+
+        bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * 2);
+
+        // The order in which the tags are added to the tree is provided by the compliance units.
+        for (uint256 j = 0; j < complianceUnitCount; ++j) {
+            Compliance.VerifierInput memory complianceUnit = action.complianceVerifierInputs[j];
+
+            actionTreeTags[2 * j] = complianceUnit.instance.consumed.nullifier;
+            actionTreeTags[(2 * j) + 1] = complianceUnit.instance.created.commitment;
+        }
+
+        root = actionTreeTags.computeRoot();
     }
 }

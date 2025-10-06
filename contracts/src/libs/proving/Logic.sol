@@ -16,14 +16,24 @@ library Logic {
     /// @param tag The nullifier or commitment of the resource depending on if the resource is consumed or not.
     /// @param verifyingKey The logic verifying key (i.e., the hash of the logic function).
     /// @param appData The application data associated with the resource.
-    /// @dev In the future and to achieve function privacy, the logic circuit validity will be proven
-    //  in another circuit and can be hard-coded similar to the compliance proof verifying key.
     /// @param proof The logic proof.
     struct VerifierInput {
         bytes32 tag;
         bytes32 verifyingKey;
         AppData appData;
         bytes proof;
+    }
+
+    /// @notice The logic instance containing the data required to verify a resource logic proof.
+    /// @param tag The nullifier or commitment of the resource depending on whether the resource is consumed or not.
+    /// @param isConsumed Whether the resource is consumed or not.
+    /// @param actionTreeRoot The root of the tree containing all resources present in an action.
+    /// @param appData The application data associated with the resource.
+    struct Instance {
+        bytes32 tag;
+        bool isConsumed;
+        bytes32 actionTreeRoot;
+        AppData appData;
     }
 
     /// @notice A struct containing payloads of different kinds.
@@ -48,6 +58,21 @@ library Logic {
 
     /// @notice Thrown if a tag is not found in a list of verifier inputs.
     error TagNotFound(bytes32 tag);
+
+    /// @notice Returns a logic instance given a logic verifier input, an action tree root, and depending on whether
+    /// associated resource is consumed or not.
+    /// @param input The logic verifier input to construct the instance from.
+    /// @param actionTreeRoot The action tree root to put into the instance.
+    /// @param isConsumed Whether the associated resource is consumed or not.
+    /// @return instance The resulting instance.
+    function toInstance(Logic.VerifierInput memory input, bytes32 actionTreeRoot, bool isConsumed)
+        internal
+        pure
+        returns (Instance memory instance)
+    {
+        instance =
+            Instance({tag: input.tag, isConsumed: isConsumed, actionTreeRoot: actionTreeRoot, appData: input.appData});
+    }
 
     /// @notice Looks up a `VerifierInput` element from a list by its tag.
     /// @param list The list of verifier inputs.

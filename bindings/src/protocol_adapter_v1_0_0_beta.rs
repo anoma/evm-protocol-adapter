@@ -59,10 +59,13 @@ impl From<AppData> for Logic::AppData {
 impl From<LogicVerifierInputs> for Logic::VerifierInput {
     fn from(logic_verifier_inputs: LogicVerifierInputs) -> Self {
         Self {
-            tag: B256::from_slice(words_to_bytes(&logic_verifier_inputs.tag)),
-            verifyingKey: B256::from_slice(words_to_bytes(&logic_verifier_inputs.verifying_key)),
+            tag: B256::from_slice(logic_verifier_inputs.tag.as_bytes()),
+            verifyingKey: B256::from_slice(logic_verifier_inputs.verifying_key.as_bytes()),
             appData: logic_verifier_inputs.app_data.into(),
-            proof: Bytes::from(encode_seal(&logic_verifier_inputs.proof)),
+            proof: match &logic_verifier_inputs.proof {
+                Some(proof) => Bytes::from(encode_seal(proof).unwrap()),
+                None => Bytes::from(""),
+            },
         }
     }
 }
@@ -71,15 +74,15 @@ impl From<ComplianceInstance> for Compliance::Instance {
     fn from(instance: ComplianceInstance) -> Self {
         Self {
             consumed: Compliance::ConsumedRefs {
-                nullifier: B256::from_slice(words_to_bytes(&instance.consumed_nullifier)),
-                logicRef: B256::from_slice(words_to_bytes(&instance.consumed_logic_ref)),
-                commitmentTreeRoot: B256::from_slice(words_to_bytes(
-                    &instance.consumed_commitment_tree_root,
-                )),
+                nullifier: B256::from_slice(instance.consumed_nullifier.as_bytes()),
+                logicRef: B256::from_slice(instance.consumed_logic_ref.as_bytes()),
+                commitmentTreeRoot: B256::from_slice(
+                    instance.consumed_commitment_tree_root.as_bytes(),
+                ),
             },
             created: Compliance::CreatedRefs {
-                commitment: B256::from_slice(words_to_bytes(&instance.created_commitment)),
-                logicRef: B256::from_slice(words_to_bytes(&instance.created_logic_ref)),
+                commitment: B256::from_slice(instance.created_commitment.as_bytes()),
+                logicRef: B256::from_slice(instance.created_logic_ref.as_bytes()),
             },
             unitDeltaX: B256::from_slice(words_to_bytes(&instance.delta_x)),
             unitDeltaY: B256::from_slice(words_to_bytes(&instance.delta_y)),
@@ -90,8 +93,11 @@ impl From<ComplianceInstance> for Compliance::Instance {
 impl From<ComplianceUnit> for Compliance::VerifierInput {
     fn from(compliance_unit: ComplianceUnit) -> Self {
         Self {
-            proof: Bytes::from(encode_seal(&compliance_unit.proof)),
-            instance: compliance_unit.get_instance().into(),
+            proof: match &compliance_unit.clone().proof {
+                Some(proof) => Bytes::from(encode_seal(proof).unwrap()),
+                None => Bytes::from(""),
+            },
+            instance: compliance_unit.get_instance().unwrap().into(),
         }
     }
 }
@@ -122,11 +128,16 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
 
         Self {
             actions: tx
+                .clone()
                 .actions
                 .into_iter()
                 .map(ProtocolAdapter::Action::from)
                 .collect(),
             deltaProof: Bytes::from(delta_proof),
+            aggregationProof: match tx.get_raw_aggregation_proof() {
+                Some(proof) => Bytes::from(encode_seal(&proof).unwrap()),
+                None => Bytes::from(""),
+            },
         }
     }
 }
@@ -175,12 +186,46 @@ impl<X: Provider> crate::call::Client for Client<X> {
             .map(|x| x.0)
     }
 
-    async fn latest_root(&self) -> Result<[u8; 32], alloy::contract::Error> {
-        Client::<X>::latestRoot(self).call().await.map(|x| x.0)
+    async fn commitment_count(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::commitmentCount(self).call().await
     }
 
-    async fn contains_root(&self, root: &[u8; 32]) -> Result<bool, alloy::contract::Error> {
-        Client::<X>::containsRoot(self, root.into()).call().await
+    async fn commitment_tree_depth(&self) -> Result<u8, alloy::contract::Error> {
+        Client::<X>::commitmentTreeDepth(self).call().await
+    }
+
+    async fn commitment_tree_capacity(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::commitmentTreeCapacity(self).call().await
+    }
+
+    async fn latest_commitment_tree_root(&self) -> Result<[u8; 32], alloy::contract::Error> {
+        Client::<X>::latestCommitmentTreeRoot(self)
+            .call()
+            .await
+            .map(|x| x.0)
+    }
+
+    async fn is_commitment_tree_root_contained(
+        &self,
+        root: &[u8; 32],
+    ) -> Result<bool, alloy::contract::Error> {
+        Client::<X>::isCommitmentTreeRootContained(self, root.into())
+            .call()
+            .await
+    }
+
+    async fn commitment_tree_root_count(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::commitmentTreeRootCount(self).call().await
+    }
+
+    async fn commitment_tree_root_at_index(
+        &self,
+        index: U256,
+    ) -> Result<[u8; 32], alloy::contract::Error> {
+        Client::<X>::commitmentTreeRootAtIndex(self, index)
+            .call()
+            .await
+            .map(Into::into)
     }
 
     async fn verify_merkle_proof(
@@ -202,16 +247,21 @@ impl<X: Provider> crate::call::Client for Client<X> {
         .map(|_| ())
     }
 
-    async fn contains(&self, nullifier: &[u8; 32]) -> Result<bool, alloy::contract::Error> {
-        Client::<X>::contains(self, nullifier.into()).call().await
+    async fn is_nullifier_contained(
+        &self,
+        nullifier: &[u8; 32],
+    ) -> Result<bool, alloy::contract::Error> {
+        Client::<X>::isNullifierContained(self, nullifier.into())
+            .call()
+            .await
     }
 
-    async fn length(&self) -> Result<U256, alloy::contract::Error> {
-        Client::<X>::length(self).call().await
+    async fn nullifier_count(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::nullifierCount(self).call().await
     }
 
-    async fn at_index(&self, index: U256) -> Result<[u8; 32], alloy::contract::Error> {
-        Client::<X>::atIndex(self, index)
+    async fn nullifier_at_index(&self, index: U256) -> Result<[u8; 32], alloy::contract::Error> {
+        Client::<X>::nullifierAtIndex(self, index)
             .call()
             .await
             .map(Into::into)
@@ -222,28 +272,58 @@ impl<X: Provider> crate::call::Client for Client<X> {
 mod tests {
     use super::ProtocolAdapter;
     use alloy::primitives::B256;
+    use alloy::sol_types::SolValue;
+    use arm_risc0::aggregation::AggregationStrategy;
 
     #[test]
-    #[ignore]
-    fn print_tx() {
+    fn print_verifying_keys() {
         println!(
-            "{:?}",
+            "COMPLIANCE_VK: {:?}",
             B256::from_slice(arm_risc0::constants::COMPLIANCE_VK.as_bytes())
         );
 
+        println!(
+            "BATCH_AGGREGATION_VK: {:?}",
+            B256::from_slice(arm_risc0::aggregation::constants::BATCH_AGGREGATION_VK.as_bytes())
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn generate_tx_reg() {
         let n_actions = 1;
 
-        let raw_tx = arm_risc0::transaction::generate_test_transaction(n_actions);
-        println!("{:?}", raw_tx);
-        let evm_tx = ProtocolAdapter::Transaction::from(raw_tx);
+        let tx = arm_risc0::tests::generate_test_transaction(n_actions, 1);
 
-        use alloy::sol_types::SolValue;
-        let encoded_tx = evm_tx.abi_encode();
+        to_evm_bin_file(ProtocolAdapter::Transaction::from(tx), "tx_reg");
+    }
+
+    #[test]
+    #[ignore]
+    fn generate_tx_agg() {
+        let n_actions = 1;
+
+        let mut tx = arm_risc0::tests::generate_test_transaction(n_actions, 1);
+
+        tx.aggregate_with_strategy(AggregationStrategy::Batch)
+            .unwrap();
+
+        to_evm_bin_file(ProtocolAdapter::Transaction::from(tx), "tx_agg");
+    }
+
+    fn to_evm_bin_file(tx: ProtocolAdapter::Transaction, name: &str) {
+        let n_actions = tx.actions.len();
+
+        let encoded_tx = tx.abi_encode();
         let decoded_tx: ProtocolAdapter::Transaction =
             ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
-        assert_eq!(evm_tx, decoded_tx);
-        println!("Transaction: {:#?}", evm_tx);
-        std::fs::write(format!("test_tx{n_actions:02}.bin"), &encoded_tx)
-            .expect("Failed to write encoded transaction to file");
+        assert_eq!(tx, decoded_tx);
+
+        println!("Transaction: {tx:#?}");
+        std::fs::write(
+            format!("../contracts/test/examples/transactions/test_{name}_{n_actions:02}.bin"),
+            &encoded_tx,
+        )
+        .expect("Failed to write encoded transaction to file");
     }
 }

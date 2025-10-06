@@ -6,8 +6,8 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test} from "forge-std/Test.sol";
 
+import {Compliance} from "../../src/libs/proving/Compliance.sol";
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
-import {Compliance} from "../../src/proving/Compliance.sol";
 import {TransactionExample} from "../examples/transactions/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
@@ -27,7 +27,7 @@ contract ComplianceProofTest is Test {
         _router.verify({
             seal: cu.proof,
             imageId: Compliance._VERIFYING_KEY,
-            journalDigest: cu.instance.toJournalDigest()
+            journalDigest: sha256(cu.instance.toJournal())
         });
     }
 

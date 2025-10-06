@@ -7,8 +7,7 @@ import {SHA256} from "../libs/SHA256.sol";
 
 /// @title MerkleTree
 /// @author Anoma Foundation, 2025
-/// @notice A Merkle tree implementation populating a tree of variable depth from left to right
-/// and providing on-chain Merkle proofs.
+/// @notice A Merkle tree implementation populating a tree of variable depth from left to right.
 /// @dev This is a modified version of the OpenZeppelin `MerkleTree` and `MerkleProof` implementation.
 /// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.4.0/contracts/utils/structs/MerkleTree.sol
 /// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.4.0/contracts/utils/cryptography/MerkleProof.sol

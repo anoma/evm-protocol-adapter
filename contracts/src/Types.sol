@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Compliance} from "./proving/Compliance.sol";
-import {Logic} from "./proving/Logic.sol";
+import {Compliance} from "./libs/proving/Compliance.sol";
+import {Logic} from "./libs/proving/Logic.sol";
 
 /// @notice The resource object constituting the atomic unit of state in the Anoma protocol.
 /// @param  logicRef The hash of the resource logic function.
@@ -24,17 +24,19 @@ struct Resource {
     bool ephemeral;
 }
 
-/// @notice The transaction object containing all required data to conduct a RM state transition.
-/// in which resource get consumed and created.
+/// @notice The transaction object containing all required data to conduct a RM state transition
+/// in which resources get consumed and created.
 /// @param actions The list of actions to be executed.
 /// @param deltaProof The proof for the transaction delta value.
+/// @param aggregationProof A recursive proof of all compliance and resource logics in the transaction.
 struct Transaction {
     Action[] actions;
     bytes deltaProof;
+    bytes aggregationProof;
 }
 
 /// @notice The action object providing context separation between non-intersecting sets of resources.
-/// @param logicProofs The logic proofs of each resource consumed or created in the action.
+/// @param logicVerifierInputs The logic inputs of each resource consumed or created in the action.
 /// @param complianceVerifierInputs The compliance units comprising one consumed and one created resource, each.
 struct Action {
     Logic.VerifierInput[] logicVerifierInputs;
