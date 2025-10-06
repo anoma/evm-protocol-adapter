@@ -742,16 +742,17 @@ contract ProtocolAdapterMockVerifierTest is Test {
         Transaction calldata transactionCalldata,
         GenericFailParams memory params
     ) public {
-        uint256 minProofLen = 4;
+        Transaction memory transaction = transactionCalldata;
         // Wrap the parameters into range
         (params.actionIdx, params.inputIdx) = this.selectComplianceVerifierInput(transactionCalldata, params.actionIdx, params.inputIdx);
-        Transaction memory transaction = transactionCalldata;
-        Compliance.VerifierInput[] memory complianceVerifierInputs =
-            transaction.actions[params.actionIdx].complianceVerifierInputs;
-        // Finally truncate the compliance proof to below the minimum
-        bytes calldata proof =
-            transactionCalldata.actions[params.actionIdx].complianceVerifierInputs[params.inputIdx].proof;
-        complianceVerifierInputs[params.inputIdx].proof = proof[0:(proof.length % minProofLen)];
+        {
+            Compliance.VerifierInput[] memory complianceVerifierInputs =
+                transaction.actions[params.actionIdx].complianceVerifierInputs;
+            // Finally truncate the compliance proof to below the minimum
+            bytes calldata proof =
+                transactionCalldata.actions[params.actionIdx].complianceVerifierInputs[params.inputIdx].proof;
+            complianceVerifierInputs[params.inputIdx].proof = proof[0:(proof.length % 4)];
+        }
         // With a short proof, we expect an EVM error (which is message-less)
         vm.expectRevert(bytes(""), address(_router));
         // Finally, execute the transaction to make sure that it fails
@@ -773,8 +774,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         UnknownSelectorFailsParams memory params
     ) public {
         // Make sure that the chosen verifier selector does not exist
-        uint256 minProofLen = 4;
-        vm.assume(params.proof.length >= minProofLen);
+        vm.assume(params.proof.length >= 4);
         vm.assume(address(_router.verifiers(bytes4(params.proof))) == address(0));
         // Wrap the parameters into range
         (params.actionIdx, params.inputIdx) = this.selectComplianceVerifierInput(transaction, params.actionIdx, params.inputIdx);
@@ -807,19 +807,21 @@ contract ProtocolAdapterMockVerifierTest is Test {
     ) public {
         // Wrap the parameters into range
         (params.actionIdx, params.inputIdx) = this.selectComplianceVerifierInput(transactionCalldata, params.actionIdx, params.inputIdx);
-        Action calldata actionCalldata = transactionCalldata.actions[params.actionIdx];
-        Compliance.VerifierInput calldata complianceVerifierInput = actionCalldata.complianceVerifierInputs[params.inputIdx];
-        // Make sure that the planned corruption will change something
-        bytes32 tag = params.consumed
-            ? complianceVerifierInput.instance.consumed.nullifier
-            : complianceVerifierInput.instance.created.commitment;
-        vm.assume(tag != params.tag);
-        // Finally, corrupt the corresponding logic verifier input tag
-        uint256 logicVerifierInputIdx = actionCalldata.logicVerifierInputs.lookup(tag);
         Transaction memory transaction = transactionCalldata;
-        transaction.actions[params.actionIdx].logicVerifierInputs[logicVerifierInputIdx].tag = params.tag;
-        // With an unknown tag, we expect failure
-        vm.expectRevert(abi.encodeWithSelector(Logic.TagNotFound.selector, tag));
+        {
+            Action calldata actionCalldata = transactionCalldata.actions[params.actionIdx];
+            Compliance.VerifierInput memory complianceVerifierInput = actionCalldata.complianceVerifierInputs[params.inputIdx];
+            // Make sure that the planned corruption will change something
+            bytes32 tag = params.consumed
+                ? complianceVerifierInput.instance.consumed.nullifier
+                : complianceVerifierInput.instance.created.commitment;
+            vm.assume(tag != params.tag);
+            // Finally, corrupt the corresponding logic verifier input tag
+            uint256 logicVerifierInputIdx = actionCalldata.logicVerifierInputs.lookup(tag);
+            transaction.actions[params.actionIdx].logicVerifierInputs[logicVerifierInputIdx].tag = params.tag;
+            // With an unknown tag, we expect failure
+            vm.expectRevert(abi.encodeWithSelector(Logic.TagNotFound.selector, tag));
+        }
         // Finally, execute the transaction to make sure that it fails
         _mockPa.execute(transaction);
     }
@@ -845,16 +847,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         // Replace the target position with the last element
         complianceVerifierInputs[params.inputIdx] = complianceVerifierInputs[complianceVerifierInputs.length - 1];
         // Then make a shorter array of compliance verifier inputs
-        Compliance.VerifierInput[] memory shorter = new Compliance.VerifierInput[](complianceVerifierInputs.length - 1);
-        for (uint256 i = 0; i < shorter.length; i++) {
-            shorter[i] = complianceVerifierInputs[i];
-        }
-        // Finally, replace the compliance verifier inputs with the shorter array
-        transaction.actions[params.actionIdx].complianceVerifierInputs = shorter;
+        assembly { mstore(complianceVerifierInputs, sub(mload(complianceVerifierInputs), 1)) }
         // With mismatching resource counts, we expect failure
         vm.expectRevert(
             abi.encodeWithSelector(
-                TagUtils.TagCountMismatch.selector, action.logicVerifierInputs.length, shorter.length * 2
+                TagUtils.TagCountMismatch.selector, action.logicVerifierInputs.length, complianceVerifierInputs.length * 2
             )
         );
         // Finally, execute the transaction to make sure that it fails
@@ -882,16 +879,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         // Replace the target position with the last element
         logicVerifierInputs[params.inputIdx] = logicVerifierInputs[logicVerifierInputs.length - 1];
         // Then make a shorter array of logic verifier inputs
-        Logic.VerifierInput[] memory shorter = new Logic.VerifierInput[](logicVerifierInputs.length - 1);
-        for (uint256 i = 0; i < shorter.length; i++) {
-            shorter[i] = logicVerifierInputs[i];
-        }
-        // Finally, replace the logic verifier inputs with the shorter array
-        transaction.actions[params.actionIdx].logicVerifierInputs = shorter;
+        assembly { mstore(logicVerifierInputs, sub(mload(logicVerifierInputs), 1)) }
         // With mismatching resource counts, we expect failure
         vm.expectRevert(
             abi.encodeWithSelector(
-                TagUtils.TagCountMismatch.selector, shorter.length, action.complianceVerifierInputs.length * 2
+                TagUtils.TagCountMismatch.selector, logicVerifierInputs.length, action.complianceVerifierInputs.length * 2
             )
         );
         // Finally, execute the transaction to make sure that it fails
