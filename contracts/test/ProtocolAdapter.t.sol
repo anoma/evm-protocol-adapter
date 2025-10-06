@@ -7,11 +7,13 @@ import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
 import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {SemVerLib} from "@solady/utils/SemVerLib.sol";
 
 import {Test, Vm} from "forge-std/Test.sol";
 
 import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
+import {Versioning} from "../src/libs/Versioning.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 import {Transaction, Action} from "../src/Types.sol";
@@ -20,6 +22,8 @@ import {TransactionExample} from "./examples/transactions/Transaction.e.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract ProtocolAdapterTest is Test {
+    using SemVerLib for bytes32;
+
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
 
@@ -115,5 +119,12 @@ contract ProtocolAdapterTest is Test {
         vm.expectEmit(address(_pa));
         emit Pausable.Paused(_EMERGENCY_COMMITTEE);
         _pa.emergencyStop();
+    }
+
+    function test_getProtocolAdapterVersion_returns_a_semantic_version() public view {
+        bytes32 version = _pa.getProtocolAdapterVersion();
+
+        assertEq(version.cmp("0.0.0"), 1 /* GT */ );
+        assertEq(version.cmp("999.999.999"), -1 /* LT */ );
     }
 }
