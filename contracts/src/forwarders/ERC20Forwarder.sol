@@ -6,9 +6,7 @@ import {SafeERC20} from "@openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol
 import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 
 import {EmergencyMigratableForwarderBase} from "./bases/EmergencyMigratableForwarderBase.sol";
-
-string constant ERC20_FORWARDER_WITNESS_TYPE_STRING =
-    "ERC20ForwarderWitness witness)ERC20ForwarderWitness(bytes32 actionTreeRoot)";
+import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
 
 /// @title ERC20Forwarder
 /// @author Anoma Foundation, 2025
@@ -20,10 +18,6 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     enum CallType {
         Unwrap,
         Wrap
-    }
-
-    struct ERC20ForwarderWitness {
-        bytes32 actionTreeRoot;
     }
 
     /// @notice The canonical Uniswap Permit2 contract being deployed at the same address on all supported chains.
@@ -130,7 +124,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             }),
             owner: from,
             witness: witness,
-            witnessTypeString: ERC20_FORWARDER_WITNESS_TYPE_STRING,
+            witnessTypeString: ERC20ForwarderPermit2._WITNESS_TYPE_STRING,
             signature: signature
         });
     }
