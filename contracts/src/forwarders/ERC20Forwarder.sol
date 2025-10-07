@@ -111,9 +111,9 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             , // CallType
             address from,
             ISignatureTransfer.PermitTransferFrom memory permit,
-            ERC20ForwarderWitness memory witnessData,
+            bytes32 witness,
             bytes memory signature
-        ) = abi.decode(input, (CallType, address, ISignatureTransfer.PermitTransferFrom, ERC20ForwarderWitness, bytes));
+        ) = abi.decode(input, (CallType, address, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
 
         if (permit.permitted.amount > type(uint128).max) {
             revert TypeOverflow({limit: type(uint128).max, actual: permit.permitted.amount});
@@ -129,7 +129,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                 requestedAmount: permit.permitted.amount
             }),
             owner: from,
-            witness: keccak256(abi.encode(witnessData)),
+            witness: witness,
             witnessTypeString: ERC20_FORWARDER_WITNESS_TYPE_STRING,
             signature: signature
         });
