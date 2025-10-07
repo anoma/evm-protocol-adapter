@@ -159,10 +159,9 @@ contract ERC20ForwarderTest is Test {
         bytes memory input;
         {
             address from = _alice;
-            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
 
-            ERC20Forwarder.ERC20ForwarderWitness memory witness =
-                ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT});
+            bytes32 witness =
+                keccak256(abi.encode(ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT})));
 
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
@@ -171,7 +170,7 @@ contract ERC20ForwarderTest is Test {
                 witness: witness
             });
 
-            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, _defaultPermit, witness, signature);
         }
 
         vm.prank(_pa);
@@ -187,10 +186,9 @@ contract ERC20ForwarderTest is Test {
         bytes memory input;
         {
             address from = _alice;
-            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
 
-            ERC20Forwarder.ERC20ForwarderWitness memory witness =
-                ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT});
+            bytes32 witness =
+                keccak256(abi.encode(ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT})));
 
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
@@ -199,7 +197,7 @@ contract ERC20ForwarderTest is Test {
                 witness: witness
             });
 
-            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, _defaultPermit, witness, signature);
         }
 
         // Advance time after the deadline
@@ -218,10 +216,9 @@ contract ERC20ForwarderTest is Test {
         bytes memory input;
         {
             address from = _alice;
-            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
 
-            ERC20Forwarder.ERC20ForwarderWitness memory witness =
-                ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT});
+            bytes32 witness =
+                keccak256(abi.encode(ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT})));
 
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
@@ -230,7 +227,7 @@ contract ERC20ForwarderTest is Test {
                 witness: witness
             });
 
-            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, _defaultPermit, witness, signature);
         }
 
         // Use the signature.
@@ -259,8 +256,8 @@ contract ERC20ForwarderTest is Test {
         {
             address from = _alice;
 
-            ERC20Forwarder.ERC20ForwarderWitness memory witness =
-                ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT});
+            bytes32 witness =
+                keccak256(abi.encode(ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT})));
 
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: permit,
@@ -290,10 +287,9 @@ contract ERC20ForwarderTest is Test {
         bytes memory input;
         {
             address from = _alice;
-            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
 
-            ERC20Forwarder.ERC20ForwarderWitness memory witness =
-                ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT});
+            bytes32 witness =
+                keccak256(abi.encode(ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT})));
 
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
@@ -302,7 +298,7 @@ contract ERC20ForwarderTest is Test {
                 witness: witness
             });
 
-            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, _defaultPermit, witness, signature);
         }
 
         vm.prank(_pa);
@@ -322,10 +318,9 @@ contract ERC20ForwarderTest is Test {
         bytes memory input;
         {
             address from = _alice;
-            ISignatureTransfer.PermitTransferFrom memory permit = _defaultPermit;
 
-            ERC20Forwarder.ERC20ForwarderWitness memory witness =
-                ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT});
+            bytes32 witness =
+                keccak256(abi.encode(ERC20Forwarder.ERC20ForwarderWitness({actionTreeRoot: _ACTION_TREE_ROOT})));
 
             bytes memory signature = _createPermitWitnessTransferFromSignature({
                 permit: _defaultPermit,
@@ -334,7 +329,7 @@ contract ERC20ForwarderTest is Test {
                 witness: witness
             });
 
-            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, permit, witness, signature);
+            input = abi.encode(ERC20Forwarder.CallType.Wrap, from, _defaultPermit, witness, signature);
         }
 
         vm.prank(_pa);
@@ -347,10 +342,9 @@ contract ERC20ForwarderTest is Test {
         ISignatureTransfer.PermitTransferFrom memory permit,
         address spender,
         uint256 privateKey,
-        ERC20Forwarder.ERC20ForwarderWitness memory witness
+        bytes32 witness
     ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
-        bytes32 digest =
-            _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witnessData: witness});
+        bytes32 digest = _computePermitWitnessTransferFromDigest({permit: permit, spender: spender, witness: witness});
 
         (v, r, s) = vm.sign(privateKey, digest);
     }
@@ -359,7 +353,7 @@ contract ERC20ForwarderTest is Test {
         ISignatureTransfer.PermitTransferFrom memory permit,
         address spender,
         uint256 privateKey,
-        ERC20Forwarder.ERC20ForwarderWitness memory witness
+        bytes32 witness
     ) internal view returns (bytes memory signature) {
         (uint8 v, bytes32 r, bytes32 s) = _createPermitWitnessTransferFromSignatureRsv({
             permit: permit,
@@ -374,26 +368,24 @@ contract ERC20ForwarderTest is Test {
     /// @notice Computes the `permitWitnessTransferFrom` digest.
     /// @param permit The permit data constituted by the token address, token amount, nonce, and deadline.
     /// @param spender The address being allowed to execute the `permitWitnessTransferFrom` call.
-    /// @param witnessData The witness data.
+    /// @param witness The witness.
     /// @return digest The digest.
     function _computePermitWitnessTransferFromDigest(
         ISignatureTransfer.PermitTransferFrom memory permit,
         address spender,
-        ERC20Forwarder.ERC20ForwarderWitness memory witnessData
+        bytes32 witness
     ) internal view returns (bytes32 digest) {
-        bytes32 witness = keccak256(abi.encode(witnessData));
         string memory witnessTypeString = ERC20_FORWARDER_WITNESS_TYPE_STRING;
 
         bytes32 dataHash =
-            hashWithWitness({permit: permit, witness: witness, witnessTypeString: witnessTypeString, spender: spender});
+            _hashWithWitness({permit: permit, witness: witness, witnessTypeString: witnessTypeString, spender: spender});
         digest = _hashTypedData(dataHash);
     }
 
-    function hashWithWitness(
+    function _hashWithWitness(
         ISignatureTransfer.PermitTransferFrom memory permit,
         bytes32 witness,
         string memory witnessTypeString,
-        // ONLY CHANGE
         address spender
     ) internal view returns (bytes32) {
         bytes32 typeHash =
