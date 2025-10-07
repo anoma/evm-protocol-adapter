@@ -7,6 +7,9 @@ import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol
 
 import {EmergencyMigratableForwarderBase} from "./EmergencyMigratableForwarderBase.sol";
 
+string constant ERC20_FORWARDER_WITNESS_TYPE_STRING =
+    "ERC20ForwarderWitness witness)ERC20ForwarderWitness(bytes32 actionTreeRoot)";
+
 /// @title ERC20Forwarder
 /// @author Anoma Foundation, 2025
 /// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources.
@@ -19,7 +22,11 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         Wrap
     }
 
-    /// @notice The canonical Uniswap Permit2 contract deployed at the same address on all supported chains
+    struct ERC20ForwarderWitness {
+        bytes32 actionTreeRoot;
+    }
+
+    /// @notice The canonical Uniswap Permit2 contract being deployed at the same address on all supported chains.
     /// (see [Uniswap's announcement](https://blog.uniswap.org/permit2-and-universal-router)).
     IPermit2 internal constant _PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
@@ -71,9 +78,11 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                 , // CallType
                 address from,
                 ISignatureTransfer.PermitTransferFrom memory permit,
-                bytes32 witness,
+                ERC20ForwarderWitness memory witnessData,
                 bytes memory signature
-            ) = abi.decode(input, (CallType, address, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
+            ) = abi.decode(
+                input, (CallType, address, ISignatureTransfer.PermitTransferFrom, ERC20ForwarderWitness, bytes)
+            );
 
             if (permit.permitted.amount > type(uint128).max) {
                 revert TypeOverflow({limit: type(uint128).max, actual: permit.permitted.amount});
@@ -89,8 +98,8 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                     requestedAmount: permit.permitted.amount
                 }),
                 owner: from,
-                witness: witness,
-                witnessTypeString: "bytes32 witness",
+                witness: keccak256(abi.encode(witnessData)),
+                witnessTypeString: ERC20_FORWARDER_WITNESS_TYPE_STRING,
                 signature: signature
             });
         } else {
