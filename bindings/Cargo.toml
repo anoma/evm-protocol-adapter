@@ -4,7 +4,7 @@ version = "1.0.0-rc.2"
 edition = "2024"
 
 [dependencies]
-arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.8.1", package = "arm", features = [
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", rev = "d49e9d559c7a7baa550a8d434516873cf972ad2c", package = "arm", features = [
     #"groth16_prover", # Add this feature to generate regular transactions. Note that proof aggregation won't work.
     "groth16_aggregation",
     "bonsai",
@@ -14,7 +14,7 @@ alloy = { version = "1.0.30", features = ["full", "eip712", "node-bindings"] }
 tokio = { version = "1.44", features = ["rt-multi-thread"] }
 serde = { version = "1.0.197", default-features = false }
 sha2 = { version = "0.10.9" }
-simple_transfer_app = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.8.1", package = "simple-transfer-app" }
+simple_transfer_app = { git = "https://github.com/anoma/arm-risc0.git", rev = "d49e9d559c7a7baa550a8d434516873cf972ad2c", package = "simple-transfer-app" }
 
 
 

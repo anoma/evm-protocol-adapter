@@ -1,5 +1,5 @@
-use alloy::primitives::{Address, B256, Bytes, FixedBytes, Signature, U256, bytes, keccak256};
-use alloy::signers::{Signer, local::PrivateKeySigner};
+use alloy::primitives::{bytes, keccak256, Address, Bytes, FixedBytes, Signature, B256, U256};
+use alloy::signers::{local::PrivateKeySigner, Signer};
 use alloy::sol;
 use alloy::sol_types::SolValue;
 
@@ -55,7 +55,7 @@ pub fn permit_witness_transfer_from_digest(
         deadline,
     };
 
-    let witness_type_string = "bytes32 witness";
+    let witness_type_string = "Witness witness)Witness(bytes32 actionTreeRoot)";
 
     let struct_hash: B256 = keccak256(
         (

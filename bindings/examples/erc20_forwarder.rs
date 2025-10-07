@@ -1,5 +1,5 @@
 use alloy::hex;
-use alloy::primitives::{Address, B256, U256, address};
+use alloy::primitives::{address, keccak256, Address, B256, U256};
 use alloy::signers::local::PrivateKeySigner;
 use alloy::sol_types::SolValue;
 use arm_risc0::Digest as ArmDigest;
@@ -7,7 +7,7 @@ use arm_risc0::action_tree::MerkleTree;
 use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
 use arm_risc0::compliance::INITIAL_ROOT;
 use arm_risc0::encryption::{AffinePoint, SecretKey, random_keypair};
-use arm_risc0::evm::CallType;
+use arm_risc0::evm::{CallType, Witness};
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
 use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
@@ -43,7 +43,7 @@ pub fn default_values() -> SetUp {
             .expect("should parse private key"),
         erc20: address!("0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f"),
         amount: U256::from(1000),
-        nonce: U256::from(0),
+        nonce: U256::random(),
         deadline: U256::from(1789040701),
         spender: address!("0xA4AD4f68d0b91CFD19687c881e50f3A00242828c"),
     }
@@ -125,7 +125,12 @@ fn mint_tx(
         data.nonce,
         data.deadline,
         data.spender,
-        B256::from_slice(action_tree.root().as_bytes()), // Witness
+        keccak256(
+            Witness {
+                actionTreeRoot: B256::from_slice(action_tree.root().as_bytes()),
+            }
+            .abi_encode(),
+        ),
     ));
 
     // Construct the mint transaction

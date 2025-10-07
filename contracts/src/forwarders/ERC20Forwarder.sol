@@ -117,7 +117,6 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
         _PERMIT2.permitWitnessTransferFrom({
             permit: permit,
-            // solhint-disable-next-line max-line-length
             transferDetails: ISignatureTransfer.SignatureTransferDetails({
                 to: address(this),
                 requestedAmount: permit.permitted.amount
