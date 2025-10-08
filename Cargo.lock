@@ -2783,10 +2783,13 @@ version = "1.0.0-rc.2"
 dependencies = [
  "alloy",
  "arm",
+ "async-trait",
+ "reqwest",
  "serde",
  "sha2",
  "simple-transfer-app",
  "tokio",
+ "url",
 ]
 
 [[package]]

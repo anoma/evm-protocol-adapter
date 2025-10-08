@@ -1,4 +1,5 @@
-use alloy::primitives::{B256, Bytes};
+use alloy::primitives::{Address, B256, Bytes, U256};
+use alloy::providers::Provider;
 use alloy::sol;
 use arm_risc0::action::Action;
 use arm_risc0::compliance::ComplianceInstance;
@@ -9,6 +10,7 @@ use arm_risc0::proving_system::encode_seal;
 
 use arm_risc0::transaction::{Delta, Transaction};
 use arm_risc0::utils::words_to_bytes;
+use async_trait::async_trait;
 
 sol!(
     #[allow(missing_docs)]
@@ -57,8 +59,8 @@ impl From<AppData> for Logic::AppData {
 impl From<LogicVerifierInputs> for Logic::VerifierInput {
     fn from(logic_verifier_inputs: LogicVerifierInputs) -> Self {
         Self {
-            tag: B256::from_slice(&logic_verifier_inputs.tag.as_bytes()),
-            verifyingKey: B256::from_slice(&logic_verifier_inputs.verifying_key.as_bytes()),
+            tag: B256::from_slice(logic_verifier_inputs.tag.as_bytes()),
+            verifyingKey: B256::from_slice(logic_verifier_inputs.verifying_key.as_bytes()),
             appData: logic_verifier_inputs.app_data.into(),
             proof: match &logic_verifier_inputs.proof {
                 Some(proof) => Bytes::from(encode_seal(proof).unwrap()),
@@ -72,15 +74,15 @@ impl From<ComplianceInstance> for Compliance::Instance {
     fn from(instance: ComplianceInstance) -> Self {
         Self {
             consumed: Compliance::ConsumedRefs {
-                nullifier: B256::from_slice(&instance.consumed_nullifier.as_bytes()),
-                logicRef: B256::from_slice(&instance.consumed_logic_ref.as_bytes()),
+                nullifier: B256::from_slice(instance.consumed_nullifier.as_bytes()),
+                logicRef: B256::from_slice(instance.consumed_logic_ref.as_bytes()),
                 commitmentTreeRoot: B256::from_slice(
-                    &instance.consumed_commitment_tree_root.as_bytes(),
+                    instance.consumed_commitment_tree_root.as_bytes(),
                 ),
             },
             created: Compliance::CreatedRefs {
-                commitment: B256::from_slice(&instance.created_commitment.as_bytes()),
-                logicRef: B256::from_slice(&instance.created_logic_ref.as_bytes()),
+                commitment: B256::from_slice(instance.created_commitment.as_bytes()),
+                logicRef: B256::from_slice(instance.created_logic_ref.as_bytes()),
             },
             unitDeltaX: B256::from_slice(words_to_bytes(&instance.delta_x)),
             unitDeltaY: B256::from_slice(words_to_bytes(&instance.delta_y)),
@@ -140,9 +142,135 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
     }
 }
 
+/// Client with which to connect to protocol adapterr
+pub type Client<X> = ProtocolAdapter::ProtocolAdapterInstance<X>;
+
+#[async_trait]
+impl<X: Provider> crate::call::Client for Client<X> {
+    type Provider = X;
+
+    fn new(address: Address, provider: X) -> Self {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::new(address, provider)
+    }
+
+    fn get_client_version() -> &'static str {
+        crate::call::PA_V1_0_0_BETA
+    }
+
+    async fn execute(&self, tx: Transaction) -> Result<(), alloy::contract::Error> {
+        Client::<X>::execute(self, tx.into())
+            .call()
+            .await
+            .map(|_| ())
+    }
+
+    async fn emergency_stop(&self) -> Result<(), alloy::contract::Error> {
+        Client::<X>::emergencyStop(self).call().await.map(|_| ())
+    }
+
+    async fn is_emergency_stopped(&self) -> Result<bool, alloy::contract::Error> {
+        Client::<X>::isEmergencyStopped(self).call().await
+    }
+
+    async fn get_risc_zero_verifier_selector(&self) -> Result<[u8; 4], alloy::contract::Error> {
+        Client::<X>::getRiscZeroVerifierSelector(self)
+            .call()
+            .await
+            .map(|x| x.0)
+    }
+
+    async fn get_protocol_adapter_version(&self) -> Result<[u8; 32], alloy::contract::Error> {
+        Client::<X>::getProtocolAdapterVersion(self)
+            .call()
+            .await
+            .map(|x| x.0)
+    }
+
+    async fn commitment_count(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::commitmentCount(self).call().await
+    }
+
+    async fn commitment_tree_depth(&self) -> Result<u8, alloy::contract::Error> {
+        Client::<X>::commitmentTreeDepth(self).call().await
+    }
+
+    async fn commitment_tree_capacity(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::commitmentTreeCapacity(self).call().await
+    }
+
+    async fn latest_commitment_tree_root(&self) -> Result<[u8; 32], alloy::contract::Error> {
+        Client::<X>::latestCommitmentTreeRoot(self)
+            .call()
+            .await
+            .map(|x| x.0)
+    }
+
+    async fn is_commitment_tree_root_contained(
+        &self,
+        root: &[u8; 32],
+    ) -> Result<bool, alloy::contract::Error> {
+        Client::<X>::isCommitmentTreeRootContained(self, root.into())
+            .call()
+            .await
+    }
+
+    async fn commitment_tree_root_count(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::commitmentTreeRootCount(self).call().await
+    }
+
+    async fn commitment_tree_root_at_index(
+        &self,
+        index: U256,
+    ) -> Result<[u8; 32], alloy::contract::Error> {
+        Client::<X>::commitmentTreeRootAtIndex(self, index)
+            .call()
+            .await
+            .map(Into::into)
+    }
+
+    async fn verify_merkle_proof(
+        &self,
+        root: &[u8; 32],
+        commitment: &[u8; 32],
+        path: &[[u8; 32]],
+        direction_bits: U256,
+    ) -> Result<(), alloy::contract::Error> {
+        Client::<X>::verifyMerkleProof(
+            self,
+            root.into(),
+            commitment.into(),
+            path.iter().map(Into::into).collect(),
+            direction_bits,
+        )
+        .call()
+        .await
+        .map(|_| ())
+    }
+
+    async fn is_nullifier_contained(
+        &self,
+        nullifier: &[u8; 32],
+    ) -> Result<bool, alloy::contract::Error> {
+        Client::<X>::isNullifierContained(self, nullifier.into())
+            .call()
+            .await
+    }
+
+    async fn nullifier_count(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::nullifierCount(self).call().await
+    }
+
+    async fn nullifier_at_index(&self, index: U256) -> Result<[u8; 32], alloy::contract::Error> {
+        Client::<X>::nullifierAtIndex(self, index)
+            .call()
+            .await
+            .map(Into::into)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::conversion::ProtocolAdapter;
+    use super::ProtocolAdapter;
     use alloy::primitives::B256;
     use alloy::sol_types::SolValue;
     use arm_risc0::aggregation::AggregationStrategy;
