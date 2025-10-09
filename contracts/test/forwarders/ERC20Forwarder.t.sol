@@ -287,11 +287,11 @@ contract ERC20ForwarderTest is Test {
         _fwd.forwardCall({logicRef: _CALLDATA_CARRIER_LOGIC_REF, input: input});
     }
 
-    function test_witness_typeHash() public pure {
+    function test_witness_typeHash_complies_with_eip712() public pure {
         assertEq(ERC20ForwarderPermit2._WITNESS_TYPEHASH, vm.eip712HashType(ERC20ForwarderPermit2._WITNESS_TYPE_DEF));
     }
 
-    function test_witness_structHash() public pure {
+    function test_witness_structHash_complies_with_eip712() public pure {
         ERC20ForwarderPermit2.Witness memory witness = ERC20ForwarderPermit2.Witness({actionTreeRoot: bytes32(0)});
         assertEq(witness.hash(), vm.eip712HashStruct(ERC20ForwarderPermit2._WITNESS_TYPE_DEF, abi.encode(witness)));
     }
