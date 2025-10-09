@@ -12,9 +12,9 @@ library ERC20ForwarderPermit2 {
         bytes32 actionTreeRoot;
     }
 
-    // solhint-disable-next-line gas-small-strings
     /// @notice The witness type string respecting the alphabetical ordering of structs
     /// (see https://docs.uniswap.org/contracts/permit2/reference/signature-transfer).
+    // solhint-disable-next-line gas-small-strings
     string internal constant _WITNESS_TYPE_STRING =
         "Witness witness)TokenPermissions(address token,uint256 amount)Witness(bytes32 actionTreeRoot)";
 
