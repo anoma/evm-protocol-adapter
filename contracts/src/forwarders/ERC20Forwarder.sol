@@ -6,12 +6,14 @@ import {SafeERC20} from "@openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol
 import {IPermit2, ISignatureTransfer} from "@permit2/src/interfaces/IPermit2.sol";
 
 import {EmergencyMigratableForwarderBase} from "./bases/EmergencyMigratableForwarderBase.sol";
+import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
 
 /// @title ERC20Forwarder
 /// @author Anoma Foundation, 2025
 /// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources.
 /// @custom:security-contact security@anoma.foundation
 contract ERC20Forwarder is EmergencyMigratableForwarderBase {
+    using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using SafeERC20 for IERC20;
 
     enum CallType {
@@ -104,7 +106,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             , // CallType
             address from,
             ISignatureTransfer.PermitTransferFrom memory permit,
-            bytes32 witness,
+            bytes32 actionTreeRoot,
             bytes memory signature
         ) = abi.decode(input, (CallType, address, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
 
@@ -116,14 +118,13 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
         _PERMIT2.permitWitnessTransferFrom({
             permit: permit,
-            // solhint-disable-next-line max-line-length
             transferDetails: ISignatureTransfer.SignatureTransferDetails({
                 to: address(this),
                 requestedAmount: permit.permitted.amount
             }),
             owner: from,
-            witness: witness,
-            witnessTypeString: "bytes32 witness",
+            witness: ERC20ForwarderPermit2.Witness({actionTreeRoot: actionTreeRoot}).hash(),
+            witnessTypeString: ERC20ForwarderPermit2._WITNESS_TYPE_STRING,
             signature: signature
         });
     }

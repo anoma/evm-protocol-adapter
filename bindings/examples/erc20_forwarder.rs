@@ -1,17 +1,17 @@
 use alloy::hex;
-use alloy::primitives::{Address, B256, U256, address};
+use alloy::primitives::{address, Address, B256, U256};
 use alloy::signers::local::PrivateKeySigner;
 use alloy::sol_types::SolValue;
-use arm_risc0::Digest as ArmDigest;
 use arm_risc0::action_tree::MerkleTree;
 use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
 use arm_risc0::compliance::INITIAL_ROOT;
-use arm_risc0::encryption::{AffinePoint, SecretKey, random_keypair};
+use arm_risc0::encryption::{random_keypair, AffinePoint, SecretKey};
 use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
+use arm_risc0::Digest as ArmDigest;
 use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
-use evm_protocol_adapter_bindings::permit2::permit_witness_transfer_from_signature;
+use evm_protocol_adapter_bindings::permit2::{permit_witness_transfer_from_signature, Permit2Data};
 use sha2::{Digest, Sha256};
 use simple_transfer_app::burn::construct_burn_tx;
 use simple_transfer_app::mint::construct_mint_tx;
@@ -43,7 +43,7 @@ pub fn default_values() -> SetUp {
             .expect("should parse private key"),
         erc20: address!("0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f"),
         amount: U256::from(1000),
-        nonce: U256::from(0),
+        nonce: U256::random(),
         deadline: U256::from(1789040701),
         spender: address!("0xA4AD4f68d0b91CFD19687c881e50f3A00242828c"),
     }
@@ -120,12 +120,15 @@ fn mint_tx(
     let rt = tokio::runtime::Runtime::new().unwrap();
     let permit_sig = rt.block_on(permit_witness_transfer_from_signature(
         &data.signer,
-        data.erc20,
-        data.amount.try_into().unwrap(),
-        data.nonce,
-        data.deadline,
-        data.spender,
-        B256::from_slice(action_tree.root().as_bytes()), // Witness
+        Permit2Data {
+            chain_id: 11155111,
+            token: data.erc20,
+            amount: data.amount.try_into().unwrap(),
+            nonce: data.nonce,
+            deadline: data.deadline,
+            spender: data.spender,
+            action_tree_root: B256::from_slice(action_tree.root().as_bytes()),
+        },
     ));
 
     // Construct the mint transaction
@@ -286,7 +289,7 @@ fn write_to_file(tx: ProtocolAdapter::Transaction, file_name: &str) {
     let encoded_tx = tx.abi_encode();
 
     std::fs::write(
-        format!("../contracts/test/examples/transactions/{file_name}.bin"),
+        format!("./contracts/test/examples/transactions/{file_name}.bin"),
         encoded_tx,
     )
     .expect("Failed to write file");
