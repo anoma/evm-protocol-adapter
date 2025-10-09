@@ -1,17 +1,17 @@
 use alloy::hex;
-use alloy::primitives::{address, keccak256, Address, B256, U256};
+use alloy::primitives::{address, Address, B256, U256};
 use alloy::signers::local::PrivateKeySigner;
 use alloy::sol_types::SolValue;
-use arm_risc0::Digest as ArmDigest;
 use arm_risc0::action_tree::MerkleTree;
 use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
 use arm_risc0::compliance::INITIAL_ROOT;
-use arm_risc0::encryption::{AffinePoint, SecretKey, random_keypair};
-use arm_risc0::evm::{CallType, Witness};
+use arm_risc0::encryption::{random_keypair, AffinePoint, SecretKey};
+use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
+use arm_risc0::Digest as ArmDigest;
 use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
-use evm_protocol_adapter_bindings::permit2::permit_witness_transfer_from_signature;
+use evm_protocol_adapter_bindings::permit2::{permit_witness_transfer_from_signature, Permit2Data};
 use sha2::{Digest, Sha256};
 use simple_transfer_app::burn::construct_burn_tx;
 use simple_transfer_app::mint::construct_mint_tx;
@@ -120,18 +120,18 @@ fn mint_tx(
     let rt = tokio::runtime::Runtime::new().unwrap();
     let permit_sig = rt.block_on(permit_witness_transfer_from_signature(
         &data.signer,
-        data.erc20,
-        data.amount.try_into().unwrap(),
-        data.nonce,
-        data.deadline,
-        data.spender,
-        keccak256(
-            Witness {
-                actionTreeRoot: B256::from_slice(action_tree.root().as_bytes()),
-            }
-            .abi_encode(),
-        ),
+        Permit2Data {
+            chain_id: 11155111,
+            token: data.erc20,
+            amount: data.amount.try_into().unwrap(),
+            nonce: data.nonce,
+            deadline: data.deadline,
+            spender: data.spender,
+            action_tree_root: B256::from_slice(action_tree.root().as_bytes()),
+        },
     ));
+
+    println!("{:?}", hex::encode(permit_sig.as_bytes()));
 
     // Construct the mint transaction
     let tx = construct_mint_tx(
@@ -291,7 +291,7 @@ fn write_to_file(tx: ProtocolAdapter::Transaction, file_name: &str) {
     let encoded_tx = tx.abi_encode();
 
     std::fs::write(
-        format!("../contracts/test/examples/transactions/{file_name}.bin"),
+        format!("./contracts/test/examples/transactions/{file_name}.bin"),
         encoded_tx,
     )
     .expect("Failed to write file");
