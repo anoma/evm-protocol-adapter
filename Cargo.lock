@@ -1312,7 +1312,7 @@ dependencies = [
 [[package]]
 name = "arm"
 version = "0.6.1"
-source = "git+https://github.com/anoma/arm-risc0.git?branch=jurevans%2Fpatch-keys-0.6.1#af43e5d659d3b5e0651c481b4aad137e8451ec44"
+source = "git+https://github.com/anoma/arm-risc0.git?branch=murisi%2Fpatch-keys-0.6.1#05c30fb1522b27824c33652906150e794e38008b"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",
@@ -1325,6 +1325,7 @@ dependencies = [
  "rand 0.8.5",
  "risc0-zkvm",
  "serde",
+ "serde_bytes",
  "sha3",
 ]
 
@@ -5832,6 +5833,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_bytes"
+version = "0.11.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5d440709e79d88e51ac01c4b72fc6cb7314017bb7da9eeff678aa94c10e3ea8"
+dependencies = [
+ "serde",
+ "serde_core",
+]
+
+[[package]]
 name = "serde_core"
 version = "1.0.226"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5994,7 +6005,7 @@ checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 [[package]]
 name = "simple-transfer-app"
 version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?branch=jurevans%2Fpatch-keys-0.6.1#af43e5d659d3b5e0651c481b4aad137e8451ec44"
+source = "git+https://github.com/anoma/arm-risc0.git?branch=murisi%2Fpatch-keys-0.6.1#05c30fb1522b27824c33652906150e794e38008b"
 dependencies = [
  "arm",
  "hex",
@@ -6008,11 +6019,12 @@ dependencies = [
 [[package]]
 name = "simple-transfer-witness"
 version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?branch=jurevans%2Fpatch-keys-0.6.1#af43e5d659d3b5e0651c481b4aad137e8451ec44"
+source = "git+https://github.com/anoma/arm-risc0.git?branch=murisi%2Fpatch-keys-0.6.1#05c30fb1522b27824c33652906150e794e38008b"
 dependencies = [
  "arm",
  "rand 0.8.5",
  "serde",
+ "serde_bytes",
 ]
 
 [[package]]
