@@ -3,6 +3,9 @@ use alloy::signers::{local::PrivateKeySigner, Signer};
 use alloy::sol;
 use alloy::sol_types::eip712_domain;
 
+pub const PERMIT2_CONTRACT_ADDRESS: Address =
+    address!("0x000000000022D473030F116dDEE9F6B43aC78BA3");
+
 pub struct Permit2Data {
     pub chain_id: u64,
     pub token: Address,
@@ -36,12 +39,10 @@ pub async fn permit_witness_transfer_from_signature(
     signer: &PrivateKeySigner,
     permit2_data: Permit2Data,
 ) -> Signature {
-    let permit2_address = address!("0x000000000022D473030F116dDEE9F6B43aC78BA3");
-
     let domain = eip712_domain! {
         name: "Permit2",
         chain_id: permit2_data.chain_id,
-        verifying_contract: permit2_address,
+        verifying_contract: PERMIT2_CONTRACT_ADDRESS,
     };
 
     let typed_data = PermitWitnessTransferFrom {
