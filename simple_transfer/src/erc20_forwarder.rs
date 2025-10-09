@@ -1,17 +1,14 @@
+use crate::keychain::KeyChain;
+use crate::permit2::{permit_witness_transfer_from_signature, Permit2Data};
 use alloy::hex;
 use alloy::primitives::{address, Address, B256, U256};
 use alloy::signers::local::PrivateKeySigner;
-use alloy::sol_types::SolValue;
 use arm_risc0::action_tree::MerkleTree;
-use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
 use arm_risc0::compliance::INITIAL_ROOT;
-use arm_risc0::encryption::{random_keypair, AffinePoint, SecretKey};
 use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
-use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
 use arm_risc0::Digest as ArmDigest;
 use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
-use evm_protocol_adapter_bindings::permit2::{permit_witness_transfer_from_signature, Permit2Data};
 use sha2::{Digest, Sha256};
 use simple_transfer_app::burn::construct_burn_tx;
 use simple_transfer_app::mint::construct_mint_tx;
@@ -49,41 +46,7 @@ pub fn default_values() -> SetUp {
     }
 }
 
-#[allow(dead_code)]
-pub struct KeyChain {
-    auth_signing_key: AuthorizationSigningKey,
-    nf_key: NullifierKey,
-    discovery_sk: SecretKey,
-    discovery_pk: AffinePoint,
-    encryption_sk: SecretKey,
-    encryption_pk: AffinePoint,
-}
-
-impl KeyChain {
-    fn auth_verifying_key(&self) -> AuthorizationVerifyingKey {
-        AuthorizationVerifyingKey::from_signing_key(&self.auth_signing_key)
-    }
-
-    fn nullifier_key_commitment(&self) -> NullifierKeyCommitment {
-        self.nf_key.commit()
-    }
-}
-
-fn example_keychain() -> KeyChain {
-    let (discovery_sk, discovery_pk) = random_keypair();
-    let (encryption_sk, encryption_pk) = random_keypair();
-
-    KeyChain {
-        auth_signing_key: AuthorizationSigningKey::from_bytes(&vec![15u8; 32]).unwrap(),
-        nf_key: NullifierKey::from_bytes(&[13u8; 32]),
-        discovery_sk,
-        discovery_pk,
-        encryption_sk,
-        encryption_pk,
-    }
-}
-
-fn mint_tx(
+pub fn mint_tx(
     data: &SetUp,
     keychain: &KeyChain,
 ) -> (ProtocolAdapter::Transaction, arm_risc0::resource::Resource) {
@@ -154,7 +117,7 @@ fn mint_tx(
     (ProtocolAdapter::Transaction::from(tx), created_resource)
 }
 
-fn transfer_tx(
+pub fn transfer_tx(
     data: &SetUp,
     keychain: &KeyChain,
     resource_to_transfer: &arm_risc0::resource::Resource,
@@ -201,7 +164,7 @@ fn transfer_tx(
     (ProtocolAdapter::Transaction::from(tx), created_resource)
 }
 
-fn burn_tx(
+pub fn burn_tx(
     data: &SetUp,
     keychain: &KeyChain,
     minted_resource: &arm_risc0::resource::Resource,
@@ -267,30 +230,4 @@ fn sha256(a: &[u8], b: &[u8]) -> [u8; 32] {
     hasher.update(b);
 
     hasher.finalize().into()
-}
-
-fn main() {
-    env::var("PRIVATE_KEY").expect("Couldn't read PRIVATE_KEY");
-
-    let data = default_values();
-    let keychain = example_keychain();
-
-    let (mint_tx, minted_resource) = mint_tx(&data, &keychain);
-    write_to_file(mint_tx, "mint");
-
-    let (transfer_tx, transferred_resource) = transfer_tx(&data, &keychain, &minted_resource);
-    write_to_file(transfer_tx, "transfer");
-
-    let burn_tx = burn_tx(&data, &keychain, &minted_resource, &transferred_resource);
-    write_to_file(burn_tx, "burn");
-}
-
-fn write_to_file(tx: ProtocolAdapter::Transaction, file_name: &str) {
-    let encoded_tx = tx.abi_encode();
-
-    std::fs::write(
-        format!("./contracts/test/examples/transactions/{file_name}.bin"),
-        encoded_tx,
-    )
-    .expect("Failed to write file");
 }
