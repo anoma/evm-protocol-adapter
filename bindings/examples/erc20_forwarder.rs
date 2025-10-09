@@ -131,8 +131,6 @@ fn mint_tx(
         },
     ));
 
-    println!("{:?}", hex::encode(permit_sig.as_bytes()));
-
     // Construct the mint transaction
     let tx = construct_mint_tx(
         consumed_resource,
