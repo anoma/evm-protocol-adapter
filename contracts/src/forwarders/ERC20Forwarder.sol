@@ -13,6 +13,7 @@ import {ERC20ForwarderPermit2} from "./ERC20ForwarderPermit2.sol";
 /// @notice A forwarder contract forwarding calls and holding funds to wrap and unwrap ERC-20 tokens as resources.
 /// @custom:security-contact security@anoma.foundation
 contract ERC20Forwarder is EmergencyMigratableForwarderBase {
+    using ERC20ForwarderPermit2 for ERC20ForwarderPermit2.Witness;
     using SafeERC20 for IERC20;
 
     enum CallType {
@@ -105,7 +106,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
             , // CallType
             address from,
             ISignatureTransfer.PermitTransferFrom memory permit,
-            bytes32 witness,
+            bytes32 actionTreeRoot,
             bytes memory signature
         ) = abi.decode(input, (CallType, address, ISignatureTransfer.PermitTransferFrom, bytes32, bytes));
 
@@ -122,7 +123,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
                 requestedAmount: permit.permitted.amount
             }),
             owner: from,
-            witness: witness,
+            witness: ERC20ForwarderPermit2.Witness({actionTreeRoot: actionTreeRoot}).hash(),
             witnessTypeString: ERC20ForwarderPermit2._WITNESS_TYPE_STRING,
             signature: signature
         });
