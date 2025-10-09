@@ -1312,7 +1312,7 @@ dependencies = [
 [[package]]
 name = "arm"
 version = "0.6.1"
-source = "git+https://github.com/anoma/arm-risc0.git?branch=jurevans%2Fpatch-keys-0.6.1#af43e5d659d3b5e0651c481b4aad137e8451ec44"
+source = "git+https://github.com/anoma/arm-risc0.git?branch=murisi%2Fpatch-keys-0.6.1#8857de2563979ec30e1bd48292984aaa4db0845a"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",
@@ -5994,7 +5994,7 @@ checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 [[package]]
 name = "simple-transfer-app"
 version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?branch=jurevans%2Fpatch-keys-0.6.1#af43e5d659d3b5e0651c481b4aad137e8451ec44"
+source = "git+https://github.com/anoma/arm-risc0.git?branch=murisi%2Fpatch-keys-0.6.1#8857de2563979ec30e1bd48292984aaa4db0845a"
 dependencies = [
  "arm",
  "hex",
@@ -6008,7 +6008,7 @@ dependencies = [
 [[package]]
 name = "simple-transfer-witness"
 version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?branch=jurevans%2Fpatch-keys-0.6.1#af43e5d659d3b5e0651c481b4aad137e8451ec44"
+source = "git+https://github.com/anoma/arm-risc0.git?branch=murisi%2Fpatch-keys-0.6.1#8857de2563979ec30e1bd48292984aaa4db0845a"
 dependencies = [
  "arm",
  "rand 0.8.5",
