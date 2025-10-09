@@ -2784,8 +2784,6 @@ dependencies = [
  "alloy",
  "arm",
  "serde",
- "sha2",
- "simple-transfer-app",
  "tokio",
 ]
 
@@ -3462,7 +3460,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.6.0",
+ "socket2 0.5.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -4880,7 +4878,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash",
  "rustls",
- "socket2 0.6.0",
+ "socket2 0.5.10",
  "thiserror 2.0.16",
  "tokio",
  "tracing",
@@ -4917,7 +4915,7 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.6.0",
+ "socket2 0.5.10",
  "tracing",
  "windows-sys 0.60.2",
 ]
@@ -6139,6 +6137,17 @@ dependencies = [
  "num-traits",
  "thiserror 2.0.16",
  "time",
+]
+
+[[package]]
+name = "simple_transfer"
+version = "1.0.0-rc.2"
+dependencies = [
+ "alloy",
+ "evm_protocol_adapter_bindings",
+ "sha2",
+ "simple-transfer-app",
+ "tokio",
 ]
 
 [[package]]
