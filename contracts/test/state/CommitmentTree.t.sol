@@ -20,8 +20,14 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         _cmAcc = new CommitmentTreeMock();
     }
 
-    function test_the_initial_root_is_the_empty_leaf_hash() public {
+    function test_initialization_stores_the_initial_root_being_the_empty_leaf_hash() public {
         assertEq(new CommitmentTree().latestCommitmentTreeRoot(), SHA256.EMPTY_HASH);
+    }
+
+    function test_initialization_emits_the_CommitmentTreeRootAdded_event() public {
+        vm.expectEmit();
+        emit ICommitmentTree.CommitmentTreeRootAdded({root: SHA256.EMPTY_HASH});
+        new CommitmentTree();
     }
 
     function test_addCommitment_returns_correct_roots() public {
@@ -60,7 +66,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), true);
     }
 
-    function test_addCommitmentTreeRoot_emits_the_CommitmentTreeRootAdded_event() public {
+    function test_storeCommitmentTreeRoot_emits_the_CommitmentTreeRootAdded_event_on_store_() public {
         bytes32 rootToStore = bytes32(type(uint256).max);
 
         vm.expectEmit(address(_cmAcc));
