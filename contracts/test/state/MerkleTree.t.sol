@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {MerkleTree as OzMerkleTree} from "@openzeppelin/contracts/utils/structs/MerkleTree.sol";
 import {Test} from "forge-std/Test.sol";
 import {MerkleTree} from "./../../src/libs/MerkleTree.sol";
-import {SHA256} from "./../../src/libs/SHA256.sol";
+import {SHA256Utils} from "./../../src/libs/utils/SHA256Utils.sol";
 import {MerkleTreeExample} from "./../examples/MerkleTree.e.sol";
 
 contract MerkleTreeTest is Test, MerkleTreeExample {
@@ -55,7 +55,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
     }
 
     function test_setup_returns_the_expected_initial_root() public {
-        assertEq(_merkleTree.setup(), SHA256.EMPTY_HASH);
+        assertEq(_merkleTree.setup(), SHA256Utils.EMPTY_HASH);
     }
 
     function testFuzz_push_returns_the_same_roots(bytes32[] memory leaves) public {
@@ -69,7 +69,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         bytes32 paRoot = _paMerkleTree.setup();
         // OpenZeppelin implementation is not variable depth, it is easier to
         // just compare the end state once we have reached the final depth
-        bytes32 ozRoot = _ozMerkleTree.setup(treeDepth, SHA256.EMPTY_HASH, _hashPair);
+        bytes32 ozRoot = _ozMerkleTree.setup(treeDepth, SHA256Utils.EMPTY_HASH, _hashPair);
 
         uint256 paIndex = 0;
         uint256 ozIndex = 0;
@@ -116,6 +116,6 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
     /// @param b The second value to hash.
     /// @return hab The resulting hash.
     function _hashPair(bytes32 a, bytes32 b) internal pure returns (bytes32 hab) {
-        hab = SHA256.hash(a, b);
+        hab = SHA256Utils.hash(a, b);
     }
 }

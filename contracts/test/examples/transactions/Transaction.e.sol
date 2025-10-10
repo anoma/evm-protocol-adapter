@@ -5,7 +5,7 @@ import {MerkleTree} from "../../../src/libs/MerkleTree.sol";
 import {Compliance} from "../../../src/libs/proving/Compliance.sol";
 import {Logic} from "../../../src/libs/proving/Logic.sol";
 
-import {SHA256} from "../../../src/libs/SHA256.sol";
+import {SHA256Utils} from "../../../src/libs/utils/SHA256Utils.sol";
 import {Transaction, Action} from "../../../src/Types.sol";
 
 library TransactionExample {
@@ -35,7 +35,7 @@ library TransactionExample {
         instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
                 nullifier: _CONSUMED_NULLIFIER,
-                commitmentTreeRoot: SHA256.EMPTY_HASH,
+                commitmentTreeRoot: SHA256Utils.EMPTY_HASH,
                 logicRef: _CONSUMED_LOGIC_REF
             }),
             created: Compliance.CreatedRefs({commitment: _CREATED_COMMITMENT, logicRef: _CREATED_LOGIC_REF}),
