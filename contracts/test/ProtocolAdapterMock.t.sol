@@ -648,7 +648,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
             newRoot = newCmTree.addCommitment(cms[i]);
         }
 
-        newCmTree.storeCommitmentTreeRoot(newRoot);
+        newCmTree.addCommitmentTreeRoot(newRoot);
 
         assert(_mockPa.latestCommitmentTreeRoot() == newCmTree.latestCommitmentTreeRoot());
     }
