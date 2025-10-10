@@ -679,6 +679,18 @@ contract ProtocolAdapterMockVerifierTest is Test {
         }
     }
 
+    function test_execute_skips_risc_zero_proofs_if_aggregation_proof_is_present() public {
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
+            isProofAggregated: true
+        });
+
+        vm.expectCall({callee: address(_router), data: bytes(""), count: 1});
+        _mockPa.execute(txn);
+    }
+
     function _exampleResourceAndEmptyAppData(uint256 nonce)
         private
         view
