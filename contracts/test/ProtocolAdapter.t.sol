@@ -13,7 +13,6 @@ import {Test, Vm} from "forge-std/Test.sol";
 
 import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
-import {Versioning} from "../src/libs/Versioning.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 import {Transaction, Action} from "../src/Types.sol";

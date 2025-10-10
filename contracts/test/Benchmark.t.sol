@@ -34,14 +34,14 @@ contract Benchmark is Test {
             Transaction memory parsed =
                 vm.parseTransaction(string.concat("/test/examples/transactions/test_tx_reg_", suffixes[i], ".bin"));
 
-            toStorage(_txnsReg[i], parsed);
+            _toStorage(_txnsReg[i], parsed);
         }
 
         for (uint256 i = 0; i < suffixes.length; ++i) {
             Transaction memory parsed =
                 vm.parseTransaction(string.concat("/test/examples/transactions/test_tx_agg_", suffixes[i], ".bin"));
 
-            toStorage(_txnsAgg[i], parsed);
+            _toStorage(_txnsAgg[i], parsed);
         }
 
         {
@@ -132,7 +132,7 @@ contract Benchmark is Test {
         }
     }
 
-    function toStorage(Transaction storage stored, Transaction memory parsed) internal {
+    function _toStorage(Transaction storage stored, Transaction memory parsed) internal {
         stored.deltaProof = parsed.deltaProof;
         stored.aggregationProof = parsed.aggregationProof;
 
