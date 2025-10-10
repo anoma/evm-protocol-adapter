@@ -37,6 +37,8 @@ contract CommitmentTree is ICommitmentTree {
 
         // slither-disable-next-line unused-return
         _roots.add(initialRoot);
+
+        emit CommitmentTreeRootAdded({root: initialRoot});
     }
 
     /// @inheritdoc ICommitmentTree
