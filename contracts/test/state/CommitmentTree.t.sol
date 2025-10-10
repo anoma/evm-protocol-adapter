@@ -20,8 +20,28 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         _cmAcc = new CommitmentTreeMock();
     }
 
-    function test_the_initial_root_is_the_empty_leaf_hash() public {
-        assertEq(new CommitmentTree().latestCommitmentTreeRoot(), SHA256.EMPTY_HASH);
+    function test_constructor_stores_the_initial_root_being_the_empty_leaf_hash() public {
+        CommitmentTree newCmAcc = new CommitmentTree();
+        assertEq(newCmAcc.latestCommitmentTreeRoot(), SHA256.EMPTY_HASH, "The inital root should be the empty hash.");
+        assertEq(newCmAcc.commitmentTreeRootCount(), 1, "The initial root count should be 1.");
+    }
+
+    function test_constructor_initializes_the_tree_with_depth_0() public {
+        assertEq(new CommitmentTree().commitmentTreeDepth(), 0, "The initial tree depth should be 0.");
+    }
+
+    function test_constructor_initializes_the_tree_with_capacity_1() public {
+        assertEq(new CommitmentTree().commitmentTreeCapacity(), 1, "The initial tree capacity should be 1.");
+    }
+
+    function test_constructor_initializes_the_tree_with_0_leaves() public {
+        assertEq(new CommitmentTree().commitmentCount(), 0, "The initial commitment count should be 0.");
+    }
+
+    function test_constructor_emits_the_CommitmentTreeRootAdded_event() public {
+        vm.expectEmit();
+        emit ICommitmentTree.CommitmentTreeRootAdded({root: SHA256.EMPTY_HASH});
+        new CommitmentTree();
     }
 
     function test_addCommitment_returns_correct_roots() public {
@@ -60,7 +80,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), true);
     }
 
-    function test_addCommitmentTreeRoot_emits_the_CommitmentTreeRootAdded_event() public {
+    function test_storeCommitmentTreeRoot_emits_the_CommitmentTreeRootAdded_event_on_store_() public {
         bytes32 rootToStore = bytes32(type(uint256).max);
 
         vm.expectEmit(address(_cmAcc));
