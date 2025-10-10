@@ -35,7 +35,8 @@ contract CommitmentTree is ICommitmentTree {
     constructor() {
         bytes32 initialRoot = _merkleTree.setup();
 
-        if (!_roots.add(initialRoot)) revert PreExistingRoot(initialRoot);
+        // slither-disable-next-line unused-return
+        _roots.add(initialRoot);
     }
 
     /// @inheritdoc ICommitmentTree
