@@ -22,8 +22,8 @@ contract TagLookupTest is Test {
 
     function setUp() public {
         uint256 n = 10;
-        _exampleList = new Logic.VerifierInput[](n);
         for (uint256 i = 0; i < n; ++i) {
+            _exampleList.push();
             _exampleList[i].tag = bytes32(i);
         }
     }

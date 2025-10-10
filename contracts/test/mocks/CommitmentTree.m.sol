@@ -14,23 +14,11 @@ contract CommitmentTreeMock is CommitmentTree {
         newRoot = _addCommitment(commitment);
     }
 
-    function storeCommitmentTreeRoot(bytes32 root) external {
+    function addCommitmentTreeRoot(bytes32 root) external {
         _addCommitmentTreeRoot(root);
-    }
-
-    function merkleTreeZero(uint8 level) external view returns (bytes32 zeroHash) {
-        zeroHash = _merkleTreeZero(level);
     }
 
     function initialRoot() external view returns (bytes32 hash) {
         hash = _roots.at(0);
-    }
-
-    function emptyLeafHash() external view returns (bytes32 hash) {
-        hash = _merkleTreeZero(0);
-    }
-
-    function _merkleTreeZero(uint256 level) internal view returns (bytes32 zeroHash) {
-        zeroHash = _merkleTree._zeros[level];
     }
 }

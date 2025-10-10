@@ -648,7 +648,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
             newRoot = newCmTree.addCommitment(cms[i]);
         }
 
-        newCmTree.storeCommitmentTreeRoot(newRoot);
+        newCmTree.addCommitmentTreeRoot(newRoot);
 
         assert(_mockPa.latestCommitmentTreeRoot() == newCmTree.latestCommitmentTreeRoot());
     }
@@ -677,6 +677,18 @@ contract ProtocolAdapterMockVerifierTest is Test {
         for (uint256 i = 0; i < nlfs.length; ++i) {
             assert(_mockPa.isNullifierContained(nlfs[i]));
         }
+    }
+
+    function test_execute_skips_risc_zero_proofs_if_aggregation_proof_is_present() public {
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
+            isProofAggregated: true
+        });
+
+        vm.expectCall({callee: address(_router), data: bytes(""), count: 1});
+        _mockPa.execute(txn);
     }
 
     function _exampleResourceAndEmptyAppData(uint256 nonce)

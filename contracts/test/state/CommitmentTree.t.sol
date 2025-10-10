@@ -68,25 +68,45 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         }
     }
 
+    function test_addCommitmentTreeRoot_reverts_on_pre_existing_root() public {
+        bytes32 preExistingRoot = bytes32(type(uint256).max);
+        _cmAcc.addCommitmentTreeRoot(preExistingRoot);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(CommitmentTree.PreExistingRoot.selector, preExistingRoot), address(_cmAcc)
+        );
+        _cmAcc.addCommitmentTreeRoot(preExistingRoot);
+    }
+
     function test_addCommitmentTreeRoot_stores_the_root() public {
         bytes32 rootToStore = bytes32(type(uint256).max);
 
         assertEq(_cmAcc.latestCommitmentTreeRoot(), _cmAcc.initialRoot());
         assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), false);
 
-        _cmAcc.storeCommitmentTreeRoot(rootToStore);
+        _cmAcc.addCommitmentTreeRoot(rootToStore);
 
         assertEq(_cmAcc.latestCommitmentTreeRoot(), rootToStore);
         assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), true);
     }
 
-    function test_storeCommitmentTreeRoot_emits_the_CommitmentTreeRootAdded_event_on_store_() public {
+    function test_addCommitmentTreeRoot_emits_the_CommitmentTreeRootAdded_event_on_store_() public {
         bytes32 rootToStore = bytes32(type(uint256).max);
 
         vm.expectEmit(address(_cmAcc));
         emit ICommitmentTree.CommitmentTreeRootAdded({root: rootToStore});
 
-        _cmAcc.storeCommitmentTreeRoot(rootToStore);
+        _cmAcc.addCommitmentTreeRoot(rootToStore);
+    }
+
+    function test_commitmentTreeRootAtIndex_returns_the_right_index() public {
+        for (uint256 i = 0; i < _N_LEAVES; ++i) {
+            _cmAcc.addCommitmentTreeRoot(_cmAcc.addCommitment(_leaves[i + 1][i]));
+        }
+
+        for (uint256 i = 0; i < _N_LEAVES; ++i) {
+            assertEq(_cmAcc.commitmentTreeRootAtIndex(i), _roots[i], "The returned root should have the expected index");
+        }
     }
 
     function test_addCommitment_allows_adding_the_same_commitment_multiple_times() public {
@@ -139,7 +159,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
 
         bytes32 commitment = bytes32(uint256(1));
         bytes32 newRoot = _cmAcc.addCommitment(commitment);
-        _cmAcc.storeCommitmentTreeRoot(newRoot);
+        _cmAcc.addCommitmentTreeRoot(newRoot);
 
         bytes32 nonExistingCommitment = bytes32(uint256(2));
         bytes32 nonExistingRoot = SHA256.hash(commitment, nonExistingCommitment);
@@ -159,7 +179,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
     }
 
     function test_verifyMerkleProof_reverts_on_wrong_path_length() public {
-        _cmAcc.storeCommitmentTreeRoot(_cmAcc.addCommitment(0));
+        _cmAcc.addCommitmentTreeRoot(_cmAcc.addCommitment(0));
         bytes32[] memory wrongPath = new bytes32[](3);
 
         vm.expectRevert(
@@ -174,7 +194,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
     function test_verifyMerkleProof_reverts_on_wrong_path() public {
         bytes32 commitment = sha256("SOMETHING");
         bytes32 newRoot = _cmAcc.addCommitment(commitment);
-        _cmAcc.storeCommitmentTreeRoot(newRoot);
+        _cmAcc.addCommitmentTreeRoot(newRoot);
 
         bytes32[] memory wrongPath = new bytes32[](_cmAcc.commitmentTreeDepth());
 
@@ -199,7 +219,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         // Update the tree with some commitment
         bytes32 commitment = sha256("SOMETHING");
         bytes32 newRoot = _cmAcc.addCommitment(commitment);
-        _cmAcc.storeCommitmentTreeRoot(newRoot);
+        _cmAcc.addCommitmentTreeRoot(newRoot);
 
         // Assert that the new root is different
         assert(_cmAcc.latestCommitmentTreeRoot() != oldRoot);
