@@ -21,7 +21,13 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
     }
 
     function test_initialization_stores_the_initial_root_being_the_empty_leaf_hash() public {
-        assertEq(new CommitmentTree().latestCommitmentTreeRoot(), SHA256.EMPTY_HASH);
+        CommitmentTree newCmAcc = new CommitmentTree();
+        assertEq(newCmAcc.latestCommitmentTreeRoot(), SHA256.EMPTY_HASH, "The inital root should be the empty hash.");
+        assertEq(newCmAcc.commitmentTreeRootCount(), 1, "The initial root count should be 1.");
+    }
+
+    function test_initialization_initializes_the_tree_with_zero_leave() public {
+        assertEq(new CommitmentTree().commitmentCount(), 0, "The initial commitment count should be 0");
     }
 
     function test_initialization_emits_the_CommitmentTreeRootAdded_event() public {
