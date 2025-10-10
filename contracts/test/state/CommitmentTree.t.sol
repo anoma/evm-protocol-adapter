@@ -26,8 +26,16 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         assertEq(newCmAcc.commitmentTreeRootCount(), 1, "The initial root count should be 1.");
     }
 
-    function test_initialization_initializes_the_tree_with_zero_leave() public {
-        assertEq(new CommitmentTree().commitmentCount(), 0, "The initial commitment count should be 0");
+    function test_initialization_initializes_the_tree_with_depth_zero() public {
+        assertEq(new CommitmentTree().commitmentTreeDepth(), 0, "The initial tree depth should be 0.");
+    }
+
+    function test_initialization_initializes_the_tree_with_capacity_1() public {
+        assertEq(new CommitmentTree().commitmentTreeCapacity(), 1, "The initial tree capacity should be 1.");
+    }
+
+    function test_initialization_initializes_the_tree_with_zero_leaves() public {
+        assertEq(new CommitmentTree().commitmentCount(), 0, "The initial commitment count should be 0.");
     }
 
     function test_initialization_emits_the_CommitmentTreeRootAdded_event() public {
