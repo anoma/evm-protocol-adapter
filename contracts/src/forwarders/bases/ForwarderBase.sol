@@ -42,10 +42,14 @@ abstract contract ForwarderBase is IForwarder {
         output = _forwardCall(input);
     }
 
+    // slither-disable-start unimplemented-functions
+
     /// @notice Forwards calls.
     /// @param input The `bytes` encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
     function _forwardCall(bytes calldata input) internal virtual returns (bytes memory output);
+
+    // slither-disable-end unimplemented-functions
 
     /// @notice Checks that an expected caller is calling the function and reverts otherwise.
     /// @param expected The expected caller.
