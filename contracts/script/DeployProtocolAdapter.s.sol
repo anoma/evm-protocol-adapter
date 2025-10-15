@@ -38,7 +38,9 @@ contract DeployProtocolAdapter is Script {
         }
 
         protocolAdapter = address(
-            new ProtocolAdapter{salt: salt}({
+            new ProtocolAdapter{
+                salt: salt
+            }({
                 riscZeroVerifierRouter: _routers[_networks[block.chainid]],
                 riscZeroVerifierSelector: Versioning._RISC_ZERO_VERIFIER_SELECTOR,
                 emergencyStopCaller: emergencyStopCaller

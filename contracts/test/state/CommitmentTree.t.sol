@@ -142,10 +142,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
             abi.encodeWithSelector(CommitmentTree.NonExistingRoot.selector, nonExistingRoot), address(_cmAcc)
         );
         _cmAcc.verifyMerkleProof({
-            commitmentTreeRoot: nonExistingRoot,
-            commitment: 0,
-            path: new bytes32[](0),
-            directionBits: 0
+            commitmentTreeRoot: nonExistingRoot, commitment: 0, path: new bytes32[](0), directionBits: 0
         });
     }
 
@@ -205,10 +202,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
             abi.encodeWithSelector(CommitmentTree.InvalidRoot.selector, newRoot, invalidRoot), address(_cmAcc)
         );
         _cmAcc.verifyMerkleProof({
-            commitmentTreeRoot: newRoot,
-            commitment: commitment,
-            path: wrongPath,
-            directionBits: 0
+            commitmentTreeRoot: newRoot, commitment: commitment, path: wrongPath, directionBits: 0
         });
     }
 
@@ -226,10 +220,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
 
         // Check merkle path verification for initial root works
         _cmAcc.verifyMerkleProof({
-            commitmentTreeRoot: oldRoot,
-            commitment: SHA256.EMPTY_HASH,
-            path: new bytes32[](0),
-            directionBits: 0
+            commitmentTreeRoot: oldRoot, commitment: SHA256.EMPTY_HASH, path: new bytes32[](0), directionBits: 0
         });
     }
 

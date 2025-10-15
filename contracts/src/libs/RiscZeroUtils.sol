@@ -87,10 +87,12 @@ library RiscZeroUtils {
                     packedLogicJournals,
                     // Encode the created journal length (which is a multiple of `32 bytes`) divided by 4 (bytes)
                     // representing the number of RISC Zero words in reverse (little-endian) byte order.
+                    // forge-lint: disable-next-line(unsafe-typecast)
                     reverseByteOrderUint32(uint32(consumedJournal.length / 4)),
                     consumedJournal,
                     // Encode the consumed journal length (which is a multiple of `32 bytes`) divided by 4 (bytes)
                     // representing the number of RISC Zero words in reverse (little-endian) byte order.
+                    // forge-lint: disable-next-line(unsafe-typecast)
                     reverseByteOrderUint32(uint32(createdJournal.length / 4)),
                     createdJournal
                 );
@@ -98,7 +100,9 @@ library RiscZeroUtils {
         }
 
         // Encode the compliance unit and tag count as a `uint32` in reverse (little-endian) byte order.
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint32 complianceUnitCountPadding = reverseByteOrderUint32(uint32(complianceUnitCount));
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint32 tagCountPadding = reverseByteOrderUint32(uint32(complianceUnitCount * 2));
 
         // Pack the aggregation instance journal.

@@ -53,10 +53,7 @@ library TxGen {
         Delta.CurvePoint memory unitDelta = DeltaGen.generateInstance(
             vm,
             DeltaGen.InstanceInputs({
-                kind: kind(consumed),
-                quantity: consumed.quantity,
-                consumed: true,
-                valueCommitmentRandomness: 1
+                kind: kind(consumed), quantity: consumed.quantity, consumed: true, valueCommitmentRandomness: 1
             })
         );
         // Construct the delta for creation based on kind and quantity
@@ -65,19 +62,14 @@ library TxGen {
             DeltaGen.generateInstance(
                 vm,
                 DeltaGen.InstanceInputs({
-                    kind: kind(created),
-                    quantity: created.quantity,
-                    consumed: false,
-                    valueCommitmentRandomness: 1
+                    kind: kind(created), quantity: created.quantity, consumed: false, valueCommitmentRandomness: 1
                 })
             )
         );
 
         Compliance.Instance memory instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
-                nullifier: nf,
-                commitmentTreeRoot: commitmentTreeRoot,
-                logicRef: consumed.logicRef
+                nullifier: nf, commitmentTreeRoot: commitmentTreeRoot, logicRef: consumed.logicRef
             }),
             created: Compliance.CreatedRefs({commitment: cm, logicRef: created.logicRef}),
             unitDeltaX: bytes32(unitDelta.x),
@@ -85,8 +77,9 @@ library TxGen {
         });
 
         unit = Compliance.VerifierInput({
-            proof: mockVerifier.mockProve({imageId: Compliance._VERIFYING_KEY, journalDigest: sha256(instance.toJournal())})
-                .seal,
+            proof: mockVerifier.mockProve({
+                imageId: Compliance._VERIFYING_KEY, journalDigest: sha256(instance.toJournal())
+            }).seal,
             instance: instance
         });
     }
@@ -223,8 +216,7 @@ library TxGen {
             proof = DeltaGen.generateProof(
                 vm,
                 DeltaGen.ProofInputs({
-                    valueCommitmentRandomness: tags.length,
-                    verifyingKey: Delta.computeVerifyingKey(tags)
+                    valueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
                 })
             );
         }
@@ -262,8 +254,7 @@ library TxGen {
             proof = DeltaGen.generateProof(
                 vm,
                 DeltaGen.ProofInputs({
-                    valueCommitmentRandomness: tags.length,
-                    verifyingKey: Delta.computeVerifyingKey(tags)
+                    valueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
                 })
             );
         }
@@ -282,8 +273,7 @@ library TxGen {
         aggregatedTxn = txn;
 
         aggregatedTxn.aggregationProof = mockVerifier.mockProve({
-            imageId: Aggregation._VERIFYING_KEY,
-            journalDigest: sha256(aggregatedInstanceGeneration(txn).toJournal())
+            imageId: Aggregation._VERIFYING_KEY, journalDigest: sha256(aggregatedInstanceGeneration(txn).toJournal())
         }).seal;
     }
 
@@ -302,8 +292,7 @@ library TxGen {
         });
 
         input.proof = mockVerifier.mockProve({
-            imageId: resource.logicRef,
-            journalDigest: sha256(input.toInstance(actionTreeRoot, isConsumed).toJournal())
+            imageId: resource.logicRef, journalDigest: sha256(input.toInstance(actionTreeRoot, isConsumed).toJournal())
         }).seal;
     }
 
@@ -419,9 +408,7 @@ library TxGen {
         }
 
         aggregationInstance = Aggregation.Instance({
-            logicRefs: logicRefs,
-            complianceInstances: complianceInstances,
-            logicInstances: logicInstances
+            logicRefs: logicRefs, complianceInstances: complianceInstances, logicInstances: logicInstances
         });
     }
 
@@ -469,12 +456,10 @@ library TxGen {
     function expirableBlobs() internal pure returns (Logic.ExpirableBlob[] memory blobs) {
         blobs = new Logic.ExpirableBlob[](2);
         blobs[0] = Logic.ExpirableBlob({
-            blob: hex"1f0000003f0000005f0000007f000000",
-            deletionCriterion: Logic.DeletionCriterion.Immediately
+            blob: hex"1f0000003f0000005f0000007f000000", deletionCriterion: Logic.DeletionCriterion.Immediately
         });
         blobs[1] = Logic.ExpirableBlob({
-            blob: hex"9f000000bf000000df000000ff000000",
-            deletionCriterion: Logic.DeletionCriterion.Never
+            blob: hex"9f000000bf000000df000000ff000000", deletionCriterion: Logic.DeletionCriterion.Never
         });
     }
 

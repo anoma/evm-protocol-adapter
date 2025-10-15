@@ -27,7 +27,9 @@ contract DeployERC20Forwarder is Script {
         }
 
         vm.startBroadcast();
-        new ERC20Forwarder{salt: salt}({
+        new ERC20Forwarder{
+            salt: salt
+        }({
             protocolAdapter: protocolAdapter,
             emergencyCommittee: emergencyCommittee,
             calldataCarrierLogicRef: calldataCarrierLogicRef

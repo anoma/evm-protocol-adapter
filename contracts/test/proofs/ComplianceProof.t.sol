@@ -25,9 +25,7 @@ contract ComplianceProofTest is Test {
         Compliance.VerifierInput memory cu = TransactionExample.complianceVerifierInput();
 
         _router.verify({
-            seal: cu.proof,
-            imageId: Compliance._VERIFYING_KEY,
-            journalDigest: sha256(cu.instance.toJournal())
+            seal: cu.proof, imageId: Compliance._VERIFYING_KEY, journalDigest: sha256(cu.instance.toJournal())
         });
     }
 

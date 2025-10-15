@@ -123,7 +123,13 @@ contract ProtocolAdapterTest is Test {
     function test_getProtocolAdapterVersion_returns_a_semantic_version() public view {
         bytes32 version = _pa.getProtocolAdapterVersion();
 
-        assertEq(version.cmp("0.0.0"), 1 /* GT */ );
-        assertEq(version.cmp("999.999.999"), -1 /* LT */ );
+        assertEq(
+            version.cmp("0.0.0"),
+            1 /* GT */
+        );
+        assertEq(
+            version.cmp("999.999.999"),
+            -1 /* LT */
+        );
     }
 }

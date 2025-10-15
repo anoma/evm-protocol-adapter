@@ -144,12 +144,13 @@ contract ProtocolAdapter is
                 // a subset of the tags as presented in the compliance unit.
 
                 // Add the unit delta to the transaction delta.
-                vars.transactionDelta = vars.transactionDelta.add(
-                    Delta.CurvePoint({
-                        x: uint256(complianceVerifierInput.instance.unitDeltaX),
-                        y: uint256(complianceVerifierInput.instance.unitDeltaY)
-                    })
-                );
+                vars.transactionDelta = vars.transactionDelta
+                    .add(
+                        Delta.CurvePoint({
+                            x: uint256(complianceVerifierInput.instance.unitDeltaX),
+                            y: uint256(complianceVerifierInput.instance.unitDeltaY)
+                        })
+                    );
             }
             emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: action.logicVerifierInputs.length});
         }
@@ -158,9 +159,7 @@ contract ProtocolAdapter is
         if (vars.tagCounter > 0) {
             // Verify the delta proof and, optionally, the aggregation proof, if it is present.
             _verifyGlobalProofs({
-                deltaProof: transaction.deltaProof,
-                aggregationProof: transaction.aggregationProof,
-                vars: vars
+                deltaProof: transaction.deltaProof, aggregationProof: transaction.aggregationProof, vars: vars
             });
 
             // Store the final commitment tree root.
@@ -170,6 +169,7 @@ contract ProtocolAdapter is
         // Emit the event containing the transaction and new root.
         emit TransactionExecuted({tags: vars.tags, logicRefs: vars.logicRefs});
     }
+
     // slither-disable-end reentrancy-no-eth
 
     /// @inheritdoc IProtocolAdapter
@@ -180,8 +180,8 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function isEmergencyStopped() public view override returns (bool isStopped) {
         bool risc0Paused = RiscZeroVerifierEmergencyStop(
-            address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))
-        ).paused();
+                address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))
+            ).paused();
 
         isStopped = paused() || risc0Paused;
     }
@@ -262,8 +262,7 @@ contract ProtocolAdapter is
 
         for (uint256 i = 0; i < nCalls; ++i) {
             _executeForwarderCall({
-                carrierLogicRef: verifierInput.verifyingKey,
-                callBlob: verifierInput.appData.externalPayload[i].blob
+                carrierLogicRef: verifierInput.verifyingKey, callBlob: verifierInput.appData.externalPayload[i].blob
             });
         }
     }
@@ -314,9 +313,7 @@ contract ProtocolAdapter is
                 // Verify the logic proof.
                 // slither-disable-next-line calls-loop
                 _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                    seal: input.proof,
-                    imageId: logicRef,
-                    journalDigest: sha256(instance.toJournal())
+                    seal: input.proof, imageId: logicRef, journalDigest: sha256(instance.toJournal())
                 });
             }
         }
@@ -372,9 +369,7 @@ contract ProtocolAdapter is
             // Verify the compliance proof.
             // slither-disable-next-line calls-loop
             _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                seal: input.proof,
-                imageId: Compliance._VERIFYING_KEY,
-                journalDigest: sha256(input.instance.toJournal())
+                seal: input.proof, imageId: Compliance._VERIFYING_KEY, journalDigest: sha256(input.instance.toJournal())
             });
         }
     }
@@ -392,9 +387,7 @@ contract ProtocolAdapter is
     ) internal view {
         // Check the delta proof.
         Delta.verify({
-            proof: deltaProof,
-            instance: vars.transactionDelta,
-            verifyingKey: Delta.computeVerifyingKey(vars.tags)
+            proof: deltaProof, instance: vars.transactionDelta, verifyingKey: Delta.computeVerifyingKey(vars.tags)
         });
 
         if (vars.isProofAggregated) {
@@ -405,10 +398,10 @@ contract ProtocolAdapter is
                 imageId: Aggregation._VERIFYING_KEY,
                 journalDigest: sha256(
                     Aggregation.Instance({
-                        logicRefs: vars.logicRefs,
-                        complianceInstances: vars.complianceInstances,
-                        logicInstances: vars.logicInstances
-                    }).toJournal()
+                            logicRefs: vars.logicRefs,
+                            complianceInstances: vars.complianceInstances,
+                            logicInstances: vars.logicInstances
+                        }).toJournal()
                 )
             });
         }

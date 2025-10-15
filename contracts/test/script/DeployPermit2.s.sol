@@ -24,13 +24,12 @@ contract DeployPermit2 is Script {
 
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            permit2 :=
-                create2(
-                    0, // no ETH sent
-                    add(creationBytecode, 0x20), // pointer to bytecode
-                    mload(creationBytecode), // length of bytecode
-                    salt // deterministic salt
-                )
+            permit2 := create2(
+                0, // no ETH sent
+                add(creationBytecode, 0x20), // pointer to bytecode
+                mload(creationBytecode), // length of bytecode
+                salt // deterministic salt
+            )
             if iszero(extcodesize(permit2)) { revert(0, 0) }
         }
     }
