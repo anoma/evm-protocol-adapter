@@ -1,34 +1,8 @@
-use crate::conversion::ProtocolAdapter;
-
-use alloy::network::EthereumWallet;
-use alloy::primitives::Address;
-use alloy::providers::fillers::{
-    BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, WalletFiller,
-};
-use alloy::providers::{Identity, ProviderBuilder, RootProvider};
-use alloy::signers::local::PrivateKeySigner;
+use alloy::primitives::{Address, address};
 use alloy::sol;
-use std::env;
 
-type DefaultProvider = FillProvider<
-    JoinFill<
-        JoinFill<
-            Identity,
-            JoinFill<GasFiller, JoinFill<BlobGasFiller, JoinFill<NonceFiller, ChainIdFiller>>>,
-        >,
-        WalletFiller<EthereumWallet>,
-    >,
-    RootProvider,
->;
-
-pub fn protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<DefaultProvider> {
-    let protocol_adapter = env::var("PROTOCOL_ADAPTER_ADDRESS_SEPOLIA")
-        .expect("Couldn't read PROTOCOL_ADAPTER_ADDRESS_SEPOLIA")
-        .parse::<Address>()
-        .expect("Wrong address format");
-
-    ProtocolAdapter::new(protocol_adapter, provider())
-}
+/// Protocol adapter deployment address on Sepolia
+pub const SEPOLIA_DEPLOYMENT_ADDR: Address = address!("0xaf21c8a4d489610f42aabc883e66be3d651e5d52");
 
 sol!(
     #[allow(missing_docs)]
@@ -38,37 +12,38 @@ sol!(
     "../contracts/out/ERC20Forwarder.sol/ERC20Forwarder.json"
 );
 
-pub fn erc20_forwarder(
-    forwarder: Address,
-) -> ERC20Forwarder::ERC20ForwarderInstance<DefaultProvider> {
-    ERC20Forwarder::new(forwarder, provider())
-}
-
-pub fn provider() -> DefaultProvider {
-    let signer = env::var("PRIVATE_KEY")
-        .expect("Couldn't read PRIVATE_KEY")
-        .parse::<PrivateKeySigner>()
-        .expect("Wrong private key format");
-
-    let rpc_url = format!(
-        "https://eth-sepolia.g.alchemy.com/v2/{}",
-        env::var("API_KEY_ALCHEMY").expect("Couldn't read API_KEY_ALCHEMY")
-    );
-
-    let wallet: EthereumWallet = signer.into();
-
-    ProviderBuilder::new()
-        .wallet(wallet)
-        .connect_http(rpc_url.parse().expect("Failed to parse RPC URL"))
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::call::protocol_adapter;
+    use crate::call::SEPOLIA_DEPLOYMENT_ADDR;
     use crate::conversion::ProtocolAdapter;
     use alloy::hex;
+    use alloy::network::EthereumWallet;
     use alloy::primitives::B256;
+    use alloy::providers::{Provider, ProviderBuilder};
+    use alloy::signers::local::PrivateKeySigner;
     use tokio;
+
+    fn private_key_signer() -> PrivateKeySigner {
+        std::env::var("PRIVATE_KEY")
+            .expect("Couldn't read PRIVATE_KEY")
+            .parse::<PrivateKeySigner>()
+            .expect("Wrong private key format")
+    }
+
+    fn alchemy_sepolia_rpc() -> reqwest::Url {
+        let rpc_url = format!(
+            "https://eth-sepolia.g.alchemy.com/v2/{}",
+            std::env::var("API_KEY_ALCHEMY").expect("Couldn't read API_KEY_ALCHEMY")
+        );
+        rpc_url.parse().expect("Failed to parse RPC URL")
+    }
+
+    pub fn sepolia_protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<impl Provider> {
+        let provider = ProviderBuilder::new()
+            .wallet(EthereumWallet::from(private_key_signer()))
+            .connect_http(alchemy_sepolia_rpc());
+        ProtocolAdapter::new(SEPOLIA_DEPLOYMENT_ADDR, provider)
+    }
 
     fn initial_root() -> B256 {
         B256::from(hex!(
@@ -80,7 +55,7 @@ mod tests {
     #[ignore = "This test requires updatng the protocol adapter address in .env"]
     async fn contains_initial_root() {
         assert!(
-            protocol_adapter()
+            sepolia_protocol_adapter()
                 .isCommitmentTreeRootContained(initial_root())
                 .call()
                 .await
@@ -91,7 +66,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "This test requires updating the protocol adapter address in .env"]
     async fn call_latest_root() {
-        let root = protocol_adapter()
+        let root = sepolia_protocol_adapter()
             .latestCommitmentTreeRoot()
             .call()
             .await
@@ -107,7 +82,7 @@ mod tests {
             aggregationProof: vec![].into(),
             deltaProof: vec![].into(),
         };
-        let result = protocol_adapter().execute(empty_tx).call().await;
+        let result = sepolia_protocol_adapter().execute(empty_tx).call().await;
         assert!(result.is_ok());
     }
 }

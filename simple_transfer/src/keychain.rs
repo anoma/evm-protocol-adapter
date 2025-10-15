@@ -1,5 +1,5 @@
 use arm_risc0::authorization::{AuthorizationSigningKey, AuthorizationVerifyingKey};
-use arm_risc0::encryption::{random_keypair, AffinePoint, SecretKey};
+use arm_risc0::encryption::{AffinePoint, SecretKey, random_keypair};
 use arm_risc0::nullifier_key::{NullifierKey, NullifierKeyCommitment};
 
 #[allow(dead_code)]
