@@ -6144,6 +6144,7 @@ name = "simple_transfer"
 version = "1.0.0-rc.2"
 dependencies = [
  "alloy",
+ "arm",
  "evm_protocol_adapter_bindings",
  "sha2",
  "simple-transfer-app",

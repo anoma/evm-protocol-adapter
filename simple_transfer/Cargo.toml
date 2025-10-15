@@ -12,12 +12,14 @@ name = "simple_transfer_main"
 path = "main.rs"
 
 [dependencies]
-
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.8.1", package = "arm", features = [
+    "groth16_prover",
+    "bonsai",
+    "test",
+] }
 evm_protocol_adapter_bindings = { path = "../bindings" }
 simple_transfer_app = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.8.1", package = "simple-transfer-app" }
 
 alloy = { version = "1.0.30", features = ["full", "eip712", "node-bindings"] }
 tokio = { version = "1.44", features = ["rt-multi-thread"] }
 sha2 = { version = "0.10.9" }
-
-
