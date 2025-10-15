@@ -1,6 +1,6 @@
 [package]
 name = "evm_protocol_adapter_bindings"
-version = "1.0.0-rc.2"
+version = "1.0.0-rc.3"
 edition = "2024"
 
 [dependencies]

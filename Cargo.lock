@@ -2779,7 +2779,7 @@ dependencies = [
 
 [[package]]
 name = "evm_protocol_adapter_bindings"
-version = "1.0.0-rc.2"
+version = "1.0.0-rc.3"
 dependencies = [
  "alloy",
  "arm",
@@ -6141,7 +6141,7 @@ dependencies = [
 
 [[package]]
 name = "simple_transfer"
-version = "1.0.0-rc.2"
+version = "1.0.0-rc.3"
 dependencies = [
  "alloy",
  "arm",
