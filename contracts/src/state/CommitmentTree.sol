@@ -84,10 +84,7 @@ contract CommitmentTree is ICommitmentTree {
         uint256 directionBits
     ) external view override {
         _verifyMerkleProof({
-            commitmentTreeRoot: commitmentTreeRoot,
-            commitment: commitment,
-            path: path,
-            directionBits: directionBits
+            commitmentTreeRoot: commitmentTreeRoot, commitment: commitment, path: path, directionBits: directionBits
         });
     }
 

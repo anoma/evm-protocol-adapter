@@ -72,8 +72,7 @@ contract ERC20ForwarderV2 is ERC20Forwarder, NullifierSet {
     /// * `token`: The address of the token to migrated.
     /// * `amount`: The amount to be migrated.
     function _migrate(bytes calldata input) internal {
-        (
-            , // CallType
+        (, // CallType
             address token,
             uint128 amount,
             bytes32 nullifier

@@ -68,6 +68,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
 
         output = "";
     }
+
     // slither-disable-end dead-code
 
     /// @notice Unwraps an ERC20 token and transfers funds to the recipient using the `SafeERC20.safeTransfer`.
@@ -77,8 +78,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// * `amount`: The amount to be transferred.
     function _unwrap(bytes calldata input) internal {
         // slither-disable-next-line unused-return
-        (
-            , // CallType
+        (, // CallType
             address token,
             address to,
             uint128 amount
@@ -102,8 +102,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
     /// * `signature`: The Permit2 signature.
     function _wrap(bytes calldata input) internal {
         // slither-disable-next-line unused-return
-        (
-            , // CallType
+        (, // CallType
             address from,
             ISignatureTransfer.PermitTransferFrom memory permit,
             bytes32 actionTreeRoot,
@@ -119,8 +118,7 @@ contract ERC20Forwarder is EmergencyMigratableForwarderBase {
         _PERMIT2.permitWitnessTransferFrom({
             permit: permit,
             transferDetails: ISignatureTransfer.SignatureTransferDetails({
-                to: address(this),
-                requestedAmount: permit.permitted.amount
+                to: address(this), requestedAmount: permit.permitted.amount
             }),
             owner: from,
             witness: ERC20ForwarderPermit2.Witness({actionTreeRoot: actionTreeRoot}).hash(),

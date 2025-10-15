@@ -43,10 +43,7 @@ contract DeltaProofTest is Test {
 
         // Construct delta instance inputs from the above parameters
         DeltaGen.InstanceInputs memory deltaInstanceInputs = DeltaGen.InstanceInputs({
-            kind: kind,
-            quantity: 0,
-            consumed: consumed,
-            valueCommitmentRandomness: valueCommitmentRandomness
+            kind: kind, quantity: 0, consumed: consumed, valueCommitmentRandomness: valueCommitmentRandomness
         });
         vm.assume(deltaInstanceInputs.computePreDelta() != 0);
 
@@ -139,8 +136,7 @@ contract DeltaProofTest is Test {
 
         // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaProofInputs = DeltaGen.ProofInputs({
-            valueCommitmentRandomness: deltaInstanceInputs.valueCommitmentRandomness,
-            verifyingKey: fuzzedVerifyingKey
+            valueCommitmentRandomness: deltaInstanceInputs.valueCommitmentRandomness, verifyingKey: fuzzedVerifyingKey
         });
 
         // Generate a delta proof and instance from the above tags and preimage
@@ -172,10 +168,7 @@ contract DeltaProofTest is Test {
         Delta.CurvePoint memory instanceRcv2;
         {
             DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
-                kind: kind,
-                quantity: 0,
-                consumed: consumed,
-                valueCommitmentRandomness: valueCommitmentRandomness2
+                kind: kind, quantity: 0, consumed: consumed, valueCommitmentRandomness: valueCommitmentRandomness2
             });
             vm.assume(deltaInputs2.computePreDelta() != 0); // TODO move?
             instanceRcv2 = DeltaGen.generateInstance(vm, deltaInputs2);
@@ -205,10 +198,7 @@ contract DeltaProofTest is Test {
         Delta.CurvePoint memory instance;
         {
             DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
-                kind: kind,
-                quantity: 0,
-                consumed: consumed,
-                valueCommitmentRandomness: valueCommitmentRandomness
+                kind: kind, quantity: 0, consumed: consumed, valueCommitmentRandomness: valueCommitmentRandomness
             });
             vm.assume(deltaInputs2.computePreDelta() != 0);
 
@@ -244,9 +234,9 @@ contract DeltaProofTest is Test {
         if (quantity != 0) {
             // TODO REFACTOR
             SignMagnitude.Number memory diff = SignMagnitude.Number(
-                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed,
-                wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity
-            ).sub(SignMagnitude.Number(consumed, quantity));
+                    wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed,
+                    wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity
+                ).sub(SignMagnitude.Number(consumed, quantity));
 
             wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed = diff.isNegative;
             wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity = diff.magnitude;

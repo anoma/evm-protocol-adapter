@@ -34,9 +34,7 @@ library TransactionExample {
     function complianceInstance() internal pure returns (Compliance.Instance memory instance) {
         instance = Compliance.Instance({
             consumed: Compliance.ConsumedRefs({
-                nullifier: _CONSUMED_NULLIFIER,
-                commitmentTreeRoot: SHA256.EMPTY_HASH,
-                logicRef: _CONSUMED_LOGIC_REF
+                nullifier: _CONSUMED_NULLIFIER, commitmentTreeRoot: SHA256.EMPTY_HASH, logicRef: _CONSUMED_LOGIC_REF
             }),
             created: Compliance.CreatedRefs({commitment: _CREATED_COMMITMENT, logicRef: _CREATED_LOGIC_REF}),
             unitDeltaX: _UNIT_DELTA_X,

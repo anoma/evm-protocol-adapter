@@ -70,8 +70,9 @@ library Logic {
         pure
         returns (Instance memory instance)
     {
-        instance =
-            Instance({tag: input.tag, isConsumed: isConsumed, actionTreeRoot: actionTreeRoot, appData: input.appData});
+        instance = Instance({
+            tag: input.tag, isConsumed: isConsumed, actionTreeRoot: actionTreeRoot, appData: input.appData
+        });
     }
 
     /// @notice Looks up a `VerifierInput` element from a list by its tag.

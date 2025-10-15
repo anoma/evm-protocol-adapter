@@ -152,10 +152,7 @@ contract ERC20ForwarderTest is Test {
             bytes32 witness = keccak256(abi.encode(ERC20ForwarderPermit2.Witness({actionTreeRoot: _ACTION_TREE_ROOT})));
 
             bytes memory signature = _createPermitWitnessTransferFromSignature({
-                permit: _defaultPermit,
-                privateKey: _alicePrivateKey,
-                spender: address(_fwd),
-                witness: witness
+                permit: _defaultPermit, privateKey: _alicePrivateKey, spender: address(_fwd), witness: witness
             });
 
             input = abi.encode(ERC20Forwarder.CallType.Wrap, from, _defaultPermit, witness, signature);
@@ -307,10 +304,7 @@ contract ERC20ForwarderTest is Test {
         bytes32 witness
     ) internal view returns (bytes memory signature) {
         (uint8 v, bytes32 r, bytes32 s) = _createPermitWitnessTransferFromSignatureRsv({
-            permit: permit,
-            spender: spender,
-            privateKey: privateKey,
-            witness: witness
+            permit: permit, spender: spender, privateKey: privateKey, witness: witness
         });
 
         return abi.encodePacked(r, s, v);
@@ -356,8 +350,9 @@ contract ERC20ForwarderTest is Test {
         string memory witnessTypeString,
         address spender
     ) internal pure returns (bytes32 hash) {
-        bytes32 typeHash =
-            keccak256(abi.encodePacked(PermitHash._PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB, witnessTypeString));
+        bytes32 typeHash = keccak256(
+            abi.encodePacked(PermitHash._PERMIT_TRANSFER_FROM_WITNESS_TYPEHASH_STUB, witnessTypeString)
+        );
 
         bytes32 tokenPermissionsHash = _hashTokenPermissions(permit.permitted);
         hash = keccak256(abi.encode(typeHash, tokenPermissionsHash, spender, permit.nonce, permit.deadline, witness));
