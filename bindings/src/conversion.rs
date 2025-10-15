@@ -1,4 +1,5 @@
-use alloy::primitives::{B256, Bytes};
+use alloy::primitives::{Address, B256, Bytes, U256};
+use alloy::providers::Provider;
 use alloy::sol;
 use arm_risc0::action::Action;
 use arm_risc0::compliance::ComplianceInstance;
@@ -9,6 +10,7 @@ use arm_risc0::proving_system::encode_seal;
 
 use arm_risc0::transaction::{Delta, Transaction};
 use arm_risc0::utils::words_to_bytes;
+use async_trait::async_trait;
 
 sol!(
     #[allow(missing_docs)]
@@ -137,6 +139,128 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
                 None => Bytes::from(""),
             },
         }
+    }
+}
+
+/// Client with which to connect to protocol adapterr
+pub type Client<X> = ProtocolAdapter::ProtocolAdapterInstance<X>;
+
+#[async_trait]
+impl<X: Provider> crate::call::Client for Client<X> {
+    type Provider = X;
+
+    fn new(address: Address, provider: X) -> Self {
+        ProtocolAdapter::ProtocolAdapterInstance::<X>::new(address, provider)
+    }
+
+    async fn execute(&self, tx: Transaction) -> Result<(), alloy::contract::Error> {
+        Client::<X>::execute(self, tx.into())
+            .call()
+            .await
+            .map(|_| ())
+    }
+
+    async fn emergency_stop(&self) -> Result<(), alloy::contract::Error> {
+        Client::<X>::emergencyStop(self).call().await.map(|_| ())
+    }
+
+    async fn is_emergency_stopped(&self) -> Result<bool, alloy::contract::Error> {
+        Client::<X>::isEmergencyStopped(self).call().await
+    }
+
+    async fn get_risc_zero_verifier_selector(&self) -> Result<[u8; 4], alloy::contract::Error> {
+        Client::<X>::getRiscZeroVerifierSelector(self)
+            .call()
+            .await
+            .map(|x| x.0)
+    }
+
+    async fn get_protocol_adapter_version(&self) -> Result<[u8; 32], alloy::contract::Error> {
+        Client::<X>::getProtocolAdapterVersion(self)
+            .call()
+            .await
+            .map(|x| x.0)
+    }
+
+    async fn commitment_count(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::commitmentCount(self).call().await
+    }
+
+    async fn commitment_tree_depth(&self) -> Result<u8, alloy::contract::Error> {
+        Client::<X>::commitmentTreeDepth(self).call().await
+    }
+
+    async fn commitment_tree_capacity(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::commitmentTreeCapacity(self).call().await
+    }
+
+    async fn latest_commitment_tree_root(&self) -> Result<[u8; 32], alloy::contract::Error> {
+        Client::<X>::latestCommitmentTreeRoot(self)
+            .call()
+            .await
+            .map(|x| x.0)
+    }
+
+    async fn is_commitment_tree_root_contained(
+        &self,
+        root: &[u8; 32],
+    ) -> Result<bool, alloy::contract::Error> {
+        Client::<X>::isCommitmentTreeRootContained(self, root.into())
+            .call()
+            .await
+    }
+
+    async fn commitment_tree_root_count(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::commitmentTreeRootCount(self).call().await
+    }
+
+    async fn commitment_tree_root_at_index(
+        &self,
+        index: U256,
+    ) -> Result<[u8; 32], alloy::contract::Error> {
+        Client::<X>::commitmentTreeRootAtIndex(self, index)
+            .call()
+            .await
+            .map(Into::into)
+    }
+
+    async fn verify_merkle_proof(
+        &self,
+        root: &[u8; 32],
+        commitment: &[u8; 32],
+        path: &[[u8; 32]],
+        direction_bits: U256,
+    ) -> Result<(), alloy::contract::Error> {
+        Client::<X>::verifyMerkleProof(
+            self,
+            root.into(),
+            commitment.into(),
+            path.iter().map(Into::into).collect(),
+            direction_bits,
+        )
+        .call()
+        .await
+        .map(|_| ())
+    }
+
+    async fn is_nullifier_contained(
+        &self,
+        nullifier: &[u8; 32],
+    ) -> Result<bool, alloy::contract::Error> {
+        Client::<X>::isNullifierContained(self, nullifier.into())
+            .call()
+            .await
+    }
+
+    async fn nullifier_count(&self) -> Result<U256, alloy::contract::Error> {
+        Client::<X>::nullifierCount(self).call().await
+    }
+
+    async fn nullifier_at_index(&self, index: U256) -> Result<[u8; 32], alloy::contract::Error> {
+        Client::<X>::nullifierAtIndex(self, index)
+            .call()
+            .await
+            .map(Into::into)
     }
 }
 
