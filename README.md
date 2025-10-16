@@ -59,7 +59,7 @@ forge test
 To show the coverage report, run
 
 ```sh
-forge coverage --ir-minimum
+forge coverage
 ```
 
 Append the
