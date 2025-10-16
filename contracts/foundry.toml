@@ -27,7 +27,6 @@ remappings = [
     "@solady/=lib/solady/src",
     "@risc0-ethereum/=lib/risc0-ethereum/contracts/src/",
     "@elliptic-curve-solidity/=lib/elliptic-curve-solidity/",
-    "openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
 ]
 
 
@@ -43,7 +42,6 @@ gas_reports = [
     "CommitmentTreeMock",
     "NullifierSetMock",
     "BlockTimeForwarder",
-    "ERC20Forwarder",
 ]
 optimizer = true
 via_ir = true
