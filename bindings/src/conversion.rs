@@ -1,5 +1,5 @@
-use alloy::primitives::{B256, Bytes};
-use alloy::sol;
+use alloy::primitives::{Bytes, B256};
+
 use arm_risc0::action::Action;
 use arm_risc0::compliance::ComplianceInstance;
 use arm_risc0::compliance_unit::ComplianceUnit;
@@ -7,16 +7,9 @@ use arm_risc0::logic_instance::{AppData, ExpirableBlob};
 use arm_risc0::logic_proof::LogicVerifierInputs;
 use arm_risc0::proving_system::encode_seal;
 
+use crate::abi::{Compliance, Logic, ProtocolAdapter};
 use arm_risc0::transaction::{Delta, Transaction};
 use arm_risc0::utils::words_to_bytes;
-
-sol!(
-    #[allow(missing_docs)]
-    #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-    #[sol(rpc)]
-    ProtocolAdapter,
-    "../contracts/out/ProtocolAdapter.sol/ProtocolAdapter.json"
-);
 
 impl From<ExpirableBlob> for Logic::ExpirableBlob {
     fn from(expirable_blob: ExpirableBlob) -> Self {

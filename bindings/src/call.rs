@@ -1,4 +1,4 @@
-use crate::conversion::ProtocolAdapter;
+use crate::abi::ProtocolAdapter;
 
 use alloy::network::EthereumWallet;
 use alloy::primitives::Address;
@@ -49,8 +49,8 @@ pub fn provider() -> DefaultProvider {
 
 #[cfg(test)]
 mod tests {
+    use crate::abi::ProtocolAdapter;
     use crate::call::protocol_adapter;
-    use crate::conversion::ProtocolAdapter;
     use alloy::hex;
     use alloy::primitives::B256;
     use tokio;
