@@ -1,13 +1,13 @@
 use crate::keychain::KeyChain;
-use crate::permit2::{permit_witness_transfer_from_signature, Permit2Data};
+use crate::permit2::{Permit2Data, permit_witness_transfer_from_signature};
 use alloy::hex;
-use alloy::primitives::{address, Address, B256, U256};
+use alloy::primitives::{Address, B256, U256, address};
 use alloy::signers::local::PrivateKeySigner;
+use arm_risc0::Digest as ArmDigest;
 use arm_risc0::action_tree::MerkleTree;
 use arm_risc0::compliance::INITIAL_ROOT;
 use arm_risc0::evm::CallType;
 use arm_risc0::merkle_path::MerklePath;
-use arm_risc0::Digest as ArmDigest;
 use evm_protocol_adapter_bindings::conversion::ProtocolAdapter;
 use sha2::{Digest, Sha256};
 use simple_transfer_app::burn::construct_burn_tx;

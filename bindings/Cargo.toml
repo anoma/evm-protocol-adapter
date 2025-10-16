@@ -14,6 +14,9 @@ alloy = { version = "1.0.30", features = ["full", "eip712", "node-bindings"] }
 tokio = { version = "1.44", features = ["rt-multi-thread"] }
 serde = { version = "1.0.197", default-features = false }
 
+[dev-dependencies]
+reqwest = { version = "0.12", default-features = false }
+
 [features]
 # These features are enabled to generate test transactions and is not required for using the library.
 arm_risc0_dev = ["arm_risc0/groth16_prover", "arm_risc0/bonsai"]
