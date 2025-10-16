@@ -1,7 +1,7 @@
 use crate::abi::ProtocolAdapter;
 
 use alloy::network::EthereumWallet;
-use alloy::primitives::Address;
+use alloy::primitives::{address, Address};
 use alloy::providers::fillers::{
     BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, WalletFiller,
 };
@@ -20,13 +20,11 @@ type DefaultProvider = FillProvider<
     RootProvider,
 >;
 
-pub fn protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<DefaultProvider> {
-    let protocol_adapter = env::var("PROTOCOL_ADAPTER_ADDRESS_SEPOLIA")
-        .expect("Couldn't read PROTOCOL_ADAPTER_ADDRESS_SEPOLIA")
-        .parse::<Address>()
-        .expect("Wrong address format");
+pub const PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: Address =
+    address!("0x375920798465eb6b845AC5BF8580d69ce0Bda34a");
 
-    ProtocolAdapter::new(protocol_adapter, provider())
+pub fn protocol_adapter() -> ProtocolAdapter::ProtocolAdapterInstance<DefaultProvider> {
+    ProtocolAdapter::new(PROTOCOL_ADAPTER_ADDRESS_SEPOLIA, provider())
 }
 
 pub fn provider() -> DefaultProvider {
