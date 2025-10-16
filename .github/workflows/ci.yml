@@ -24,6 +24,10 @@ jobs:
         with:
           cache: true
 
+      - name: Install dependencies
+        run: forge soldeer install
+        working-directory: ./contracts
+
       - name: Show Foundry version
         run: forge --version
 
