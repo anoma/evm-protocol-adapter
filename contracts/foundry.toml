@@ -27,8 +27,7 @@ remappings = [
     "@solady/=lib/solady/src",
     "@risc0-ethereum/=lib/risc0-ethereum/contracts/src/",
     "@elliptic-curve-solidity/=lib/elliptic-curve-solidity/",
-    "@permit2/=lib/permit2/",
-    "solmate/=lib/permit2/lib/solmate/",                              # Used witin `permit2`
+    "openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
 ]
 
 
