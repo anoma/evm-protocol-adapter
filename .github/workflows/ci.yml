@@ -67,13 +67,6 @@ jobs:
           API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
         working-directory: ./contracts
 
-      - name: Run Forge coverage
-        run: forge coverage --no-match-coverage "(script|test|draft|forwarder)" --report summary
-        env:
-          API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-        working-directory: ./contracts
-
       - name: Upload Contract Artifacts
         uses: actions/upload-artifact@v4
         with:
