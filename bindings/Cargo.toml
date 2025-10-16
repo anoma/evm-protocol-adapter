@@ -11,8 +11,12 @@ arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.8.1", pa
     "test",
 ] }
 alloy = { version = "1.0.30", features = ["full", "eip712", "node-bindings"] }
+async-trait = "0.1.89"
 tokio = { version = "1.44", features = ["rt-multi-thread"] }
 serde = { version = "1.0.197", default-features = false }
+
+[dev-dependencies]
+reqwest = { version = "0.12", default-features = false }
 
 [features]
 # These features are enabled to generate test transactions and is not required for using the library.

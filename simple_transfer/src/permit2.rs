@@ -1,5 +1,5 @@
-use alloy::primitives::{address, Address, Signature, B256, U256};
-use alloy::signers::{local::PrivateKeySigner, Signer};
+use alloy::primitives::{Address, B256, Signature, U256, address};
+use alloy::signers::{Signer, local::PrivateKeySigner};
 use alloy::sol;
 use alloy::sol_types::eip712_domain;
 

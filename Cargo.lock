@@ -2783,6 +2783,8 @@ version = "1.0.0-rc.3"
 dependencies = [
  "alloy",
  "arm",
+ "async-trait",
+ "reqwest",
  "serde",
  "tokio",
 ]
