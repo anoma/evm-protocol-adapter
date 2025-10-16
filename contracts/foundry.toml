@@ -27,8 +27,6 @@ remappings = [
     "@solady/=lib/solady/src",
     "@risc0-ethereum/=lib/risc0-ethereum/contracts/src/",
     "@elliptic-curve-solidity/=lib/elliptic-curve-solidity/",
-    "@permit2/=lib/permit2/",
-    "solmate/=lib/permit2/lib/solmate/",                              # Used witin `permit2`
 ]
 
 
@@ -44,7 +42,6 @@ gas_reports = [
     "CommitmentTreeMock",
     "NullifierSetMock",
     "BlockTimeForwarder",
-    "ERC20Forwarder",
 ]
 optimizer = true
 via_ir = true

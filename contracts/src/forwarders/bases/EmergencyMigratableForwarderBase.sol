@@ -72,10 +72,14 @@ abstract contract EmergencyMigratableForwarderBase is IEmergencyMigratable, Forw
         caller = _emergencyCaller;
     }
 
+    // slither-disable-start unimplemented-functions
+
     /// @notice Forwards emergency calls.
     /// @param input The `bytes`  encoded input of the call.
     /// @return output The `bytes` encoded output of the call.
     function _forwardEmergencyCall(bytes calldata input) internal virtual returns (bytes memory output);
+
+    // slither-disable-end unimplemented-functions
 
     /// @notice Checks that the protocol adapter has been emergency stopped.
     function _checkEmergencyStopped() internal view {

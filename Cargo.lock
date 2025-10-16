@@ -6119,30 +6119,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 
 [[package]]
-name = "simple-transfer-app"
-version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.8.1#a0cca9cdc8e87508b97f6afc65a3b7582aa3e59d"
-dependencies = [
- "arm",
- "hex",
- "lazy_static",
- "rand 0.8.5",
- "risc0-zkvm",
- "serde",
- "simple-transfer-witness",
-]
-
-[[package]]
-name = "simple-transfer-witness"
-version = "0.1.0"
-source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.8.1#a0cca9cdc8e87508b97f6afc65a3b7582aa3e59d"
-dependencies = [
- "arm",
- "rand 0.8.5",
- "serde",
-]
-
-[[package]]
 name = "simple_asn1"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6156,10 +6132,9 @@ dependencies = [
 
 [[package]]
 name = "simple_transfer"
-version = "1.0.0-rc.3"
+version = "1.0.0-rc.2"
 dependencies = [
  "alloy",
- "arm",
  "evm_protocol_adapter_bindings",
  "sha2",
  "simple-transfer-app",
