@@ -19,17 +19,16 @@ fs_permissions = [
 ]
 
 
+auto_detect_remappings = false
 remappings = [
     "forge-std/=lib/forge-std/src/",
     "@openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
+    "openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",  # Used within `risc0-ethereum`
     "@solady/=lib/solady/src",
     "@risc0-ethereum/=lib/risc0-ethereum/contracts/src/",
     "@elliptic-curve-solidity/=lib/elliptic-curve-solidity/",
     "@permit2/=lib/permit2/",
-    "openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
-    "ds-test/=lib/risc0-ethereum/lib/openzeppelin-contracts/lib/forge-std/lib/ds-test/src/",
-    "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
-    "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+    "solmate/=lib/permit2/lib/solmate/",                              # Used witin `permit2`
 ]
 
 
