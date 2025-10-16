@@ -3,6 +3,7 @@ cache/
 out/
 target/
 deps/
+dependencies/
 node_modules/
 .vscode/*
 .idea/
@@ -19,8 +20,3 @@ contracts/broadcast/*/31337/
 .history
 *.nockma
 *.bkp
-
-
-# Added by cargo
-
-/target
