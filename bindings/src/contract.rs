@@ -1,15 +1,24 @@
-extern crate dotenv;
-
 use alloy::primitives::{address, Address};
+use alloy::sol;
 
 pub const PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: Address =
     address!("0xfF91D5653b7121718DE6BE553ef7014EF131EF50");
 
+sol!(
+    #[allow(missing_docs)]
+    #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+    #[sol(rpc)]
+    ProtocolAdapter,
+    "../contracts/out/ProtocolAdapter.sol/ProtocolAdapter.json"
+);
+
 #[cfg(test)]
 mod tests {
-    use crate::abi::ProtocolAdapter;
-    use crate::abi::ProtocolAdapter::ProtocolAdapterInstance;
-    use crate::call::PROTOCOL_ADAPTER_ADDRESS_SEPOLIA;
+    extern crate dotenv;
+
+    use super::*;
+    use crate::contract::ProtocolAdapter;
+    use crate::contract::ProtocolAdapter::ProtocolAdapterInstance;
     use alloy::primitives::B256;
     use alloy::providers::{Provider, ProviderBuilder};
     use std::env;

@@ -7,7 +7,7 @@ use arm_risc0::logic_instance::{AppData, ExpirableBlob};
 use arm_risc0::logic_proof::LogicVerifierInputs;
 use arm_risc0::proving_system::encode_seal;
 
-use crate::abi::{Compliance, Logic, ProtocolAdapter};
+use crate::contract::{Compliance, Logic, ProtocolAdapter};
 use arm_risc0::transaction::{Delta, Transaction};
 use arm_risc0::utils::words_to_bytes;
 
