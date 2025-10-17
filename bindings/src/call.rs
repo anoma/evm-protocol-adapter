@@ -10,10 +10,8 @@ mod tests {
     use crate::abi::ProtocolAdapter;
     use crate::abi::ProtocolAdapter::ProtocolAdapterInstance;
     use crate::call::PROTOCOL_ADAPTER_ADDRESS_SEPOLIA;
-    use alloy::network::EthereumWallet;
     use alloy::primitives::B256;
     use alloy::providers::{Provider, ProviderBuilder};
-    use alloy::signers::local::PrivateKeySigner;
     use std::env;
     use tokio;
 
@@ -58,15 +56,9 @@ mod tests {
             env::var("API_KEY_ALCHEMY").expect("Couldn't read API_KEY_ALCHEMY")
         );
 
-        let wallet: EthereumWallet = env::var("PRIVATE_KEY")
-            .unwrap()
-            .parse::<PrivateKeySigner>()
-            .unwrap()
-            .into();
-
         let provider = ProviderBuilder::new()
-            .wallet(wallet)
-            .connect_anvil_with_config(|a| a.fork(url));
+            .connect_anvil_with_wallet_and_config(|a| a.fork(url))
+            .unwrap();
         ProtocolAdapter::new(PROTOCOL_ADAPTER_ADDRESS_SEPOLIA, provider)
     }
 
