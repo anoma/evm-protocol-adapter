@@ -21,7 +21,7 @@ mod tests {
             .getProtocolAdapterVersion()
             .call()
             .await
-            .unwrap();
+            .expect("Couldn't get protocol adapter version");
 
         assert_eq!(
             decode_bytes32_to_utf8(pa_version),
@@ -41,10 +41,10 @@ mod tests {
             .execute(empty_tx)
             .send()
             .await
-            .unwrap()
+            .expect("Couldn't send tx")
             .get_receipt()
             .await
-            .unwrap();
+            .expect("Couldn't get receipt");
 
         assert!(receipt.inner.is_success());
     }
@@ -58,7 +58,7 @@ mod tests {
 
         let provider = ProviderBuilder::new()
             .connect_anvil_with_wallet_and_config(|a| a.fork(url))
-            .unwrap();
+            .expect("Couldn't create anvil provider");
         ProtocolAdapter::new(PROTOCOL_ADAPTER_ADDRESS_SEPOLIA, provider)
     }
 
