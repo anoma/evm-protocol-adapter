@@ -39,16 +39,4 @@ interface ICommitmentTree {
     /// @param index The index to return the commitment tree root for.
     /// @return root The root at the given index.
     function commitmentTreeRootAtIndex(uint256 index) external view returns (bytes32 root);
-
-    /// @notice Verifies that a Merkle path (proof) and a commitment leaf reproduce a given root.
-    /// @param commitmentTreeRoot The commitment tree root to reproduce.
-    /// @param commitment The commitment leaf to proof inclusion in the tree for.
-    /// @param path The siblings constituting the path from the leaf to the root.
-    /// @param directionBits The direction bits indicating whether the siblings are left of right.
-    function verifyMerkleProof(
-        bytes32 commitmentTreeRoot,
-        bytes32 commitment,
-        bytes32[] calldata path,
-        uint256 directionBits
-    ) external view;
 }
