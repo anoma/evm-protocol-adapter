@@ -41,6 +41,7 @@ interface ICommitmentTree {
     function commitmentTreeRootAtIndex(uint256 index) external view returns (bytes32 root);
 
     /// @notice Verifies that a Merkle path (proof) and a commitment leaf reproduce a given root.
+    /// @dev To prevent second-preimage attacks, ensure that the commitment is a leaf and not an intermediary node.
     /// @param commitmentTreeRoot The commitment tree root to reproduce.
     /// @param commitment The commitment leaf to proof inclusion in the tree for.
     /// @param path The siblings constituting the path from the leaf to the root.
