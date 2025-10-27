@@ -429,6 +429,24 @@ library TxGen {
         });
     }
 
+    function defaultResource() internal pure returns (Resource memory resource) {
+        resource = Resource({
+                // forge-lint: disable-next-line(unsafe-typecast)
+            logicRef: bytes32(""),
+            // forge-lint: disable-next-line(unsafe-typecast)
+            labelRef: bytes32(""),
+            // forge-lint: disable-next-line(unsafe-typecast)
+            valueRef: bytes32(""),
+            // forge-lint: disable-next-line(unsafe-typecast)
+            nullifierKeyCommitment: bytes32(""),
+            quantity: 0,
+            // forge-lint: disable-next-line(unsafe-typecast)
+            nonce: bytes32(""),
+            randSeed: 0,
+            ephemeral: true
+        });
+    }
+
     function getTagIndex(Action memory action, bytes32 tag) internal pure returns (uint256 index) {
         uint256 logicVerifierInputCount = action.logicVerifierInputs.length;
 
@@ -442,7 +460,19 @@ library TxGen {
     }
 
     function commitment(Resource memory resource) internal pure returns (bytes32 hash) {
-        hash = sha256(abi.encode(resource));
+        bytes17 personalization = 0x52495343305f457870616e645365656401;
+        hash = sha256(
+            abi.encodePacked(
+                resource.logicRef,
+                resource.labelRef,
+                resource.quantity,
+                resource.valueRef,
+                resource.ephemeral,
+                resource.nonce,
+                resource.nullifierKeyCommitment,
+                sha256(abi.encodePacked(personalization, resource.randSeed, resource.nonce))
+            )
+        );
     }
 
     function nullifier(Resource memory resource, bytes32 nullifierKey) internal pure returns (bytes32 hash) {
