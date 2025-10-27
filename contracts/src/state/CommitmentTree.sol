@@ -5,6 +5,7 @@ import {EnumerableSet} from "@openzeppelin-contracts/utils/structs/EnumerableSet
 
 import {ICommitmentTree} from "../interfaces/ICommitmentTree.sol";
 import {MerkleTree} from "../libs/MerkleTree.sol";
+import {Resource} from "../Types.sol";
 
 /// @title CommitmentTree
 /// @author Anoma Foundation, 2025
@@ -16,6 +17,8 @@ contract CommitmentTree is ICommitmentTree {
     using MerkleTree for MerkleTree.Tree;
     using MerkleTree for bytes32[];
     using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    bytes17 internal constant _COMMITMENT_PERSONALIZATION = 0x52495343305f457870616e645365656401;
 
     MerkleTree.Tree internal _merkleTree;
     EnumerableSet.Bytes32Set internal _roots;
@@ -79,12 +82,12 @@ contract CommitmentTree is ICommitmentTree {
     /// @inheritdoc ICommitmentTree
     function verifyMerkleProof(
         bytes32 commitmentTreeRoot,
-        bytes32 commitment,
+        Resource calldata resource,
         bytes32[] calldata path,
         uint256 directionBits
     ) external view override {
         _verifyMerkleProof({
-            commitmentTreeRoot: commitmentTreeRoot, commitment: commitment, path: path, directionBits: directionBits
+            commitmentTreeRoot: commitmentTreeRoot, resource: resource, path: path, directionBits: directionBits
         });
     }
 
@@ -108,12 +111,12 @@ contract CommitmentTree is ICommitmentTree {
     /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.
     /// @dev To prevent second-preimage attacks, ensure that the commitment is a leaf and not an intermediary node.
     /// @param commitmentTreeRoot The commitment tree root to reproduce.
-    /// @param commitment The commitment leaf to proof inclusion in the tree for.
+    /// @param resource The resource whoe commitment leaf we prove inclusion in the tree for.
     /// @param path The siblings constituting the path from the leaf to the root.
     /// @param directionBits The direction bits indicating whether the siblings are left of right.
     function _verifyMerkleProof(
         bytes32 commitmentTreeRoot,
-        bytes32 commitment,
+        Resource calldata resource,
         bytes32[] calldata path,
         uint256 directionBits
     ) internal view {
@@ -126,6 +129,19 @@ contract CommitmentTree is ICommitmentTree {
         if (!_roots.contains(commitmentTreeRoot)) {
             revert NonExistingRoot(commitmentTreeRoot);
         }
+
+        bytes32 commitment = sha256(
+            abi.encodePacked(
+                resource.logicRef,
+                resource.labelRef,
+                resource.quantity,
+                resource.valueRef,
+                resource.ephemeral,
+                resource.nonce,
+                resource.nullifierKeyCommitment,
+                sha256(abi.encodePacked(_COMMITMENT_PERSONALIZATION, resource.randSeed, resource.nonce))
+            )
+        );
 
         // Check that the commitment leaf and path reproduce the root.
         bytes32 computedRoot = path.processProof(directionBits, commitment);

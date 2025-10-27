@@ -7,7 +7,9 @@ import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
 import {CommitmentTree} from "../../src/state/CommitmentTree.sol";
+import {Resource} from "../../src/Types.sol";
 import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
+import {TxGen} from "../libs/TxGen.sol";
 import {CommitmentTreeMock} from "../mocks/CommitmentTree.m.sol";
 
 contract CommitmentTreeTest is Test, MerkleTreeExample {
@@ -141,12 +143,15 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         vm.expectRevert(
             abi.encodeWithSelector(CommitmentTree.NonExistingRoot.selector, nonExistingRoot), address(_cmAcc)
         );
+
+        Resource memory resource = TxGen.defaultResource();
+
         _cmAcc.verifyMerkleProof({
-            commitmentTreeRoot: nonExistingRoot, commitment: 0, path: new bytes32[](0), directionBits: 0
+            commitmentTreeRoot: nonExistingRoot, resource: resource, path: new bytes32[](0), directionBits: 0
         });
     }
 
-    function test_verifyMerkleProof_reverts_on_non_existent_commitment() public {
+    function test_verifyMerkleProof_reverts_on_non_existent_resource_commitment() public {
         /*
           (1)
            R
@@ -154,11 +159,15 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         1   []
         */
 
-        bytes32 commitment = bytes32(uint256(1));
+        Resource memory resource = TxGen.defaultResource();
+        bytes32 commitment = TxGen.commitment(resource);
         bytes32 newRoot = _cmAcc.addCommitment(commitment);
         _cmAcc.addCommitmentTreeRoot(newRoot);
 
-        bytes32 nonExistingCommitment = bytes32(uint256(2));
+        // Change the nonce
+        // forge-lint: disable-next-line(unsafe-typecast)
+        resource.nonce = bytes32("new");
+        bytes32 nonExistingCommitment = TxGen.commitment(resource);
         bytes32 nonExistingRoot = SHA256.hash(commitment, nonExistingCommitment);
         bytes32[] memory siblingsCorrespondingToNonExistingRoot = new bytes32[](1);
         siblingsCorrespondingToNonExistingRoot[0] = commitment;
@@ -169,14 +178,16 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         );
         _cmAcc.verifyMerkleProof({
             commitmentTreeRoot: newRoot,
-            commitment: nonExistingCommitment,
+            resource: resource,
             path: siblingsCorrespondingToNonExistingRoot,
             directionBits: directionBitsCorrespondingToNonExistingRoot
         });
     }
 
     function test_verifyMerkleProof_reverts_on_wrong_path_length() public {
-        _cmAcc.addCommitmentTreeRoot(_cmAcc.addCommitment(0));
+        Resource memory resource = TxGen.defaultResource();
+        bytes32 commitment = TxGen.commitment(resource);
+        _cmAcc.addCommitmentTreeRoot(_cmAcc.addCommitment(commitment));
         bytes32[] memory wrongPath = new bytes32[](3);
 
         vm.expectRevert(
@@ -185,11 +196,12 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
             ),
             address(_cmAcc)
         );
-        _cmAcc.verifyMerkleProof({commitmentTreeRoot: 0, commitment: 0, path: wrongPath, directionBits: 0});
+        _cmAcc.verifyMerkleProof({commitmentTreeRoot: 0, resource: resource, path: wrongPath, directionBits: 0});
     }
 
     function test_verifyMerkleProof_reverts_on_wrong_path() public {
-        bytes32 commitment = sha256("SOMETHING");
+        Resource memory resource = TxGen.defaultResource();
+        bytes32 commitment = TxGen.commitment(resource);
         bytes32 newRoot = _cmAcc.addCommitment(commitment);
         _cmAcc.addCommitmentTreeRoot(newRoot);
 
@@ -201,27 +213,39 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         vm.expectRevert(
             abi.encodeWithSelector(CommitmentTree.InvalidRoot.selector, newRoot, invalidRoot), address(_cmAcc)
         );
-        _cmAcc.verifyMerkleProof({
-            commitmentTreeRoot: newRoot, commitment: commitment, path: wrongPath, directionBits: 0
-        });
+        _cmAcc.verifyMerkleProof({commitmentTreeRoot: newRoot, resource: resource, path: wrongPath, directionBits: 0});
     }
 
-    function test_verifyMerkleProof_verifies_path_for_roots() public {
-        // Fix old root
-        bytes32 oldRoot = _cmAcc.latestCommitmentTreeRoot();
+    function test_verifyMerkleProof_verifies_path_for_old_roots() public {
+        // Fix initial root
+        bytes32 initialRoot = _cmAcc.latestCommitmentTreeRoot();
 
         // Update the tree with some commitment
-        bytes32 commitment = sha256("SOMETHING");
-        bytes32 newRoot = _cmAcc.addCommitment(commitment);
-        _cmAcc.addCommitmentTreeRoot(newRoot);
+        Resource memory resource = TxGen.defaultResource();
+        bytes32 commitment = TxGen.commitment(resource);
+        bytes32 firstRoot = _cmAcc.addCommitment(commitment);
+        _cmAcc.addCommitmentTreeRoot(firstRoot);
 
         // Assert that the new root is different
-        assert(_cmAcc.latestCommitmentTreeRoot() != oldRoot);
+        assert(_cmAcc.latestCommitmentTreeRoot() != initialRoot);
 
-        // Check merkle path verification for initial root works
-        _cmAcc.verifyMerkleProof({
-            commitmentTreeRoot: oldRoot, commitment: SHA256.EMPTY_HASH, path: new bytes32[](0), directionBits: 0
-        });
+        // Add another
+        Resource memory resourceNew = TxGen.defaultResource();
+        // forge-lint: disable-next-line(unsafe-typecast)
+        resourceNew.nonce = bytes32("NEW");
+        bytes32 commitmentNew = TxGen.commitment(resource);
+        bytes32 secondRoot = _cmAcc.addCommitment(commitmentNew);
+        _cmAcc.addCommitmentTreeRoot(secondRoot);
+
+        // Assert that the new root is different
+        assert(_cmAcc.latestCommitmentTreeRoot() != firstRoot);
+
+        // Construct valid path at the first root
+        bytes32[] memory path = new bytes32[](1);
+        path[0] = sha256("EMPTY");
+
+        // Check merkle path verification for first updated root works
+        _cmAcc.verifyMerkleProof({commitmentTreeRoot: firstRoot, resource: resource, path: path, directionBits: 1});
     }
 
     function test_should_produce_an_invalid_root_for_a_non_existent_leaf_in_the_empty_tree() public view {
@@ -234,14 +258,5 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
             MerkleTree.processProof({siblings: new bytes32[](0), directionBits: 0, leaf: nonExistentCommitment});
         assertNotEq(computedRoot, root);
         assertEq(computedRoot, invalidRoot);
-    }
-
-    function test_verifyMerkleProof_verifies_the_empty_tree_with_depth_zero() public view {
-        _cmAcc.verifyMerkleProof({
-            commitmentTreeRoot: _cmAcc.latestCommitmentTreeRoot(),
-            commitment: SHA256.EMPTY_HASH,
-            path: new bytes32[](0),
-            directionBits: 0
-        });
     }
 }

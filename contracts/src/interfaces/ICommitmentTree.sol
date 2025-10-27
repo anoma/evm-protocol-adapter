@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Resource} from "../Types.sol";
+
 /// @title ICommitmentTree
 /// @author Anoma Foundation, 2025
 /// @notice The interface of the commitment tree contract.
@@ -42,12 +44,12 @@ interface ICommitmentTree {
 
     /// @notice Verifies that a Merkle path (proof) and a commitment leaf reproduce a given root.
     /// @param commitmentTreeRoot The commitment tree root to reproduce.
-    /// @param commitment The commitment leaf to proof inclusion in the tree for.
+    /// @param resource The resource whose commitment leaf we prove inclusion in the tree for.
     /// @param path The siblings constituting the path from the leaf to the root.
     /// @param directionBits The direction bits indicating whether the siblings are left of right.
     function verifyMerkleProof(
         bytes32 commitmentTreeRoot,
-        bytes32 commitment,
+        Resource calldata resource,
         bytes32[] calldata path,
         uint256 directionBits
     ) external view;
