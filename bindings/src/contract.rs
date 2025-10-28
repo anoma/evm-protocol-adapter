@@ -1,8 +1,9 @@
-use alloy::primitives::{address, Address};
+use alloy::primitives::address;
 use alloy::sol;
+use alloy_chains::NamedChain;
 
-pub const PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: Address =
-    address!("0xfF91D5653b7121718DE6BE553ef7014EF131EF50");
+use crate::contract::ProtocolAdapter::ProtocolAdapterInstance;
+use alloy::providers::{DynProvider, Provider};
 
 sol!(
     #[allow(missing_docs)]
@@ -12,21 +13,38 @@ sol!(
     "../contracts/out/ProtocolAdapter.sol/ProtocolAdapter.json"
 );
 
+pub async fn protocol_adapter(
+    provider: DynProvider,
+) -> Result<ProtocolAdapterInstance<DynProvider>, &'static str> {
+    match NamedChain::try_from(
+        provider
+            .get_chain_id()
+            .await
+            .expect("Couldn't get chain id"),
+    ) {
+        Ok(NamedChain::Sepolia) => Ok(ProtocolAdapterInstance::new(
+            address!("0xfF91D5653b7121718DE6BE553ef7014EF131EF50"),
+            provider,
+        )),
+        _ => Err("Unsupported chain"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     extern crate dotenv;
 
-    use super::*;
-    use crate::contract::ProtocolAdapter;
     use crate::contract::ProtocolAdapter::ProtocolAdapterInstance;
+    use crate::contract::{protocol_adapter, ProtocolAdapter};
     use alloy::primitives::B256;
-    use alloy::providers::{Provider, ProviderBuilder};
+    use alloy::providers::{DynProvider, Provider, ProviderBuilder};
     use std::env;
     use tokio;
 
     #[tokio::test]
     async fn protocol_adapter_version_matches_the_cargo_pkg_version() {
         let pa_version = pa_instance()
+            .await
             .getProtocolAdapterVersion()
             .call()
             .await
@@ -47,6 +65,7 @@ mod tests {
         };
 
         let receipt = pa_instance()
+            .await
             .execute(empty_tx)
             .send()
             .await
@@ -58,7 +77,7 @@ mod tests {
         assert!(receipt.inner.is_success());
     }
 
-    fn pa_instance() -> ProtocolAdapterInstance<impl Provider> {
+    async fn pa_instance() -> ProtocolAdapterInstance<DynProvider> {
         dotenv::dotenv().ok();
         let url = format!(
             "https://eth-sepolia.g.alchemy.com/v2/{}",
@@ -68,7 +87,7 @@ mod tests {
         let provider = ProviderBuilder::new()
             .connect_anvil_with_wallet_and_config(|a| a.fork(url))
             .expect("Couldn't create anvil provider");
-        ProtocolAdapter::new(PROTOCOL_ADAPTER_ADDRESS_SEPOLIA, provider)
+        protocol_adapter(provider.erased()).await.unwrap()
     }
 
     fn decode_bytes32_to_utf8(encoded_string: B256) -> String {

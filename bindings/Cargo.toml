@@ -11,6 +11,8 @@ arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.8.1", pa
     "test",
 ] }
 alloy = { version = "1.0.30", features = ["full", "eip712", "node-bindings"] }
+alloy-chains = "0.2.15"
+
 tokio = { version = "1.44", features = ["rt-multi-thread"] }
 serde = { version = "1.0.197", default-features = false }
 dotenv = "0.15.0"
