@@ -20,14 +20,26 @@ library Delta {
         uint256 y;
     }
 
-    /// @notice The constant of the secp256k1 (K-256) elliptic curve.
+    /// @notice The x-coordinate of the curve generator point.
+    uint256 internal constant _GX = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
+
+    /// @notice The y-coordinate of the curve generator point.
+    uint256 internal constant _GY = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
+
+    // @notice The coefficient a of th secp256k1 (K-256) elliptic curve (y² = x³ + ax + b).
     uint256 internal constant _AA = 0;
 
-    /// @notice The modulus of the secp256k1 (K-256) elliptic curve.
+    // @notice The coefficient b of th secp256k1 (K-256) elliptic curve (y² = x³ + ax + b).
+    uint256 internal constant _BB = 7;
+
+    /// @notice The field prime modulus (2^256 - 2^32 - 977) of the secp256k1 (K-256) elliptic curve (y² = x³ + ax + b).
     uint256 internal constant _PP = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
 
     /// @notice Thrown if the recovered delta public key doesn't match the delta instance.
     error DeltaMismatch(address expected, address actual);
+
+    /// @notice Thrown when a provided point is not on the curve.
+    error PointNotOnCurve(CurvePoint point);
 
     /// @notice Returns the elliptic curve point representing the zero delta.
     /// @return zeroDelta The zero delta.
@@ -40,7 +52,21 @@ library Delta {
     /// @param p2 The second curve point.
     /// @return sum The resulting curve point.
     function add(CurvePoint memory p1, CurvePoint memory p2) internal pure returns (CurvePoint memory sum) {
+        if (!p1.isZero() && !EllipticCurve.isOnCurve({_x: p1.x, _y: p1.y, _aa: _AA, _bb: _BB, _pp: _PP})) {
+            revert PointNotOnCurve(p1);
+        }
+        if (!p2.isZero() && !EllipticCurve.isOnCurve({_x: p2.x, _y: p2.y, _aa: _AA, _bb: _BB, _pp: _PP})) {
+            revert PointNotOnCurve(p2);
+        }
+
         (sum.x, sum.y) = EllipticCurve.ecAdd({_x1: p1.x, _y1: p1.y, _x2: p2.x, _y2: p2.y, _aa: _AA, _pp: _PP});
+    }
+
+    /// @notice Returns whether a point is the zero delta or not.
+    /// @param p The point to check.
+    /// @return isZeroDelta Whether the point is the zero delta or not.
+    function isZero(CurvePoint memory p) internal pure returns (bool isZeroDelta) {
+        isZeroDelta = p.x == 0 && p.y == 0;
     }
 
     /// @notice Converts an elliptic curve point to an Ethereum account address.
