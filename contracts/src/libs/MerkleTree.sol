@@ -19,9 +19,6 @@ library MerkleTree {
         bytes32[] _zeros;
     }
 
-    /// @notice Thrown if the leaf index does not exist.
-    error NonExistentLeafIndex(uint256 index);
-
     /// @notice Sets up the tree with an initial capacity (i.e. number of leaves) of 1
     /// and returns the initial root of the empty tree.
     /// @param self The tree data structure.
