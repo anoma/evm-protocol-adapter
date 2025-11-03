@@ -20,12 +20,6 @@ contract CommitmentTree is ICommitmentTree {
     MerkleTree.Tree internal _merkleTree;
     EnumerableSet.Bytes32Set internal _roots;
 
-    error EmptyCommitment();
-    error NonExistingCommitment(bytes32 commitment);
-    error PreExistingCommitment(bytes32 commitment);
-    error CommitmentMismatch(bytes32 expected, bytes32 actual);
-    error CommitmentIndexOutOfBounds(uint256 current, uint256 limit);
-
     error NonExistingRoot(bytes32 root);
     error PreExistingRoot(bytes32 root);
     error InvalidRoot(bytes32 expected, bytes32 actual);
