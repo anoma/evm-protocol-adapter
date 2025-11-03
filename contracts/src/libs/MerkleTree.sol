@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Arrays} from "@openzeppelin-contracts/utils/Arrays.sol";
+import {Math} from "@openzeppelin-contracts/utils/math/Math.sol";
 
 import {SHA256} from "../libs/SHA256.sol";
 
@@ -187,14 +188,6 @@ library MerkleTree {
     /// @param leavesCount The number of leaves.
     /// @return treeDepth The minimal required tree depth.
     function computeMinimalTreeDepth(uint256 leavesCount) internal pure returns (uint8 treeDepth) {
-        uint256 treeCapacity = 1;
-        treeDepth = 0;
-
-        while (treeCapacity < leavesCount) {
-            treeCapacity *= 2;
-            ++treeDepth;
-        }
-
-        return treeDepth;
+        treeDepth = uint8(Math.log2({value: leavesCount, rounding: Math.Rounding.Ceil}));
     }
 }
