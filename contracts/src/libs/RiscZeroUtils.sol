@@ -38,10 +38,13 @@ library RiscZeroUtils {
     function toJournal(Logic.Instance memory input) internal pure returns (bytes memory converted) {
         Logic.AppData memory appData = input.appData;
 
+        uint32 risc0BoolTrueLittleEndian = 0x01000000;
+        uint32 risc0BoolFalseLittleEndian = 0x00000000;
+
         converted = abi.encodePacked(
             input.tag,
             // Encode the `isConsumed` boolean as a `uint32` in reverse (little-endian) byte order.
-            input.isConsumed ? uint32(0x01000000) : uint32(0x00000000),
+            input.isConsumed ? risc0BoolTrueLittleEndian : risc0BoolFalseLittleEndian,
             input.actionTreeRoot,
             //
             // Encode the resource payload length as a `uint32` in reverse byte order.
