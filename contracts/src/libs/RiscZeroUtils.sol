@@ -80,8 +80,10 @@ library RiscZeroUtils {
 
             // Pack the logic instance journals.
             {
-                bytes memory consumedJournal = instance.logicInstances[(i * 2)].toJournal();
-                bytes memory createdJournal = instance.logicInstances[(i * 2) + 1].toJournal();
+                bytes memory consumedJournal =
+                    instance.logicInstances[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT)].toJournal();
+                bytes memory createdJournal =
+                    instance.logicInstances[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT) + 1].toJournal();
 
                 packedLogicJournals = abi.encodePacked(
                     packedLogicJournals,
@@ -103,7 +105,8 @@ library RiscZeroUtils {
         // forge-lint: disable-next-line(unsafe-typecast)
         uint32 complianceUnitCountPadding = reverseByteOrderUint32(uint32(complianceUnitCount));
         // forge-lint: disable-next-line(unsafe-typecast)
-        uint32 tagCountPadding = reverseByteOrderUint32(uint32(complianceUnitCount * 2));
+        uint32 tagCountPadding =
+            reverseByteOrderUint32(uint32(complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT));
 
         // Pack the aggregation instance journal.
         journal = abi.encodePacked(

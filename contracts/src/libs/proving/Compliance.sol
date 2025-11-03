@@ -46,9 +46,11 @@ library Compliance {
         Instance instance;
     }
 
+    /// @notice The number of resources contained in a compliance unit.
+    uint256 internal constant _RESOURCES_PER_COMPLIANCE_UNIT = 2;
+
     /// @notice The compliance verifying key.
     /// @dev The key is fixed as long as the compliance circuit binary is not changed.
-    /// The compliance circuit should ensure that the created resources use the consumed resource's nullifier
-    /// as nonce.
+    /// The compliance circuit should ensure that the created resources use the consumed resource's nullifier as nonce.
     bytes32 internal constant _VERIFYING_KEY = 0x5e12ee6aeaa338ff28ae3efe563704e0439b358c75895e98fee8feb2acac697b;
 }
