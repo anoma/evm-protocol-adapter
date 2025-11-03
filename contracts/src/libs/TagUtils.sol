@@ -19,11 +19,11 @@ library TagUtils {
     function collectTags(Action calldata action) internal pure returns (bytes32[] memory tags) {
         uint256 complianceUnitCount = action.complianceVerifierInputs.length;
 
-        tags = new bytes32[](complianceUnitCount * 2);
+        tags = new bytes32[](complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
 
         for (uint256 i = 0; i < complianceUnitCount; ++i) {
             Compliance.Instance calldata instance = action.complianceVerifierInputs[i].instance;
-            uint256 index = i * 2;
+            uint256 index = i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT;
             tags[index] = instance.consumed.nullifier;
             tags[index + 1] = instance.created.commitment;
         }
@@ -50,8 +50,10 @@ library TagUtils {
         actionTagCount = action.logicVerifierInputs.length;
 
         // Check that the tag count in the action and compliance units matches.
-        if (actionTagCount != complianceUnitCount * 2) {
-            revert TagCountMismatch({expected: actionTagCount, actual: complianceUnitCount * 2});
+        if (actionTagCount != complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT) {
+            revert TagCountMismatch({
+                expected: actionTagCount, actual: complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT
+            });
         }
     }
 }

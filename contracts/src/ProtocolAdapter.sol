@@ -364,7 +364,8 @@ contract ProtocolAdapter is
 
         if (updatedVars.isProofAggregated) {
             // Aggregate the compliance instance
-            updatedVars.complianceInstances[vars.tagCounter / 2] = input.instance;
+            updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] =
+                input.instance;
         } else {
             // Verify the compliance proof.
             // slither-disable-next-line calls-loop
@@ -428,7 +429,8 @@ contract ProtocolAdapter is
             tagCounter: 0,
             /* Proof aggregation-related variables */
             isProofAggregated: isProofAggregated,
-            complianceInstances: new Compliance.Instance[](isProofAggregated ? tagCount / 2 : 0),
+            complianceInstances: new Compliance
+                .Instance[](isProofAggregated ? tagCount / Compliance._RESOURCES_PER_COMPLIANCE_UNIT : 0),
             logicInstances: new Logic.Instance[](isProofAggregated ? tagCount : 0)
         });
     }
