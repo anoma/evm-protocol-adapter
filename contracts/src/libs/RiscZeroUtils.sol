@@ -107,9 +107,10 @@ library RiscZeroUtils {
         // Encode the compliance unit and tag count as a `uint32` in reverse (little-endian) byte order.
         // forge-lint: disable-next-line(unsafe-typecast)
         uint32 complianceUnitCountPadding = reverseByteOrderUint32(uint32(complianceUnitCount));
-        // forge-lint: disable-next-line(unsafe-typecast)
+
         uint32 tagCountPadding =
-            reverseByteOrderUint32(uint32(complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT));
+        // forge-lint: disable-next-line(unsafe-typecast)
+        reverseByteOrderUint32(uint32(complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT));
 
         // Pack the aggregation instance journal.
         journal = abi.encodePacked(
