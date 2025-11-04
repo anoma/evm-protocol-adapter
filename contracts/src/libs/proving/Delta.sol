@@ -10,12 +10,12 @@ import {EfficientHashLib} from "@solady/utils/EfficientHashLib.sol";
 /// @notice A library containing methods of the delta proving system.
 /// @custom:security-contact security@anoma.foundation
 library Delta {
-    using Delta for CurvePoint;
+    using Delta for Point;
 
     /// @notice An elliptic curve point representing a delta value.
     /// @param x The x component of the point.
     /// @param y The y component of the point.
-    struct CurvePoint {
+    struct Point {
         uint256 x;
         uint256 y;
     }
@@ -39,19 +39,19 @@ library Delta {
     error DeltaMismatch(address expected, address actual);
 
     /// @notice Thrown when a provided point is not on the curve.
-    error PointNotOnCurve(CurvePoint point);
+    error PointNotOnCurve(Point point);
 
     /// @notice Returns the elliptic curve point representing the zero delta.
     /// @return zeroDelta The zero delta.
-    function zero() internal pure returns (CurvePoint memory zeroDelta) {
-        zeroDelta = CurvePoint({x: 0, y: 0});
+    function zero() internal pure returns (Point memory zeroDelta) {
+        zeroDelta = Point({x: 0, y: 0});
     }
 
     /// @notice Adds two elliptic curve points and returns the resulting value.
     /// @param p1 The first curve point.
     /// @param p2 The second curve point.
     /// @return sum The resulting curve point.
-    function add(CurvePoint memory p1, CurvePoint memory p2) internal pure returns (CurvePoint memory sum) {
+    function add(Point memory p1, Point memory p2) internal pure returns (Point memory sum) {
         if (!EllipticCurve.isOnCurve({_x: p2.x, _y: p2.y, _aa: _AA, _bb: _BB, _pp: _PP})) {
             revert PointNotOnCurve(p2);
         }
@@ -62,7 +62,7 @@ library Delta {
     /// @notice Converts an elliptic curve point to an Ethereum account address.
     /// @param delta The elliptic curve point.
     /// @return account The associated account.
-    function toAccount(CurvePoint memory delta) internal pure returns (address account) {
+    function toAccount(Point memory delta) internal pure returns (address account) {
         // Hash the public key with Keccak-256.
         bytes32 hashedKey = EfficientHashLib.hash(delta.x, delta.y);
 
@@ -82,7 +82,7 @@ library Delta {
     /// @param proof The delta proof.
     /// @param instance The transaction delta.
     /// @param verifyingKey The Keccak-256 hash of all nullifiers and commitments as ordered in the compliance units.
-    function verify(bytes memory proof, CurvePoint memory instance, bytes32 verifyingKey) internal pure {
+    function verify(bytes memory proof, Point memory instance, bytes32 verifyingKey) internal pure {
         // Verify the delta proof using the ECDSA.recover API to obtain the address
         address recovered = ECDSA.recover({hash: verifyingKey, signature: proof});
 

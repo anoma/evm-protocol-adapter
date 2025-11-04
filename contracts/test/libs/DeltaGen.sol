@@ -49,7 +49,7 @@ library DeltaGen {
     /// @return instance The delta instance corresponding to the parameters
     function generateInstance(VmSafe vm, InstanceInputs memory deltaInputs)
         internal
-        returns (Delta.CurvePoint memory instance)
+        returns (Delta.Point memory instance)
     {
         deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
         if (deltaInputs.valueCommitmentRandomness == 0) {
@@ -69,7 +69,7 @@ library DeltaGen {
         VmSafe.Wallet memory valueWallet = vm.createWallet(preDelta);
 
         // Extract the transaction delta from the wallet
-        instance = Delta.CurvePoint({x: valueWallet.publicKeyX, y: valueWallet.publicKeyY});
+        instance = Delta.Point({x: valueWallet.publicKeyX, y: valueWallet.publicKeyY});
     }
 
     /// @notice Generates a transaction delta proof by signing verifyingKey with

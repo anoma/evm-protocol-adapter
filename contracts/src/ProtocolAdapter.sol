@@ -35,7 +35,7 @@ contract ProtocolAdapter is
     CommitmentTree,
     NullifierSet
 {
-    using Delta for Delta.CurvePoint;
+    using Delta for Delta.Point;
     using MerkleTree for bytes32[];
     using Logic for Logic.VerifierInput[];
     using Logic for Logic.VerifierInput;
@@ -61,7 +61,7 @@ contract ProtocolAdapter is
         bytes32[] tags;
         bytes32[] logicRefs;
         bytes32 latestCommitmentTreeRoot;
-        Delta.CurvePoint transactionDelta;
+        Delta.Point transactionDelta;
         uint256 tagCounter;
         /* Proof aggregation-related variables */
         bool isProofAggregated;
@@ -146,7 +146,7 @@ contract ProtocolAdapter is
                 // Add the unit delta to the transaction delta.
                 vars.transactionDelta = vars.transactionDelta
                     .add(
-                        Delta.CurvePoint({
+                        Delta.Point({
                             x: uint256(complianceVerifierInput.instance.unitDeltaX),
                             y: uint256(complianceVerifierInput.instance.unitDeltaY)
                         })
