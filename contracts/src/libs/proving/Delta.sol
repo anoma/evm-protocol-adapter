@@ -52,21 +52,11 @@ library Delta {
     /// @param p2 The second curve point.
     /// @return sum The resulting curve point.
     function add(CurvePoint memory p1, CurvePoint memory p2) internal pure returns (CurvePoint memory sum) {
-        if (!p1.isZero() && !EllipticCurve.isOnCurve({_x: p1.x, _y: p1.y, _aa: _AA, _bb: _BB, _pp: _PP})) {
-            revert PointNotOnCurve(p1);
-        }
-        if (!p2.isZero() && !EllipticCurve.isOnCurve({_x: p2.x, _y: p2.y, _aa: _AA, _bb: _BB, _pp: _PP})) {
+        if (!EllipticCurve.isOnCurve({_x: p2.x, _y: p2.y, _aa: _AA, _bb: _BB, _pp: _PP})) {
             revert PointNotOnCurve(p2);
         }
 
         (sum.x, sum.y) = EllipticCurve.ecAdd({_x1: p1.x, _y1: p1.y, _x2: p2.x, _y2: p2.y, _aa: _AA, _pp: _PP});
-    }
-
-    /// @notice Returns whether a point is the zero delta or not.
-    /// @param p The point to check.
-    /// @return isZeroDelta Whether the point is the zero delta or not.
-    function isZero(CurvePoint memory p) internal pure returns (bool isZeroDelta) {
-        isZeroDelta = p.x == 0 && p.y == 0;
     }
 
     /// @notice Converts an elliptic curve point to an Ethereum account address.

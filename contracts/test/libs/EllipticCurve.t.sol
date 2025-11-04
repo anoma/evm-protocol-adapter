@@ -107,7 +107,8 @@ contract EllipticCurvePropertiesTest is Test {
             EllipticCurve.ecAdd({_x1: x, _y1: y, _x2: invX, _y2: invY, _aa: Delta._AA, _pp: Delta._PP});
 
         assertTrue(
-            Delta.isZero(Delta.CurvePoint(resultX, resultY)), "GROUP PROPERTY: P + (-P) must equal point at infinity"
+            _isPointAtInfinity(Delta.CurvePoint(resultX, resultY)),
+            "GROUP PROPERTY: P + (-P) must equal point at infinity"
         );
     }
 
@@ -167,7 +168,7 @@ contract EllipticCurvePropertiesTest is Test {
             EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: Delta._AA, _pp: Delta._PP});
 
         // Result must be on curve or at infinity
-        bool atInfinity = Delta.isZero(Delta.CurvePoint(resultX, resultY));
+        bool atInfinity = _isPointAtInfinity(Delta.CurvePoint(resultX, resultY));
         bool onCurve =
             EllipticCurve.isOnCurve({_x: resultX, _y: resultY, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP});
 
@@ -187,7 +188,7 @@ contract EllipticCurvePropertiesTest is Test {
 
         // P + (-P) should equal point at infinity
         assertTrue(
-            Delta.isZero(Delta.CurvePoint(rx, ry)),
+            _isPointAtInfinity(Delta.CurvePoint(rx, ry)),
             "With REDUCED coordinates: (3,5) + (3,2) correctly gives point at infinity"
         );
     }
@@ -224,7 +225,7 @@ contract EllipticCurvePropertiesTest is Test {
         (uint256 rx, uint256 ry) =
             EllipticCurve.ecAdd({_x1: Delta._GX, _y1: Delta._GY, _x2: invX, _y2: invY, _aa: Delta._AA, _pp: Delta._PP});
 
-        assertTrue(Delta.isZero(Delta.CurvePoint(rx, ry)), "G + (-G) should be point at infinity");
+        assertTrue(_isPointAtInfinity(Delta.CurvePoint(rx, ry)), "G + (-G) should be point at infinity");
     }
 
     /// @notice Concrete: (G + 2G) + 3G = G + (2G + 3G) = 6G
@@ -258,5 +259,12 @@ contract EllipticCurvePropertiesTest is Test {
         assertEq(result1Y, result2Y, "Associativity: (G+2G)+3G = G+(2G+3G)");
         assertEq(result1X, p6gx, "Result should be 6G");
         assertEq(result1Y, p6gy, "Result should be 6G");
+    }
+
+    /// @notice Returns whether a point is at infinity or not..
+    /// @param p The point to check.
+    /// @return isAtInfinity Whether the point is at infinity or not.
+    function _isPointAtInfinity(Delta.CurvePoint memory p) internal pure returns (bool isAtInfinity) {
+        isAtInfinity = p.x == 0 && p.y == 0;
     }
 }
