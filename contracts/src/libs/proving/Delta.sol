@@ -51,7 +51,9 @@ library Delta {
     /// @param lhs The left-hand side point that can also be the zero delta.
     /// @param rhs The right-hand side point that must be a curve point.
     /// @return sum The resulting curve point.
-    /// @dev Note that only the right-hand side point is checked to allow adding the zero delta from the left.
+    /// @dev Note that only the right-hand side point is checked to allow adding the zero delta from the left. This is
+    /// done due to the delta points being added sequentially starting from the zero delta in the
+    /// `ProtocolAdapter.execute()` function.
     function add(Point memory lhs, Point memory rhs) internal pure returns (Point memory sum) {
         if (!EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: _AA, _bb: _BB, _pp: _PP})) {
             revert PointNotOnCurve(rhs);
