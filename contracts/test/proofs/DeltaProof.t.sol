@@ -303,7 +303,7 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
-    function test_add_reverts_when_adding_a_non_curve_from_the_right(uint8 k, Delta.Point memory rhs) public {
+    function testFuzz_add_reverts_when_adding_a_non_curve_from_the_right(uint8 k, Delta.Point memory rhs) public {
         // Ensure that `rhs` is not on the curve.
         vm.assume(!EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
 
@@ -319,7 +319,7 @@ contract DeltaProofTest is Test {
         lhs.add(rhs);
     }
 
-    function test_add_reverts_when_adding_zero_from_the_right(uint8 k) public {
+    function testFuzz_add_reverts_when_adding_zero_from_the_right(uint8 k) public {
         // Generate a random point on the curve.
         Delta.Point memory lhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k});
         assertTrue(
@@ -335,6 +335,7 @@ contract DeltaProofTest is Test {
     }
 
     function test_add_adding_two_curve_points_produces_a_curve_point(uint8 k1, uint8 k2) public pure {
+    function testFuzz_add_adding_two_curve_points_produces_a_curve_point(uint8 k1, uint8 k2) public pure {
         // Generate two random points on the curve.
         Delta.Point memory lhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k1});
         assertTrue(
