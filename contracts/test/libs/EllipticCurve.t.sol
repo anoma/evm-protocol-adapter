@@ -8,6 +8,7 @@ import {Delta} from "../../src/libs/proving/Delta.sol";
 
 /**
  * @title EllipticCurvePropertiesTest
+ * @author Informal Systems
  * @dev Property-based tests for EllipticCurve.ecAdd using Foundry fuzzing.
  *
  * These tests verify GROUP PROPERTIES with points VERIFIED to be on the curve.
