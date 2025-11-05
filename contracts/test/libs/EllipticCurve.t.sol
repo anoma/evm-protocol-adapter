@@ -24,7 +24,7 @@ contract EllipticCurvePropertiesTest is Test {
 
     /// @notice GROUP PROPERTY: Commutativity - P + Q = Q + P
     /// @dev Uses secp256k1 with points VERIFIED to be on the curve
-    function testGroupProperty_Commutativity_Secp256k1(uint256 scalar1, uint256 scalar2) public pure {
+    function testFuzz_group_property_commutativity_secp256k1(uint256 scalar1, uint256 scalar2) public pure {
         // Generate two points on secp256k1 by scalar multiplication of G
         scalar1 = bound(scalar1, 1, 20); // Keep small for performance
         scalar2 = bound(scalar2, 1, 20);
@@ -58,7 +58,7 @@ contract EllipticCurvePropertiesTest is Test {
     }
 
     /// @notice GROUP PROPERTY: Identity - P + O = P
-    function testGroupProperty_Identity_Secp256k1(uint256 scalar) public pure {
+    function testFuzz_group_property_identity_secp256k1(uint256 scalar) public pure {
         scalar = bound(scalar, 1, 20);
 
         // P = scalar * G (guaranteed on curve)
@@ -80,7 +80,7 @@ contract EllipticCurvePropertiesTest is Test {
     }
 
     /// @notice GROUP PROPERTY: Inverse - P + (-P) = O
-    function testGroupProperty_Inverse_Secp256k1(uint256 scalar) public pure {
+    function testFuzz_group_property_inverse_secp256k1(uint256 scalar) public pure {
         scalar = bound(scalar, 1, 20);
 
         // P = scalar * G (guaranteed on curve)
@@ -112,7 +112,10 @@ contract EllipticCurvePropertiesTest is Test {
     }
 
     /// @notice GROUP PROPERTY: Associativity - (P + Q) + R = P + (Q + R)
-    function testGroupProperty_Associativity_Secp256k1(uint256 scalar1, uint256 scalar2, uint256 scalar3) public pure {
+    function testFuzz_group_property_associativity_secp256k1(uint256 scalar1, uint256 scalar2, uint256 scalar3)
+        public
+        pure
+    {
         scalar1 = bound(scalar1, 1, 10); // Keep small for performance
         scalar2 = bound(scalar2, 1, 10);
         scalar3 = bound(scalar3, 1, 10);
@@ -148,7 +151,7 @@ contract EllipticCurvePropertiesTest is Test {
     }
 
     /// @notice GROUP PROPERTY: Closure - If P, Q on curve, then P+Q on curve or at infinity
-    function testGroupProperty_Closure_Secp256k1(uint256 scalar1, uint256 scalar2) public pure {
+    function testFuzz_group_property_Closure_secp256k1(uint256 scalar1, uint256 scalar2) public pure {
         scalar1 = bound(scalar1, 1, 20);
         scalar2 = bound(scalar2, 1, 20);
 
@@ -177,7 +180,7 @@ contract EllipticCurvePropertiesTest is Test {
     /* PRECONDITION TESTS (UNREDUCED COORDINATES) */
 
     /// @notice PRECONDITION TEST: Demonstrates correct behavior with reduced coordinates
-    function test_Precondition_ReducedCoordinates() public pure {
+    function test_precondition_reduced_coordinates() public pure {
         // Use a small prime: p = 7, curve parameter a = 2
         uint256 pp = 7;
         uint256 aa = 2;
@@ -195,7 +198,7 @@ contract EllipticCurvePropertiesTest is Test {
     /* CONCRETE TESTS (SECP256K1) */
 
     /// @notice Concrete: G + G = 2G
-    function test_Concrete_Doubling_Secp256k1() public pure {
+    function test_doubling_secp256k1() public pure {
         (uint256 rx, uint256 ry) = EllipticCurve.ecAdd({
             _x1: Delta._GX, _y1: Delta._GY, _x2: Delta._GX, _y2: Delta._GY, _aa: Delta._AA, _pp: Delta._PP
         });
@@ -209,7 +212,7 @@ contract EllipticCurvePropertiesTest is Test {
     }
 
     /// @notice Concrete: G + O = G
-    function test_Concrete_Identity_Secp256k1() public pure {
+    function test_group_property_identity_secp256k1() public pure {
         (uint256 rx, uint256 ry) =
             EllipticCurve.ecAdd({_x1: Delta._GX, _y1: Delta._GY, _x2: 0, _y2: 0, _aa: Delta._AA, _pp: Delta._PP});
 
@@ -218,7 +221,7 @@ contract EllipticCurvePropertiesTest is Test {
     }
 
     /// @notice Concrete: G + (-G) = O
-    function test_Concrete_Inverse_Secp256k1() public pure {
+    function test_inverse_secp256k1() public pure {
         (uint256 invX, uint256 invY) = EllipticCurve.ecInv({_x: Delta._GX, _y: Delta._GY, _pp: Delta._PP});
 
         (uint256 rx, uint256 ry) =
@@ -228,7 +231,7 @@ contract EllipticCurvePropertiesTest is Test {
     }
 
     /// @notice Concrete: (G + 2G) + 3G = G + (2G + 3G) = 6G
-    function test_Concrete_Associativity_Secp256k1() public pure {
+    function test_associativity_secp256k1() public pure {
         // Compute 2G, 3G
 
         (uint256 p2gX, uint256 p2gY) =
