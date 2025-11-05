@@ -303,55 +303,53 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
-    function test_add_reverts_if_the_second_point_is_not_on_the_curve(uint8 k) public {
+    function test_add_reverts_when_adding_a_non_curve_from_the_right(uint8 k, Delta.Point memory rhs) public {
+        // Ensure that `rhs` is not on the curve.
+        vm.assume(!EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
+
         // Generate a random point on the curve.
-        Delta.Point memory p1 = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k});
+        Delta.Point memory lhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k});
         assertTrue(
-            EllipticCurve.isOnCurve({_x: p1.x, _y: p1.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
-            "Point 1 must be on the curve."
+            EllipticCurve.isOnCurve({_x: lhs.x, _y: lhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Left-hand side point must be on the curve."
         );
 
-        Delta.Point memory p2 = Delta.zero();
-
-        // Attempt to add a point being not on the curve
-        vm.expectRevert(abi.encodeWithSelector(Delta.PointNotOnCurve.selector, p2), address(this));
-        p1.add(p2);
+        // Attempt to add a point being not on the curve.
+        vm.expectRevert(abi.encodeWithSelector(Delta.PointNotOnCurve.selector, rhs), address(this));
+        lhs.add(rhs);
     }
 
-    function test_add_adding_two_curve_points_produces_a_point_on_the_curve(uint8 k1, uint8 k2) public pure {
-        // Generate two random points on the curve.
-        Delta.Point memory p1 = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k1});
+    function test_add_reverts_when_adding_zero_from_the_right(uint8 k) public {
+        // Generate a random point on the curve.
+        Delta.Point memory lhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k});
         assertTrue(
-            EllipticCurve.isOnCurve({_x: p1.x, _y: p1.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
-            "Point 1 must be on the curve."
+            EllipticCurve.isOnCurve({_x: lhs.x, _y: lhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Left-hand side point must be on the curve."
         );
 
-        Delta.Point memory p2 = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k2});
-        assertTrue(
-            EllipticCurve.isOnCurve({_x: p2.x, _y: p2.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
-            "Point 2 must be on the curve."
-        );
-
-        // Add the two points.
-        Delta.Point memory sum = Delta.add(p1, p2);
-        assertTrue(
-            EllipticCurve.isOnCurve({_x: sum.x, _y: sum.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
-            "Sum must be on the curve."
-        );
-    }
-
-    function test_add_adding_a_curve_point_to_zero_produces_a_point_on_the_curve(uint8 k) public pure {
         Delta.Point memory zero = Delta.zero();
 
-        // Generate a random point on the curve.
-        Delta.Point memory p = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k});
+        // Add the two points.
+        vm.expectRevert(abi.encodeWithSelector(Delta.PointNotOnCurve.selector, zero), address(this));
+        lhs.add(zero);
+    }
+
+    function test_add_adding_two_curve_points_produces_a_curve_point(uint8 k1, uint8 k2) public pure {
+        // Generate two random points on the curve.
+        Delta.Point memory lhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k1});
         assertTrue(
-            EllipticCurve.isOnCurve({_x: p.x, _y: p.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
-            "The point must be on the curve."
+            EllipticCurve.isOnCurve({_x: lhs.x, _y: lhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Left-hand side point must be on the curve."
         );
 
-        // Add the two points.
-        Delta.Point memory sum = zero.add(p);
+        Delta.Point memory rhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k2});
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Right-hand side must be on the curve."
+        );
+
+        // Add the two points and check that the sum is a curve point.
+        Delta.Point memory sum = lhs.add(rhs);
         assertTrue(
             EllipticCurve.isOnCurve({_x: sum.x, _y: sum.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
             "Sum must be on the curve."
