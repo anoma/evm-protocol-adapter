@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -65,12 +65,6 @@ jobs:
           API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
         working-directory: ./contracts
 
-      - name: Upload Contract Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: contract-artifacts
-          path: ./contracts/out
-
   bindings:
     name: Bindings
     runs-on: macos-latest
@@ -82,19 +76,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download Contract Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/checkout@v5
         with:
-          name: contract-artifacts
-          path: ./contracts/out
+          submodules: "recursive"
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
+          components: rustfmt, clippy
 
       - name: Show Rust version
         run: rustc --version
@@ -109,14 +98,21 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            bindings/target
-          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+            target
+          key: rust-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: rust-
+
+      - name: Run rustfmt
+        run: cargo fmt -- --check
+
+      - name: Run clippy
+        run: cargo clippy -- -Dwarnings
+
+      - name: Run Clippy on test
+        run: cargo clippy --tests -- -Dwarnings
 
       - name: Build Bindings
         run: cargo build
-        working-directory: ./bindings
 
       - name: Run Tests
         run: cargo test
-        working-directory: ./bindings
