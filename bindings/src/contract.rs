@@ -35,7 +35,7 @@ mod tests {
     extern crate dotenv;
 
     use crate::contract::ProtocolAdapter::ProtocolAdapterInstance;
-    use crate::contract::{protocol_adapter, ProtocolAdapter};
+    use crate::contract::{ProtocolAdapter, protocol_adapter};
     use alloy::primitives::B256;
     use alloy::providers::{DynProvider, Provider, ProviderBuilder};
     use std::env;
