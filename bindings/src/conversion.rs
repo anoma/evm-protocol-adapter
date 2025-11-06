@@ -7,7 +7,7 @@ use arm_risc0::logic_instance::{AppData, ExpirableBlob};
 use arm_risc0::logic_proof::LogicVerifierInputs;
 use arm_risc0::proving_system::encode_seal;
 
-use arm_risc0::transaction::{Delta, Transaction};
+use arm_risc0::transaction::{Delta as ArmDelta, Transaction};
 use arm_risc0::utils::words_to_bytes;
 
 sol!(
@@ -120,8 +120,8 @@ impl From<Action> for ProtocolAdapter::Action {
 impl From<Transaction> for ProtocolAdapter::Transaction {
     fn from(tx: Transaction) -> Self {
         let delta_proof = match &tx.delta_proof {
-            Delta::Witness(_) => panic!("Unbalanced Transactions cannot be converted"),
-            Delta::Proof(proof) => proof.to_bytes().to_vec(),
+            ArmDelta::Witness(_) => panic!("Unbalanced Transactions cannot be converted"),
+            ArmDelta::Proof(proof) => proof.to_bytes().to_vec(),
         };
 
         Self {

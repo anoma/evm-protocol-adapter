@@ -35,7 +35,7 @@ contract ProtocolAdapter is
     CommitmentTree,
     NullifierSet
 {
-    using Delta for Delta.CurvePoint;
+    using Delta for Delta.Point;
     using MerkleTree for bytes32[];
     using Logic for Logic.VerifierInput[];
     using Logic for Logic.VerifierInput;
@@ -61,7 +61,7 @@ contract ProtocolAdapter is
         bytes32[] tags;
         bytes32[] logicRefs;
         bytes32 latestCommitmentTreeRoot;
-        Delta.CurvePoint transactionDelta;
+        Delta.Point transactionDelta;
         uint256 tagCounter;
         /* Proof aggregation-related variables */
         bool isProofAggregated;
@@ -146,7 +146,7 @@ contract ProtocolAdapter is
                 // Add the unit delta to the transaction delta.
                 vars.transactionDelta = vars.transactionDelta
                     .add(
-                        Delta.CurvePoint({
+                        Delta.Point({
                             x: uint256(complianceVerifierInput.instance.unitDeltaX),
                             y: uint256(complianceVerifierInput.instance.unitDeltaY)
                         })
@@ -364,7 +364,8 @@ contract ProtocolAdapter is
 
         if (updatedVars.isProofAggregated) {
             // Aggregate the compliance instance
-            updatedVars.complianceInstances[vars.tagCounter / 2] = input.instance;
+            updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] =
+                input.instance;
         } else {
             // Verify the compliance proof.
             // slither-disable-next-line calls-loop
@@ -428,7 +429,8 @@ contract ProtocolAdapter is
             tagCounter: 0,
             /* Proof aggregation-related variables */
             isProofAggregated: isProofAggregated,
-            complianceInstances: new Compliance.Instance[](isProofAggregated ? tagCount / 2 : 0),
+            complianceInstances: new Compliance
+                .Instance[](isProofAggregated ? tagCount / Compliance._RESOURCES_PER_COMPLIANCE_UNIT : 0),
             logicInstances: new Logic.Instance[](isProofAggregated ? tagCount : 0)
         });
     }

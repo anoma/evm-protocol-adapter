@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {EllipticCurve} from "@elliptic-curve-solidity/contracts/EllipticCurve.sol";
 import {Test} from "forge-std/Test.sol";
 
 import {Delta} from "../../src/libs/proving/Delta.sol";
@@ -20,14 +21,14 @@ library DeltaFuzzing {
     }
 
     /// @dev This function exposes `Delta.verify` for the fuzzer.
-    function verify(bytes memory proof, Delta.CurvePoint memory instance, bytes32 verifyingKey) public pure {
+    function verify(bytes memory proof, Delta.Point memory instance, bytes32 verifyingKey) public pure {
         Delta.verify({proof: proof, instance: instance, verifyingKey: verifyingKey});
     }
 }
 
 contract DeltaProofTest is Test {
     using SignMagnitude for SignMagnitude.Number;
-    using Delta for Delta.CurvePoint;
+    using Delta for Delta.Point;
     using DeltaGen for DeltaGen.InstanceInputs[];
     using DeltaGen for DeltaGen.InstanceInputs;
     using DeltaGen for uint256;
@@ -52,7 +53,7 @@ contract DeltaProofTest is Test {
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
 
         // Generate a delta instance from the above inputs
-        Delta.CurvePoint memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
+        Delta.Point memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
 
         // Generate a delta proof from the above inputs
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
@@ -110,12 +111,12 @@ contract DeltaProofTest is Test {
         vm.assume(summedDeltaInputs.computePreDelta() != 0);
 
         // Generate a delta proof and instance from the above tags and preimage
-        Delta.CurvePoint memory instance1 = DeltaGen.generateInstance(vm, deltaInputs1);
-        Delta.CurvePoint memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
-        Delta.CurvePoint memory expectedDelta = DeltaGen.generateInstance(vm, summedDeltaInputs);
+        Delta.Point memory instance1 = DeltaGen.generateInstance(vm, deltaInputs1);
+        Delta.Point memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
+        Delta.Point memory expectedDelta = DeltaGen.generateInstance(vm, summedDeltaInputs);
 
         // Verify that the deltas add correctly
-        Delta.CurvePoint memory computedDelta = Delta.add(instance1, instance2);
+        Delta.Point memory computedDelta = Delta.add(instance1, instance2);
 
         assertEq(computedDelta.x, expectedDelta.x);
         assertEq(computedDelta.y, expectedDelta.y);
@@ -140,7 +141,7 @@ contract DeltaProofTest is Test {
         });
 
         // Generate a delta proof and instance from the above tags and preimage
-        Delta.CurvePoint memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
+        Delta.Point memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         DeltaFuzzing.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
@@ -165,7 +166,7 @@ contract DeltaProofTest is Test {
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness1, verifyingKey: verifyingKey})
         );
 
-        Delta.CurvePoint memory instanceRcv2;
+        Delta.Point memory instanceRcv2;
         {
             DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
                 kind: kind, quantity: 0, consumed: consumed, valueCommitmentRandomness: valueCommitmentRandomness2
@@ -195,7 +196,7 @@ contract DeltaProofTest is Test {
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey1})
         );
 
-        Delta.CurvePoint memory instance;
+        Delta.Point memory instance;
         {
             DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
                 kind: kind, quantity: 0, consumed: consumed, valueCommitmentRandomness: valueCommitmentRandomness
@@ -218,7 +219,7 @@ contract DeltaProofTest is Test {
         kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
         DeltaGen.InstanceInputs[] memory deltaInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
 
-        Delta.CurvePoint memory deltaAcc = Delta.zero();
+        Delta.Point memory deltaAcc = Delta.zero();
 
         // Make sure that the delta quantities balance out
         (
@@ -248,7 +249,7 @@ contract DeltaProofTest is Test {
             vm.assume(wrappedDeltaInputs[i].valueCommitmentRandomness != 0);
             vm.assume(wrappedDeltaInputs[i].computePreDelta() != 0);
 
-            Delta.CurvePoint memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
+            Delta.Point memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
             deltaAcc = deltaAcc.add(instance);
         }
 
@@ -270,7 +271,7 @@ contract DeltaProofTest is Test {
         kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
         DeltaGen.InstanceInputs[] memory deltaInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
 
-        Delta.CurvePoint memory deltaAcc = Delta.zero();
+        Delta.Point memory deltaAcc = Delta.zero();
 
         // Accumulate the total quantity and randomness commitment
         (
@@ -289,7 +290,7 @@ contract DeltaProofTest is Test {
             vm.assume(wrappedDeltaInputs[i].valueCommitmentRandomness != 0);
             vm.assume(wrappedDeltaInputs[i].computePreDelta() != 0);
 
-            Delta.CurvePoint memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
+            Delta.Point memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
             deltaAcc = deltaAcc.add(instance);
         }
         // Compute the proof for the balanced transaction
@@ -302,12 +303,104 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
+    function testFuzz_add_reverts_when_adding_a_non_curve_from_the_right(uint32 k, Delta.Point memory rhs) public {
+        // Ensure that `rhs` is not on the curve.
+        vm.assume(!EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
+
+        // Generate a random point on the curve.
+        Delta.Point memory lhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k});
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: lhs.x, _y: lhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Left-hand side point must be on the curve."
+        );
+
+        // Attempt to add a point being not on the curve.
+        vm.expectRevert(abi.encodeWithSelector(Delta.PointNotOnCurve.selector, rhs), address(this));
+        lhs.add(rhs);
+    }
+
+    function testFuzz_add_reverts_when_adding_zero_from_the_right(uint32 k) public {
+        // Generate a random point on the curve.
+        Delta.Point memory lhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k});
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: lhs.x, _y: lhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Left-hand side point must be on the curve."
+        );
+
+        Delta.Point memory zero = Delta.zero();
+
+        // Add the two points.
+        vm.expectRevert(abi.encodeWithSelector(Delta.PointNotOnCurve.selector, zero), address(this));
+        lhs.add(zero);
+    }
+
+    function testFuzz_add_adding_zero_from_the_left_produces_a_curve_point(uint32 k) public pure {
+        Delta.Point memory zero = Delta.zero();
+
+        // Generate a random point on the curve.
+        Delta.Point memory rhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k});
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Right-hand side point must be on the curve."
+        );
+
+        // Add the two points and check that the sum is a curve point.
+        Delta.Point memory sum = zero.add(rhs);
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: sum.x, _y: sum.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Sum must be on the curve."
+        );
+    }
+
+    function testFuzz_add_adding_zero_from_the_left_is_the_identity_operation(uint32 k) public pure {
+        Delta.Point memory zero = Delta.zero();
+
+        // Generate a random point on the curve.
+        Delta.Point memory rhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k});
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Right-hand side point must be on the curve."
+        );
+
+        // Add the two points and check that the sum is a curve point.
+        Delta.Point memory sum = zero.add(rhs);
+        assertEq(sum.x, rhs.x);
+        assertEq(sum.y, rhs.y);
+    }
+
+    function testFuzz_add_adding_two_curve_points_produces_a_curve_point(uint32 k1, uint32 k2) public pure {
+        // Generate two random points on the curve.
+        Delta.Point memory lhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k1});
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: lhs.x, _y: lhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Left-hand side point must be on the curve."
+        );
+
+        Delta.Point memory rhs = _mul({p: Delta.Point({x: Delta._GX, y: Delta._GY}), k: k2});
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Right-hand side must be on the curve."
+        );
+
+        // Add the two points and check that the sum is a curve point.
+        Delta.Point memory sum = lhs.add(rhs);
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: sum.x, _y: sum.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "Sum must be on the curve."
+        );
+    }
+
+    function test_zero_is_not_on_the_curve() public pure {
+        Delta.Point memory p2 = Delta.zero();
+        assertFalse(EllipticCurve.isOnCurve({_x: p2.x, _y: p2.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
+    }
+
     function test_verify_example_delta_proof() public pure {
         Transaction memory txn = TransactionExample.transaction();
 
         DeltaFuzzing.verify({
             proof: txn.deltaProof,
-            instance: Delta.CurvePoint({
+            instance: Delta.Point({
                 x: uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaX),
                 y: uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaY)
             }),
@@ -337,5 +430,9 @@ contract DeltaProofTest is Test {
                 consumed: fuzzerInputs[i].consumed
             });
         }
+    }
+
+    function _mul(Delta.Point memory p, uint256 k) internal pure returns (Delta.Point memory product) {
+        (product.x, product.y) = EllipticCurve.ecMul({_k: k, _x: p.x, _y: p.y, _aa: Delta._AA, _pp: Delta._PP});
     }
 }

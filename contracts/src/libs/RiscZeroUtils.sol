@@ -38,10 +38,13 @@ library RiscZeroUtils {
     function toJournal(Logic.Instance memory input) internal pure returns (bytes memory converted) {
         Logic.AppData memory appData = input.appData;
 
+        uint32 risc0BoolTrueLittleEndian = 0x01000000;
+        uint32 risc0BoolFalseLittleEndian = 0x00000000;
+
         converted = abi.encodePacked(
             input.tag,
             // Encode the `isConsumed` boolean as a `uint32` in reverse (little-endian) byte order.
-            input.isConsumed ? uint32(0x01000000) : uint32(0x00000000),
+            input.isConsumed ? risc0BoolTrueLittleEndian : risc0BoolFalseLittleEndian,
             input.actionTreeRoot,
             //
             // Encode the resource payload length as a `uint32` in reverse byte order.
@@ -80,8 +83,10 @@ library RiscZeroUtils {
 
             // Pack the logic instance journals.
             {
-                bytes memory consumedJournal = instance.logicInstances[(i * 2)].toJournal();
-                bytes memory createdJournal = instance.logicInstances[(i * 2) + 1].toJournal();
+                bytes memory consumedJournal =
+                    instance.logicInstances[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT)].toJournal();
+                bytes memory createdJournal =
+                    instance.logicInstances[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT) + 1].toJournal();
 
                 packedLogicJournals = abi.encodePacked(
                     packedLogicJournals,
@@ -102,8 +107,10 @@ library RiscZeroUtils {
         // Encode the compliance unit and tag count as a `uint32` in reverse (little-endian) byte order.
         // forge-lint: disable-next-line(unsafe-typecast)
         uint32 complianceUnitCountPadding = reverseByteOrderUint32(uint32(complianceUnitCount));
+
+        uint32 tagCountPadding =
         // forge-lint: disable-next-line(unsafe-typecast)
-        uint32 tagCountPadding = reverseByteOrderUint32(uint32(complianceUnitCount * 2));
+        reverseByteOrderUint32(uint32(complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT));
 
         // Pack the aggregation instance journal.
         journal = abi.encodePacked(

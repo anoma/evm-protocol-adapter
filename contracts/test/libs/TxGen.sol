@@ -50,7 +50,7 @@ library TxGen {
         bytes32 cm = commitment(created);
 
         // Construct the delta for consumption based on kind and quantity
-        Delta.CurvePoint memory unitDelta = DeltaGen.generateInstance(
+        Delta.Point memory unitDelta = DeltaGen.generateInstance(
             vm,
             DeltaGen.InstanceInputs({
                 kind: kind(consumed), quantity: consumed.quantity, consumed: true, valueCommitmentRandomness: 1
@@ -100,7 +100,7 @@ library TxGen {
 
         bytes32[] memory actionTreeTags = new bytes32[](2 * complianceUnitCount);
         for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            uint256 index = (i * 2);
+            uint256 index = (i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
 
             actionTreeTags[index] = nullifier(consumed[i].resource, 0);
             actionTreeTags[index + 1] = commitment(created[i].resource);
@@ -109,7 +109,7 @@ library TxGen {
         bytes32 actionTreeRoot = actionTreeTags.computeRoot();
 
         for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            uint256 index = i * 2;
+            uint256 index = i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT;
 
             logicVerifierInputs[index] = logicVerifierInput({
                 mockVerifier: mockVerifier,
@@ -316,7 +316,7 @@ library TxGen {
     }
 
     function collectTags(Action[] memory actions) internal pure returns (bytes32[] memory tags) {
-        tags = new bytes32[](countComplianceUnits(actions) * 2);
+        tags = new bytes32[](countComplianceUnits(actions) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
 
         uint256 n = 0;
         for (uint256 i = 0; i < actions.length; ++i) {
@@ -332,12 +332,12 @@ library TxGen {
     function collectTags(Action memory action) internal pure returns (bytes32[] memory tags) {
         uint256 complianceUnitCount = action.complianceVerifierInputs.length;
 
-        tags = new bytes32[](complianceUnitCount * 2);
+        tags = new bytes32[](complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
 
         for (uint256 i = 0; i < complianceUnitCount; ++i) {
             Compliance.Instance memory instance = action.complianceVerifierInputs[i].instance;
-            tags[(i * 2)] = instance.consumed.nullifier;
-            tags[(i * 2) + 1] = instance.created.commitment;
+            tags[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT)] = instance.consumed.nullifier;
+            tags[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT) + 1] = instance.created.commitment;
         }
     }
 
@@ -346,7 +346,7 @@ library TxGen {
         bytes32[] memory tagList = collectTags(txn.actions);
 
         for (uint256 i = 0; i < nullifiers.length; ++i) {
-            nullifiers[i] = tagList[i * 2];
+            nullifiers[i] = tagList[i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT];
         }
     }
 
@@ -355,12 +355,12 @@ library TxGen {
         bytes32[] memory tagList = collectTags(txn.actions);
 
         for (uint256 i = 0; i < commitments.length; ++i) {
-            commitments[i] = tagList[(i * 2) + 1];
+            commitments[i] = tagList[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT) + 1];
         }
     }
 
     function collectLogicRefs(Action[] memory actions) internal pure returns (bytes32[] memory logicRefs) {
-        logicRefs = new bytes32[](countComplianceUnits(actions) * 2);
+        logicRefs = new bytes32[](countComplianceUnits(actions) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
 
         uint256 n = 0;
         for (uint256 i = 0; i < actions.length; ++i) {
@@ -381,7 +381,7 @@ library TxGen {
         uint256 n = 0;
         bytes32[] memory logicRefs = collectLogicRefs(txn.actions);
 
-        if (countComplianceUnits(txn.actions) * 2 != logicRefs.length) {
+        if (countComplianceUnits(txn.actions) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT != logicRefs.length) {
             revert TransactionTagCountMismatch();
         }
 
@@ -470,7 +470,7 @@ library TxGen {
     function computeActionTreeRoot(Action memory action) internal pure returns (bytes32 root) {
         uint256 complianceUnitCount = action.complianceVerifierInputs.length;
 
-        bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * 2);
+        bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
 
         // The order in which the tags are added to the tree is provided by the compliance units.
         for (uint256 j = 0; j < complianceUnitCount; ++j) {
