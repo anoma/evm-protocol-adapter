@@ -105,14 +105,14 @@ jobs:
       - name: Run rustfmt
         run: cargo fmt -- --check
 
+      - name: Build Bindings
+        run: cargo build
+
       - name: Run clippy
         run: cargo clippy -- -Dwarnings
 
       - name: Run Clippy on test
         run: cargo clippy --tests -- -Dwarnings
-
-      - name: Build Bindings
-        run: cargo build
 
       - name: Run Tests
         run: cargo test
