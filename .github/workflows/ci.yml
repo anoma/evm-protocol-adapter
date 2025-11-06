@@ -114,5 +114,5 @@ jobs:
         working-directory: ./bindings
 
       - name: Run Tests
-        run: cargo test --verbose
+        run: cargo test
         working-directory: ./bindings
