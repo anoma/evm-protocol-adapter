@@ -50,7 +50,7 @@ library TxGen {
         bytes32 cm = commitment(created);
 
         // Construct the delta for consumption based on kind and quantity
-        Delta.CurvePoint memory unitDelta = DeltaGen.generateInstance(
+        Delta.Point memory unitDelta = DeltaGen.generateInstance(
             vm,
             DeltaGen.InstanceInputs({
                 kind: kind(consumed), quantity: consumed.quantity, consumed: true, valueCommitmentRandomness: 1

@@ -10,43 +10,62 @@ import {EfficientHashLib} from "@solady/utils/EfficientHashLib.sol";
 /// @notice A library containing methods of the delta proving system.
 /// @custom:security-contact security@anoma.foundation
 library Delta {
-    using Delta for CurvePoint;
+    using Delta for Point;
 
     /// @notice An elliptic curve point representing a delta value.
     /// @param x The x component of the point.
     /// @param y The y component of the point.
-    struct CurvePoint {
+    struct Point {
         uint256 x;
         uint256 y;
     }
 
-    /// @notice The constant of the secp256k1 (K-256) elliptic curve.
+    /// @notice The x-coordinate of the curve generator point.
+    uint256 internal constant _GX = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
+
+    /// @notice The y-coordinate of the curve generator point.
+    uint256 internal constant _GY = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
+
+    // @notice The coefficient a of th secp256k1 (K-256) elliptic curve (y² = x³ + ax + b).
     uint256 internal constant _AA = 0;
 
-    /// @notice The modulus of the secp256k1 (K-256) elliptic curve.
+    // @notice The coefficient b of th secp256k1 (K-256) elliptic curve (y² = x³ + ax + b).
+    uint256 internal constant _BB = 7;
+
+    /// @notice The field prime modulus (2^256 - 2^32 - 977) of the secp256k1 (K-256) elliptic curve (y² = x³ + ax + b).
     uint256 internal constant _PP = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
 
     /// @notice Thrown if the recovered delta public key doesn't match the delta instance.
     error DeltaMismatch(address expected, address actual);
 
+    /// @notice Thrown when a provided point is not on the curve.
+    error PointNotOnCurve(Point point);
+
     /// @notice Returns the elliptic curve point representing the zero delta.
     /// @return zeroDelta The zero delta.
-    function zero() internal pure returns (CurvePoint memory zeroDelta) {
-        zeroDelta = CurvePoint({x: 0, y: 0});
+    function zero() internal pure returns (Point memory zeroDelta) {
+        zeroDelta = Point({x: 0, y: 0});
     }
 
-    /// @notice Adds two elliptic curve points and returns the resulting value.
-    /// @param p1 The first curve point.
-    /// @param p2 The second curve point.
+    /// @notice Adds two delta points and returns the sum.
+    /// @param lhs The left-hand side point that can also be the zero delta.
+    /// @param rhs The right-hand side point that must be a curve point.
     /// @return sum The resulting curve point.
-    function add(CurvePoint memory p1, CurvePoint memory p2) internal pure returns (CurvePoint memory sum) {
-        (sum.x, sum.y) = EllipticCurve.ecAdd({_x1: p1.x, _y1: p1.y, _x2: p2.x, _y2: p2.y, _aa: _AA, _pp: _PP});
+    /// @dev Note that only the right-hand side point is checked to allow adding the zero delta from the left. This is
+    /// done due to the delta points being added sequentially starting from the zero delta in the
+    /// `ProtocolAdapter.execute()` function.
+    function add(Point memory lhs, Point memory rhs) internal pure returns (Point memory sum) {
+        if (!EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: _AA, _bb: _BB, _pp: _PP})) {
+            revert PointNotOnCurve(rhs);
+        }
+
+        (sum.x, sum.y) = EllipticCurve.ecAdd({_x1: lhs.x, _y1: lhs.y, _x2: rhs.x, _y2: rhs.y, _aa: _AA, _pp: _PP});
     }
 
     /// @notice Converts an elliptic curve point to an Ethereum account address.
     /// @param delta The elliptic curve point.
     /// @return account The associated account.
-    function toAccount(CurvePoint memory delta) internal pure returns (address account) {
+    function toAccount(Point memory delta) internal pure returns (address account) {
         // Hash the public key with Keccak-256.
         bytes32 hashedKey = EfficientHashLib.hash(delta.x, delta.y);
 
@@ -66,7 +85,7 @@ library Delta {
     /// @param proof The delta proof.
     /// @param instance The transaction delta.
     /// @param verifyingKey The Keccak-256 hash of all nullifiers and commitments as ordered in the compliance units.
-    function verify(bytes memory proof, CurvePoint memory instance, bytes32 verifyingKey) internal pure {
+    function verify(bytes memory proof, Point memory instance, bytes32 verifyingKey) internal pure {
         // Verify the delta proof using the ECDSA.recover API to obtain the address
         address recovered = ECDSA.recover({hash: verifyingKey, signature: proof});
 
