@@ -21,8 +21,6 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
-        with:
-          cache: true
 
       - name: Show Foundry version
         run: forge --version
@@ -98,16 +96,14 @@ jobs:
           toolchain: stable
           override: true
 
+      - name: Show Rust version
+        run: rustc --version
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
-        with:
-          cache: true
 
       - name: Show Foundry version
         run: forge --version
-
-      - name: Show Rust version
-        run: rustc --version
 
       - name: Restore dependencies cache
         uses: actions/cache@v3
