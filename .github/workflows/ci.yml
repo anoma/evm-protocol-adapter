@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
   workflow_dispatch:
 
@@ -110,7 +110,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build Bindings
-        run: cargo build --release
+        run: cargo build
         working-directory: ./bindings
 
       - name: Run Tests
