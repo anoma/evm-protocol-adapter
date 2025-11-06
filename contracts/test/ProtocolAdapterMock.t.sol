@@ -100,13 +100,16 @@ contract ProtocolAdapterMockVerifierTest is Test {
             vm.expectEmit(address(_mockPa));
             emit IProtocolAdapter
                 .ActionExecuted({
-                actionTreeRoot: txn.actions[i].collectTags().computeRoot(), actionTagCount: complianceUnitCount * 2
+                actionTreeRoot: txn.actions[i].collectTags().computeRoot(),
+                actionTagCount: complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT
             });
         }
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource(bool aggregated) public {
+    function testFuzz_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource(bool aggregated)
+        public
+    {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
 
@@ -250,7 +253,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         assertEq(txn.actions[0].complianceVerifierInputs.length, complianceUnitCount);
 
         // You expect the twice number of compliance units to be the expected resource count.
-        uint256 expectedResourceCount = txn.actions[0].complianceVerifierInputs.length * 2;
+        uint256 expectedResourceCount =
+            txn.actions[0].complianceVerifierInputs.length * Compliance._RESOURCES_PER_COMPLIANCE_UNIT;
 
         vm.expectRevert(
             abi.encodeWithSelector(TagUtils.TagCountMismatch.selector, 0, expectedResourceCount), address(_mockPa)
@@ -437,7 +441,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
             abi.encodeWithSelector(
                 TagUtils.TagCountMismatch.selector,
                 txn.actions[actionIndex].logicVerifierInputs.length,
-                uint256(fakeComplianceCount) * 2
+                uint256(fakeComplianceCount) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT
             )
         );
 
@@ -460,7 +464,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
             ) = _bindParameters(actionCount, complianceUnitCount, actionIndex, 0);
 
         // Take a fake action unit count.
-        vm.assume(fakeLogicVerifierCount != (uint256(complianceUnitCount) * 2));
+        vm.assume(fakeLogicVerifierCount != (uint256(complianceUnitCount) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT));
 
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount});
@@ -476,7 +480,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
             abi.encodeWithSelector(
                 TagUtils.TagCountMismatch.selector,
                 fakeLogicVerifierCount,
-                txn.actions[actionIndex].complianceVerifierInputs.length * 2
+                txn.actions[actionIndex].complianceVerifierInputs.length * Compliance._RESOURCES_PER_COMPLIANCE_UNIT
             )
         );
 

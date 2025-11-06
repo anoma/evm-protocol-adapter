@@ -14,22 +14,13 @@ import {MerkleTree} from "../libs/MerkleTree.sol";
 /// @custom:security-contact security@anoma.foundation
 contract CommitmentTree is ICommitmentTree {
     using MerkleTree for MerkleTree.Tree;
-    using MerkleTree for bytes32[];
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
     MerkleTree.Tree internal _merkleTree;
     EnumerableSet.Bytes32Set internal _roots;
 
-    error EmptyCommitment();
-    error NonExistingCommitment(bytes32 commitment);
-    error PreExistingCommitment(bytes32 commitment);
-    error CommitmentMismatch(bytes32 expected, bytes32 actual);
-    error CommitmentIndexOutOfBounds(uint256 current, uint256 limit);
-
     error NonExistingRoot(bytes32 root);
     error PreExistingRoot(bytes32 root);
-    error InvalidRoot(bytes32 expected, bytes32 actual);
-    error PathLengthExceedsLatestDepth(uint256 latestDepth, uint256 provided);
 
     /// @notice Initializes the commitment accumulator by setting up a Merkle tree.
     constructor() {
@@ -76,18 +67,6 @@ contract CommitmentTree is ICommitmentTree {
         root = _roots.at(_roots.length() - 1);
     }
 
-    /// @inheritdoc ICommitmentTree
-    function verifyMerkleProof(
-        bytes32 commitmentTreeRoot,
-        bytes32 commitment,
-        bytes32[] calldata path,
-        uint256 directionBits
-    ) external view override {
-        _verifyMerkleProof({
-            commitmentTreeRoot: commitmentTreeRoot, commitment: commitment, path: path, directionBits: directionBits
-        });
-    }
-
     /// @notice Adds a commitment to the accumulator and returns the new root.
     /// @param commitment The commitment to add.
     /// @return newRoot The resulting new root.
@@ -103,36 +82,6 @@ contract CommitmentTree is ICommitmentTree {
             revert PreExistingRoot(root);
         }
         emit CommitmentTreeRootAdded(root);
-    }
-
-    /// @notice An internal function verifying that a Merkle path (proof) and a commitment leaf reproduce a given root.
-    /// @dev To prevent second-preimage attacks, ensure that the commitment is a leaf and not an intermediary node.
-    /// @param commitmentTreeRoot The commitment tree root to reproduce.
-    /// @param commitment The commitment leaf to proof inclusion in the tree for.
-    /// @param path The siblings constituting the path from the leaf to the root.
-    /// @param directionBits The direction bits indicating whether the siblings are left of right.
-    function _verifyMerkleProof(
-        bytes32 commitmentTreeRoot,
-        bytes32 commitment,
-        bytes32[] calldata path,
-        uint256 directionBits
-    ) internal view {
-        // Check length.
-        if (path.length > _merkleTree.depth()) {
-            revert PathLengthExceedsLatestDepth({latestDepth: _merkleTree.depth(), provided: path.length});
-        }
-
-        // Check root existence.
-        if (!_roots.contains(commitmentTreeRoot)) {
-            revert NonExistingRoot(commitmentTreeRoot);
-        }
-
-        // Check that the commitment leaf and path reproduce the root.
-        bytes32 computedRoot = path.processProof(directionBits, commitment);
-
-        if (commitmentTreeRoot != computedRoot) {
-            revert InvalidRoot({expected: commitmentTreeRoot, actual: computedRoot});
-        }
     }
 
     /// @notice Checks if a commitment tree root is contained in the set of historical roots.

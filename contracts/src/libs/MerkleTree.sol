@@ -2,15 +2,15 @@
 pragma solidity ^0.8.30;
 
 import {Arrays} from "@openzeppelin-contracts/utils/Arrays.sol";
+import {Math} from "@openzeppelin-contracts/utils/math/Math.sol";
 
 import {SHA256} from "../libs/SHA256.sol";
 
 /// @title MerkleTree
 /// @author Anoma Foundation, 2025
 /// @notice A Merkle tree implementation populating a tree of variable depth from left to right.
-/// @dev This is a modified version of the OpenZeppelin `MerkleTree` and `MerkleProof` implementation.
-/// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.4.0/contracts/utils/structs/MerkleTree.sol
-/// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.4.0/contracts/utils/cryptography/MerkleProof.sol
+/// @dev This is a modified version of the OpenZeppelin `MerkleTree` implementation
+/// (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.4.0/contracts/utils/structs/MerkleTree.sol).
 /// @custom:security-contact security@anoma.foundation
 library MerkleTree {
     struct Tree {
@@ -18,9 +18,6 @@ library MerkleTree {
         bytes32[] _sides;
         bytes32[] _zeros;
     }
-
-    /// @notice Thrown if the leaf index does not exist.
-    error NonExistentLeafIndex(uint256 index);
 
     /// @notice Sets up the tree with an initial capacity (i.e. number of leaves) of 1
     /// and returns the initial root of the empty tree.
@@ -114,39 +111,6 @@ library MerkleTree {
         isLeft = (index & 1) == 0;
     }
 
-    /// @notice Processes a Merkle proof consisting of siblings and direction bits and returns the resulting root.
-    /// @param siblings The siblings.
-    /// @param directionBits The direction bits indicating whether the siblings are left of right.
-    /// @param leaf The leaf.
-    /// @return root The resulting root obtained by processing the leaf, siblings, and direction bits.
-    function processProof(bytes32[] memory siblings, uint256 directionBits, bytes32 leaf)
-        internal
-        pure
-        returns (bytes32 root)
-    {
-        bytes32 computedHash = leaf;
-
-        uint256 treeDepth = siblings.length;
-        for (uint256 i = 0; i < treeDepth; ++i) {
-            if (isLeftSibling(directionBits, i)) {
-                // Left sibling
-                computedHash = SHA256.hash(siblings[i], computedHash);
-            } else {
-                // Right sibling
-                computedHash = SHA256.hash(computedHash, siblings[i]);
-            }
-        }
-        root = computedHash;
-    }
-
-    /// @notice Checks whether a direction bit encodes the left or right sibling.
-    /// @param directionBits The direction bits.
-    /// @param d The index of the bit to check.
-    /// @return isLeft Whether the sibling is left or right.
-    function isLeftSibling(uint256 directionBits, uint256 d) internal pure returns (bool isLeft) {
-        isLeft = (directionBits >> d) & 1 == 0;
-    }
-
     /// @notice Computes the root of a Merkle tree.
     /// @param leaves The leaves of the tree.
     /// @param treeDepth The depth of the tree.
@@ -190,14 +154,6 @@ library MerkleTree {
     /// @param leavesCount The number of leaves.
     /// @return treeDepth The minimal required tree depth.
     function computeMinimalTreeDepth(uint256 leavesCount) internal pure returns (uint8 treeDepth) {
-        uint256 treeCapacity = 1;
-        treeDepth = 0;
-
-        while (treeCapacity < leavesCount) {
-            treeCapacity *= 2;
-            ++treeDepth;
-        }
-
-        return treeDepth;
+        treeDepth = uint8(Math.log2({value: leavesCount, rounding: Math.Rounding.Ceil}));
     }
 }
