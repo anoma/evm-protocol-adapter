@@ -98,6 +98,14 @@ jobs:
           toolchain: stable
           override: true
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: true
+
+      - name: Show Foundry version
+        run: forge --version
+
       - name: Show Rust version
         run: rustc --version
 
