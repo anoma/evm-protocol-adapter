@@ -70,9 +70,7 @@ jobs:
     runs-on: macos-latest
     needs: contracts
     env:
-      PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: ${{ vars.PROTOCOL_ADAPTER_ADDRESS_SEPOLIA }}
       API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
-      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
     steps:
       - name: Checkout repository
