@@ -160,7 +160,7 @@ The current protocol adapter implementation utilizes a Merkle tree of dynamic de
 
 #### Build
 
-Change the directory to the `bindings` folder with `cd bindings` and run
+From the project root run
 
 ```sh
 cargo build

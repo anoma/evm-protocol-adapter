@@ -11,7 +11,7 @@ fn main() {
     // run forge build --ast in the ../contracts directory
     let status = Command::new("forge")
         .current_dir("../contracts")
-        .args(&["build", "--ast"])
+        .args(["build", "--ast"])
         .status()
         .expect("failed to run forge command");
 
