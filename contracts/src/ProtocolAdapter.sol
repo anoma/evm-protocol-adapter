@@ -255,18 +255,6 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Processes forwarder calls by verifying and executing them.
-    /// @param verifierInput The logic verifier input of a resource making the call.
-    function _executeForwarderCalls(Logic.VerifierInput calldata verifierInput) internal {
-        uint256 nCalls = verifierInput.appData.externalPayload.length;
-
-        for (uint256 i = 0; i < nCalls; ++i) {
-            _executeForwarderCall({
-                carrierLogicRef: verifierInput.verifyingKey, callBlob: verifierInput.appData.externalPayload[i].blob
-            });
-        }
-    }
-
     /// @notice Processes a resource logic proof by
     /// * checking that the logic reference matches the one with the corresponding tag in the compliance unit,
     /// * aggregating the logic instance OR verifying the RISC Zero logic proof,
@@ -342,6 +330,18 @@ contract ProtocolAdapter is
         }
 
         _emitAppDataBlobs(input);
+    }
+
+    /// @notice Processes forwarder calls by verifying and executing them.
+    /// @param verifierInput The logic verifier input of a resource making the call.
+    function _executeForwarderCalls(Logic.VerifierInput calldata verifierInput) internal {
+        uint256 nCalls = verifierInput.appData.externalPayload.length;
+
+        for (uint256 i = 0; i < nCalls; ++i) {
+            _executeForwarderCall({
+                carrierLogicRef: verifierInput.verifyingKey, callBlob: verifierInput.appData.externalPayload[i].blob
+            });
+        }
     }
 
     /// @notice Processes a resource machine compliance proof by
