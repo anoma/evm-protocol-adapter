@@ -196,77 +196,6 @@ contract ProtocolAdapter is
         version = Versioning._PROTOCOL_ADAPTER_VERSION;
     }
 
-    /// @notice Executes a call to a an external, untrusted forwarder contract.
-    /// @param carrierLogicRef The logic reference of the carrier resource.
-    /// @param callBlob The blob containing the external call instruction.
-    /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
-    /// the associated carrier resource logic.
-    function _executeForwarderCall(bytes32 carrierLogicRef, bytes calldata callBlob) internal {
-        (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
-            abi.decode(callBlob, (address, bytes, bytes));
-
-        // slither-disable-next-line calls-loop
-        bytes memory actualOutput =
-            IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
-
-        if (keccak256(actualOutput) != keccak256(expectedOutput)) {
-            revert ForwarderCallOutputMismatch({expected: expectedOutput, actual: actualOutput});
-        }
-
-        // solhint-disable-next-line max-line-length
-        emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
-    }
-
-    /// @notice Emits app data blobs together with the associated resource tag based on their deletion criterion.
-    /// @param input The logic verifier input of a resource making the call.
-    function _emitAppDataBlobs(Logic.VerifierInput calldata input) internal {
-        bytes32 tag = input.tag;
-
-        Logic.ExpirableBlob[] calldata payload = input.appData.resourcePayload;
-        uint256 n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ResourcePayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
-
-        payload = input.appData.discoveryPayload;
-        n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit DiscoveryPayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
-
-        payload = input.appData.externalPayload;
-        n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ExternalPayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
-
-        payload = input.appData.applicationPayload;
-        n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
-    }
-
-    /// @notice Processes forwarder calls by verifying and executing them.
-    /// @param verifierInput The logic verifier input of a resource making the call.
-    function _executeForwarderCalls(Logic.VerifierInput calldata verifierInput) internal {
-        uint256 nCalls = verifierInput.appData.externalPayload.length;
-
-        for (uint256 i = 0; i < nCalls; ++i) {
-            _executeForwarderCall({
-                carrierLogicRef: verifierInput.verifyingKey, callBlob: verifierInput.appData.externalPayload[i].blob
-            });
-        }
-    }
-
     /// @notice Processes a resource logic proof by
     /// * checking that the logic reference matches the one with the corresponding tag in the compliance unit,
     /// * aggregating the logic instance OR verifying the RISC Zero logic proof,
@@ -342,6 +271,77 @@ contract ProtocolAdapter is
         }
 
         _emitAppDataBlobs(input);
+    }
+
+    /// @notice Processes forwarder calls by verifying and executing them.
+    /// @param verifierInput The logic verifier input of a resource making the call.
+    function _executeForwarderCalls(Logic.VerifierInput calldata verifierInput) internal {
+        uint256 nCalls = verifierInput.appData.externalPayload.length;
+
+        for (uint256 i = 0; i < nCalls; ++i) {
+            _executeForwarderCall({
+                carrierLogicRef: verifierInput.verifyingKey, callBlob: verifierInput.appData.externalPayload[i].blob
+            });
+        }
+    }
+
+    /// @notice Executes a call to a an external, untrusted forwarder contract.
+    /// @param carrierLogicRef The logic reference of the carrier resource.
+    /// @param callBlob The blob containing the external call instruction.
+    /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
+    /// the associated carrier resource logic.
+    function _executeForwarderCall(bytes32 carrierLogicRef, bytes calldata callBlob) internal {
+        (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
+            abi.decode(callBlob, (address, bytes, bytes));
+
+        // slither-disable-next-line calls-loop
+        bytes memory actualOutput =
+            IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
+
+        if (keccak256(actualOutput) != keccak256(expectedOutput)) {
+            revert ForwarderCallOutputMismatch({expected: expectedOutput, actual: actualOutput});
+        }
+
+        // solhint-disable-next-line max-line-length
+        emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
+    }
+
+    /// @notice Emits app data blobs together with the associated resource tag based on their deletion criterion.
+    /// @param input The logic verifier input of a resource making the call.
+    function _emitAppDataBlobs(Logic.VerifierInput calldata input) internal {
+        bytes32 tag = input.tag;
+
+        Logic.ExpirableBlob[] calldata payload = input.appData.resourcePayload;
+        uint256 n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ResourcePayload({tag: tag, index: i, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.discoveryPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit DiscoveryPayload({tag: tag, index: i, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.externalPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ExternalPayload({tag: tag, index: i, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.applicationPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
+            }
+        }
     }
 
     /// @notice Processes a resource machine compliance proof by
