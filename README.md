@@ -21,6 +21,20 @@ The `bindings` folder contains bindings in [Rust](https://www.rust-lang.org/) to
 convert [Rust](https://www.rust-lang.org/) and [RISC Zero](https://risczero.com/) types into EVM types using the [
 `alloy-rs` library](https://github.com/alloy-rs).
 
+## Audits
+
+Anoma smart contracts undergo regular audits:
+
+1. Informal Systems
+
+   - Company Website: https://informal.systems
+   - Commit ID: [fc69013e7bc2db1bddf6ef6936e8bf03d14f2963](https://github.com/anoma/evm-protocol-adapter/tree/fc69013e7bc2db1bddf6ef6936e8bf03d14f2963)
+   - Started: 2025-10-13
+   - Finished: 2025-10-31
+   - Last revised: 2025-11-07
+
+   [📄 Audit Report (pdf)](./audits/2025-11-07_Informal_Systems_RISC_Zero_RM_&_EVM_Protocol_Adapter.pdf)
+
 ## Security
 
 If you believe you've found a security issue, we encourage you to notify us via Email at [security@anoma.foundation](mailto:security@anoma.foundation).
