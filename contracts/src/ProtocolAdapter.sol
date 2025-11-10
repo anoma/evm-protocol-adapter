@@ -196,27 +196,6 @@ contract ProtocolAdapter is
         version = Versioning._PROTOCOL_ADAPTER_VERSION;
     }
 
-    /// @notice Executes a call to a an external, untrusted forwarder contract.
-    /// @param carrierLogicRef The logic reference of the carrier resource.
-    /// @param callBlob The blob containing the external call instruction.
-    /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
-    /// the associated carrier resource logic.
-    function _executeForwarderCall(bytes32 carrierLogicRef, bytes calldata callBlob) internal {
-        (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
-            abi.decode(callBlob, (address, bytes, bytes));
-
-        // slither-disable-next-line calls-loop
-        bytes memory actualOutput =
-            IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
-
-        if (keccak256(actualOutput) != keccak256(expectedOutput)) {
-            revert ForwarderCallOutputMismatch({expected: expectedOutput, actual: actualOutput});
-        }
-
-        // solhint-disable-next-line max-line-length
-        emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
-    }
-
     /// @notice Emits app data blobs together with the associated resource tag based on their deletion criterion.
     /// @param input The logic verifier input of a resource making the call.
     function _emitAppDataBlobs(Logic.VerifierInput calldata input) internal {
@@ -342,6 +321,27 @@ contract ProtocolAdapter is
                 carrierLogicRef: verifierInput.verifyingKey, callBlob: verifierInput.appData.externalPayload[i].blob
             });
         }
+    }
+
+    /// @notice Executes a call to a an external, untrusted forwarder contract.
+    /// @param carrierLogicRef The logic reference of the carrier resource.
+    /// @param callBlob The blob containing the external call instruction.
+    /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
+    /// the associated carrier resource logic.
+    function _executeForwarderCall(bytes32 carrierLogicRef, bytes calldata callBlob) internal {
+        (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
+            abi.decode(callBlob, (address, bytes, bytes));
+
+        // slither-disable-next-line calls-loop
+        bytes memory actualOutput =
+            IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
+
+        if (keccak256(actualOutput) != keccak256(expectedOutput)) {
+            revert ForwarderCallOutputMismatch({expected: expectedOutput, actual: actualOutput});
+        }
+
+        // solhint-disable-next-line max-line-length
+        emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
     }
 
     /// @notice Processes a resource machine compliance proof by
