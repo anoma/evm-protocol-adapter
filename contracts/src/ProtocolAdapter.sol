@@ -196,44 +196,6 @@ contract ProtocolAdapter is
         version = Versioning._PROTOCOL_ADAPTER_VERSION;
     }
 
-    /// @notice Emits app data blobs together with the associated resource tag based on their deletion criterion.
-    /// @param input The logic verifier input of a resource making the call.
-    function _emitAppDataBlobs(Logic.VerifierInput calldata input) internal {
-        bytes32 tag = input.tag;
-
-        Logic.ExpirableBlob[] calldata payload = input.appData.resourcePayload;
-        uint256 n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ResourcePayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
-
-        payload = input.appData.discoveryPayload;
-        n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit DiscoveryPayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
-
-        payload = input.appData.externalPayload;
-        n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ExternalPayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
-
-        payload = input.appData.applicationPayload;
-        n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
-    }
-
     /// @notice Processes a resource logic proof by
     /// * checking that the logic reference matches the one with the corresponding tag in the compliance unit,
     /// * aggregating the logic instance OR verifying the RISC Zero logic proof,
@@ -342,6 +304,44 @@ contract ProtocolAdapter is
 
         // solhint-disable-next-line max-line-length
         emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
+    }
+
+    /// @notice Emits app data blobs together with the associated resource tag based on their deletion criterion.
+    /// @param input The logic verifier input of a resource making the call.
+    function _emitAppDataBlobs(Logic.VerifierInput calldata input) internal {
+        bytes32 tag = input.tag;
+
+        Logic.ExpirableBlob[] calldata payload = input.appData.resourcePayload;
+        uint256 n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ResourcePayload({tag: tag, index: i, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.discoveryPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit DiscoveryPayload({tag: tag, index: i, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.externalPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ExternalPayload({tag: tag, index: i, blob: payload[i].blob});
+            }
+        }
+
+        payload = input.appData.applicationPayload;
+        n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
+            }
+        }
     }
 
     /// @notice Processes a resource machine compliance proof by
