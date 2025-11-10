@@ -11,9 +11,6 @@
 	path = contracts/lib/elliptic-curve-solidity
 	url = https://github.com/witnet/elliptic-curve-solidity
 	branch = master
-[submodule "contracts/lib/permit2"]
-	path = contracts/lib/permit2
-	url = https://github.com/Uniswap/permit2
 [submodule "contracts/lib/solady"]
 	path = contracts/lib/solady
 	url = https://github.com/vectorized/solady

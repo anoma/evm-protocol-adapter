@@ -107,7 +107,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource(bool aggregated) public {
+    function testFuzz_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource(bool aggregated)
+        public
+    {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
 

@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
   workflow_dispatch:
 
@@ -15,14 +15,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
-        with:
-          cache: true
 
       - name: Show Foundry version
         run: forge --version
@@ -64,66 +62,55 @@ jobs:
       - name: Run Forge tests
         run: forge test --gas-report
         env:
-          API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
           API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
         working-directory: ./contracts
-
-      - name: Run Forge coverage
-        run: forge coverage --no-match-coverage "(script|test|draft|forwarder)" --report summary
-        env:
-          API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
-          API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-        working-directory: ./contracts
-
-      - name: Upload Contract Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: contract-artifacts
-          path: ./contracts/out
 
   bindings:
     name: Bindings
     runs-on: macos-latest
     needs: contracts
     env:
-      PROTOCOL_ADAPTER_ADDRESS_SEPOLIA: ${{ vars.PROTOCOL_ADAPTER_ADDRESS_SEPOLIA }}
-      API_KEY_INFURA: ${{ secrets.API_KEY_INFURA }}
       API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
-      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download Contract Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/checkout@v5
         with:
-          name: contract-artifacts
-          path: ./contracts/out
+          submodules: "recursive"
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
+          components: rustfmt, clippy
 
       - name: Show Rust version
         run: rustc --version
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Show Foundry version
+        run: forge --version
+
       - name: Restore dependencies cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
-            bindings/target
-          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+            target
+          key: rust-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: rust-
+
+      - name: Run rustfmt
+        run: cargo fmt -- --check
 
       - name: Build Bindings
-        run: cargo build --release
-        working-directory: ./bindings
+        run: cargo build
+
+      - name: Run clippy
+        run: cargo clippy -- -Dwarnings
+
+      - name: Run Clippy on test
+        run: cargo clippy --tests -- -Dwarnings
 
       - name: Run Tests
-        run: cargo test --verbose
-        working-directory: ./bindings
+        run: cargo test
