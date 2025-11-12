@@ -52,5 +52,5 @@ library Compliance {
     /// @notice The compliance verifying key.
     /// @dev The key is fixed as long as the compliance circuit binary is not changed.
     /// The compliance circuit should ensure that the created resources use the consumed resource's nullifier as nonce.
-    bytes32 internal constant _VERIFYING_KEY = 0x5e12ee6aeaa338ff28ae3efe563704e0439b358c75895e98fee8feb2acac697b;
+    bytes32 internal constant _VERIFYING_KEY = 0x3a7953535604ff0606b3e82ea96a43a23eec622cb4981259eaefe07e8bb29783;
 }

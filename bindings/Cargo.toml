@@ -4,22 +4,21 @@ version = "1.0.0-rc.3"
 edition = "2024"
 
 [dependencies]
-arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.8.1", package = "arm", features = [
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.11.0", package = "arm", features = [
     "groth16_prover", # Add this feature to generate regular transactions. Note that proof aggregation won't work.
     "groth16_aggregation",
     "bonsai",
     "test",
 ] }
-alloy = { version = "1.0.30", features = ["full", "eip712", "node-bindings"] }
-alloy-chains = "0.2.15"
+alloy = { version = "1.1.0", features = ["full", "eip712", "node-bindings"] }
+alloy-chains = "0.2.18"
 
-tokio = { version = "1.44", features = ["rt-multi-thread"] }
-serde = { version = "1.0.197", default-features = false }
-dotenv = "0.15.0"
+tokio = { version = "1.48", features = ["rt-multi-thread"] }
+serde = { version = "1.0.228", default-features = false }
 
 [dev-dependencies]
 dotenv = { version = "0.15.0", features = ["cli"] }
 
 [features]
-# These features are enabled to generate test transactions and is not required for using the library.
+# These features are enabled to generate test transactions and are not required for using the library.
 arm_risc0_dev = ["arm_risc0/groth16_prover", "arm_risc0/bonsai"]
