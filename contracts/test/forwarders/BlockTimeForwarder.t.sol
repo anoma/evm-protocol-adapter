@@ -7,7 +7,7 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {Test} from "forge-std/Test.sol";
 
-import {BlockTimeForwarder} from "../../src/forwarders/BlockTimeForwarder.sol";
+import {BlockTimeForwarder} from "../../src/examples/BlockTimeForwarder.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
