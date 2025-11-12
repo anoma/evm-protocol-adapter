@@ -23,7 +23,7 @@ pub async fn protocol_adapter(
             .expect("Couldn't get chain id"),
     ) {
         Ok(NamedChain::Sepolia) => Ok(ProtocolAdapterInstance::new(
-            address!("0xfF91D5653b7121718DE6BE553ef7014EF131EF50"),
+            address!("0x6aCDEdB64eb38f6a2911b52E8633D418E28fa9aB"),
             provider,
         )),
         _ => Err("Unsupported chain"),
