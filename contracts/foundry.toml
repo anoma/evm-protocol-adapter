@@ -13,9 +13,6 @@ fs_permissions = [
     { access = "read", path = "./test/examples/transactions/test_tx_agg_20_01.bin" },
     { access = "read", path = "./test/examples/transactions/test_tx_reg_02_02.bin" },
     { access = "read", path = "./test/examples/transactions/test_tx_agg_02_02.bin" },
-    { access = "read", path = "./test/examples/transactions/mint.bin" },
-    { access = "read", path = "./test/examples/transactions/transfer.bin" },
-    { access = "read", path = "./test/examples/transactions/burn.bin" },
 ]
 
 
