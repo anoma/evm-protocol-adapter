@@ -1347,8 +1347,8 @@ dependencies = [
 
 [[package]]
 name = "arm"
-version = "0.10.0"
-source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.10.0#34b0ad8ec2dc841dd9f9660f78953111872dcb13"
+version = "0.11.0"
+source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.11.0#087e7d05f6b7f5a961ea4197d6be5615aea85343"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",
