@@ -3,24 +3,50 @@ pragma solidity ^0.8.30;
 
 import {Address} from "@openzeppelin-contracts/utils/Address.sol";
 
-import {ForwarderBase} from "../../src/forwarders/bases/ForwarderBase.sol";
 import {ForwarderTargetExample} from "./ForwarderTarget.e.sol";
 
-contract ForwarderExample is ForwarderBase {
+contract ForwarderExample {
     using Address for address;
+
+    /// @notice The protocol adapter contract that can forward calls.
+    address internal immutable _PROTOCOL_ADAPTER;
+
+    /// @notice The calldata carrier resource logic reference.
+    bytes32 internal immutable _CALLDATA_CARRIER_LOGIC_REF;
 
     address public immutable TARGET;
 
     event CallForwarded(bytes input, bytes output);
     event EmergencyCallForwarded(bytes input, bytes output);
 
-    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef)
-        ForwarderBase(protocolAdapter, calldataCarrierLogicRef)
-    {
+    error ZeroNotAllowed();
+    error UnauthorizedCaller(address expected, address actual);
+    error UnauthorizedLogicRef(bytes32 expected, bytes32 actual);
+
+    /// @notice Initializes the forwarder contract.
+    /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
+    /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
+    constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef) {
+        if (protocolAdapter == address(0) || calldataCarrierLogicRef == bytes32(0)) {
+            revert ZeroNotAllowed();
+        }
+
+        _PROTOCOL_ADAPTER = protocolAdapter;
+
+        _CALLDATA_CARRIER_LOGIC_REF = calldataCarrierLogicRef;
+
         TARGET = address(new ForwarderTargetExample());
     }
 
-    function _forwardCall(bytes calldata input) internal override returns (bytes memory output) {
+    function forwardCall(bytes32 logicRef, bytes calldata input) external returns (bytes memory output) {
+        if (msg.sender != _PROTOCOL_ADAPTER) {
+            revert UnauthorizedCaller({expected: _PROTOCOL_ADAPTER, actual: msg.sender});
+        }
+
+        if (_CALLDATA_CARRIER_LOGIC_REF != logicRef) {
+            revert UnauthorizedLogicRef({expected: _CALLDATA_CARRIER_LOGIC_REF, actual: logicRef});
+        }
+
         output = TARGET.functionCall(input);
 
         emit CallForwarded({input: input, output: output});
