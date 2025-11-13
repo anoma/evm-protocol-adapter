@@ -6,7 +6,6 @@ use arm_risc0::compliance_unit::ComplianceUnit;
 use arm_risc0::logic_instance::{AppData, ExpirableBlob};
 use arm_risc0::logic_proof::LogicVerifierInputs;
 use arm_risc0::proving_system::encode_seal;
-
 use arm_risc0::transaction::{Delta as ArmDelta, Transaction};
 use arm_risc0::utils::words_to_bytes;
 
