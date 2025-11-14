@@ -15,8 +15,7 @@ alloy-chains = "0.2.18"
 
 tokio = { version = "1.48", features = ["rt-multi-thread"] }
 serde = { version = "1.0.228", default-features = false }
-
-[dev-dependencies]
+thiserror = "2.0.17"
 dotenv = { version = "0.15.0", features = ["cli"] }
 
 [features]
