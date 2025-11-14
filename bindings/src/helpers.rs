@@ -9,9 +9,9 @@ pub type AlchemyResult<T> = Result<T, AlchemyError>;
 pub enum AlchemyError {
     #[error("The alchemy subdomain was not found for this chain.")]
     SubdomainNotFound,
-    #[error("Thrown when the API key is not set in the environment.")]
+    #[error("The Alchemy API key is not set in the environment.")]
     ApiKeyEnvVarNotSet,
-    #[error("Thrown when the url_string could not be parsed.")]
+    #[error("The url could not be parsed.")]
     UrlParsingError,
 }
 

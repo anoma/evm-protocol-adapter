@@ -11,14 +11,12 @@ pub type BindingsResult<T> = Result<T, BindingsError>;
 
 #[derive(Error, Debug)]
 pub enum BindingsError {
-    #[error(
-        "Thrown when the chain ID returned by the RPC transport is not in the list of named chains."
-    )]
+    #[error("The chain ID returned by the RPC transport is not in the list of named chains.")]
     ChainIdUnkown,
-    #[error("Thrown when the RPC transport returns an error.")]
+    #[error("The RPC transport returned an error.")]
     RpcTransportError(RpcError<TransportErrorKind>),
     #[error(
-        "Thrown when the current protocol adapter version has not been deployed on the provided chain."
+        "The current protocol adapter version has not been deployed on the provided chain '{0}'."
     )]
     UnsupportedChain(NamedChain),
 }
