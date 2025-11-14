@@ -1,10 +1,9 @@
-use alloy::sol;
-use alloy_chains::NamedChain;
-
 use crate::addresses::protocol_adapter_address;
 use crate::contract::ProtocolAdapter::ProtocolAdapterInstance;
 use alloy::providers::{DynProvider, Provider};
+use alloy::sol;
 use alloy::transports::{RpcError, TransportErrorKind};
+use alloy_chains::NamedChain;
 use thiserror::Error;
 
 pub type BindingsResult<T> = Result<T, BindingsError>;
