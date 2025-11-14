@@ -23,7 +23,7 @@ pub enum BindingsError {
 
 sol!(
     #[allow(missing_docs)]
-    #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+    #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize, Default)]
     #[sol(rpc)]
     ProtocolAdapter,
     "../contracts/out/ProtocolAdapter.sol/ProtocolAdapter.json"
@@ -98,11 +98,7 @@ mod tests {
     #[tokio::test]
     async fn call_executes_the_empty_tx_on_all_supported_chains() {
         for chain in protocol_adapter_deployments_map().keys() {
-            let empty_tx = ProtocolAdapter::Transaction {
-                actions: vec![],
-                aggregationProof: vec![].into(),
-                deltaProof: vec![].into(),
-            };
+            let empty_tx = ProtocolAdapter::Transaction::default();
 
             let receipt = pa_instance(chain)
                 .await
