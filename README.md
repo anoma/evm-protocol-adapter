@@ -35,6 +35,15 @@ Anoma smart contracts undergo regular audits:
 
    [📄 Audit Report (pdf)](./audits/2025-11-07_Informal_Systems_RISC_Zero_RM_&_EVM_Protocol_Adapter.pdf)
 
+2. Nethermind
+
+   - Company Website: https://www.nethermind.io/nethermind-security
+   - Commit ID: [fee4f47050689b82473e9a3198e7a2065becb3fb](https://github.com/anoma/evm-protocol-adapter/tree/fee4f47050689b82473e9a3198e7a2065becb3fb)
+   - Started: 2025-10-07
+   - Finished: 2025-11-13
+
+   [📄 Audit Report (pdf)](./audits/2025-11-13_Nethermind_RISC_Zero_RM_&_EVM_Protocol_Adapter.pdf)
+
 ## Security
 
 If you believe you've found a security issue, we encourage you to notify us via Email at [security@anoma.foundation](mailto:security@anoma.foundation).
