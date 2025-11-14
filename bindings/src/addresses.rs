@@ -3,8 +3,9 @@ use alloy_chains::NamedChain;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-static CHAIN_ADDRESS_MAP: OnceLock<HashMap<NamedChain, Address>> = OnceLock::new();
-fn init_chain_address_map() -> HashMap<NamedChain, Address> {
+static PROTOCOL_ADAPTER_DEPLOYMENTS: OnceLock<HashMap<NamedChain, Address>> = OnceLock::new();
+
+fn init_protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
     use NamedChain::*;
     let mut m = HashMap::new();
 
@@ -16,10 +17,12 @@ fn init_chain_address_map() -> HashMap<NamedChain, Address> {
     m
 }
 
-pub fn chain_address_map() -> &'static HashMap<NamedChain, Address> {
-    CHAIN_ADDRESS_MAP.get_or_init(init_chain_address_map)
+/// Returns a map of protocol adapter deployments for all supported chains.
+pub fn protocol_adapter_deployments_map() -> &'static HashMap<NamedChain, Address> {
+    PROTOCOL_ADAPTER_DEPLOYMENTS.get_or_init(init_protocol_adapter_deployments_map)
 }
 
+/// Returns the address of the protocol adapter deployed on the provided chain, if any.
 pub fn protocol_adapter_address(chain: NamedChain) -> Option<Address> {
-    chain_address_map().get(&chain).cloned()
+    protocol_adapter_deployments_map().get(&chain).cloned()
 }

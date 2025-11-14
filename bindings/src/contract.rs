@@ -52,7 +52,7 @@ pub async fn protocol_adapter(
 mod tests {
     extern crate dotenv;
 
-    use crate::addresses::chain_address_map;
+    use crate::addresses::protocol_adapter_deployments_map;
     use crate::contract::ProtocolAdapter::ProtocolAdapterInstance;
     use crate::contract::{ProtocolAdapter, protocol_adapter};
     use crate::helpers::alchemy_url;
@@ -80,7 +80,7 @@ mod tests {
         };
 
         // Iterate over all supported chains
-        for chain in chain_address_map().keys() {
+        for chain in protocol_adapter_deployments_map().keys() {
             let actual_version: alloy::primitives::FixedBytes<32> = pa_instance(chain)
                 .await
                 .getProtocolAdapterVersion()
@@ -99,7 +99,7 @@ mod tests {
 
     #[tokio::test]
     async fn call_executes_the_empty_tx_on_all_supported_chains() {
-        for chain in chain_address_map().keys() {
+        for chain in protocol_adapter_deployments_map().keys() {
             let empty_tx = ProtocolAdapter::Transaction {
                 actions: vec![],
                 aggregationProof: vec![].into(),

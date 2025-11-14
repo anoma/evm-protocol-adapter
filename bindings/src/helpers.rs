@@ -15,6 +15,18 @@ pub enum AlchemyError {
     UrlParsingError,
 }
 
+pub fn alchemy_url(chain: &NamedChain) -> AlchemyResult<Url> {
+    dotenv::dotenv().ok();
+
+    format!(
+        "https://{subdomain}.g.alchemy.com/v2/{api_key}",
+        subdomain = alchemy_subdomain(chain)?,
+        api_key = env::var("API_KEY_ALCHEMY").map_err(|_| AlchemyError::ApiKeyEnvVarNotSet)?
+    )
+    .parse()
+    .map_err(|_| AlchemyError::UrlParsingError)
+}
+
 pub fn alchemy_subdomain(chain: &NamedChain) -> AlchemyResult<&'static str> {
     use NamedChain::*;
 
@@ -36,18 +48,4 @@ pub fn alchemy_subdomain(chain: &NamedChain) -> AlchemyResult<&'static str> {
 
         _ => Err(AlchemyError::SubdomainNotFound),
     }
-}
-
-pub fn alchemy_url(chain: &NamedChain) -> AlchemyResult<Url> {
-    dotenv::dotenv().ok();
-
-    let chain_prefix = alchemy_subdomain(chain)?;
-
-    let url_string = format!(
-        "https://{}.g.alchemy.com/v2/{}",
-        chain_prefix,
-        env::var("API_KEY_ALCHEMY").map_err(|_| AlchemyError::ApiKeyEnvVarNotSet)?
-    );
-
-    Url::parse(&url_string).map_err(|_| AlchemyError::UrlParsingError)
 }
