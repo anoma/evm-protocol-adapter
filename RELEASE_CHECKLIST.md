@@ -111,9 +111,6 @@ For each chain, you want to deploy to, do the following:
   export PA_ADDRESS=<ADDRESS>
   ```
 
-  > ![NOTE]
-  > Since deployment is deterministic, the address should not change between deployments.
-
 - [ ] Verify the contract on
 
   - [ ] sourcify
@@ -240,9 +237,6 @@ For each **new** chain, you want to deploy to, do the following:
   ```sh
   export PA_ADDRESS=<ADDRESS>
   ```
-
-  > ![NOTE]
-  > Since deployment is deterministic, the address should not change between deployments and match previous deployments.
 
 - [ ] Verify the contract on
 
