@@ -144,6 +144,10 @@ For each chain, you want to deploy to, do the following:
 
   function in `./bindings/src/addresses.rs`.
 
+- [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.0.0`, where `A` is the last `MAJOR` version number incremented by 1.
+
+- [ ] Run `cargo build` and check that the `Cargo.lock` file reflects the version number change.
+
 - [ ] Run the tests with `cargo test`.
 
 - [ ] Commit the change and artifacts generated in the `./broadcast/` directory to git and open a PR to `main`.
@@ -269,6 +273,10 @@ For each **new** chain, you want to deploy to, do the following:
   ```
 
   function in `./bindings/src/addresses.rs`.
+
+- [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.0`, where `A` is the last `MAJOR` version, and `B` is the last `MINOR` version number incremented by 1.
+
+- [ ] Run `cargo build` and check that the `Cargo.lock` file reflects the version number change.
 
 - [ ] Run the tests with `cargo test`.
 
