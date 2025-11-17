@@ -149,8 +149,6 @@ The following benchmark shows the transaction execution costs without and with p
 
 <img src=".assets/Benchmark.png" width=67% alt="Protocol adapter benchmark.">
 
-The current protocol adapter implementation utilizes a Merkle tree of dynamic depth starting at depth 0.
-
 ## Rust Bindings
 
 ## Prerequisites
