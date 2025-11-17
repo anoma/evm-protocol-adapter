@@ -111,9 +111,6 @@ For each chain, you want to deploy to, do the following:
   export PA_ADDRESS=<ADDRESS>
   ```
 
-  > ![NOTE]
-  > Since deployment is deterministic, the address should not change between deployments.
-
 - [ ] Verify the contract on
 
   - [ ] sourcify
@@ -143,6 +140,10 @@ For each chain, you want to deploy to, do the following:
   ```
 
   function in `./bindings/src/addresses.rs`.
+
+- [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.0.0`, where `A` is the last `MAJOR` version number incremented by 1.
+
+- [ ] Run `cargo build` and check that the `Cargo.lock` file reflects the version number change.
 
 - [ ] Run the tests with `cargo test`.
 
@@ -237,9 +238,6 @@ For each **new** chain, you want to deploy to, do the following:
   export PA_ADDRESS=<ADDRESS>
   ```
 
-  > ![NOTE]
-  > Since deployment is deterministic, the address should not change between deployments and match previous deployments.
-
 - [ ] Verify the contract on
 
   - [ ] sourcify
@@ -270,11 +268,15 @@ For each **new** chain, you want to deploy to, do the following:
 
   function in `./bindings/src/addresses.rs`.
 
+- [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
+
+- [ ] Run `cargo build` and check that the `Cargo.lock` file reflects the version number change.
+
 - [ ] Run the tests with `cargo test`.
 
 - [ ] Commit the change and artifacts generated in the `./broadcast/` directory to git and open a PR to `main`.
 
-- [ ] After merging, create a new `bindings/A.B.0` tag, where `A` is the last `MAJOR` version, and `B` is the last `MINOR` version number incremented by 1.
+- [ ] After merging, create a new `bindings/A.B.0` tag, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
 - [ ] Create a new [GH release](https://github.com/anoma/evm-protocol-adapter/releases).
 
@@ -284,6 +286,6 @@ For each **new** chain, you want to deploy to, do the following:
 
 - [ ] Commit the changes and open a PR to `main`.
 
-- [ ] After merging, create a new `bindings/A.B.C` tag, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers, respectively, and `C` is the last `PATCH` version number incremented by 1.
+- [ ] After merging, create a new `bindings/A.B.C` tag, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers, respectively and `C` is the last `PATCH` version number incremented by 1.
 
 - [ ] Create a new [GH release](https://github.com/anoma/evm-protocol-adapter/releases).
