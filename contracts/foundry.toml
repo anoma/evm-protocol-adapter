@@ -60,7 +60,7 @@ verbosity = 3
 
 [etherscan]
 mainnet = { key = "${API_KEY_ETHERSCAN}" }
-#sepolia = { key = "${API_KEY_ETHERSCAN}" }
+sepolia = { key = "${API_KEY_ETHERSCAN}" }
 arbitrum = { key = "${API_KEY_ETHERSCAN}" }
 arbitrum-sepolia = { key = "${API_KEY_ETHERSCAN}" }
 base = { key = "${API_KEY_ETHERSCAN}" }
