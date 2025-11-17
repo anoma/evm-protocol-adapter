@@ -3,21 +3,22 @@
 Releases of the packages contained in this monorepo follow the [SemVer convention](https://semver.org/spec/v2.0.0.html).
 
 > ![NOTE]
-> The `contracts` and `bindings` are independently versioned with `X.Y.Z` (`.rc-?`) and `A.B.C`, respectively.
+> The `contracts` and `bindings` are independently versioned with `X.Y.Z` and `A.B.C`, respectively.
+> Both version can include release candidates (suffixed with `-rc.?`).
 
 Here, we distinguish between three release cases:
 
-- Deploying a new protocol adapter version resulting in
+- Deploying a new protocol adapter version resulting in a new
 
-  - a new `contracts/X.Y.Z` version
-  - a new `bindings/A.0.0` version
+  - `contracts/X.Y.Z` version
+  - `bindings/A.0.0` version
 
-- Deploying an existing protocol adapter version to new chains resulting in
+- Deploying an existing protocol adapter version to new chains resulting in a new
 
-  - a new `bindings/A.B.0` version
+  - `bindings/A.B.0` version
 
-- Maintaining the bindings crate resulting in
-  - a new `bindings/A.B.C` version
+- Maintaining the bindings resulting in a new
+  - `bindings/A.B.C` version
 
 ## Deploying a new Protocol Adapter Version
 
@@ -148,8 +149,11 @@ For each chain, you want to deploy to, do the following:
 - [ ] Commit the change and artifacts generated in the `./broadcast/` directory to git and open a PR to `main`.
 
 - [ ] After merging, create new tags for
-  - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the protocol adapter version number and create a [GH release](https://github.com/anoma/evm-protocol-adapter/releases).
-  - [ ] `bindings/A.0.0` tag, where `X` is the last `MAJOR` version incremented by 1. Create a new [GH release](https://github.com/anoma/evm-protocol-adapter/releases).
+
+  - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the protocol adapter version number.
+  - [ ] `bindings/A.0.0` tag, where `A` is the last `MAJOR` version incremented by 1.
+
+- [ ] Create new [GH releases](https://github.com/anoma/evm-protocol-adapter/releases) for both packages.
 
 ## Deploying an existing Protocol Adapter Version to new Chains
 
@@ -216,6 +220,9 @@ For each **new** chain, you want to deploy to, do the following:
   --rpc-url <CHAIN_NAME>
   ```
 
+  > ![NOTE]
+  > For chains that the protocol adapter of this version has already been deployed to, the simulation will fail since the deterministic address is already taken.
+
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
@@ -223,9 +230,6 @@ For each **new** chain, you want to deploy to, do the following:
    --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
   --broadcast --rpc-url <CHAIN_NAME> --account deployer
   ```
-
-  > ![NOTE]
-  > For chains that the protocol adapter has already been deployed to, the simulation will fail since the deterministic address is already taken.
 
 - [ ] Export the address of the newly deployed protocol adapter contract with
 
@@ -258,7 +262,13 @@ For each **new** chain, you want to deploy to, do the following:
 
 ### 4. Update the Deployments and Create a new `bindings` Release
 
-- [ ] Update the address and chain name in the `protocol_adapter` function in `./bindings/src/contract.rs`.
+- [ ] Add the **new** address and chain name pairs in the
+
+  ```rust
+  pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address>
+  ```
+
+  function in `./bindings/src/addresses.rs`.
 
 - [ ] Run the tests with `cargo test`.
 
