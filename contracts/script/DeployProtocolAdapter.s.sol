@@ -17,10 +17,14 @@ contract DeployProtocolAdapter is Script {
 
     constructor() {
         _networks[11155111] = "sepolia";
+        _networks[1] = "mainnet";
+
         _networks[421614] = "arbitrum-sepolia";
         _networks[84532] = "base-sepolia";
-
+        
         _routers["sepolia"] = RiscZeroVerifierRouter(0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187);
+        _routers["mainnet"] = RiscZeroVerifierRouter(0x8EaB2D97Dfce405A1692a21b3ff3A172d593D319);
+
         _routers["arbitrum-sepolia"] = RiscZeroVerifierRouter(0x0b144E07A0826182B6b59788c34b32Bfa86Fb711);
         _routers["base-sepolia"] = RiscZeroVerifierRouter(0x0b144E07A0826182B6b59788c34b32Bfa86Fb711);
     }

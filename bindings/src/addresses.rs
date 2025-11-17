@@ -7,7 +7,7 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
     use NamedChain::*;
     HashMap::from([(
         Sepolia,
-        address!("0x6aCDEdB64eb38f6a2911b52E8633D418E28fa9aB"),
+        address!("0x0b74B3f295344Ae4e79b94Fb02c7d640dFF6176E"),
     )])
 }
 
