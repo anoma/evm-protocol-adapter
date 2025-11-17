@@ -4,16 +4,16 @@ Releases of the packages contained in this monorepo follow the [SemVer conventio
 
 > ![NOTE]
 > The `contracts` and `bindings` are independently versioned with `X.Y.Z` and `A.B.C`, respectively.
-> Both version can include release candidates (suffixed with `-rc.?`).
+> Both versions can include release candidates (suffixed with `-rc.?`).
 
-Here, we distinguish between three release cases:
+We distinguish between three release cases:
 
-- Deploying a new protocol adapter version resulting in a new
+- Deploying a **new** protocol adapter version to multiple new chains resulting in a new
 
   - `contracts/X.Y.Z` version
   - `bindings/A.0.0` version
 
-- Deploying an existing protocol adapter version to new chains resulting in a new
+- Deploying an **existing** protocol adapter version to multiple new chains resulting in a new
 
   - `bindings/A.B.0` version
 
@@ -79,11 +79,11 @@ Here, we distinguish between three release cases:
 
 ### 3. Build the Contracts
 
-- [ ] Change the directory with `cd contracts`
+- [ ] Change the directory with `cd contracts`.
 
-- [ ] Run `forge clean && forge build`
+- [ ] Run `forge clean && forge build`.
 
-- [ ] Run the test suite with `forge test`
+- [ ] Run the test suite with `forge test`.
 
 ### 4. Deploy and Verify the Protocol Adapter
 
@@ -134,7 +134,7 @@ For each chain, you want to deploy to, do the following:
 
   and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
-### 5. Update the Deployments and Create a new `contracts` and `bindings` Release
+### 5. Update the Deployments Map and Create a new `contracts` and `bindings` Release
 
 - [ ] Add the **new** address and chain name pairs in the
 
@@ -148,9 +148,9 @@ For each chain, you want to deploy to, do the following:
 
 - [ ] Commit the change and artifacts generated in the `./broadcast/` directory to git and open a PR to `main`.
 
-- [ ] After merging, create new tags for
+- [ ] After merging, create new tags for:
 
-  - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the protocol adapter version number.
+  - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the protocol adapter version number and
   - [ ] `bindings/A.0.0` tag, where `A` is the last `MAJOR` version incremented by 1.
 
 - [ ] Create new [GH releases](https://github.com/anoma/evm-protocol-adapter/releases) for both packages.
@@ -260,7 +260,7 @@ For each **new** chain, you want to deploy to, do the following:
 
   and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
-### 4. Update the Deployments and Create a new `bindings` Release
+### 4. Update the Deployments Map and Create a new `bindings` Release
 
 - [ ] Add the **new** address and chain name pairs in the
 
