@@ -21,7 +21,7 @@ contract DeployProtocolAdapter is Script {
     mapping(uint256 chainId => string networkName) internal _supportedNetworks;
 
     /// @notice A mapping from supported network names to RISC Zero verifier routers.
-    mapping(string supportedNetworkNames => RiscZeroVerifierRouter router) internal _riscZeroVerfierRouters;
+    mapping(string networkName => RiscZeroVerifierRouter router) internal _riscZeroVerifierRouters;
 
     /// @notice Thrown when a network is not supported.
     /// @param chainId The chain ID of the unsupported network.
@@ -70,7 +70,7 @@ contract DeployProtocolAdapter is Script {
     /// @dev If `isTestDeployment` is set to `false`, the protocol adapter is deployed deterministically.
     function run(bool isTestDeployment, address emergencyStopCaller) public returns (address protocolAdapter) {
         // Lookup the RISC Zero router address from the supported networks.
-        RiscZeroVerifierRouter riscZeroVerifierRouter = _riscZeroVerfierRouters[_supportedNetworks[block.chainid]];
+        RiscZeroVerifierRouter riscZeroVerifierRouter = _riscZeroVerifierRouters[_supportedNetworks[block.chainid]];
 
         if (address(riscZeroVerifierRouter) == address(0)) {
             revert UnsupportedNetwork({chainId: block.chainid});
@@ -108,10 +108,10 @@ contract DeployProtocolAdapter is Script {
     /// @notice Stores the data for a network to be supported for deployment.
     /// @param name The network name that must match the name in the `[rpc_endpoints]` list in the `foundry.toml` file.
     /// @param chainId The chain ID of the network.
-    /// @param riscZeroVerifierRouter The RISC Zero verfier router address obtained from
+    /// @param riscZeroVerifierRouter The RISC Zero verifier router address obtained from
     /// https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier.
     function _supportNetwork(string memory name, uint256 chainId, address riscZeroVerifierRouter) internal {
         _supportedNetworks[chainId] = name;
-        _riscZeroVerfierRouters[name] = RiscZeroVerifierRouter(riscZeroVerifierRouter);
+        _riscZeroVerifierRouters[name] = RiscZeroVerifierRouter(riscZeroVerifierRouter);
     }
 }
