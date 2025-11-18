@@ -9,50 +9,109 @@ import {Script} from "forge-std/Script.sol";
 import {Versioning} from "../src/libs/Versioning.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
+/// @title DeployProtocolAdapter
+/// @author Anoma Foundation, 2025
+/// @notice The protocol adapter contract deployment script.
+/// @dev Note that the deployment is only possible on supported networks.
+/// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapter is Script {
     using LibString for bytes32;
 
-    mapping(uint256 chainId => string network) internal _networks;
-    mapping(string network => RiscZeroVerifierRouter router) internal _routers;
+    /// @notice A mapping containing the supported chain IDs and network names.
+    mapping(uint256 chainId => string networkName) internal _supportedNetworks;
 
+    /// @notice A mapping from supported network names to RISC Zero verifier routers.
+    mapping(string supportedNetworkNames => RiscZeroVerifierRouter router) internal _riscZeroVerfierRouters;
+
+    /// @notice Thrown when a network is not supported.
+    /// @param chainId The chain ID of the unsupported network.
+    error UnsupportedNetwork(uint256 chainId);
+
+    /// @notice Initializes the supported networks and associated RISC Zero verifier router addresses
+    /// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).
     constructor() {
-        _networks[11155111] = "sepolia";
-        _networks[1] = "mainnet";
+        _supportNetwork({
+            name: "sepolia", chainId: 11155111, riscZeroVerifierRouter: 0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187
+        });
+        _supportNetwork({
+            name: "mainnet", chainId: 1, riscZeroVerifierRouter: 0x8EaB2D97Dfce405A1692a21b3ff3A172d593D319
+        });
 
-        _networks[421614] = "arbitrum-sepolia";
+        _supportNetwork({
+            name: "arbitrum-sepolia",
+            chainId: 421614,
+            riscZeroVerifierRouter: 0x0b144E07A0826182B6b59788c34b32Bfa86Fb711
+        });
+        _supportNetwork({
+            name: "arbitrum", chainId: 42161, riscZeroVerifierRouter: 0x0b144E07A0826182B6b59788c34b32Bfa86Fb711
+        });
 
-        _networks[84532] = "base-sepolia";
+        _supportNetwork({
+            name: "base-sepolia", chainId: 84532, riscZeroVerifierRouter: 0x0b144E07A0826182B6b59788c34b32Bfa86Fb711
+        });
+        _supportNetwork({
+            name: "base", chainId: 8453, riscZeroVerifierRouter: 0x0b144E07A0826182B6b59788c34b32Bfa86Fb711
+        });
 
-        _routers["sepolia"] = RiscZeroVerifierRouter(0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187);
-        _routers["mainnet"] = RiscZeroVerifierRouter(0x8EaB2D97Dfce405A1692a21b3ff3A172d593D319);
-
-        _routers["arbitrum-sepolia"] = RiscZeroVerifierRouter(0x0b144E07A0826182B6b59788c34b32Bfa86Fb711);
-
-        _routers["base-sepolia"] = RiscZeroVerifierRouter(0x0b144E07A0826182B6b59788c34b32Bfa86Fb711);
+        _supportNetwork({
+            name: "optimism-sepolia",
+            chainId: 11155420,
+            riscZeroVerifierRouter: 0xB369b4dd27FBfb59921d3A4a3D23AC2fc32FB908
+        });
+        _supportNetwork({
+            name: "optimism", chainId: 10, riscZeroVerifierRouter: 0x0b144E07A0826182B6b59788c34b32Bfa86Fb711
+        });
     }
 
+    /// @notice Deploys the protocol adapter contract on supported networks and allows for test deployments.
+    /// @param isTestDeployment Whether the deployment is a test deployment or not. If set to `false`, the protocol
+    /// adapter is deployed deterministically.
+    /// @param emergencyStopCaller The emergency stop caller that can stop the protocol adapter in an emergency.
+    /// @dev If `isTestDeployment` is set to `false`, the protocol adapter is deployed deterministically.
     function run(bool isTestDeployment, address emergencyStopCaller) public returns (address protocolAdapter) {
+        // Lookup the RISC Zero router address from the supported networks.
+        RiscZeroVerifierRouter riscZeroVerifierRouter = _riscZeroVerfierRouters[_supportedNetworks[block.chainid]];
+
+        if (address(riscZeroVerifierRouter) == address(0)) {
+            revert UnsupportedNetwork({chainId: block.chainid});
+        }
+
         vm.startBroadcast();
 
-        bytes32 salt;
         if (isTestDeployment) {
-            salt = bytes32(block.prevrandao);
+            // Deploy regularly.
+            protocolAdapter = address(
+                new ProtocolAdapter({
+                    riscZeroVerifierRouter: riscZeroVerifierRouter,
+                    riscZeroVerifierSelector: Versioning._RISC_ZERO_VERIFIER_SELECTOR,
+                    emergencyStopCaller: emergencyStopCaller
+                })
+            );
         } else {
-            salt = keccak256(
-                bytes(string.concat("ProtocolAdapter", Versioning._PROTOCOL_ADAPTER_VERSION.fromSmallString()))
+            // Deploy deterministically.
+            protocolAdapter = address(
+                new ProtocolAdapter{
+                    salt: keccak256(
+                        bytes(string.concat("ProtocolAdapter", Versioning._PROTOCOL_ADAPTER_VERSION.fromSmallString()))
+                    )
+                }({
+                    riscZeroVerifierRouter: riscZeroVerifierRouter,
+                    riscZeroVerifierSelector: Versioning._RISC_ZERO_VERIFIER_SELECTOR,
+                    emergencyStopCaller: emergencyStopCaller
+                })
             );
         }
 
-        protocolAdapter = address(
-            new ProtocolAdapter{
-                salt: salt
-            }({
-                riscZeroVerifierRouter: _routers[_networks[block.chainid]],
-                riscZeroVerifierSelector: Versioning._RISC_ZERO_VERIFIER_SELECTOR,
-                emergencyStopCaller: emergencyStopCaller
-            })
-        );
-
         vm.stopBroadcast();
+    }
+
+    /// @notice Stores the data for a network to be supported for deployment.
+    /// @param name The network name that must match the name in the `[rpc_endpoints]` list in the `foundry.toml` file.
+    /// @param chainId The chain ID of the network.
+    /// @param riscZeroVerifierRouter The RISC Zero verfier router address obtained from
+    /// https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier.
+    function _supportNetwork(string memory name, uint256 chainId, address riscZeroVerifierRouter) internal {
+        _supportedNetworks[chainId] = name;
+        _riscZeroVerfierRouters[name] = RiscZeroVerifierRouter(riscZeroVerifierRouter);
     }
 }
