@@ -1,26 +1,13 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
 [profile.default]
-fs_permissions = [
-    { access = "read", path = "./test/examples/transactions/test_tx_reg_01_01.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx_reg_05_01.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx_reg_10_01.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx_reg_15_01.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx_reg_20_01.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx_agg_01_01.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx_agg_05_01.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx_agg_10_01.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx_agg_15_01.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx_agg_20_01.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx_reg_02_02.bin" },
-    { access = "read", path = "./test/examples/transactions/test_tx_agg_02_02.bin" },
-]
+fs_permissions = [{ access = "read", path = "./" }]
 
 
 auto_detect_remappings = false
 remappings = [
     "forge-std/=lib/forge-std/src/",
     "@openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
-    "openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/", # Used within `risc0-ethereum`
+    "openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",  # Used within `risc0-ethereum`
     "@solady/=lib/solady/src",
     "@risc0-ethereum/=lib/risc0-ethereum/contracts/src/",
     "@elliptic-curve-solidity/=lib/elliptic-curve-solidity/",
