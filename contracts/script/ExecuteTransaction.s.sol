@@ -18,7 +18,7 @@ contract ExecuteTransaction is Script {
 
     /// @notice Executes a transaction binary file on a given protocol adapter contract.
     /// @param protocolAdapter The protocol adapter address.
-    /// @param filepath The transaction binary file path relative to the `contracts` folder
+    /// @param filepath The transaction binary file path relative to the `contracts` folder.
     /// (e.g., `"tx.bin"` or `"test/examples/transactions/test_tx_agg_01_01.bin"`).
     /// @dev Run with
     /// ```sh
