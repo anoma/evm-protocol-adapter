@@ -109,6 +109,8 @@ contract DeployProtocolAdapter is Script {
     /// @param chainId The chain ID of the network.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router address obtained from
     /// https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier.
+    /// @dev The network `name` must match the `[rpc_endpoints]` names in the `foundry.toml` file for the test in
+    /// `DeployProtocolAdapter.t.sol` to succeed.
     function _supportNetwork(string memory name, uint256 chainId, address riscZeroVerifierRouter) internal {
         _supportedNetworks[chainId] = name;
         _riscZeroVerifierRouters[name] = RiscZeroVerifierRouter(riscZeroVerifierRouter);
