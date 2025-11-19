@@ -11,8 +11,7 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 /// @title DeployProtocolAdapter
 /// @author Anoma Foundation, 2025
-/// @notice The protocol adapter contract deployment script.
-/// @dev Note that the deployment is only possible on supported networks.
+/// @notice A script to deploy protocol adapter contracts on supported networks.
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapter is Script {
     using LibString for bytes32;
@@ -106,7 +105,7 @@ contract DeployProtocolAdapter is Script {
     }
 
     /// @notice Stores the data for a network to be supported for deployment.
-    /// @param name The network name that must match the name in the `[rpc_endpoints]` list in the `foundry.toml` file.
+    /// @param name The network name.
     /// @param chainId The chain ID of the network.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router address obtained from
     /// https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier.
