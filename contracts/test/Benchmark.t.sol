@@ -32,14 +32,14 @@ contract Benchmark is Test {
 
         for (uint256 i = 0; i < suffixes.length; ++i) {
             Transaction memory parsed =
-                vm.parseTransaction(string.concat("/test/examples/transactions/test_tx_reg_", suffixes[i], ".bin"));
+                vm.parseTransaction(string.concat("test/examples/transactions/test_tx_reg_", suffixes[i], ".bin"));
 
             _toStorage(_txnsReg[i], parsed);
         }
 
         for (uint256 i = 0; i < suffixes.length; ++i) {
             Transaction memory parsed =
-                vm.parseTransaction(string.concat("/test/examples/transactions/test_tx_agg_", suffixes[i], ".bin"));
+                vm.parseTransaction(string.concat("test/examples/transactions/test_tx_agg_", suffixes[i], ".bin"));
 
             _toStorage(_txnsAgg[i], parsed);
         }
