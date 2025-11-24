@@ -28,6 +28,7 @@ sol!(
     "../contracts/out/ProtocolAdapter.sol/ProtocolAdapter.json"
 );
 
+/// Returns a protocol adapter instance for the given provider.
 pub async fn protocol_adapter(
     provider: DynProvider,
 ) -> BindingsResult<ProtocolAdapterInstance<DynProvider>> {
@@ -39,7 +40,7 @@ pub async fn protocol_adapter(
     )
     .map_err(|_| BindingsError::ChainIdUnkown)?;
 
-    match protocol_adapter_address(named_chain) {
+    match protocol_adapter_address(&named_chain) {
         Some(address) => Ok(ProtocolAdapterInstance::new(address, provider)),
         None => Err(BindingsError::UnsupportedChain(named_chain)),
     }

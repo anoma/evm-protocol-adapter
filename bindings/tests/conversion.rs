@@ -42,7 +42,7 @@ fn generate_tx_agg() {
     let mut tx = arm_risc0::tests::generate_test_transaction(n_actions, n_cus);
 
     tx.aggregate_with_strategy(AggregationStrategy::Batch)
-        .unwrap();
+        .expect("Aggregation proof failed.");
 
     to_evm_bin_file(
         ProtocolAdapter::Transaction::from(tx),
@@ -55,7 +55,7 @@ fn generate_tx_agg() {
 fn to_evm_bin_file(tx: ProtocolAdapter::Transaction, name: &str, n_actions: &usize, n_cus: &usize) {
     let encoded_tx = tx.abi_encode();
     let decoded_tx: ProtocolAdapter::Transaction =
-        ProtocolAdapter::Transaction::abi_decode(&encoded_tx).unwrap();
+        ProtocolAdapter::Transaction::abi_decode(&encoded_tx).expect("Failed to decode tx");
     assert_eq!(tx, decoded_tx);
 
     println!("Transaction: {tx:#?}");
