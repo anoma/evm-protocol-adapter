@@ -30,12 +30,7 @@ fn main() {
     );
 
     println!(
-        "Generating {tx_type} transaction with {n_actions} actions and {n_cus} compliance units.",
-        tx_type = if aggregate_proofs {
-            "aggregated"
-        } else {
-            "regular"
-        }
+        "Generating {tx_type}. transaction with {n_actions} actions and {n_cus} compliance units."
     );
 
     let bindings_path = Path::new(env!("CARGO_MANIFEST_DIR"));
