@@ -79,7 +79,7 @@ async fn pa_instance(chain: &NamedChain) -> ProtocolAdapterInstance<DynProvider>
     let provider = ProviderBuilder::new()
         .connect_anvil_with_wallet_and_config(|a| a.fork(rpc_url))
         .expect("Couldn't create anvil provider");
-    protocol_adapter(provider.erased())
+    protocol_adapter(&provider.erased())
         .await
         .expect("Couldn't get protocol adapter instance")
 }

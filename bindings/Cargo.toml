@@ -21,3 +21,8 @@ dotenv = { version = "0.15.0", features = ["cli"] }
 [features]
 # These features are enabled to generate test transactions and are not required for using the library.
 arm_risc0_dev = ["arm_risc0/groth16_prover", "arm_risc0/bonsai"]
+
+
+[[bin]]
+name = "generate_transaction"
+path = "bin/generate_transaction.rs"
