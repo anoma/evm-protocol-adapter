@@ -47,7 +47,8 @@ contract Benchmark is Test {
         {
             RiscZeroGroth16Verifier verifier;
 
-            (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts().run();
+            (_router, _emergencyStop, verifier) =
+                new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
 
             _pa = new ProtocolAdapter(_router, verifier.SELECTOR(), msg.sender);
         }

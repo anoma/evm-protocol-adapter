@@ -18,7 +18,7 @@ contract ComplianceProofTest is Test {
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
 
     function setUp() public {
-        (_router, _emergencyStop,) = new DeployRiscZeroContracts().run();
+        (_router, _emergencyStop,) = new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
     }
 
     function test_verify_example_compliance_proof() public view {

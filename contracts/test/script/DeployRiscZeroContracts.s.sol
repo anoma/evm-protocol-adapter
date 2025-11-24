@@ -8,7 +8,10 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 import {Script} from "forge-std/Script.sol";
 
 contract DeployRiscZeroContracts is Script {
-    function run()
+    /// @notice Deploys the RISC Zero router, verifier, and emergency stop contract of the current RISC Zero version.
+    /// @param admin The address that can add new verifier contracts.
+    /// @param guardian The address that can emergency stop the verifier.
+    function run(address admin, address guardian)
         public
         returns (
             RiscZeroVerifierRouter router,
@@ -20,10 +23,13 @@ contract DeployRiscZeroContracts is Script {
 
         groth16Verifier = new RiscZeroGroth16Verifier(ControlID.CONTROL_ROOT, ControlID.BN254_CONTROL_ID);
 
-        emergencyStop = new RiscZeroVerifierEmergencyStop({_verifier: groth16Verifier, guardian: msg.sender});
+        emergencyStop = new RiscZeroVerifierEmergencyStop({_verifier: groth16Verifier, guardian: guardian});
 
         router = new RiscZeroVerifierRouter({admin: msg.sender});
         router.addVerifier({selector: groth16Verifier.SELECTOR(), verifier: emergencyStop});
+
+        // Transfer the router ownership from the deployer to the admin.
+        router.transferOwnership(admin);
 
         vm.stopBroadcast();
     }
