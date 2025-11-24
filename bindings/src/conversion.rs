@@ -1,5 +1,5 @@
 use alloy::primitives::{B256, Bytes};
-
+use alloy::sol_types::SolValue;
 use arm_risc0::action::Action;
 use arm_risc0::compliance::ComplianceInstance;
 use arm_risc0::compliance_unit::ComplianceUnit;
@@ -10,6 +10,7 @@ use arm_risc0::transaction::{Delta as ArmDelta, Transaction};
 use arm_risc0::utils::words_to_bytes;
 
 pub use crate::contract::{Compliance, Logic, ProtocolAdapter};
+use crate::error::{BindingsError, BindingsResult};
 
 impl From<ExpirableBlob> for Logic::ExpirableBlob {
     fn from(expirable_blob: ExpirableBlob) -> Self {
@@ -131,4 +132,17 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
             },
         }
     }
+}
+
+pub fn to_evm_bin_file(tx: ProtocolAdapter::Transaction, path: &str) -> BindingsResult<()> {
+    let encoded_tx = tx.abi_encode();
+    let decoded_tx: ProtocolAdapter::Transaction =
+        ProtocolAdapter::Transaction::abi_decode(&encoded_tx)
+            .map_err(BindingsError::TransactionDecodingError)?;
+    assert_eq!(tx, decoded_tx);
+
+    println!("Transaction: {tx:#?}");
+    std::fs::write(path, &encoded_tx).map_err(BindingsError::FilesystemWriteError)?;
+
+    Ok(())
 }

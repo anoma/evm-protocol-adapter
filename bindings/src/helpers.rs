@@ -15,6 +15,7 @@ pub enum AlchemyError {
     UrlParsingError,
 }
 
+/// Returns the Alchemy RPC URL for the given chain.
 pub fn alchemy_url(chain: &NamedChain) -> AlchemyResult<Url> {
     dotenv::dotenv().ok();
 
@@ -27,6 +28,7 @@ pub fn alchemy_url(chain: &NamedChain) -> AlchemyResult<Url> {
     .map_err(|_| AlchemyError::UrlParsingError)
 }
 
+/// Returns the Alchemy subdomain for the given chain.
 pub fn alchemy_subdomain(chain: &NamedChain) -> AlchemyResult<&'static str> {
     use NamedChain::*;
 

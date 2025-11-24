@@ -23,8 +23,14 @@ async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
     // Get the expected protocol adapter version.
     let expected_version = {
         let provider = ProviderBuilder::new().connect_anvil_with_wallet();
-        let contract = VersioningLibExternal::deploy(&provider).await.unwrap();
-        contract.version().call().await.unwrap()
+        let contract = VersioningLibExternal::deploy(&provider)
+            .await
+            .expect("Couldn't deploy `VersioningLibExternal` contract");
+        contract
+            .version()
+            .call()
+            .await
+            .expect("Couldn't get version")
     };
 
     // Iterate over all supported chains
@@ -68,17 +74,24 @@ async fn call_executes_the_empty_tx_on_all_supported_chains() {
 }
 
 async fn pa_instance(chain: &NamedChain) -> ProtocolAdapterInstance<DynProvider> {
-    let rpc_url = alchemy_url(chain).unwrap();
+    let rpc_url = alchemy_url(chain).expect("Couldn't get RPC URL for chain");
 
     let provider = ProviderBuilder::new()
         .connect_anvil_with_wallet_and_config(|a| a.fork(rpc_url))
         .expect("Couldn't create anvil provider");
-    protocol_adapter(provider.erased()).await.unwrap()
+    protocol_adapter(&provider.erased())
+        .await
+        .expect("Couldn't get protocol adapter instance")
 }
 
 fn decode_bytes32_to_utf8(encoded_string: B256) -> String {
-    let bytes = alloy::hex::decode(encoded_string.to_string()).unwrap();
+    let bytes = alloy::hex::decode(encoded_string.to_string()).expect("Couldn't decode hex string");
 
-    let trimmed = bytes.split(|b| *b == 0).next().unwrap();
-    str::from_utf8(trimmed).unwrap().to_string()
+    let trimmed = bytes
+        .split(|b| *b == 0)
+        .next()
+        .expect("No null byte found in bytes");
+    str::from_utf8(trimmed)
+        .expect("Conversion to UTF-8 failed.")
+        .to_string()
 }
