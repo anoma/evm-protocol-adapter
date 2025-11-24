@@ -33,7 +33,8 @@ contract ProtocolAdapterTest is Test {
 
     function setUp() public {
         RiscZeroGroth16Verifier verifier;
-        (_router, _emergencyStop, verifier) = new DeployRiscZeroContracts().run();
+        (_router, _emergencyStop, verifier) =
+            new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
 
         _verifierSelector = verifier.SELECTOR();
 

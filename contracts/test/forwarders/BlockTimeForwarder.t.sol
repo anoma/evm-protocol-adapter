@@ -20,7 +20,8 @@ contract BlockTimeForwarderTest is Test {
 
     function setUp() public virtual {
         // Deploy RISC Zero contracts
-        (RiscZeroVerifierRouter router,, RiscZeroGroth16Verifier verifier) = new DeployRiscZeroContracts().run();
+        (RiscZeroVerifierRouter router,, RiscZeroGroth16Verifier verifier) =
+            new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
 
         // Deploy the protocol adapter
         _pa = new ProtocolAdapter(router, verifier.SELECTOR(), _EMERGENCY_COMMITTEE);
