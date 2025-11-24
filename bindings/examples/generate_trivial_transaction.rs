@@ -15,25 +15,22 @@ fn main() {
     }
 
     // Parse the arguments
-    // args[1] -> bool
-    let aggregate_proofs: bool = args[1]
-        .parse()
-        .expect("Argument 1 must be a boolean (true/false)");
+    let aggregate_proofs: bool = args[1].parse().expect(
+        "Argument 1 must be a boolean (true/false) indicating whether to aggregate proofs or not.",
+    );
 
     let tx_type = if aggregate_proofs { "agg" } else { "reg" };
 
-    // args[2] -> usize
-    let n_actions: usize = args[2]
-        .parse()
-        .expect("Argument 2 must be a positive number");
+    let n_actions: usize = args[2].parse().expect(
+        "Argument 2 must be a positive number indicating the number of actions in the transaction.",
+    );
 
-    // args[3] -> usize
-    let n_cus: usize = args[3]
-        .parse()
-        .expect("Argument 3 must be a positive number");
+    let n_cus: usize = args[3].parse().expect(
+        "Argument 3 must be a positive number indicating the number of compliance units in the transaction.",
+    );
 
     println!(
-        "Generating {tx_type} transaction with {n_actions} actions and {n_cus} CUs.",
+        "Generating {tx_type} transaction with {n_actions} actions and {n_cus} compliance units.",
         tx_type = if aggregate_proofs {
             "aggregated"
         } else {
