@@ -33,7 +33,7 @@ Anoma smart contracts undergo regular audits:
    - Finished: 2025-10-31
    - Last revised: 2025-11-07
 
-   [📄 Audit Report (pdf)](./audits/2025-11-07_Informal_Systems_RISC_Zero_RM_&_EVM_Protocol_Adapter.pdf)
+   [📄 Audit Report (pdf)](./audits/2025-11-24_Informal_Systems_RISC_Zero_RM_&_EVM_Protocol_Adapter.pdf)
 
 2. Nethermind
 
