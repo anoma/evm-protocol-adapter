@@ -4,7 +4,17 @@ use evm_protocol_adapter_bindings::conversion::to_evm_bin_file;
 use std::path::Path;
 use std::{env, process};
 
+extern crate dotenv;
+
 fn main() {
+    dotenv::dotenv().ok();
+
+    println!(
+        "GPU Prover URL: {}",
+        env::var("BONSAI_API_URL").expect("Failed to get BONSAI_API_URL")
+    );
+    env::var("BONSAI_API_KEY").expect("Failed to get BONSAI_API_KEY");
+
     // Collect command line arguments into a vector
     let args: Vec<String> = env::args().collect();
 
@@ -35,8 +45,6 @@ fn main() {
 
     let bindings_path = Path::new(env!("CARGO_MANIFEST_DIR"));
     let project_root = bindings_path.parent().expect("Failed to get project root");
-
-    println!("Project root: {project_root:?}");
 
     let path = format!(
         "{project_root}/contracts/test/examples/transactions/test_tx_{tx_type}_{n_actions:02}_{n_cus:02}.bin",
