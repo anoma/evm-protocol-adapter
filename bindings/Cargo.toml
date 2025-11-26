@@ -1,15 +1,14 @@
 [package]
 name = "evm_protocol_adapter_bindings"
-version = "1.0.0-rc.5"
+version = "1.0.0-rc.6"
 edition = "2024"
 
 [dependencies]
-arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.11.0", package = "arm", features = [
-    "groth16_prover", # Add this feature to generate regular transactions. Note that proof aggregation won't work.
-    "groth16_aggregation",
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.13.0", package = "arm", features = [
+    "aggregation",
     "bonsai",
-    "test",
 ] }
+arm_tests = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.13.0", package = "arm-test-app"}
 alloy = { version = "1.1.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.18"
 
@@ -20,4 +19,4 @@ dotenv = { version = "0.15.0", features = ["cli"] }
 
 [features]
 # These features are enabled to generate test transactions and are not required for using the library.
-arm_risc0_dev = ["arm_risc0/groth16_prover", "arm_risc0/bonsai"]
+arm_risc0_dev = ["arm_risc0/bonsai"]

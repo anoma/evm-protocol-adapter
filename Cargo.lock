@@ -1347,12 +1347,9 @@ dependencies = [
 
 [[package]]
 name = "arm"
-version = "0.11.0"
-source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.11.0#087e7d05f6b7f5a961ea4197d6be5615aea85343"
+version = "0.13.0"
+source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.13.0#cde4e1b7bdda25f8a9cc003fc7ff94263bcdd2b3"
 dependencies = [
- "aes-gcm",
- "alloy-primitives",
- "alloy-sol-types",
  "bincode",
  "bytemuck",
  "hex",
@@ -1366,7 +1363,46 @@ dependencies = [
  "slab",
  "thiserror 2.0.17",
  "tracing-subscriber 0.3.20",
+]
+
+[[package]]
+name = "arm-gadgets"
+version = "0.1.0"
+source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.13.0#cde4e1b7bdda25f8a9cc003fc7ff94263bcdd2b3"
+dependencies = [
+ "aes-gcm",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "arm",
+ "bincode",
+ "hex",
+ "k256",
+ "rand 0.8.5",
+ "serde",
  "zeroize",
+]
+
+[[package]]
+name = "arm-test-app"
+version = "0.1.0"
+source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.13.0#cde4e1b7bdda25f8a9cc003fc7ff94263bcdd2b3"
+dependencies = [
+ "arm",
+ "arm-test-witness",
+ "hex",
+ "lazy_static",
+ "serde",
+]
+
+[[package]]
+name = "arm-test-witness"
+version = "0.1.0"
+source = "git+https://github.com/anoma/arm-risc0.git?tag=v0.13.0#cde4e1b7bdda25f8a9cc003fc7ff94263bcdd2b3"
+dependencies = [
+ "arm",
+ "arm-gadgets",
+ "k256",
+ "serde",
 ]
 
 [[package]]
@@ -2851,11 +2887,12 @@ dependencies = [
 
 [[package]]
 name = "evm_protocol_adapter_bindings"
-version = "1.0.0-rc.5"
+version = "1.0.0-rc.6"
 dependencies = [
  "alloy",
  "alloy-chains",
  "arm",
+ "arm-test-app",
  "dotenv",
  "serde",
  "thiserror 2.0.17",
@@ -3531,7 +3568,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.6.1",
+ "socket2 0.5.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -4861,7 +4898,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.14.0",
+ "itertools 0.12.1",
  "proc-macro2",
  "quote",
  "syn 2.0.110",
@@ -4874,7 +4911,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9120690fafc389a67ba3803df527d0ec9cbbc9cc45e4cc20b332996dfb672425"
 dependencies = [
  "anyhow",
- "itertools 0.14.0",
+ "itertools 0.12.1",
  "proc-macro2",
  "quote",
  "syn 2.0.110",
@@ -4940,7 +4977,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash",
  "rustls",
- "socket2 0.6.1",
+ "socket2 0.5.10",
  "thiserror 2.0.17",
  "tokio",
  "tracing",
@@ -4977,7 +5014,7 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.6.1",
+ "socket2 0.5.10",
  "tracing",
  "windows-sys 0.60.2",
 ]

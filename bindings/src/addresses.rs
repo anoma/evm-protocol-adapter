@@ -8,11 +8,11 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
     HashMap::from([
         (
             Sepolia,
-            address!("0x0b74B3f295344Ae4e79b94Fb02c7d640dFF6176E"),
+            address!("0x71b36D618e8B086EBbE0896c5214C8464B1dFDD4"),
         ),
         (
             Mainnet,
-            address!("0x46E622226F93Ed52C584F3f66135CD06AF01c86c"),
+            address!("0xf031F3c63400417ADA22B4D43b7bAa5E699548B1"),
         ),
     ])
 }
