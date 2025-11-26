@@ -5,16 +5,10 @@ use std::collections::HashMap;
 /// Returns a map of protocol adapter deployments for all supported chains.
 pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
     use NamedChain::*;
-    HashMap::from([
-        (
-            Sepolia,
-            address!("0x0b74B3f295344Ae4e79b94Fb02c7d640dFF6176E"),
-        ),
-        (
-            Mainnet,
-            address!("0x46E622226F93Ed52C584F3f66135CD06AF01c86c"),
-        ),
-    ])
+    HashMap::from([(
+        Sepolia,
+        address!("0x71b36D618e8B086EBbE0896c5214C8464B1dFDD4"),
+    )])
 }
 
 /// Returns the address of the protocol adapter deployed on the provided chain, if any.
