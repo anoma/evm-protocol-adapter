@@ -1,4 +1,5 @@
 use arm_risc0::aggregation::AggregationStrategy;
+use arm_risc0::proving_system::ProofType;
 use evm_protocol_adapter_bindings::contract::ProtocolAdapter;
 use evm_protocol_adapter_bindings::conversion::to_evm_bin_file;
 use std::path::Path;
@@ -47,10 +48,16 @@ fn main() {
 
     println!("Writing to file: {path:?}");
 
-    let mut tx = arm_risc0::tests::generate_test_transaction(n_actions, n_cus);
+    let proof_type = if aggregate_proofs {
+        ProofType::Succinct
+    } else {
+        ProofType::Groth16
+    };
+
+    let mut tx = arm_tests::generate_test_transaction(n_actions, n_cus, proof_type);
 
     if aggregate_proofs {
-        tx.aggregate_with_strategy(AggregationStrategy::Batch)
+        tx.aggregate_with_strategy(AggregationStrategy::Batch, ProofType::Groth16)
             .expect("Aggregation proof failed.");
     }
 
