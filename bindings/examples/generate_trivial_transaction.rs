@@ -7,14 +7,6 @@ use std::{env, process};
 extern crate dotenv;
 
 fn main() {
-    dotenv::dotenv().ok();
-
-    println!(
-        "GPU Prover URL: {}",
-        env::var("BONSAI_API_URL").expect("Failed to get BONSAI_API_URL")
-    );
-    env::var("BONSAI_API_KEY").expect("Failed to get BONSAI_API_KEY");
-
     // Collect command line arguments into a vector
     let args: Vec<String> = env::args().collect();
 
@@ -38,6 +30,18 @@ fn main() {
     let n_cus: usize = args[3].parse().expect(
         "Argument 3 must be a positive number indicating the number of compliance units in the transaction.",
     );
+
+    dotenv::dotenv().ok();
+
+    match env::var("BONSAI_API_URL") {
+        Ok(url) => {
+            println!("Remote proving on {url} cluster...");
+
+            env::var("BONSAI_API_KEY")
+                .expect("The environment variable `BONSAI_API_KEY` must be set.");
+        }
+        Err(_) => println!("Local proving..."),
+    }
 
     println!(
         "Generating {tx_type}. transaction with {n_actions} actions and {n_cus} compliance units."
