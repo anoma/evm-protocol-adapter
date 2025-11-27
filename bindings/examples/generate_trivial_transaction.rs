@@ -5,6 +5,8 @@ use evm_protocol_adapter_bindings::conversion::to_evm_bin_file;
 use std::path::Path;
 use std::{env, process};
 
+extern crate dotenv;
+
 fn main() {
     // Collect command line arguments into a vector
     let args: Vec<String> = env::args().collect();
@@ -30,14 +32,24 @@ fn main() {
         "Argument 3 must be a positive number indicating the number of compliance units in the transaction.",
     );
 
+    dotenv::dotenv().ok();
+
+    match env::var("BONSAI_API_URL") {
+        Ok(url) => {
+            println!("Remote proving on {url} cluster...");
+
+            env::var("BONSAI_API_KEY")
+                .expect("The environment variable `BONSAI_API_KEY` must be set.");
+        }
+        Err(_) => println!("Local proving..."),
+    }
+
     println!(
         "Generating {tx_type}. transaction with {n_actions} actions and {n_cus} compliance units."
     );
 
     let bindings_path = Path::new(env!("CARGO_MANIFEST_DIR"));
     let project_root = bindings_path.parent().expect("Failed to get project root");
-
-    println!("Project root: {project_root:?}");
 
     let path = format!(
         "{project_root}/contracts/test/examples/transactions/test_tx_{tx_type}_{n_actions:02}_{n_cus:02}.bin",
