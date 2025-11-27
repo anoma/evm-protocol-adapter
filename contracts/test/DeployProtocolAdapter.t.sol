@@ -10,6 +10,7 @@ contract DeployProtocolAdapterTest is Test {
         string name;
     }
 
+    // forge-lint: disable-next-line(mixed-case-function)
     function tableNetworksTest_DeployProtocolAdapter_test_deployment_succeeds_on_all_supported_networks(TestCase memory network)
         public
     {
@@ -18,6 +19,7 @@ contract DeployProtocolAdapterTest is Test {
         new DeployProtocolAdapter().run({isTestDeployment: true, emergencyStopCaller: msg.sender});
     }
 
+    // forge-lint: disable-next-line(mixed-case-function)
     function tableNetworksTest_DeployProtocolAdapter_prod_deployment_succeeds_on_all_supported_networks(TestCase memory network)
         public
     {
