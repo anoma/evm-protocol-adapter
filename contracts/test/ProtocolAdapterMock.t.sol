@@ -76,8 +76,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
 
         vm.expectEmit(address(_mockPa));
-        emit IProtocolAdapter
-            .TransactionExecuted({tags: txn.actions.collectTags(), logicRefs: txn.actions.collectLogicRefs()});
+        emit IProtocolAdapter.TransactionExecuted({
+            tags: txn.actions.collectTags(), logicRefs: txn.actions.collectLogicRefs()
+        });
         _mockPa.execute(txn);
     }
 
@@ -98,8 +99,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         for (uint256 i = 0; i < actionCount; ++i) {
             vm.expectEmit(address(_mockPa));
-            emit IProtocolAdapter
-                .ActionExecuted({
+            emit IProtocolAdapter.ActionExecuted({
                 actionTreeRoot: txn.actions[i].collectTags().computeRoot(),
                 actionTagCount: complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT
             });
@@ -118,8 +118,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         Transaction memory txn = vm.transaction(_mockVerifier, resourceLists, aggregated);
 
         vm.expectEmit(address(_mockPa));
-        emit IProtocolAdapter
-            .ForwarderCallExecuted({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT});
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT
+        });
         _mockPa.execute(txn);
     }
 
@@ -134,8 +135,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         Transaction memory txn = vm.transaction(_mockVerifier, resourceLists, aggregated);
 
         vm.expectEmit(address(_mockPa));
-        emit IProtocolAdapter
-            .ForwarderCallExecuted({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT});
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT
+        });
 
         _mockPa.execute(txn);
     }
@@ -158,12 +160,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
         Transaction memory txn = vm.transaction(_mockVerifier, resourceLists, aggregated);
 
         vm.expectEmit(address(_mockPa));
-        emit IProtocolAdapter
-            .ForwarderCallExecuted({untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT});
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT
+        });
 
         vm.expectEmit(address(_mockPa));
-        emit IProtocolAdapter
-            .ForwarderCallExecuted({untrustedForwarder: address(fwd2), input: INPUT, output: EXPECTED_OUTPUT});
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(fwd2), input: INPUT, output: EXPECTED_OUTPUT
+        });
 
         _mockPa.execute(txn);
     }
@@ -288,7 +292,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         // Assign the proposed commitment tree root into the transaction.
         txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].instance.consumed.commitmentTreeRoot =
-            fakeRoot;
+        fakeRoot;
 
         vm.expectRevert(abi.encodeWithSelector(CommitmentTree.NonExistingRoot.selector, fakeRoot));
         _mockPa.execute(txn);
@@ -417,10 +421,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
     ) public {
         // Choose a random action whose resource count we will mutate.
         (
-                actionCount,
-                complianceUnitCount,
-                actionIndex, /* complianceIndex */
-            ) = _bindParameters(actionCount, complianceUnitCount, actionIndex, 0);
+            actionCount,
+            complianceUnitCount,
+            actionIndex, /* complianceIndex */
+        ) = _bindParameters(actionCount, complianceUnitCount, actionIndex, 0);
 
         // Take a fake compliance unit count.
         vm.assume(fakeComplianceCount != complianceUnitCount);
@@ -458,10 +462,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
     ) public {
         // Choose a random action whose resource count we will mutate.
         (
-                actionCount,
-                complianceUnitCount,
-                actionIndex, /* complianceIndex */
-            ) = _bindParameters(actionCount, complianceUnitCount, actionIndex, 0);
+            actionCount,
+            complianceUnitCount,
+            actionIndex, /* complianceIndex */
+        ) = _bindParameters(actionCount, complianceUnitCount, actionIndex, 0);
 
         // Take a fake action unit count.
         vm.assume(fakeLogicVerifierCount != (uint256(complianceUnitCount) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT));
@@ -599,9 +603,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     function testFuzz_execute_updates_root(uint8 actionCount, uint8 complianceUnitCount, bool aggregated) public {
         (
-                actionCount,
-                complianceUnitCount,/* actionIndex */, /* complianceIndex */
-            ) = _bindParameters(actionCount, complianceUnitCount, 0, 0);
+            actionCount,
+            complianceUnitCount,/* actionIndex */, /* complianceIndex */
+        ) = _bindParameters(actionCount, complianceUnitCount, 0, 0);
         bytes32 oldRoot = _mockPa.latestCommitmentTreeRoot();
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
@@ -623,9 +627,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         bool aggregated
     ) public {
         (
-                actionCount,
-                complianceUnitCount,/* actionIndex */, /* complianceIndex */
-            ) = _bindParameters(actionCount, complianceUnitCount, 0, 0);
+            actionCount,
+            complianceUnitCount,/* actionIndex */, /* complianceIndex */
+        ) = _bindParameters(actionCount, complianceUnitCount, 0, 0);
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
@@ -655,9 +659,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         bool aggregated
     ) public {
         (
-                actionCount,
-                complianceUnitCount,/* actionIndex */, /* complianceIndex */
-            ) = _bindParameters(actionCount, complianceUnitCount, 0, 0);
+            actionCount,
+            complianceUnitCount,/* actionIndex */, /* complianceIndex */
+        ) = _bindParameters(actionCount, complianceUnitCount, 0, 0);
         assertEq(_mockPa.nullifierCount(), 0);
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,

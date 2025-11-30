@@ -65,6 +65,11 @@ jobs:
         run: slither .
         id: slither
 
+      - name: Run Forge fmt
+        run: forge fmt --check
+        id: fmt
+        working-directory: ./contracts
+
       - name: Run Forge build
         run: forge build --sizes --ast
         working-directory: ./contracts
