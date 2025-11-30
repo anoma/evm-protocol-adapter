@@ -254,14 +254,14 @@ contract ProtocolAdapter is
         // Note that the order of the compliance units dictate the delta verifying key.
         updatedVars.tags[updatedVars.tagCounter] = tag;
 
-        // Populate an array containg all the logic references.
+        // Populate an array containing all the logic references.
         // This is used both for events and aggregation proofs.
         updatedVars.logicRefs[updatedVars.tagCounter++] = logicRef;
 
         // Transition the resource machine state.
         if (isConsumed) {
             // The function reverts if a repeating tag is added to the set.
-            // If the final nullifier stored in the action gets added to the set succesfully,
+            // If the final nullifier stored in the action gets added to the set successfully,
             // the compliance units partition the action.
             _addNullifier(tag);
         } else {
