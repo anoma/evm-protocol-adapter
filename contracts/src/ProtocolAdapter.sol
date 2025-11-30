@@ -365,7 +365,7 @@ contract ProtocolAdapter is
         if (updatedVars.isProofAggregated) {
             // Aggregate the compliance instance
             updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] =
-                input.instance;
+            input.instance;
         } else {
             // Verify the compliance proof.
             // slither-disable-next-line calls-loop
