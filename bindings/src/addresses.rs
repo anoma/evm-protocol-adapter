@@ -22,6 +22,19 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
             Arbitrum,
             address!("0x6d0A05E3535bd4D2C32AaD37FFB28fd0E1e528c3"),
         ),
+        (
+            BaseSepolia,
+            address!("0x6d0A05E3535bd4D2C32AaD37FFB28fd0E1e528c3"),
+        ),
+        (Base, address!("0x6d0A05E3535bd4D2C32AaD37FFB28fd0E1e528c3")),
+        (
+            OptimismSepolia,
+            address!("0x3a182dcCC17Dd68407cFbc9257fF88349F5153fd"),
+        ),
+        (
+            Optimism,
+            address!("0x6d0A05E3535bd4D2C32AaD37FFB28fd0E1e528c3"),
+        ),
     ])
 }
 
