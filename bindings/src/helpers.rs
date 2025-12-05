@@ -22,7 +22,7 @@ pub fn alchemy_url(chain: &NamedChain) -> AlchemyResult<Url> {
     format!(
         "https://{subdomain}.g.alchemy.com/v2/{api_key}",
         subdomain = alchemy_subdomain(chain)?,
-        api_key = env::var("API_KEY_ALCHEMY").map_err(|_| AlchemyError::ApiKeyEnvVarNotSet)?
+        api_key = env::var("ALCHEMY_API_KEY").map_err(|_| AlchemyError::ApiKeyEnvVarNotSet)?
     )
     .parse()
     .map_err(|_| AlchemyError::UrlParsingError)

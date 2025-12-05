@@ -77,7 +77,7 @@ jobs:
       - name: Run Forge tests
         run: forge test --gas-report
         env:
-          API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
         working-directory: ./contracts
 
   bindings:
@@ -85,7 +85,7 @@ jobs:
     runs-on: macos-latest
     needs: contracts
     env:
-      API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
+      ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
 
     steps:
       - name: Checkout repository
