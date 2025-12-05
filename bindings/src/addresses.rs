@@ -14,6 +14,10 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
             Mainnet,
             address!("0xf031F3c63400417ADA22B4D43b7bAa5E699548B1"),
         ),
+        (
+            BaseSepolia,
+            address!("0x6d0A05E3535bd4D2C32AaD37FFB28fd0E1e528c3"),
+        ),
     ])
 }
 
