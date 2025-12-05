@@ -193,12 +193,12 @@ For each chain, you want to deploy to, do the following:
 - [ ] Set the Alchemy RPC provider by exporting
 
   ```sh
-  export API_KEY_ALCHEMY=<KEY>
+  export ALCHEMY_API_KEY=<KEY>
   ```
 
 - [ ] Set the Etherscan key
   ```sh
-  export API_KEY_ETHERSCAN=<KEY>
+  export ETHERSCAN_API_KEY=<KEY>
   ```
 
 ### 2. Build the contracts
