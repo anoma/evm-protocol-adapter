@@ -1,6 +1,6 @@
 [package]
 name = "evm_protocol_adapter_bindings"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.8"
 edition = "2024"
 
 [dependencies]
@@ -8,7 +8,7 @@ arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.13.0", p
     "aggregation",
     "bonsai",
 ] }
-arm_tests = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.13.0", package = "arm-test-app"}
+arm_tests = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.13.0", package = "arm-test-app" }
 alloy = { version = "1.1.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.18"
 
