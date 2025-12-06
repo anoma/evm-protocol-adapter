@@ -66,6 +66,10 @@ interface IProtocolAdapter {
     /// @return version The semantic version number.
     function getProtocolAdapterVersion() external view returns (bytes32 version);
 
+    /// @notice Returns the RISC Zero verifier router associated with the protocol adapter.
+    /// @return verifierRouter The RISC Zero verifier router.
+    function getRiscZeroVerifierRouter() external view returns (address verifierRouter);
+
     /// @notice Returns the RISC Zero verifier selector associated with the protocol adapter.
     /// @return verifierSelector The RISC Zero verifier selector.
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);

@@ -187,6 +187,11 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
+    function getRiscZeroVerifierRouter() public view override returns (address verifierRouter) {
+        verifierRouter = address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER);
+    }
+
+    /// @inheritdoc IProtocolAdapter
     function getRiscZeroVerifierSelector() public view override returns (bytes4 verifierSelector) {
         verifierSelector = _RISC_ZERO_VERIFIER_SELECTOR;
     }

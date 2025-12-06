@@ -121,6 +121,14 @@ contract ProtocolAdapterTest is Test {
         _pa.emergencyStop();
     }
 
+    function test_getRiscZeroVerifierRouter_returns_the_router_address() public view {
+        assertEq(_pa.getRiscZeroVerifierRouter(), address(_router));
+    }
+
+    function test_getRiscZeroVerifierSelector_returns_the_selector() public view {
+        assertEq(_pa.getRiscZeroVerifierSelector(), _verifierSelector);
+    }
+
     function test_getProtocolAdapterVersion_returns_a_semantic_version() public view {
         bytes32 version = _pa.getProtocolAdapterVersion();
 
