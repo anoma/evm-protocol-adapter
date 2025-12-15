@@ -129,8 +129,8 @@ contract ProtocolAdapterTest is Test {
         assertEq(_pa.getRiscZeroVerifierSelector(), _verifierSelector);
     }
 
-    function test_getProtocolAdapterVersion_returns_a_semantic_version() public view {
-        bytes32 version = _pa.getProtocolAdapterVersion();
+    function test_getVersion_returns_a_semantic_version() public view {
+        bytes32 version = _pa.getVersion();
 
         assertEq(
             version.cmp("0.0.0"),

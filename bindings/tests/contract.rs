@@ -37,7 +37,7 @@ async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
     for chain in protocol_adapter_deployments_map().keys() {
         let actual_version: alloy::primitives::FixedBytes<32> = pa_instance(chain)
             .await
-            .getProtocolAdapterVersion()
+            .getVersion()
             .call()
             .await
             .expect("Couldn't get protocol adapter version");
