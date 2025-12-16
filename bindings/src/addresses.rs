@@ -14,6 +14,7 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
             BaseSepolia,
             address!("0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"),
         ),
+        (Base, address!("0x9ED43C229480659bF6B6607C46d7B96c6D760cBB")),
     ])
 }
 
