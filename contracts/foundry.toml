@@ -18,9 +18,9 @@ remappings = [
 cbor_metadata = false
 bytecode_hash = "none"
 
-solc = "0.8.30"
+solc = "0.8.31"
 auto_detect_solc = false
-evm_version = "prague"
+evm_version = "osaka"
 gas_reports = [
     "ProtocolAdapter",
     "CommitmentTreeMock",
