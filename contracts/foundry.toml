@@ -3,17 +3,6 @@
 fs_permissions = [{ access = "read", path = "./" }]
 
 
-auto_detect_remappings = false
-remappings = [
-    "forge-std/=lib/forge-std/src/",
-    "@openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
-    "openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",  # Used within `risc0-ethereum`
-    "@solady/=lib/solady/src",
-    "@risc0-ethereum/=lib/risc0-ethereum/contracts/src/",
-    "@elliptic-curve-solidity/=lib/elliptic-curve-solidity/",
-]
-
-
 # Deterministic deployment settings (https://book.getfoundry.sh/guides/deterministic-deployments-using-create2#configuring-your-foundrytoml)
 cbor_metadata = false
 bytecode_hash = "none"
@@ -30,13 +19,33 @@ gas_reports = [
 optimizer = true
 via_ir = true
 optimizer_runs = 10_000
-
-src = "src"
-libs = ["lib"]
-out = "out"
-script = "script"
-test = "test"
 allow_internal_expect_revert = true
+
+auto_detect_remappings = false
+
+remappings = [
+    "forge-std/=dependencies/forge-std-1.12.0/src/",
+    "@openzeppelin-contracts/=dependencies/@openzeppelin-contracts-5.5.0/",
+    "openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.5.0/",
+    "@risc0-ethereum/=dependencies/risc0-ethereum-3.0.1/contracts/src/",
+    "@elliptic-curve-solidity/=dependencies/elliptic-curve-solidity-0.2.5/",
+    "@solady/=dependencies/solady-0.1.26/src/",
+]
+libs = ["dependencies"]
+
+[dependencies]
+"forge-std" = "1.12.0"
+"@openzeppelin-contracts" = "5.5.0"
+"solady" = "0.1.26"
+risc0-risc0-ethereum = "3.0.1"
+"elliptic-curve-solidity" = { version = "0.2.5", git = "https://github.com/witnet/elliptic-curve-solidity", rev = "347547890840fd501809dfe0b855206407136ec0" }
+
+[soldeer]
+recursive_deps = true
+remappings_generate = false
+remappings_regenerate = true
+remappings_version = false
+remappings_prefix = ""
 
 [fuzz]
 runs = 1_000
