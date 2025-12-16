@@ -45,16 +45,6 @@ runs = 1_000
 fuzz = { runs = 1_000 }
 verbosity = 3
 
-[etherscan]
-mainnet = { key = "${ETHERSCAN_API_KEY}" }
-sepolia = { key = "${ETHERSCAN_API_KEY}" }
-arbitrum = { key = "${ETHERSCAN_API_KEY}" }
-arbitrum-sepolia = { key = "${ETHERSCAN_API_KEY}" }
-optimism = { key = "${ETHERSCAN_API_KEY}" }
-optimism-sepolia = { key = "${ETHERSCAN_API_KEY}" }
-base = { key = "${ETHERSCAN_API_KEY}" }
-base-sepolia = { key = "${ETHERSCAN_API_KEY}" }
-
 [rpc_endpoints]
 mainnet = "https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 sepolia = "https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
