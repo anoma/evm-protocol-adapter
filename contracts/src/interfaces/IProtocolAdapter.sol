@@ -62,10 +62,6 @@ interface IProtocolAdapter {
     /// @return isStopped Whether the protocol adapter has been stopped or not.
     function isEmergencyStopped() external view returns (bool isStopped);
 
-    /// @notice Returns the semantic version number of the protocol adapter.
-    /// @return version The semantic version number.
-    function getProtocolAdapterVersion() external view returns (bytes32 version);
-
     /// @notice Returns the RISC Zero verifier router associated with the protocol adapter.
     /// @return verifierRouter The RISC Zero verifier router.
     function getRiscZeroVerifierRouter() external view returns (address verifierRouter);

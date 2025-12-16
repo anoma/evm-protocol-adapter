@@ -9,6 +9,7 @@ import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol
 
 import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
+import {IVersion} from "./interfaces/IVersion.sol";
 
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {Aggregation} from "./libs/proving/Aggregation.sol";
@@ -29,6 +30,7 @@ import {Action, Transaction} from "./Types.sol";
 /// @custom:security-contact security@anoma.foundation
 contract ProtocolAdapter is
     IProtocolAdapter,
+    IVersion,
     ReentrancyGuardTransient,
     Ownable,
     Pausable,
@@ -177,6 +179,11 @@ contract ProtocolAdapter is
         _pause();
     }
 
+    /// @inheritdoc IVersion
+    function getVersion() external pure override returns (bytes32 version) {
+        version = Versioning._PROTOCOL_ADAPTER_VERSION;
+    }
+
     /// @inheritdoc IProtocolAdapter
     function isEmergencyStopped() public view override returns (bool isStopped) {
         bool risc0Paused = RiscZeroVerifierEmergencyStop(
@@ -194,11 +201,6 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function getRiscZeroVerifierSelector() public view override returns (bytes4 verifierSelector) {
         verifierSelector = _RISC_ZERO_VERIFIER_SELECTOR;
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function getProtocolAdapterVersion() public pure override returns (bytes32 version) {
-        version = Versioning._PROTOCOL_ADAPTER_VERSION;
     }
 
     /// @notice Processes a resource logic proof by
