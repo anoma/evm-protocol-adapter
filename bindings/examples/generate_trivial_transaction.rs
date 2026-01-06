@@ -5,7 +5,7 @@ use evm_protocol_adapter_bindings::conversion::to_evm_bin_file;
 use std::path::Path;
 use std::{env, process};
 
-extern crate dotenv;
+extern crate dotenvy;
 
 fn main() {
     // Collect command line arguments into a vector
@@ -32,7 +32,7 @@ fn main() {
         "Argument 3 must be a positive number indicating the number of compliance units in the transaction.",
     );
 
-    dotenv::dotenv().ok();
+    dotenvy::dotenv().ok();
 
     match env::var("BONSAI_API_URL") {
         Ok(url) => {

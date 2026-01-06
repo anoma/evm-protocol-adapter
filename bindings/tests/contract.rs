@@ -1,5 +1,5 @@
 #[cfg(test)]
-extern crate dotenv;
+extern crate dotenvy;
 
 use alloy::primitives::B256;
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
