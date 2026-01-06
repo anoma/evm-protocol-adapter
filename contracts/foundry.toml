@@ -37,14 +37,16 @@ out = "out"
 script = "script"
 test = "test"
 allow_internal_expect_revert = true
+ignored_warnings_from = [
+    "lib/solady/src/utils",             # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
+    "lib/risc0-ethereum/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
+]
+
 
 [fuzz]
 runs = 1_000
 
 [profile.ci]
-ignored_error_codes = [
-    9170, # Ignores 9170 warnings from `dependencies/risc0-ethereum-3.0.1/contracts/`
-]
 fuzz = { runs = 1_000 }
 verbosity = 3
 
