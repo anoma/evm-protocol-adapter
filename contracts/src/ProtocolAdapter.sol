@@ -203,6 +203,34 @@ contract ProtocolAdapter is
         verifierSelector = _RISC_ZERO_VERIFIER_SELECTOR;
     }
 
+    /// @notice Pure computation phase: validates and computes the next state without side effects.
+    /// @param isConsumed Whether the logic belongs to a consumed or created resource.
+    /// @param input The logic verifier input.
+    /// @param logicRefFromComplianceUnit The logic references as found in the corresponding compliance unit.
+    /// @param actionTreeRoot The action tree root.
+    /// @return tag The resource tag (nullifier or commitment).
+    /// @return logicRef The verified logic reference.
+    /// @return instance The logic instance for proof verification.
+    function _validateAndComputeLogicTransition(
+        bool isConsumed,
+        Logic.VerifierInput calldata input,
+        bytes32 logicRefFromComplianceUnit,
+        bytes32 actionTreeRoot
+    ) internal pure returns (bytes32 tag, bytes32 logicRef, Logic.Instance memory instance) {
+        // In this RM implementation the logicRef is the verifying key.
+        logicRef = input.verifyingKey;
+
+        // Check that the logic reference from the logic verifier input matches the expected reference from the
+        // compliance unit.
+        if (logicRef != logicRefFromComplianceUnit) {
+            revert LogicRefMismatch({expected: logicRefFromComplianceUnit, actual: logicRef});
+        }
+
+        tag = input.tag;
+        // Obtain the logic instance from the verifier input, action tree root, and consumed flag.
+        instance = input.toInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
+    }
+
     /// @notice Processes a resource logic proof by
     /// * checking that the logic reference matches the one with the corresponding tag in the compliance unit,
     /// * aggregating the logic instance OR verifying the RISC Zero logic proof,
@@ -227,43 +255,33 @@ contract ProtocolAdapter is
         bytes32 actionTreeRoot,
         InternalVariables memory vars
     ) internal returns (InternalVariables memory updatedVars) {
-        updatedVars = vars;
+        // Phase 1: Pure computation - validation and state calculation
+        (bytes32 tag, bytes32 logicRef, Logic.Instance memory instance) =
+            _validateAndComputeLogicTransition(isConsumed, input, logicRefFromComplianceUnit, actionTreeRoot);
 
-        // In this RM implementation the logicRef is the verifying key.
-        bytes32 logicRef = input.verifyingKey;
-
-        // Check that the logic reference from the logic verifier input matches the expected reference from the
-        // compliance unit.
-        if (logicRef != logicRefFromComplianceUnit) {
-            revert LogicRefMismatch({expected: logicRefFromComplianceUnit, actual: logicRef});
+        // Phase 2: Effects - proof verification
+        if (vars.isProofAggregated) {
+            // Aggregate the logic instance.
+            vars.logicInstances[vars.tagCounter] = instance;
+        } else {
+            // Verify the logic proof.
+            // slither-disable-next-line calls-loop
+            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                seal: input.proof, imageId: logicRef, journalDigest: sha256(instance.toJournal())
+            });
         }
 
-        {
-            // Obtain the logic instance from the verifier input, action tree root, and consumed flag.
-            Logic.Instance memory instance = input.toInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
-
-            if (updatedVars.isProofAggregated) {
-                // Aggregate the logic instance.
-                updatedVars.logicInstances[updatedVars.tagCounter] = instance;
-            } else {
-                // Verify the logic proof.
-                // slither-disable-next-line calls-loop
-                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                    seal: input.proof, imageId: logicRef, journalDigest: sha256(instance.toJournal())
-                });
-            }
-        }
-
+        // Phase 3: External interactions
         _executeForwarderCalls(input);
 
-        bytes32 tag = input.tag;
+        // Phase 4: State updates
         // Populate the tags array for use as a verification key for the delta proof.
         // Note that the order of the compliance units dictate the delta verifying key.
-        updatedVars.tags[updatedVars.tagCounter] = tag;
+        vars.tags[vars.tagCounter] = tag;
 
         // Populate an array containing all the logic references.
         // This is used both for events and aggregation proofs.
-        updatedVars.logicRefs[updatedVars.tagCounter++] = logicRef;
+        vars.logicRefs[vars.tagCounter++] = logicRef;
 
         // Transition the resource machine state.
         if (isConsumed) {
@@ -274,10 +292,13 @@ contract ProtocolAdapter is
         } else {
             // `_addCommitment` does not error if a repeating leaf is added to the tree.
             // Uniqueness of commitments is grated by the compliance circuit, assuming that nullifiers are unique.
-            updatedVars.latestCommitmentTreeRoot = _addCommitment(tag);
+            vars.latestCommitmentTreeRoot = _addCommitment(tag);
         }
 
+        // Phase 5: Event emission
         _emitAppDataBlobs(input);
+
+        updatedVars = vars;
     }
 
     /// @notice Processes forwarder calls by verifying and executing them.
@@ -313,42 +334,50 @@ contract ProtocolAdapter is
         emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
     }
 
+    /// @notice Payload type enumeration for event emission.
+    enum PayloadType {
+        Resource,
+        Discovery,
+        External,
+        Application
+    }
+
+    /// @notice Emits filtered blobs based on deletion criterion.
+    /// @param tag The resource tag.
+    /// @param payload The array of expirable blobs.
+    /// @param payloadType The type of payload being emitted.
+    function _emitFilteredBlobs(
+        bytes32 tag,
+        Logic.ExpirableBlob[] calldata payload,
+        PayloadType payloadType
+    ) private {
+        uint256 n = payload.length;
+        for (uint256 i = 0; i < n; ++i) {
+            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                bytes calldata blob = payload[i].blob;
+
+                if (payloadType == PayloadType.Resource) {
+                    emit ResourcePayload({tag: tag, index: i, blob: blob});
+                } else if (payloadType == PayloadType.Discovery) {
+                    emit DiscoveryPayload({tag: tag, index: i, blob: blob});
+                } else if (payloadType == PayloadType.External) {
+                    emit ExternalPayload({tag: tag, index: i, blob: blob});
+                } else {
+                    emit ApplicationPayload({tag: tag, index: i, blob: blob});
+                }
+            }
+        }
+    }
+
     /// @notice Emits app data blobs together with the associated resource tag based on their deletion criterion.
     /// @param input The logic verifier input of a resource making the call.
     function _emitAppDataBlobs(Logic.VerifierInput calldata input) internal {
         bytes32 tag = input.tag;
 
-        Logic.ExpirableBlob[] calldata payload = input.appData.resourcePayload;
-        uint256 n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ResourcePayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
-
-        payload = input.appData.discoveryPayload;
-        n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit DiscoveryPayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
-
-        payload = input.appData.externalPayload;
-        n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ExternalPayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
-
-        payload = input.appData.applicationPayload;
-        n = payload.length;
-        for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
-                emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
-            }
-        }
+        _emitFilteredBlobs(tag, input.appData.resourcePayload, PayloadType.Resource);
+        _emitFilteredBlobs(tag, input.appData.discoveryPayload, PayloadType.Discovery);
+        _emitFilteredBlobs(tag, input.appData.externalPayload, PayloadType.External);
+        _emitFilteredBlobs(tag, input.appData.applicationPayload, PayloadType.Application);
     }
 
     /// @notice Processes a resource machine compliance proof by
