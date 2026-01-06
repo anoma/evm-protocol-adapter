@@ -4,13 +4,13 @@ version = "1.0.0-rc.9"
 edition = "2024"
 
 [dependencies]
-arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.13.0", package = "arm", features = [
+arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v1.0.0", package = "arm", features = [
     "aggregation",
     "bonsai",
 ] }
-arm_tests = { git = "https://github.com/anoma/arm-risc0.git", tag = "v0.13.0", package = "arm-test-app" }
 alloy = { version = "1.3.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.24"
+arm_tests = { git = "https://github.com/anoma/arm-risc0.git", tag = "v1.0.0", package = "arm-test-app" }
 
 tokio = { version = "1.48", features = ["rt-multi-thread"] }
 serde = { version = "1.0.228", default-features = false }
