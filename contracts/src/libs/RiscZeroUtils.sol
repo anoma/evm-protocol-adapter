@@ -38,8 +38,8 @@ library RiscZeroUtils {
     function toJournal(Logic.Instance memory input) internal pure returns (bytes memory converted) {
         Logic.AppData memory appData = input.appData;
 
-        uint32 risc0BoolTrueLittleEndian = 0x01000000;
-        uint32 risc0BoolFalseLittleEndian = 0x00000000;
+        uint32 risc0BoolTrueLittleEndian = uint32(0x01000000);
+        uint32 risc0BoolFalseLittleEndian = uint32(0x00000000);
 
         converted = abi.encodePacked(
             input.tag,
