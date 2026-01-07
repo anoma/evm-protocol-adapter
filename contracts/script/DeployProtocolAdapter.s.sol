@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-import {LibString} from "@solady/utils/LibString.sol";
-
 import {Script} from "forge-std/Script.sol";
+import {RiscZeroVerifierRouter} from "risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 import {Versioning} from "../src/libs/Versioning.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";

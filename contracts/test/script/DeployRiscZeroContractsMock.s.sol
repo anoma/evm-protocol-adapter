@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-import {RiscZeroMockVerifier} from "@risc0-ethereum/test/RiscZeroMockVerifier.sol";
-
 import {Script} from "forge-std/Script.sol";
+import {RiscZeroVerifierEmergencyStop} from "risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
+import {RiscZeroVerifierRouter} from "risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {RiscZeroMockVerifier} from "risc0-ethereum/test/RiscZeroMockVerifier.sol";
 
 bytes4 constant _MOCK_VERIFIER_SELECTOR = bytes4(0xFFFFFFFF);
 

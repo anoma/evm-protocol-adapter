@@ -2,11 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {Strings} from "@openzeppelin-contracts/utils/Strings.sol";
-import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
-import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-
 import {Test, Vm, console} from "forge-std/Test.sol";
+import {RiscZeroGroth16Verifier} from "risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
+import {RiscZeroVerifierEmergencyStop} from "risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
+import {RiscZeroVerifierRouter} from "risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {Compliance} from "../src/libs/proving/Compliance.sol";
 import {Logic} from "../src/libs/proving/Logic.sol";

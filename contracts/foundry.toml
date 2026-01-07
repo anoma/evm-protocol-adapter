@@ -29,11 +29,11 @@ libs = ["dependencies"]
 auto_detect_remappings = false
 remappings = [
     "@openzeppelin-contracts/=dependencies/@openzeppelin-contracts-5.5.0/",
-    "@elliptic-curve-solidity/=dependencies/elliptic-curve-solidity-0.2.5/",
+    "elliptic-curve-solidity/=dependencies/elliptic-curve-solidity-0.2.5/",
     "forge-std/=dependencies/forge-std-1.14.0/src/",
     "openzeppelin/contracts/=dependencies/risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
-    "@risc0-ethereum/=dependencies/risc0-ethereum-3.0.1/contracts/src/",
-    "@solady/=dependencies/solady-0.1.26/src/",
+    "risc0-ethereum/=dependencies/risc0-ethereum-3.0.1/contracts/src/",
+    "solady/=dependencies/solady-0.1.26/src/",
 ]
 ignored_warnings_from = [
     "dependencies/risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated

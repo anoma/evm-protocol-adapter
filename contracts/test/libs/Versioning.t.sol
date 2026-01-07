@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {SemVerLib} from "@solady/utils/SemVerLib.sol";
-
 import {Test} from "forge-std/Test.sol";
+import {SemVerLib} from "solady/utils/SemVerLib.sol";
 
 import {Versioning} from "../../src/libs/Versioning.sol";
 

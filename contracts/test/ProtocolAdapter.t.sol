@@ -3,13 +3,11 @@ pragma solidity ^0.8.30;
 
 import {Ownable} from "@openzeppelin-contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
-
-import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
-import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-import {SemVerLib} from "@solady/utils/SemVerLib.sol";
-
 import {Test, Vm} from "forge-std/Test.sol";
+import {RiscZeroGroth16Verifier} from "risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
+import {RiscZeroVerifierEmergencyStop} from "risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
+import {RiscZeroVerifierRouter} from "risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {SemVerLib} from "solady/utils/SemVerLib.sol";
 
 import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";

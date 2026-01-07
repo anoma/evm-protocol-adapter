@@ -2,10 +2,9 @@
 pragma solidity ^0.8.30;
 
 import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
-import {RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-
 import {Test} from "forge-std/Test.sol";
+import {RiscZeroGroth16Verifier} from "risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
+import {RiscZeroVerifierRouter} from "risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {BlockTimeForwarder} from "../../src/examples/BlockTimeForwarder.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";

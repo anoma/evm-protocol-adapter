@@ -4,8 +4,8 @@ pragma solidity ^0.8.30;
 import {Ownable} from "@openzeppelin-contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
-import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {RiscZeroVerifierEmergencyStop} from "risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
+import {RiscZeroVerifierRouter} from "risc0-ethereum/RiscZeroVerifierRouter.sol";
 
 import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";

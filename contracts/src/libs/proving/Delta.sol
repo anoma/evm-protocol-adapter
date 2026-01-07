@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {EllipticCurve} from "@elliptic-curve-solidity/contracts/EllipticCurve.sol";
 import {ECDSA} from "@openzeppelin-contracts/utils/cryptography/ECDSA.sol";
-import {EfficientHashLib} from "@solady/utils/EfficientHashLib.sol";
+import {EllipticCurve} from "elliptic-curve-solidity/contracts/EllipticCurve.sol";
+import {EfficientHashLib} from "solady/utils/EfficientHashLib.sol";
 
 /// @title Delta
 /// @author Anoma Foundation, 2025

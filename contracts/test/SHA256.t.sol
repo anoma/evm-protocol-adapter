@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {EfficientHashLib} from "@solady/utils/EfficientHashLib.sol";
-
 import {Test} from "forge-std/Test.sol";
+import {EfficientHashLib} from "solady/utils/EfficientHashLib.sol";
 
 import {SHA256} from "../src/libs/SHA256.sol";
 

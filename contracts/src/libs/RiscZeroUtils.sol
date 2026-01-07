@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {reverseByteOrderUint32} from "@risc0-ethereum/Util.sol";
+import {reverseByteOrderUint32} from "risc0-ethereum/Util.sol";
 
 import {Aggregation} from "./proving/Aggregation.sol";
 import {Compliance} from "./proving/Compliance.sol";
