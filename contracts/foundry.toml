@@ -20,6 +20,11 @@ optimizer = true
 via_ir = true
 optimizer_runs = 10_000
 allow_internal_expect_revert = true
+
+src = "src"
+test = "test"
+out = "out"
+script = "script"
 libs = ["dependencies"]
 auto_detect_remappings = false
 remappings = [
