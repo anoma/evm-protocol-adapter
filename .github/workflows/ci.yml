@@ -26,7 +26,7 @@ jobs:
         run: forge --version
 
       - name: Run Forge Lint
-        run: forge lint --deny-warnings
+        run: forge lint --deny warnings
         working-directory: ./contracts
 
       - name: Install Bun
@@ -63,12 +63,13 @@ jobs:
 
       - name: Run Slither
         run: slither .
+        working-directory: ./contracts
         id: slither
 
       - name: Run Forge fmt
         run: forge fmt --check
-        id: fmt
         working-directory: ./contracts
+        id: fmt
 
       - name: Run Forge build
         run: forge build --sizes --ast
