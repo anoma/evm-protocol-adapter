@@ -18,9 +18,9 @@ remappings = [
 cbor_metadata = false
 bytecode_hash = "none"
 
-solc = "0.8.30"
+solc = "0.8.33"
 auto_detect_solc = false
-evm_version = "prague"
+evm_version = "osaka"
 gas_reports = [
     "ProtocolAdapter",
     "CommitmentTreeMock",
@@ -37,6 +37,11 @@ out = "out"
 script = "script"
 test = "test"
 allow_internal_expect_revert = true
+ignored_warnings_from = [
+    "lib/solady/src/utils",             # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
+    "lib/risc0-ethereum/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
+]
+
 
 [fuzz]
 runs = 1_000

@@ -17,7 +17,7 @@ pub enum AlchemyError {
 
 /// Returns the Alchemy RPC URL for the given chain.
 pub fn alchemy_url(chain: &NamedChain) -> AlchemyResult<Url> {
-    dotenv::dotenv().ok();
+    dotenvy::dotenv().ok();
 
     format!(
         "https://{subdomain}.g.alchemy.com/v2/{api_key}",
