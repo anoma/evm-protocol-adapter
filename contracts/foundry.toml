@@ -44,7 +44,7 @@ ignored_warnings_from = [
 "@openzeppelin-contracts" = "5.5.0"
 "forge-std" = "1.14.0"
 "elliptic-curve-solidity" = { version = "0.2.5", git = "https://github.com/witnet/elliptic-curve-solidity", rev = "347547890840fd501809dfe0b855206407136ec0" }
-risc0-ethereum = { version = "3.0.1", git = "https://github.com/risc0/risc0-ethereum.git", tag = "v3.0.1" }
+"risc0-ethereum" = { version = "3.0.1", git = "https://github.com/risc0/risc0-ethereum.git", tag = "v3.0.1" }
 "solady" = "0.1.26"
 
 [soldeer]
