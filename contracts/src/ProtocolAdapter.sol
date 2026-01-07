@@ -346,11 +346,7 @@ contract ProtocolAdapter is
     /// @param tag The resource tag.
     /// @param payload The array of expirable blobs.
     /// @param payloadType The type of payload being emitted.
-    function _emitFilteredBlobs(
-        bytes32 tag,
-        Logic.ExpirableBlob[] calldata payload,
-        PayloadType payloadType
-    ) private {
+    function _emitFilteredBlobs(bytes32 tag, Logic.ExpirableBlob[] calldata payload, PayloadType payloadType) private {
         uint256 n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
