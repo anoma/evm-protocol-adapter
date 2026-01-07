@@ -7,6 +7,17 @@ fn main() {
         panic!("Forge not found. Visit https://getfoundry.sh/ to install it.");
     }
 
+    // Run `forge soldeer install` in the `../contracts` directory.
+    let status = Command::new("forge")
+        .current_dir("../contracts")
+        .args(["soldeer", "install"])
+        .status()
+        .expect("failed to fetch dependencies with forge soldeer");
+
+    if !status.success() {
+        panic!("forge soldeer install command failed");
+    }
+
     // Run `forge build --ast` in the `../contracts` directory.
     let status = Command::new("forge")
         .current_dir("../contracts")
