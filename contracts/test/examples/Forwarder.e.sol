@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Address} from "@openzeppelin-contracts/utils/Address.sol";
+import {Address} from "@openzeppelin-contracts-5.5.0/utils/Address.sol";
 
 import {ForwarderTargetExample} from "./ForwarderTarget.e.sol";
 

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {EllipticCurve} from "elliptic-curve-solidity/contracts/EllipticCurve.sol";
-import {Test} from "forge-std/Test.sol";
+import {EllipticCurve} from "elliptic-curve-solidity-0.2.5/contracts/EllipticCurve.sol";
+import {Test} from "forge-std-1.14.0/src/Test.sol";
 
 import {Delta} from "../../src/libs/proving/Delta.sol";
 import {Transaction} from "../../src/Types.sol";

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {MerkleTree as OzMerkleTree} from "@openzeppelin-contracts/utils/structs/MerkleTree.sol";
-import {Test} from "forge-std/Test.sol";
+import {MerkleTree as OzMerkleTree} from "@openzeppelin-contracts-5.5.0/utils/structs/MerkleTree.sol";
+import {Test} from "forge-std-1.14.0/src/Test.sol";
 import {MerkleTree} from "./../../src/libs/MerkleTree.sol";
 import {SHA256} from "./../../src/libs/SHA256.sol";
 import {MerkleTreeExample} from "./../examples/MerkleTree.e.sol";

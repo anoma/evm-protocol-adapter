@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Time} from "@openzeppelin-contracts/utils/types/Time.sol";
+import {Time} from "@openzeppelin-contracts-5.5.0/utils/types/Time.sol";
 
 import {IForwarder} from "../interfaces/IForwarder.sol";
 
