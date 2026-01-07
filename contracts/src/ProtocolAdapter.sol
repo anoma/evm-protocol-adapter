@@ -298,7 +298,7 @@ contract ProtocolAdapter is
         // Phase 5: Event emission
         _emitAppDataBlobs(input);
 
-        updatedVars = vars;
+        return vars;
     }
 
     /// @notice Processes forwarder calls by verifying and executing them.
