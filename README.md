@@ -63,9 +63,17 @@ foundryup
 
 ### Usage
 
-#### Build
+#### Installation
 
 Change the directory to the `contracts` folder with `cd contracts` and run
+
+```sh
+forge soldeer install
+```
+
+#### Build
+
+To compile the contracts, run
 
 ```sh
 forge build

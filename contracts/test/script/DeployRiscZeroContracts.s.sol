@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ControlID, RiscZeroGroth16Verifier} from "@risc0-ethereum/groth16/RiscZeroGroth16Verifier.sol";
-import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
-
-import {Script} from "forge-std/Script.sol";
+import {Script} from "forge-std-1.14.0/src/Script.sol";
+import {
+    ControlID,
+    RiscZeroGroth16Verifier
+} from "risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
+import {RiscZeroVerifierEmergencyStop} from "risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";
+import {RiscZeroVerifierRouter} from "risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 contract DeployRiscZeroContracts is Script {
     /// @notice Deploys the RISC Zero router, verifier, and emergency stop contract of the current RISC Zero version.

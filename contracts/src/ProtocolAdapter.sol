@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Ownable} from "@openzeppelin-contracts/access/Ownable.sol";
-import {Pausable} from "@openzeppelin-contracts/utils/Pausable.sol";
-import {ReentrancyGuardTransient} from "@openzeppelin-contracts/utils/ReentrancyGuardTransient.sol";
-import {RiscZeroVerifierEmergencyStop} from "@risc0-ethereum/RiscZeroVerifierEmergencyStop.sol";
-import {RiscZeroVerifierRouter} from "@risc0-ethereum/RiscZeroVerifierRouter.sol";
+import {Ownable} from "@openzeppelin-contracts-5.5.0/access/Ownable.sol";
+import {Pausable} from "@openzeppelin-contracts-5.5.0/utils/Pausable.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.5.0/utils/ReentrancyGuardTransient.sol";
+import {RiscZeroVerifierRouter} from "risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
@@ -186,9 +185,8 @@ contract ProtocolAdapter is
 
     /// @inheritdoc IProtocolAdapter
     function isEmergencyStopped() public view override returns (bool isStopped) {
-        bool risc0Paused = RiscZeroVerifierEmergencyStop(
-                address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))
-            ).paused();
+        bool risc0Paused =
+            Pausable(address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))).paused();
 
         isStopped = paused() || risc0Paused;
     }

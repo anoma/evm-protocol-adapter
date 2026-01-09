@@ -3,17 +3,6 @@
 fs_permissions = [{ access = "read", path = "./" }]
 
 
-auto_detect_remappings = false
-remappings = [
-    "forge-std/=lib/forge-std/src/",
-    "@openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/",
-    "openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",  # Used within `risc0-ethereum`
-    "@solady/=lib/solady/src",
-    "@risc0-ethereum/=lib/risc0-ethereum/contracts/src/",
-    "@elliptic-curve-solidity/=lib/elliptic-curve-solidity/",
-]
-
-
 # Deterministic deployment settings (https://book.getfoundry.sh/guides/deterministic-deployments-using-create2#configuring-your-foundrytoml)
 cbor_metadata = false
 bytecode_hash = "none"
@@ -30,18 +19,39 @@ gas_reports = [
 optimizer = true
 via_ir = true
 optimizer_runs = 10_000
+allow_internal_expect_revert = true
 
 src = "src"
-libs = ["lib"]
+test = "test"
 out = "out"
 script = "script"
-test = "test"
-allow_internal_expect_revert = true
+libs = ["dependencies"]
+auto_detect_remappings = false
+remappings = [
+    "@openzeppelin-contracts-5.5.0/=dependencies/@openzeppelin-contracts-5.5.0/",
+    "elliptic-curve-solidity-0.2.5/=dependencies/elliptic-curve-solidity-0.2.5/",
+    "forge-std-1.14.0/=dependencies/forge-std-1.14.0/",
+    "openzeppelin/contracts/=dependencies/risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
+    "risc0-ethereum-3.0.1/=dependencies/risc0-ethereum-3.0.1/",
+    "solady-0.1.26/=dependencies/solady-0.1.26/",
+]
 ignored_warnings_from = [
-    "lib/solady/src/utils",             # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
-    "lib/risc0-ethereum/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
+    "dependencies/risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
+    "dependencies/solady-0.1.26/src/utils",            # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
 
+[dependencies]
+"@openzeppelin-contracts" = "5.5.0"
+"forge-std" = "1.14.0"
+"elliptic-curve-solidity" = { version = "0.2.5", git = "https://github.com/witnet/elliptic-curve-solidity", rev = "347547890840fd501809dfe0b855206407136ec0" }
+"risc0-ethereum" = { version = "3.0.1", git = "https://github.com/risc0/risc0-ethereum.git", tag = "v3.0.1" }
+"solady" = "0.1.26"
+
+[soldeer]
+recursive_deps = true
+remappings_location = "config"
+remappings_generate = true
+remappings_version = true
 
 [fuzz]
 runs = 1_000
