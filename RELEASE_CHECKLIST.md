@@ -57,12 +57,12 @@ We distinguish between three release cases:
 - [ ] Set the Alchemy RPC provider by exporting
 
   ```sh
-  export API_KEY_ALCHEMY=<KEY>
+  export ALCHEMY_API_KEY=<KEY>
   ```
 
 - [ ] Set the Etherscan key
   ```sh
-  export API_KEY_ETHERSCAN=<KEY>
+  export ETHERSCAN_API_KEY=<KEY>
   ```
 
 ### 2. Bump the Version
