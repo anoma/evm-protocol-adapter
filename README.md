@@ -203,8 +203,24 @@ To test the build, run
 cargo test
 ```
 
-To print a test transaction with aggregated proofs run
+#### Example Transactions
+
+To generate test transactions with aggregated and non-aggregated proofs, build the executable with
 
 ```sh
-cargo test -- conversion::tests::generate_tx_agg --exact --show-output --ignored
+cargo build --package evm_protocol_adapter_bindings --example generate_trivial_transaction
 ```
+
+and run it with, e.g.,
+
+```sh
+./target/debug/examples/generate_trivial_transaction true 1 1
+```
+
+from the project root, where
+
+- the first argument is whether to generate aggregate proofs or not,
+- the second argument is the number of actions to generate, and
+- the last argument is the number of compliance units per actions, each of which contains two resources.
+
+Compliance units contain one ephemeral consumed resource and one created resource, both having a quantity of one and the trivial resource logic always returning true.
