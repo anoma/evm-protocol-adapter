@@ -13,7 +13,6 @@ This package is structured as follows:
 
 ```
 .
-├── build.rs
 ├── Cargo.toml
 ├── examples
 ├── README.md
