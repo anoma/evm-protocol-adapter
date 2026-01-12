@@ -1,7 +1,8 @@
-use arm_risc0::aggregation::AggregationStrategy;
-use arm_risc0::proving_system::ProofType;
-use evm_protocol_adapter_bindings::contract::ProtocolAdapter;
-use evm_protocol_adapter_bindings::conversion::to_evm_bin_file;
+use anoma_pa_evm_bindings_test::conversion::to_evm_bin_file;
+use anoma_pa_evm_bindings_test::generated::protocol_adapter::ProtocolAdapter;
+use anoma_rm_risc0_test_0112::aggregation::AggregationStrategy;
+use anoma_rm_risc0_test_0112::proving_system::ProofType;
+use anoma_rm_risc0_test_app_test_0112::generate_test_transaction;
 use std::path::Path;
 use std::{env, process};
 
@@ -66,7 +67,7 @@ fn main() {
         ProofType::Groth16
     };
 
-    let mut tx = arm_tests::generate_test_transaction(n_actions, n_cus, proof_type);
+    let mut tx = generate_test_transaction(n_actions, n_cus, proof_type);
 
     if aggregate_proofs {
         tx.aggregate_with_strategy(AggregationStrategy::Batch, ProofType::Groth16)

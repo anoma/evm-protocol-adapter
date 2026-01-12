@@ -1,22 +1,23 @@
 [package]
-name = "evm_protocol_adapter_bindings"
+description = "Anoma EVM protocol adapter bindings and contract deployments."
+name = "anoma-pa-evm-bindings-test"
 version = "1.0.0"
-edition = "2024"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
 
 [dependencies]
-arm_risc0 = { git = "https://github.com/anoma/arm-risc0.git", tag = "v1.0.0", package = "arm", features = [
-    "aggregation",
-    "bonsai",
-] }
 alloy = { version = "1.3.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.24"
-arm_tests = { git = "https://github.com/anoma/arm-risc0.git", tag = "v1.0.0", package = "arm-test-app" }
-
 tokio = { version = "1.48", features = ["rt-multi-thread"] }
 serde = { version = "1.0.228", default-features = false }
 thiserror = "2.0.17"
+anoma-rm-risc0-test-0112 = "1.0.0"
+anoma-rm-risc0-test-app-test-0112 = "1.0.0"
+
 dotenvy = { version = "0.15.7", features = ["cli"] }
 
-[features]
+
+#[features]
 # These features are enabled to generate test transactions and are not required for using the library.
-arm_risc0_dev = ["arm_risc0/bonsai"]
+#arm_risc0_dev = ["arm_risc0/bonsai"]

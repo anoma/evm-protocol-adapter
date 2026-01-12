@@ -37,7 +37,7 @@ remappings = [
 ]
 ignored_warnings_from = [
     "dependencies/risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
-    "dependencies/solady-0.1.26/src/utils",            # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
+    "dependencies/solady-0.1.26/src/utils", # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
 
 [dependencies]
