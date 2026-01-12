@@ -11,7 +11,7 @@ chains.
 
 This mono repo is structured as follows:
 
-```sh
+```
 .
 ├── audits
 ├── bindings

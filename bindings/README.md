@@ -2,13 +2,16 @@
 
 # EVM Protocol Adapter Bindings
 
-This package provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs) library.
+This package provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust
+and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and
+exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs)
+library.
 
 ## Project Structure
 
 This package is structured as follows:
 
-```sh
+```
 .
 ├── build.rs
 ├── Cargo.toml
@@ -18,9 +21,11 @@ This package is structured as follows:
 └── tests
 ```
 
-The `build.rs` script builds the `../contracts` dependency and requires [Foundry](https://github.com/foundry-rs/foundry).
+The `build.rs` script builds the `../contracts` dependency and
+requires [Foundry](https://github.com/foundry-rs/foundry).
 
-The `src` folder contains methods and bindings for type conversion and instantiation of the deployed protocol adapter contracts.
+The `src` folder contains methods and bindings for type conversion and instantiation of the deployed protocol adapter
+contracts.
 
 The `examples` folder contains a binary to generate test transactions.
 
@@ -68,8 +73,10 @@ cargo test
 
 To generate test transactions with aggregated and non-aggregated proofs, build the executable with
 
+<!-- TODO! -->
+
 ```sh
-cargo build --package evm_protocol_adapter_bindings --example generate_trivial_transaction
+cargo build --package anoma-pa-evm-bindings --example generate_trivial_transaction
 ```
 
 and run it with, e.g.,
@@ -84,4 +91,5 @@ from the project root, where
 - the second argument is the number of actions to generate, and
 - the last argument is the number of compliance units per actions, each of which contains two resources.
 
-Compliance units contain one ephemeral consumed resource and one created resource, both having a quantity of one and the trivial resource logic always returning true.
+Compliance units contain one ephemeral consumed resource and one created resource, both having a quantity of one and the
+trivial resource logic always returning true.
