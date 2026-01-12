@@ -1,4 +1,4 @@
-[![CI](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml)
+[![License](https://img.shields.io/crates/l/anoma-pa-evm-bindings)](https://github.com/anoma/evm-protocol-adapter/blob/main/LICENSE) [![CI](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml)
 
 # EVM Protocol Adapter
 
@@ -6,12 +6,31 @@ The protocol adapter contract written in Solidity enabling Anoma Resource Machin
 
 ## Prerequisites
 
-Get an up-to-date version of [Foundry](https://github.com/foundry-rs/foundry) with
+1. Get an up-to-date version of [Foundry](https://github.com/foundry-rs/foundry) with
 
-```sh
-curl -L https://foundry.paradigm.xyz | sh
-foundryup
-```
+   ```sh
+   curl -L https://foundry.paradigm.xyz | sh
+   foundryup
+   ```
+
+2. Optionally, to lint the contracts, install [solhint](https://github.com/protofire/solhint) using a JS package manager such as [Bun](https://bun.com/) with
+
+   ```sh
+   curl -fsSL https://bun.sh/install | sh
+   bun install
+   ```
+
+3. Optionally, for static analysis, install [Slither](https://github.com/crytic/slither) with
+
+   ```sh
+   python3 -m pip install slither-analyzer
+   ```
+
+   or brew
+
+   ```sh
+   brew install slither-analyzer
+   ```
 
 ## Usage
 
@@ -60,9 +79,21 @@ As a prerequisite, install the
 To run the linter and static analyzer, run
 
 ```sh
-npx solhint --config .solhint.json 'src/**/*.sol' && \
-npx solhint --config .solhint.other.json 'script/**/*.sol' 'test/**/*.sol' && \
+bunx solhint --config .solhint.json 'src/**/*.sol' && \
+bunx solhint --config .solhint.other.json 'script/**/*.sol' 'test/**/*.sol' && \
 slither .
+```
+
+#### Rust Bindings
+
+To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forge/reference/bind/) documentation), run
+
+```sh
+forge bind \
+  --select '^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$' \
+  --bindings-path ../bindings/src/generated/ \
+  --module \
+  --overwrite
 ```
 
 #### Documentation

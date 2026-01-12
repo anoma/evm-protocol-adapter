@@ -49,8 +49,6 @@ The `examples` folder contains a binary to generate test transactions.
    rzup install cargo-risczero 3.0.3
    ```
 
-4. Install the contract prerequisites from [../contracts/README.md](../contracts/README.md#prerequisites).
-
 ## Usage
 
 ### Build
@@ -72,8 +70,6 @@ cargo test
 ### Example Transactions
 
 To generate test transactions with aggregated and non-aggregated proofs, build the executable with
-
-<!-- TODO! -->
 
 ```sh
 cargo build --package anoma-pa-evm-bindings --example generate_trivial_transaction

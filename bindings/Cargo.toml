@@ -10,8 +10,8 @@ license.workspace = true
 alloy = { version = "1.4.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.27"
 anoma-rm-risc0-test-0112 = { version = "1.0.0", features = [
-    "bonsai",
-    "aggregation",
+  "bonsai",
+  "aggregation",
 ] }
 anoma-rm-risc0-test-app-test-0112 = { version = "1.0.0", features = ["bonsai"] }
 dotenvy = { version = "0.15.7", features = ["cli"] }

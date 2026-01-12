@@ -1,6 +1,4 @@
-[![CI](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml)
-[![Crates.io](https://img.shields.io/crates/v/anoma-pa-evm-bindings)](https://crates.io/crates/anoma-pa-evm-bindings)
-[![License](https://img.shields.io/crates/l/anoma-pa-evm-bindings)](https://github.com/anoma/evm-protocol-adapter/blob/main/LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/anoma-pa-evm-bindings)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/crates/l/anoma-pa-evm-bindings)](https://github.com/anoma/evm-protocol-adapter/blob/main/LICENSE) [![CI](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml)
 
 # EVM Protocol Adapter
 
@@ -37,22 +35,22 @@ Our software undergoes regular [audits](./audits/):
 
 1. Informal Systems
 
-    - Company Website: https://informal.systems
-    - Commit
-      ID: [fc69013e7bc2db1bddf6ef6936e8bf03d14f2963](https://github.com/anoma/evm-protocol-adapter/tree/fc69013e7bc2db1bddf6ef6936e8bf03d14f2963)
-    - Started: 2025-10-13
-    - Finished: 2025-10-31
-    - Last revised: 2025-11-07
+   - Company Website: https://informal.systems
+   - Commit
+     ID: [fc69013e7bc2db1bddf6ef6936e8bf03d14f2963](https://github.com/anoma/evm-protocol-adapter/tree/fc69013e7bc2db1bddf6ef6936e8bf03d14f2963)
+   - Started: 2025-10-13
+   - Finished: 2025-10-31
+   - Last revised: 2025-11-07
 
    [📄 Audit Report (pdf)](./audits/2025-11-24_Informal_Systems_RISC_Zero_RM_&_EVM_Protocol_Adapter.pdf)
 
 2. Nethermind
 
-    - Company Website: https://www.nethermind.io/nethermind-security
-    - Commit
-      ID: [fee4f47050689b82473e9a3198e7a2065becb3fb](https://github.com/anoma/evm-protocol-adapter/tree/fee4f47050689b82473e9a3198e7a2065becb3fb)
-    - Started: 2025-10-07
-    - Finished: 2025-11-13
+   - Company Website: https://www.nethermind.io/nethermind-security
+   - Commit
+     ID: [fee4f47050689b82473e9a3198e7a2065becb3fb](https://github.com/anoma/evm-protocol-adapter/tree/fee4f47050689b82473e9a3198e7a2065becb3fb)
+   - Started: 2025-10-07
+   - Finished: 2025-11-13
 
    [📄 Audit Report (pdf)](./audits/2025-11-13_Nethermind_RISC_Zero_RM_&_EVM_Protocol_Adapter.pdf)
 
@@ -69,9 +67,3 @@ The following benchmark shows the transaction execution costs without and with p
 protocol adapter implementation:
 
 <img src=".assets/Benchmark.png" width=67% alt="Protocol adapter benchmark.">
-
-# TODO
-
-```sh
-forge bind --select '^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$' --bindings-path ../bindings/src/generated/ --module --overwrite
-```
