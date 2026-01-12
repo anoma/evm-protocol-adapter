@@ -984,20 +984,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anoma-pa-evm-bindings-test"
-version = "1.0.0"
-dependencies = [
- "alloy",
- "alloy-chains",
- "anoma-rm-risc0-test-0112",
- "anoma-rm-risc0-test-app-test-0112",
- "dotenvy",
- "serde",
- "thiserror 2.0.17",
- "tokio",
-]
-
-[[package]]
 name = "anoma-rm-risc0-gadgets-test-0112"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6400,6 +6386,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "test-anoma-pa-evm-bindings"
+version = "1.0.0"
+dependencies = [
+ "alloy",
+ "alloy-chains",
+ "anoma-rm-risc0-test-0112",
+ "anoma-rm-risc0-test-app-test-0112",
+ "dotenvy",
+ "serde",
+ "thiserror 2.0.17",
+ "tokio",
 ]
 
 [[package]]
