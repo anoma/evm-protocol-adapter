@@ -4,6 +4,7 @@ out/
 target/
 deps/
 dependencies/
+docs/
 node_modules/
 .vscode/*
 .idea/
