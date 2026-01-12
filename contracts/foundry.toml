@@ -1,12 +1,5 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
 [profile.default]
-fs_permissions = [{ access = "read", path = "./" }]
-
-
-# Deterministic deployment settings (https://book.getfoundry.sh/guides/deterministic-deployments-using-create2#configuring-your-foundrytoml)
-cbor_metadata = false
-bytecode_hash = "none"
-
 solc = "0.8.33"
 auto_detect_solc = false
 evm_version = "osaka"
@@ -20,6 +13,10 @@ optimizer = true
 via_ir = true
 optimizer_runs = 10_000
 allow_internal_expect_revert = true
+# Deterministic deployment settings (https://book.getfoundry.sh/guides/deterministic-deployments-using-create2#configuring-your-foundrytoml)
+cbor_metadata = false
+bytecode_hash = "none"
+fs_permissions = [{ access = "read", path = "./" }]
 
 src = "src"
 test = "test"
