@@ -16,8 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-        with:
-          submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -103,12 +101,6 @@ jobs:
 
       - name: Show Rust version
         run: rustc --version
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-
-      - name: Show Foundry version
-        run: forge --version
 
       - name: Restore dependencies cache
         uses: actions/cache@v4
