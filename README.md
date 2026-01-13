@@ -14,20 +14,19 @@ This mono repo is structured as follows:
 ├── audits
 ├── bindings
 ├── contracts
-├── Cargo.lock
+├── example-tx-generation
 ├── Cargo.toml
 ├── LICENSE
 ├── README.md
 └── RELEASE_CHECKLIST.md
 ```
 
-The [contracts](./contracts/) folder contains the contracts written in [Solidity](https://soliditylang.org/) as well
-as [Foundry forge](https://book.getfoundry.sh/forge/) tests and deploy scripts.
+The [contracts](./contracts/) folder contains the contracts written in [Solidity](https://soliditylang.org/) as well as [Foundry forge](https://book.getfoundry.sh/forge/) tests and deploy scripts.
 
-The [bindings](./bindings/) folder provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust
-and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and
-exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs)
+The [bindings](./bindings/) folder provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs)
 library.
+
+The [example-tx-generation](./example-tx-generation) folder contains a binary to generate example transactions with aggregated and non-aggregated proofs as `.bin` files for testing purposes, which can be used for testing purposes, e.g., in [./contracts/test/examples/transactions/](./contracts/test/examples/transactions/).
 
 ## Audits
 

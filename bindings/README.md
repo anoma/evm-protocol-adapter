@@ -2,9 +2,7 @@
 
 # EVM Protocol Adapter Bindings
 
-This package provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust
-and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and
-exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs)
+This package provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs)
 library.
 
 ## Project Structure
@@ -14,19 +12,10 @@ This package is structured as follows:
 ```
 .
 ├── Cargo.toml
-├── examples
 ├── README.md
 ├── src
 └── tests
 ```
-
-The `build.rs` script builds the `../contracts` dependency and
-requires [Foundry](https://github.com/foundry-rs/foundry).
-
-The `src` folder contains methods and bindings for type conversion and instantiation of the deployed protocol adapter
-contracts.
-
-The `examples` folder contains a binary to generate test transactions.
 
 ## Prerequisites
 
