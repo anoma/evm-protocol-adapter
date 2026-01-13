@@ -1,6 +1,6 @@
 [![Crates.io](https://img.shields.io/crates/v/test-anoma-pa-evm-bindings)](https://crates.io/crates/test-anoma-pa-evm-bindings) [![License](https://img.shields.io/crates/l/test-anoma-pa-evm-bindings)](https://github.com/anoma/pa-evm/blob/main/LICENSE) [![Bindings Tests](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml)
 
-# EVM Protocol Adapter Bindings
+# Anoma EVM Protocol Adapter Bindings
 
 This package provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs)
 library.

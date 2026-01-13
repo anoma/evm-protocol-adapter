@@ -2,7 +2,7 @@
 
 # Example Transaction Generation
 
-This package provides a [Rust](https://www.rust-lang.org/) executable to generate example transactions with aggregated and non-aggregated proofs that can be submitted to the Anoma EVM Protocol Adapter.
+This package provides a [Rust](https://www.rust-lang.org/) executable to generate example transactions with aggregated and non-aggregated proofs that can be executed with the Anoma EVM Protocol Adapter or be used for testing purposes, e.g., in [./contracts/test/examples/transactions/](./contracts/test/examples/transactions/).
 
 ## Prerequisites
 
@@ -44,7 +44,7 @@ The executable expects three input arguments:
 
 Compliance units contain one ephemeral consumed resource and one created resource, both having a quantity of one and the trivial resource logic always returning true.
 
-To generate an example transaction `.bin` file with, e.g., aggregated proofs and one action containg one compliance unit, run
+To generate an example transaction `.bin` file with, e.g., aggregated proofs and one action containing one compliance unit, run
 
 ```sh
 ./target/release/example-tx-generation true 1 1
