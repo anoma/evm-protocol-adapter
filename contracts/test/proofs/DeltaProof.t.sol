@@ -2,14 +2,13 @@
 pragma solidity ^0.8.30;
 
 import {EllipticCurve} from "elliptic-curve-solidity-0.2.5/contracts/EllipticCurve.sol";
-import {Test} from "forge-std-1.14.0/src/Test.sol";
+import {Test, Vm} from "forge-std-1.14.0/src/Test.sol";
 
 import {Delta} from "../../src/libs/proving/Delta.sol";
 import {Transaction} from "../../src/Types.sol";
 
-import {TransactionExample} from "../examples/transactions/Transaction.e.sol";
-
 import {DeltaGen} from "../libs/DeltaGen.sol";
+import {Parsing} from "../libs/Parsing.sol";
 import {SignMagnitude} from "../libs/SignMagnitude.sol";
 import {TxGen} from "../libs/TxGen.sol";
 
@@ -27,6 +26,7 @@ library DeltaFuzzing {
 }
 
 contract DeltaProofTest is Test {
+    using Parsing for Vm;
     using SignMagnitude for SignMagnitude.Number;
     using Delta for Delta.Point;
     using DeltaGen for DeltaGen.InstanceInputs[];
@@ -334,6 +334,19 @@ contract DeltaProofTest is Test {
         lhs.add(zero);
     }
 
+    function test_verify_example_delta_proof() public view {
+        Transaction memory txn = vm.parseTransaction("test/examples/transactions/test_tx_reg_01_01.bin");
+
+        DeltaFuzzing.verify({
+            proof: txn.deltaProof,
+            instance: Delta.Point({
+                x: uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaX),
+                y: uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaY)
+            }),
+            verifyingKey: Delta.computeVerifyingKey(TxGen.collectTags(txn.actions))
+        });
+    }
+
     function testFuzz_add_adding_zero_from_the_left_produces_a_curve_point(uint32 k) public pure {
         Delta.Point memory zero = Delta.zero();
 
@@ -393,19 +406,6 @@ contract DeltaProofTest is Test {
     function test_zero_is_not_on_the_curve() public pure {
         Delta.Point memory p2 = Delta.zero();
         assertFalse(EllipticCurve.isOnCurve({_x: p2.x, _y: p2.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
-    }
-
-    function test_verify_example_delta_proof() public pure {
-        Transaction memory txn = TransactionExample.transaction();
-
-        DeltaFuzzing.verify({
-            proof: txn.deltaProof,
-            instance: Delta.Point({
-                x: uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaX),
-                y: uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaY)
-            }),
-            verifyingKey: Delta.computeVerifyingKey(TxGen.collectTags(txn.actions))
-        });
     }
 
     function _getBoundedDeltaInstances(uint256 kind, DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs)
