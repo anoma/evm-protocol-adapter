@@ -1,0 +1,49 @@
+name: Bindings Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  bindings:
+    name: Bindings
+    runs-on: macos-latest
+    env:
+      ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Show Rust version
+        run: rustc --version
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            target
+          key: rust-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: rust-
+
+      - name: Run rustfmt
+        run: cargo fmt -- --check
+
+      - name: Build Bindings
+        run: cargo build
+
+      - name: Run clippy
+        run: cargo clippy -- -Dwarnings
+
+      - name: Run Clippy on test
+        run: cargo clippy --tests -- -Dwarnings
+
+      - name: Run Tests
+        run: cargo test
