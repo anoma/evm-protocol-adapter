@@ -22,5 +22,5 @@ library Aggregation {
 
     /// @notice The aggregation verifying key.
     /// @dev The key is fixed as long as the aggregation circuit binary is not changed.
-    bytes32 internal constant _VERIFYING_KEY = 0x6bd39fd7673afba6dbde9e024875ebce86b93fb49a28b7d0fde61abdf2b5f2bf;
+    bytes32 internal constant _VERIFYING_KEY = 0x213b3f40d7c113c1a012072fcd791fa44bf5166a2300121630bd3228e2b00827;
 }
