@@ -1,4 +1,4 @@
-[![Crates.io](https://img.shields.io/crates/v/test-anoma-pa-evm-bindings)](https://crates.io/crates/test-anoma-pa-evm-bindings) [![License](https://img.shields.io/crates/l/test-anoma-pa-evm-bindings)](https://github.com/anoma/pa-evm/blob/main/LICENSE) [![Bindings Tests](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml)
+[![Crates.io](https://img.shields.io/crates/v/anoma-pa-evm-bindings)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/crates/l/anoma-pa-evm-bindings)](https://github.com/anoma/pa-evm/blob/main/LICENSE) [![Bindings Tests](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml)
 
 # Anoma EVM Protocol Adapter Bindings
 

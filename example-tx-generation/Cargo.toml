@@ -10,5 +10,5 @@ edition.workspace = true
 [dependencies]
 anoma-rm-risc0 = { workspace = true }
 anoma-rm-risc0-test-app = { workspace = true }
-test-anoma-pa-evm-bindings = { workspace = true }
+anoma-pa-evm-bindings = { workspace = true }
 dotenvy = { workspace = true }

@@ -4,11 +4,11 @@ extern crate dotenvy;
 use alloy::primitives::B256;
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy_chains::NamedChain;
-use test_anoma_pa_evm_bindings::addresses::protocol_adapter_deployments_map;
-use test_anoma_pa_evm_bindings::contract::protocol_adapter;
-use test_anoma_pa_evm_bindings::generated::protocol_adapter;
-use test_anoma_pa_evm_bindings::generated::versioning_lib_external;
-use test_anoma_pa_evm_bindings::helpers::alchemy_url;
+use anoma_pa_evm_bindings::addresses::protocol_adapter_deployments_map;
+use anoma_pa_evm_bindings::contract::protocol_adapter;
+use anoma_pa_evm_bindings::generated::protocol_adapter;
+use anoma_pa_evm_bindings::generated::versioning_lib_external;
+use anoma_pa_evm_bindings::helpers::alchemy_url;
 
 #[tokio::test]
 async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
