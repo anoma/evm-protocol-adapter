@@ -4,18 +4,6 @@
 
 This package provides a [Rust](https://www.rust-lang.org/) executable to generate example transactions with aggregated and non-aggregated proofs that can be submitted to the Anoma EVM Protocol Adapter.
 
-## Project Structure
-
-This package is structured as follows:
-
-```
-.
-├── Cargo.toml
-├── README.md
-└── src
-    └── main.rs
-```
-
 ## Prerequisites
 
 1. Get an up-to-date version of [Rust](https://www.rust-lang.org/) with

@@ -1,4 +1,4 @@
-[![Crates.io](https://img.shields.io/crates/v/anoma-pa-evm-bindings)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/crates/l/anoma-pa-evm-bindings)](https://github.com/anoma/evm-protocol-adapter/blob/main/LICENSE) [![CI](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/test-anoma-pa-evm-bindings)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/crates/l/test-anoma-pa-evm-bindings)](https://choosealicense.com/licenses/mit/) [![CI](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml)
 
 # EVM Protocol Adapter
 
@@ -7,7 +7,7 @@ chains.
 
 ## Project Structure
 
-This mono repo is structured as follows:
+This monorepo is structured as follows:
 
 ```
 .
@@ -15,8 +15,8 @@ This mono repo is structured as follows:
 ├── bindings
 ├── contracts
 ├── example-tx-generation
+├── Cargo.lock
 ├── Cargo.toml
-├── LICENSE
 ├── README.md
 └── RELEASE_CHECKLIST.md
 ```

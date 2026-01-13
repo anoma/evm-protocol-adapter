@@ -1,6 +1,6 @@
 [package]
 name = "example-tx-generation"
-description = "Generate example transactions consuming and creating resources with the trivial resource logic."
+description = "Example transaction generation for testing purposes."
 keywords.workspace = true
 authors.workspace = true
 license.workspace = true
@@ -12,4 +12,3 @@ anoma-rm-risc0 = { workspace = true }
 anoma-rm-risc0-test-app = { workspace = true }
 test-anoma-pa-evm-bindings = { workspace = true }
 dotenvy = { workspace = true }
-

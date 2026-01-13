@@ -5,18 +5,6 @@
 This package provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs)
 library.
 
-## Project Structure
-
-This package is structured as follows:
-
-```
-.
-├── Cargo.toml
-├── README.md
-├── src
-└── tests
-```
-
 ## Prerequisites
 
 1. Get an up-to-date version of [Rust](https://www.rust-lang.org/) with
