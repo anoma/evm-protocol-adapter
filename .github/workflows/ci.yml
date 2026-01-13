@@ -83,8 +83,14 @@ jobs:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
         working-directory: ./contracts
 
-      - name: Run Forge bind
-        run: forge bind --select "^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$" --bindings-path ../bindings/src/generated/ --module --overwrite
+      - name: Check that bindings are up-to-date
+        run: |
+          forge bind \
+            --select '^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$' \
+            --bindings-path ../bindings/src/generated/ \
+            --module \
+            --overwrite && \
+            git status --porcelain
         working-directory: ./contracts
 
   bindings:
