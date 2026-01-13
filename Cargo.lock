@@ -984,28 +984,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "anoma-rm-risc0-gadgets-test-0112"
+name = "anoma-rm-risc0"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97e465f006fb85fbca3cdbd1cf08d99019b0fce30d1b9864dde3f0acf072dd99"
-dependencies = [
- "aes-gcm",
- "alloy-primitives",
- "alloy-sol-types",
- "anoma-rm-risc0-test-0112",
- "bincode",
- "hex",
- "k256",
- "rand 0.8.5",
- "serde",
- "zeroize",
-]
-
-[[package]]
-name = "anoma-rm-risc0-test-0112"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1db08fb56a5f8b7e4b3fb53ee897bbbcdb290e22aa47dbb4d823c353962cb7b"
+checksum = "26e987cb8962ddb8e72b43a32aadfb36c2d9abe9829c91d7b97fa742b3a1b998"
 dependencies = [
  "bincode",
  "bytemuck",
@@ -1021,13 +1003,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "anoma-rm-risc0-test-app-test-0112"
+name = "anoma-rm-risc0-gadgets"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "193ce2a167a548cea42d6ff130c6b41fcd4f71e2caa5c40f244d2a2cba041110"
+checksum = "1c126d90b10b9be4663490e80cc5309fb7612e2ed914e32aaca0a9fe516ebfe1"
 dependencies = [
- "anoma-rm-risc0-test-0112",
- "anoma-rm-risc0-test-witness-test-0112",
+ "aes-gcm",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "anoma-rm-risc0",
+ "bincode",
+ "hex",
+ "k256",
+ "rand 0.8.5",
+ "serde",
+ "zeroize",
+]
+
+[[package]]
+name = "anoma-rm-risc0-test-app"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "894ddf576f0dc0f109e94769d6f139244cc26c14746fe3c8d3a1c28a0e44bb71"
+dependencies = [
+ "anoma-rm-risc0",
+ "anoma-rm-risc0-test-witness",
  "hex",
  "k256",
  "lazy_static",
@@ -1035,13 +1035,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "anoma-rm-risc0-test-witness-test-0112"
+name = "anoma-rm-risc0-test-witness"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf9f30407146c8252dd2181355552e16fb7275f8864820305423cf37ea1487ec"
+checksum = "5bcbf7acfdc781fbb93c2eed3779aadae3f433ebdff8cfaff361d39cc674c44c"
 dependencies = [
- "anoma-rm-risc0-gadgets-test-0112",
- "anoma-rm-risc0-test-0112",
+ "anoma-rm-risc0",
+ "anoma-rm-risc0-gadgets",
  "k256",
  "serde",
 ]
@@ -6394,8 +6394,8 @@ version = "1.0.0"
 dependencies = [
  "alloy",
  "alloy-chains",
- "anoma-rm-risc0-test-0112",
- "anoma-rm-risc0-test-app-test-0112",
+ "anoma-rm-risc0",
+ "anoma-rm-risc0-test-app",
  "dotenvy",
  "serde",
  "thiserror 2.0.17",
