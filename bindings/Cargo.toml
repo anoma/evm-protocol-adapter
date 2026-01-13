@@ -1,10 +1,12 @@
 [package]
 name = "test-anoma-pa-evm-bindings"
-version = "1.0.0"
+version = "1.0.1"
 description = "The Anoma EVM protocol adapter contract bindings and deployments."
-edition.workspace = true
+keywords.workspace = true
 authors.workspace = true
 license.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [dependencies]
 alloy = { version = "1.4.0", features = ["full", "eip712", "node-bindings"] }
