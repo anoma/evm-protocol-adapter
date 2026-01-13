@@ -21,3 +21,4 @@ contracts/broadcast/*/31337/
 .history
 *.nockma
 *.bkp
+*.zip
