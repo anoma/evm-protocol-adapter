@@ -83,6 +83,10 @@ jobs:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
         working-directory: ./contracts
 
+      - name: Run Forge bind
+        run: forge bind --select "^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$" --bindings-path ../bindings/src/generated/ --module --overwrite
+        working-directory: ./contracts
+
   bindings:
     name: Bindings
     runs-on: macos-latest
