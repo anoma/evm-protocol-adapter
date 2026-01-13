@@ -2892,6 +2892,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-tx-generation"
+version = "0.0.0"
+dependencies = [
+ "anoma-rm-risc0",
+ "anoma-rm-risc0-test-app",
+ "dotenvy",
+ "test-anoma-pa-evm-bindings",
+]
+
+[[package]]
 name = "fallible-iterator"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6395,7 +6405,6 @@ dependencies = [
  "alloy",
  "alloy-chains",
  "anoma-rm-risc0",
- "anoma-rm-risc0-test-app",
  "dotenvy",
  "serde",
  "thiserror 2.0.17",

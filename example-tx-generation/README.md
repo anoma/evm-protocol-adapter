@@ -1,11 +1,8 @@
 [![Crates.io](https://img.shields.io/crates/v/anoma-pa-evm-bindings)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/crates/l/anoma-pa-evm-bindings)](https://github.com/anoma/evm-protocol-adapter/blob/main/LICENSE) [![CI](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml)
 
-# EVM Protocol Adapter Bindings
+# Example Transaction Generation
 
-This package provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust
-and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and
-exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs)
-library.
+This package provides a [Rust](https://www.rust-lang.org/) executable to generate example transactions with aggregated and non-aggregated proofs that can be submitted to the Anoma EVM Protocol Adapter.
 
 ## Project Structure
 
@@ -14,19 +11,10 @@ This package is structured as follows:
 ```
 .
 ├── Cargo.toml
-├── examples
 ├── README.md
-├── src
-└── tests
+└── src
+    └── main.rs
 ```
-
-The `build.rs` script builds the `../contracts` dependency and
-requires [Foundry](https://github.com/foundry-rs/foundry).
-
-The `src` folder contains methods and bindings for type conversion and instantiation of the deployed protocol adapter
-contracts.
-
-The `examples` folder contains a binary to generate test transactions.
 
 ## Prerequisites
 
@@ -52,16 +40,26 @@ The `examples` folder contains a binary to generate test transactions.
 
 ### Build
 
-Run
+From the project root run
 
 ```sh
-cargo build
+cargo build --release --package example-tx-generation
 ```
 
-### Test
+### Generate an Example Transaction
 
-To test the build, run
+The executable expects three input arguments:
+
+1. Whether to generate aggregate proofs or not.
+2. The number of actions to generate.
+3. The number of compliance units per action, each of which contains two resources.
+
+Compliance units contain one ephemeral consumed resource and one created resource, both having a quantity of one and the trivial resource logic always returning true.
+
+To generate an example transaction `.bin` file with, e.g., aggregated proofs and one action containg one compliance unit, run
 
 ```sh
-cargo test
+./target/release/example-tx-generation true 1 1
 ```
+
+from the project root.

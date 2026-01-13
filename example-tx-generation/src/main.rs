@@ -1,13 +1,17 @@
 use anoma_rm_risc0::aggregation::AggregationStrategy;
 use anoma_rm_risc0::proving_system::ProofType;
 use anoma_rm_risc0_test_app::generate_test_transaction;
-use std::path::Path;
 use std::{env, process};
 use test_anoma_pa_evm_bindings::conversion::to_evm_bin_file;
 use test_anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter;
 
 extern crate dotenvy;
 
+/// A program generating example transactions consuming and creating resources with the trivial resource logic as `.bin` files.
+/// The program expects three input arguments:
+/// 1. Whether to generate aggregate proofs or not.
+/// 2. The number of actions to generate.
+/// 3. The number of compliance units per action, each of which contains two resources.
 fn main() {
     // Collect command line arguments into a vector
     let args: Vec<String> = env::args().collect();
@@ -49,15 +53,7 @@ fn main() {
         "Generating {tx_type}. transaction with {n_actions} actions and {n_cus} compliance units."
     );
 
-    let bindings_path = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let project_root = bindings_path.parent().expect("Failed to get project root");
-
-    let path = format!(
-        "{project_root}/contracts/test/examples/transactions/test_tx_{tx_type}_{n_actions:02}_{n_cus:02}.bin",
-        project_root = project_root
-            .to_str()
-            .expect("Failed to convert project root")
-    );
+    let path = format!("test_tx_{tx_type}_{n_actions:02}_{n_cus:02}.bin",);
 
     println!("Writing to file: {path:?}");
 
