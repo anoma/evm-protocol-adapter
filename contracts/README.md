@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/crates/l/anoma-pa-evm-bindings)](https://github.com/anoma/evm-protocol-adapter/blob/main/LICENSE) [![CI](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/anoma/evm-protocol-adapter/blob/main/LICENSE) [![Contracts Tests](https://github.com/anoma/evm-protocol-adapter/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/contracts.yml)
 
 # EVM Protocol Adapter
 

@@ -1,4 +1,4 @@
-name: Bindings Tests
+name: Bindings
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  bindings:
-    name: Bindings
+  tests:
+    name: Tests
     runs-on: macos-latest
     env:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}

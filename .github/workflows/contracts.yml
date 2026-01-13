@@ -1,4 +1,4 @@
-name: Contracts Tests
+name: Contracts
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  contracts:
-    name: Contracts
+  tests:
+    name: Tests
     runs-on: macos-latest
     env:
       FOUNDRY_PROFILE: ci

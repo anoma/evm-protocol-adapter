@@ -1,4 +1,4 @@
-[![Crates.io](https://img.shields.io/crates/v/test-anoma-pa-evm-bindings)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/crates/l/test-anoma-pa-evm-bindings)](https://choosealicense.com/licenses/mit/) [![CI](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/test-anoma-pa-evm-bindings)](https://crates.io/crates/test-anoma-pa-evm-bindings) [![License](https://img.shields.io/crates/l/test-anoma-pa-evm-bindings)](https://choosealicense.com/licenses/mit/) [![Contracts Tests](https://github.com/anoma/evm-protocol-adapter/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/contracts.yml) [![Bindings Tests](https://github.com/anoma/evm-protocol-adapter/actions/workflows/bindings.yml/badge.svg)](https://github.com/anoma/evm-protocol-adapter/actions/workflows/bindings.yml)
 
 # EVM Protocol Adapter
 
