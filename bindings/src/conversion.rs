@@ -1,18 +1,18 @@
 use alloy::primitives::{B256, Bytes};
 use alloy::sol_types::SolValue;
-use anoma_rm_risc0_test_0112::action::Action;
-use anoma_rm_risc0_test_0112::compliance::ComplianceInstance;
-use anoma_rm_risc0_test_0112::compliance_unit::ComplianceUnit;
-use anoma_rm_risc0_test_0112::logic_instance::{AppData, ExpirableBlob};
-use anoma_rm_risc0_test_0112::logic_proof::LogicVerifierInputs;
-use anoma_rm_risc0_test_0112::proving_system::encode_seal;
-use anoma_rm_risc0_test_0112::transaction::{Delta as ArmDelta, Transaction};
-use anoma_rm_risc0_test_0112::utils::words_to_bytes;
+use anoma_rm_risc0::action::Action;
+use anoma_rm_risc0::compliance::ComplianceInstance;
+use anoma_rm_risc0::compliance_unit::ComplianceUnit;
+use anoma_rm_risc0::logic_instance::{AppData, ExpirableBlob};
+use anoma_rm_risc0::logic_proof::LogicVerifierInputs;
+use anoma_rm_risc0::proving_system::encode_seal;
+use anoma_rm_risc0::transaction::{Delta as ArmDelta, Transaction};
+use anoma_rm_risc0::utils::words_to_bytes;
 
 use crate::error::{BindingsError, BindingsResult};
-use crate::generated::protocol_adapter;
+use crate::generated::protocol_adapter::{Compliance, Logic, ProtocolAdapter};
 
-impl From<ExpirableBlob> for protocol_adapter::Logic::ExpirableBlob {
+impl From<ExpirableBlob> for Logic::ExpirableBlob {
     fn from(expirable_blob: ExpirableBlob) -> Self {
         Self {
             blob: words_to_bytes(&expirable_blob.blob).to_vec().into(),
@@ -21,34 +21,34 @@ impl From<ExpirableBlob> for protocol_adapter::Logic::ExpirableBlob {
     }
 }
 
-impl From<AppData> for protocol_adapter::Logic::AppData {
+impl From<AppData> for Logic::AppData {
     fn from(app_data: AppData) -> Self {
         Self {
             discoveryPayload: app_data
                 .discovery_payload
                 .into_iter()
-                .map(protocol_adapter::Logic::ExpirableBlob::from)
+                .map(Logic::ExpirableBlob::from)
                 .collect(),
             resourcePayload: app_data
                 .resource_payload
                 .into_iter()
-                .map(protocol_adapter::Logic::ExpirableBlob::from)
+                .map(Logic::ExpirableBlob::from)
                 .collect(),
             externalPayload: app_data
                 .external_payload
                 .into_iter()
-                .map(protocol_adapter::Logic::ExpirableBlob::from)
+                .map(Logic::ExpirableBlob::from)
                 .collect(),
             applicationPayload: app_data
                 .application_payload
                 .into_iter()
-                .map(protocol_adapter::Logic::ExpirableBlob::from)
+                .map(Logic::ExpirableBlob::from)
                 .collect(),
         }
     }
 }
 
-impl From<LogicVerifierInputs> for protocol_adapter::Logic::VerifierInput {
+impl From<LogicVerifierInputs> for Logic::VerifierInput {
     fn from(logic_verifier_inputs: LogicVerifierInputs) -> Self {
         Self {
             tag: B256::from_slice(logic_verifier_inputs.tag.as_bytes()),
@@ -62,17 +62,17 @@ impl From<LogicVerifierInputs> for protocol_adapter::Logic::VerifierInput {
     }
 }
 
-impl From<ComplianceInstance> for protocol_adapter::Compliance::Instance {
+impl From<ComplianceInstance> for Compliance::Instance {
     fn from(instance: ComplianceInstance) -> Self {
         Self {
-            consumed: protocol_adapter::Compliance::ConsumedRefs {
+            consumed: Compliance::ConsumedRefs {
                 nullifier: B256::from_slice(instance.consumed_nullifier.as_bytes()),
                 logicRef: B256::from_slice(instance.consumed_logic_ref.as_bytes()),
                 commitmentTreeRoot: B256::from_slice(
                     instance.consumed_commitment_tree_root.as_bytes(),
                 ),
             },
-            created: protocol_adapter::Compliance::CreatedRefs {
+            created: Compliance::CreatedRefs {
                 commitment: B256::from_slice(instance.created_commitment.as_bytes()),
                 logicRef: B256::from_slice(instance.created_logic_ref.as_bytes()),
             },
@@ -82,7 +82,7 @@ impl From<ComplianceInstance> for protocol_adapter::Compliance::Instance {
     }
 }
 
-impl From<ComplianceUnit> for protocol_adapter::Compliance::VerifierInput {
+impl From<ComplianceUnit> for Compliance::VerifierInput {
     fn from(compliance_unit: ComplianceUnit) -> Self {
         Self {
             proof: match &compliance_unit.clone().proof {
@@ -94,7 +94,7 @@ impl From<ComplianceUnit> for protocol_adapter::Compliance::VerifierInput {
     }
 }
 
-impl From<Action> for protocol_adapter::ProtocolAdapter::Action {
+impl From<Action> for ProtocolAdapter::Action {
     fn from(action: Action) -> Self {
         Self {
             logicVerifierInputs: action
@@ -111,7 +111,7 @@ impl From<Action> for protocol_adapter::ProtocolAdapter::Action {
     }
 }
 
-impl From<Transaction> for protocol_adapter::ProtocolAdapter::Transaction {
+impl From<Transaction> for ProtocolAdapter::Transaction {
     fn from(tx: Transaction) -> Self {
         let delta_proof = match &tx.delta_proof {
             ArmDelta::Witness(_) => panic!("Unbalanced Transactions cannot be converted"),
@@ -123,7 +123,7 @@ impl From<Transaction> for protocol_adapter::ProtocolAdapter::Transaction {
                 .clone()
                 .actions
                 .into_iter()
-                .map(protocol_adapter::ProtocolAdapter::Action::from)
+                .map(ProtocolAdapter::Action::from)
                 .collect(),
             deltaProof: Bytes::from(delta_proof),
             aggregationProof: match tx.get_raw_aggregation_proof() {
@@ -134,10 +134,7 @@ impl From<Transaction> for protocol_adapter::ProtocolAdapter::Transaction {
     }
 }
 
-pub fn to_evm_bin_file(
-    tx: protocol_adapter::ProtocolAdapter::Transaction,
-    path: &str,
-) -> BindingsResult<()> {
+pub fn to_evm_bin_file(tx: ProtocolAdapter::Transaction, path: &str) -> BindingsResult<()> {
     std::fs::write(path, tx.abi_encode()).map_err(BindingsError::FilesystemWriteError)?;
 
     Ok(())

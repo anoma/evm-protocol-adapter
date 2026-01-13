@@ -1,6 +1,6 @@
-use anoma_rm_risc0_test_0112::aggregation::AggregationStrategy;
-use anoma_rm_risc0_test_0112::proving_system::ProofType;
-use anoma_rm_risc0_test_app_test_0112::generate_test_transaction;
+use anoma_rm_risc0::aggregation::AggregationStrategy;
+use anoma_rm_risc0::proving_system::ProofType;
+use anoma_rm_risc0_test_app::generate_test_transaction;
 use std::path::Path;
 use std::{env, process};
 use test_anoma_pa_evm_bindings::conversion::to_evm_bin_file;
