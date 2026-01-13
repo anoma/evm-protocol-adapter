@@ -154,7 +154,7 @@ For each chain, you want to deploy to, do the following:
   - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the protocol adapter version number and
   - [ ] `bindings/A.0.0` tag, where `A` is the last `MAJOR` version incremented by 1.
 
-- [ ] Create new [GH releases](https://github.com/anoma/evm-protocol-adapter/releases) for both packages.
+- [ ] Create new [GH releases](https://github.com/anoma/pa-evm/releases) for both packages.
 
 ## Deploying an existing Protocol Adapter Version to new Chains
 
@@ -278,7 +278,7 @@ For each **new** chain, you want to deploy to, do the following:
 
 - [ ] After merging, create a new `bindings/A.B.0` tag, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
-- [ ] Create a new [GH release](https://github.com/anoma/evm-protocol-adapter/releases).
+- [ ] Create a new [GH release](https://github.com/anoma/pa-evm/releases).
 
 ## Maintaining the Bindings
 
@@ -288,4 +288,4 @@ For each **new** chain, you want to deploy to, do the following:
 
 - [ ] After merging, create a new `bindings/A.B.C` tag, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers, respectively and `C` is the last `PATCH` version number incremented by 1.
 
-- [ ] Create a new [GH release](https://github.com/anoma/evm-protocol-adapter/releases).
+- [ ] Create a new [GH release](https://github.com/anoma/pa-evm/releases).

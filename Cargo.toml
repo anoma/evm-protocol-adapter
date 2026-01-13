@@ -6,7 +6,7 @@ members = ["bindings", "example-tx-generation"]
 keywords = ["anoma", "evm", "protocol-adapter"]
 authors = ["Anoma Foundation"]
 license = "MIT"
-repository = "https://github.com/anoma/evm-protocol-adapter"
+repository = "https://github.com/anoma/pa-evm"
 homepage = "https://anoma.net/"
 edition = "2024"
 
