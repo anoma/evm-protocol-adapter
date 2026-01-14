@@ -35,7 +35,7 @@ We distinguish between three release cases:
 
 - [ ] Check that the dependencies are up-to-date, have no known vulnerabilities in the dependencies
 
-- [ ] Check that the forge bindings are up-to-date by regenerating them with
+- [ ] Check that the Rust bindings are up-to-date by regenerating them with
 
   ```sh
   forge bind \
@@ -215,7 +215,7 @@ For each chain, you want to deploy to, do the following:
 
 - [ ] Check that the dependencies are up-to-date, have no known vulnerabilities in the dependencies
 
-- [ ] Check that the forge bindings are up-to-date by regenerating them with
+- [ ] Check that the Rust bindings are up-to-date by regenerating them with
 
   ```sh
   forge bind \
