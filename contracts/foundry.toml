@@ -16,12 +16,13 @@ allow_internal_expect_revert = true
 # Deterministic deployment settings (https://book.getfoundry.sh/guides/deterministic-deployments-using-create2#configuring-your-foundrytoml)
 cbor_metadata = false
 bytecode_hash = "none"
-fs_permissions = [{ access = "read", path = "./" }]
+
 
 src = "src"
 test = "test"
 out = "out"
 script = "script"
+fs_permissions = [{ access = "read", path = "./" }]
 libs = ["dependencies"]
 auto_detect_remappings = false
 remappings = [
