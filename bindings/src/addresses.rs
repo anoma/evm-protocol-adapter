@@ -1,10 +1,13 @@
-use alloy::primitives::Address;
+use alloy::primitives::{Address, address};
 use alloy_chains::NamedChain;
 use std::collections::HashMap;
 
 /// Returns a map of protocol adapter deployments for all supported chains.
 pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
-    HashMap::from([])
+    HashMap::from([(
+        NamedChain::Sepolia,
+        address!("0x15AA6295Aa7Be63D4be1C97c952DbBB7083787CB"),
+    )])
 }
 
 /// Returns the address of the protocol adapter deployed on the provided chain, if any.
