@@ -45,7 +45,7 @@ We distinguish between three release cases:
     --overwrite
   ```
 
-  and running `git status` which should shown no changes.
+  and running `git status`, which should shown no changes.
 
 - [ ] Checkout a new git branch branching off from `main`.
 
@@ -223,7 +223,7 @@ For each chain, you want to deploy to, do the following:
     --overwrite
   ```
 
-  and running `git status` which should shown no changes.
+  and running `git status`, which should shown no changes.
 
 - [ ] Checkout a new git branch branching off from `main`.
 
