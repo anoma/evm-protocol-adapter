@@ -33,7 +33,7 @@ We distinguish between three release cases:
   forge soldeer install
   ```
 
-- [ ] Check that they dependencies are up-to-date, have no known vulnerabilities in the dependencies
+- [ ] Check that the dependencies are up-to-date, have no known vulnerabilities in the dependencies
 
 - [ ] Check that the forge bindings are up-to-date by regenerating them with
 
@@ -211,7 +211,7 @@ For each chain, you want to deploy to, do the following:
   forge soldeer install
   ```
 
-- [ ] Check that they dependencies are up-to-date, have no known vulnerabilities in the dependencies
+- [ ] Check that the dependencies are up-to-date, have no known vulnerabilities in the dependencies
 
 - [ ] Check that the forge bindings are up-to-date by regenerating them with
 
