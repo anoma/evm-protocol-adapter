@@ -1,0 +1,16 @@
+[package]
+publish = false
+name = "example-tx-generation"
+version = "0.0.0"
+description = "Example transaction generation for testing purposes."
+keywords.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+edition.workspace = true
+
+[dependencies]
+anoma-rm-risc0 = { workspace = true }
+anoma-rm-risc0-test-app = { workspace = true }
+anoma-pa-evm-bindings = { workspace = true }
+dotenvy = { workspace = true }

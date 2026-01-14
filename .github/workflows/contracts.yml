@@ -1,4 +1,4 @@
-name: Tests
+name: Contracts
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  contracts:
-    name: Contracts
+  tests:
+    name: Tests
     runs-on: macos-latest
     env:
       FOUNDRY_PROFILE: ci
@@ -16,8 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-        with:
-          submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -85,50 +83,16 @@ jobs:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
         working-directory: ./contracts
 
-  bindings:
-    name: Bindings
-    runs-on: macos-latest
-    needs: contracts
-    env:
-      ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      - name: Show Rust version
-        run: rustc --version
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-
-      - name: Show Foundry version
-        run: forge --version
-
-      - name: Restore dependencies cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            target
-          key: rust-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: rust-
-
-      - name: Run rustfmt
-        run: cargo fmt -- --check
-
-      - name: Build Bindings
-        run: cargo build
-
-      - name: Run clippy
-        run: cargo clippy -- -Dwarnings
-
-      - name: Run Clippy on test
-        run: cargo clippy --tests -- -Dwarnings
-
-      - name: Run Tests
-        run: cargo test
+      - name: Check that bindings are up-to-date
+        run: |
+          forge bind \
+            --select '^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$' \
+            --bindings-path ../bindings/src/generated/ \
+            --module \
+            --overwrite && \
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Error: Bindings are out of date. Regenerate them locally and commit the changes."
+            git status --porcelain
+            exit 1
+          fi
+        working-directory: ./contracts

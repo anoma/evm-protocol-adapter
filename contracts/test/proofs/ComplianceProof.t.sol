@@ -2,8 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {Test, Vm} from "forge-std-1.14.0/src/Test.sol";
-import {RiscZeroVerifierEmergencyStop} from "risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";
-import {RiscZeroVerifierRouter} from "risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
+import {
+    RiscZeroVerifierEmergencyStop
+} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";
+import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {Compliance} from "../../src/libs/proving/Compliance.sol";
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";

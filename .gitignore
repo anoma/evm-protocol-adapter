@@ -4,6 +4,7 @@ out/
 target/
 deps/
 dependencies/
+docs/
 node_modules/
 .vscode/*
 .idea/
@@ -20,3 +21,4 @@ contracts/broadcast/*/31337/
 .history
 *.nockma
 *.bkp
+*.zip

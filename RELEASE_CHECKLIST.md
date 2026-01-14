@@ -18,13 +18,34 @@ We distinguish between three release cases:
   - `bindings/A.B.0` version
 
 - Maintaining the bindings resulting in a new
+
   - `bindings/A.B.C` version
 
 ## Deploying a new Protocol Adapter Version
 
 ### 1. Prerequisites
 
-- [ ] Check that the contract dependencies are up-to-date and that there are no known vulnerabilities.
+- [ ] Visit https://www.soliditylang.org/ and check that Solidity compiler version used in `contracts/foundry.toml` has no known vulnerabilities.
+
+- [ ] Change the directory to `contracts` and install the dependencies with
+
+  ```sh
+  forge soldeer install
+  ```
+
+- [ ] Check that the dependencies are up-to-date, have no known vulnerabilities in the dependencies
+
+- [ ] Check that the Rust bindings are up-to-date by regenerating them with
+
+  ```sh
+  forge bind \
+    --select '^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$' \
+    --bindings-path ../bindings/src/generated/ \
+    --module \
+    --overwrite
+  ```
+
+  and running `git status`, which should shown no changes.
 
 - [ ] Checkout a new git branch branching off from `main`.
 
@@ -131,7 +152,7 @@ For each chain, you want to deploy to, do the following:
 
   and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
-### 5. Update the Deployments Map and Create a new `contracts` and `bindings` Release
+### 5. Update the Deployments Map and Create a new `contracts` and `bindings` GitHub Release
 
 - [ ] Add the **new** address and chain name pairs in the
 
@@ -147,20 +168,62 @@ For each chain, you want to deploy to, do the following:
 
 - [ ] Run the tests with `cargo test`.
 
-- [ ] Commit the change and artifacts generated in the `./broadcast/` directory to git and open a PR to `main`.
-
 - [ ] After merging, create new tags for:
 
   - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the protocol adapter version number and
   - [ ] `bindings/A.0.0` tag, where `A` is the last `MAJOR` version incremented by 1.
 
-- [ ] Create new [GH releases](https://github.com/anoma/evm-protocol-adapter/releases) for both packages.
+- [ ] Create new [GH releases](https://github.com/anoma/pa-evm/releases) for both packages.
+
+### 6. Publish a new `contracts` package
+
+- [ ] Go to the `contracts` directory
+
+- [ ] Publish the `contracts` package on https://soldeer.xyz/ with
+
+  ```sh
+  forge soldeer push anoma-pa-evm~<X.Y.Z> --dry-run
+  ```
+
+  where `<X.Y.Z>` is the `_PROTOCOL_ADAPTER_VERSION` number and check the resulting `contracts.zip` file. If everything is correct, remove the `--dry-run` flag and publish the package.
+
+### 7. Publish a new `bindings` package
+
+- [ ] Go to the `bindings` directory
+
+- [ ] Publish the `anoma-pa-evm-bindings` package on https://crates.io/ with
+
+  ```sh
+  cargo publish --dry-run
+  ```
+
+  and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
 
 ## Deploying an existing Protocol Adapter Version to new Chains
 
 ### 1. Prerequisites
 
-- [ ] Check that the contract dependencies are up-to-date and that there are no known vulnerabilities.
+- [ ] Visit https://www.soliditylang.org/ and check that Solidity compiler version used in `contracts/foundry.toml` has no known vulnerabilities.
+
+- [ ] Change the directory to `contracts` and install the dependencies with
+
+  ```sh
+  forge soldeer install
+  ```
+
+- [ ] Check that the dependencies are up-to-date, have no known vulnerabilities in the dependencies
+
+- [ ] Check that the Rust bindings are up-to-date by regenerating them with
+
+  ```sh
+  forge bind \
+    --select '^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$' \
+    --bindings-path ../bindings/src/generated/ \
+    --module \
+    --overwrite
+  ```
+
+  and running `git status`, which should shown no changes.
 
 - [ ] Checkout a new git branch branching off from `main`.
 
@@ -258,7 +321,7 @@ For each **new** chain, you want to deploy to, do the following:
 
   and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
-### 4. Update the Deployments Map and Create a new `bindings` Release
+### 4. Update the Deployments Map and Create a new `bindings` GitHub Release
 
 - [ ] Add the **new** address and chain name pairs in the
 
@@ -274,13 +337,25 @@ For each **new** chain, you want to deploy to, do the following:
 
 - [ ] Run the tests with `cargo test`.
 
-- [ ] Commit the change and artifacts generated in the `./broadcast/` directory to git and open a PR to `main`.
-
 - [ ] After merging, create a new `bindings/A.B.0` tag, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
-- [ ] Create a new [GH release](https://github.com/anoma/evm-protocol-adapter/releases).
+- [ ] Create a new [GH release](https://github.com/anoma/pa-evm/releases).
+
+### 5. Publish a new `bindings` package
+
+- [ ] Go to the `bindings` directory
+
+- [ ] Publish the `anoma-pa-evm-bindings` package on https://crates.io/ with
+
+  ```sh
+  cargo publish --dry-run
+  ```
+
+  and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
 
 ## Maintaining the Bindings
+
+### 1. Create a new `bindings` GitHub Release
 
 - [ ] Run the tests with `cargo test`.
 
@@ -288,4 +363,16 @@ For each **new** chain, you want to deploy to, do the following:
 
 - [ ] After merging, create a new `bindings/A.B.C` tag, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers, respectively and `C` is the last `PATCH` version number incremented by 1.
 
-- [ ] Create a new [GH release](https://github.com/anoma/evm-protocol-adapter/releases).
+- [ ] Create a new [GH release](https://github.com/anoma/pa-evm/releases).
+
+### 2. Publish a new `bindings` package
+
+- [ ] Go to the `bindings` directory
+
+- [ ] Publish the `anoma-pa-evm-bindings` package on https://crates.io/ with
+
+  ```sh
+  cargo publish --dry-run
+  ```
+
+  and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.

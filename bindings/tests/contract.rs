@@ -3,27 +3,19 @@ extern crate dotenvy;
 
 use alloy::primitives::B256;
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
-use alloy::sol;
 use alloy_chains::NamedChain;
-use evm_protocol_adapter_bindings::addresses::protocol_adapter_deployments_map;
-use evm_protocol_adapter_bindings::contract::ProtocolAdapter::ProtocolAdapterInstance;
-use evm_protocol_adapter_bindings::contract::{ProtocolAdapter, protocol_adapter};
-use evm_protocol_adapter_bindings::helpers::alchemy_url;
-
-sol!(
-    #[allow(missing_docs)]
-    #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-    #[sol(rpc)]
-    VersioningLibExternal,
-    "../contracts/out/VersioningLibExternal.sol/VersioningLibExternal.json"
-);
+use anoma_pa_evm_bindings::addresses::protocol_adapter_deployments_map;
+use anoma_pa_evm_bindings::contract::protocol_adapter;
+use anoma_pa_evm_bindings::generated::protocol_adapter;
+use anoma_pa_evm_bindings::generated::versioning_lib_external;
+use anoma_pa_evm_bindings::helpers::alchemy_url;
 
 #[tokio::test]
 async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
     // Get the expected protocol adapter version.
     let expected_version = {
         let provider = ProviderBuilder::new().connect_anvil_with_wallet();
-        let contract = VersioningLibExternal::deploy(&provider)
+        let contract = versioning_lib_external::VersioningLibExternal::deploy(&provider)
             .await
             .expect("Couldn't deploy `VersioningLibExternal` contract");
         contract
@@ -54,7 +46,11 @@ async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
 #[tokio::test]
 async fn call_executes_the_empty_tx_on_all_supported_chains() {
     for chain in protocol_adapter_deployments_map().keys() {
-        let empty_tx = ProtocolAdapter::Transaction::default();
+        let empty_tx = protocol_adapter::ProtocolAdapter::Transaction {
+            actions: vec![],
+            deltaProof: Default::default(),
+            aggregationProof: Default::default(),
+        };
 
         let receipt = pa_instance(chain)
             .await
@@ -73,7 +69,9 @@ async fn call_executes_the_empty_tx_on_all_supported_chains() {
     }
 }
 
-async fn pa_instance(chain: &NamedChain) -> ProtocolAdapterInstance<DynProvider> {
+async fn pa_instance(
+    chain: &NamedChain,
+) -> protocol_adapter::ProtocolAdapter::ProtocolAdapterInstance<DynProvider> {
     let rpc_url = alchemy_url(chain).expect("Couldn't get RPC URL for chain");
 
     let provider = ProviderBuilder::new()
