@@ -168,8 +168,6 @@ For each chain, you want to deploy to, do the following:
 
 - [ ] Run the tests with `cargo test`.
 
-- [ ] Commit the change and artifacts generated in the `./broadcast/` directory to git and open a PR to `main`.
-
 - [ ] After merging, create new tags for:
 
   - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the protocol adapter version number and
@@ -338,8 +336,6 @@ For each **new** chain, you want to deploy to, do the following:
 - [ ] Run `cargo build` and check that the `Cargo.lock` file reflects the version number change.
 
 - [ ] Run the tests with `cargo test`.
-
-- [ ] Commit the change and artifacts generated in the `./broadcast/` directory to git and open a PR to `main`.
 
 - [ ] After merging, create a new `bindings/A.B.0` tag, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
