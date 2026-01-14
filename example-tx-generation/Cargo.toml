@@ -1,5 +1,7 @@
 [package]
+publish = false
 name = "example-tx-generation"
+version = "0.0.0"
 description = "Example transaction generation for testing purposes."
 keywords.workspace = true
 authors.workspace = true
