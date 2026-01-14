@@ -89,7 +89,7 @@ jobs:
             --select '^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$' \
             --bindings-path ../bindings/src/generated/ \
             --module \
-            --overwrite
+            --overwrite && \
           if [ -n "$(git status --porcelain)" ]; then
             echo "Error: Bindings are out of date. Run 'forge bind' locally and commit the changes."
             git status --porcelain
