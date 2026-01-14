@@ -185,7 +185,7 @@ For each chain, you want to deploy to, do the following:
   forge soldeer push anoma-pa-evm~<X.Y.Z> --dry-run
   ```
 
-  where `<X.Y.Z>` is the `_PROTOCOL_ADAPTER_VERSION` number and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
+  where `<X.Y.Z>` is the `_PROTOCOL_ADAPTER_VERSION` number and check the resulting `contracts.zip` file. If everything is correct, remove the `--dry-run` flag and publish the package.
 
 ### 7. Publish a new `bindings` package
 
