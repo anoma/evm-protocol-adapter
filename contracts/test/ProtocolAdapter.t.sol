@@ -14,11 +14,11 @@ import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 import {Transaction, Action} from "../src/Types.sol";
-import {TransactionExample} from "./examples/transactions/Transaction.e.sol";
-
+import {Parsing} from "./libs/Parsing.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract ProtocolAdapterTest is Test {
+    using Parsing for Vm;
     using SemVerLib for bytes32;
 
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
@@ -29,6 +29,8 @@ contract ProtocolAdapterTest is Test {
     ProtocolAdapter internal _pa;
     bytes4 internal _verifierSelector;
 
+    Transaction internal _exampleTx;
+
     function setUp() public {
         RiscZeroGroth16Verifier verifier;
         (_router, _emergencyStop, verifier) =
@@ -37,6 +39,8 @@ contract ProtocolAdapterTest is Test {
         _verifierSelector = verifier.SELECTOR();
 
         _pa = new ProtocolAdapter(_router, _verifierSelector, _EMERGENCY_COMMITTEE);
+
+        _exampleTx = vm.parseTransaction("test/examples/transactions/test_tx_reg_01_01.bin");
     }
 
     function test_constructor_reverts_on_address_zero_router() public {
@@ -57,7 +61,7 @@ contract ProtocolAdapterTest is Test {
         _pa.emergencyStop();
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
-        _pa.execute(TransactionExample.transaction());
+        _pa.execute(_exampleTx);
     }
 
     function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {
@@ -65,11 +69,11 @@ contract ProtocolAdapterTest is Test {
         _emergencyStop.estop();
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
-        _pa.execute(TransactionExample.transaction());
+        _pa.execute(_exampleTx);
     }
 
     function test_execute() public {
-        _pa.execute(TransactionExample.transaction());
+        _pa.execute(_exampleTx);
     }
 
     function test_execute_executes_the_empty_transaction() public {
