@@ -177,7 +177,7 @@ For each chain, you want to deploy to, do the following:
 
 - [ ] Create new [GH releases](https://github.com/anoma/pa-evm/releases) for both packages.
 
-### 6. Publish a new `contracts` and `bindings` package
+### 6. Publish a new `contracts` package
 
 - [ ] Go to the `contracts` directory
 
@@ -188,6 +188,8 @@ For each chain, you want to deploy to, do the following:
   ```
 
   where `<X.Y.Z>` is the `_PROTOCOL_ADAPTER_VERSION` number and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
+
+### 7. Publish a new `bindings` package
 
 - [ ] Go to the `bindings` directory
 
