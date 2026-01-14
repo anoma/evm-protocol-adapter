@@ -18,6 +18,7 @@ We distinguish between three release cases:
   - `bindings/A.B.0` version
 
 - Maintaining the bindings resulting in a new
+
   - `bindings/A.B.C` version
 
 ## Deploying a new Protocol Adapter Version
@@ -356,7 +357,7 @@ For each **new** chain, you want to deploy to, do the following:
 
 ## Maintaining the Bindings
 
-## 1. Create a new `bindings` GitHub Release
+### 1. Create a new `bindings` GitHub Release
 
 - [ ] Run the tests with `cargo test`.
 
