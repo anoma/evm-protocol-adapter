@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Script} from "forge-std-1.14.0/src/Script.sol";
-import {RiscZeroVerifierRouter} from "risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
+import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 
 import {Versioning} from "../src/libs/Versioning.sol";

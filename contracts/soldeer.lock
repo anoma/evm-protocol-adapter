@@ -19,10 +19,11 @@ checksum = "d10079d1b7aac1a36dd2eeb4c5d042e8ed27b00f4ef89530b7f0a6ecd18cada3"
 integrity = "64133846def1b04b1726d2bf1292c19050a0e8cb832b60c6104c19595b9699f8"
 
 [[dependencies]]
-name = "risc0-ethereum"
+name = "risc0-risc0-ethereum"
 version = "3.0.1"
-git = "https://github.com/risc0/risc0-ethereum.git"
-rev = "365e7b2db4f620fa256580c27558d2623362b9ae"
+url = "https://soldeer-revisions.s3.amazonaws.com/risc0-risc0-ethereum/3_0_1_09-11-2025_11:23:36_risc0-risc0-ethereum-3.0.zip"
+checksum = "894cb1442a71fcbef5f7e8984aab7e1cb3079ee8876a080926f0c66e07e50e58"
+integrity = "6c79ce83a736fae5d5a06a61d3900e37aaa4f504c47e404a9c6b8ef2ff07664a"
 
 [[dependencies]]
 name = "solady"
