@@ -91,7 +91,7 @@ jobs:
             --module \
             --overwrite && \
           if [ -n "$(git status --porcelain)" ]; then
-            echo "Error: Bindings are out of date. Run 'forge bind' locally and commit the changes."
+            echo "Error: Bindings are out of date. Regenerate them locally and commit the changes."
             git status --porcelain
             exit 1
           fi
