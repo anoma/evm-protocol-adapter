@@ -11,12 +11,16 @@ default:
 contracts-deps:
     cd contracts && forge soldeer install
 
+# Clean contract dependencies
+contracts-deps-clean:
+    cd contracts && forge soldeer clean
+
 # Clean contracts
 contracts-clean:
-    cd contracts && forge clean && forge soldeer clean
+    cd contracts && forge clean
 
 # Build contracts
-contracts-build *args: contracts-clean contracts-deps
+contracts-build *args:
     cd contracts && forge build {{ args }}
 
 # Run contract tests
@@ -33,6 +37,8 @@ contracts-gen-bindings:
 
 # Simulate deployment (dry-run)
 contracts-simulate chain *args:
+    @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
+    @echo "EMERGENCY_STOP_CALLER: $EMERGENCY_STOP_CALLER"
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
         --rpc-url {{chain}} {{ args }}
