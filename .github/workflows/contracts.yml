@@ -17,12 +17,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Install just
+        uses: extractions/setup-just@v3
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Install dependencies
-        run: forge soldeer install
-        working-directory: ./contracts
+        run: just contracts-deps
 
       - name: Show Foundry version
         run: forge --version
@@ -74,25 +76,12 @@ jobs:
         id: fmt
 
       - name: Run Forge build
-        run: forge build --sizes --ast
-        working-directory: ./contracts
+        run: just contracts-build --sizes --ast
 
       - name: Run Forge tests
-        run: forge test --gas-report
+        run: just contracts-test --gas-report
         env:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
-        working-directory: ./contracts
 
       - name: Check that bindings are up-to-date
-        run: |
-          forge bind \
-            --select '^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$' \
-            --bindings-path ../bindings/src/generated/ \
-            --module \
-            --overwrite && \
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "Error: Bindings are out of date. Regenerate them locally and commit the changes."
-            git status --porcelain
-            exit 1
-          fi
-        working-directory: ./contracts
+        run: just bindings-check
