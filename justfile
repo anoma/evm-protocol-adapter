@@ -11,9 +11,13 @@ default:
 contracts-deps:
     cd contracts && forge soldeer install
 
+# Clean contracts
+contracts-clean:
+    cd contracts && forge clean && forge soldeer clean
+
 # Build contracts
-contracts-build *args:
-    cd contracts && forge clean && forge build {{ args }}
+contracts-build *args: contracts-clean contracts-deps
+    cd contracts && forge build {{ args }}
 
 # Run contract tests
 contracts-test *args:
