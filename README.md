@@ -1,4 +1,4 @@
-[![Crates.io](https://img.shields.io/crates/v/anoma-pa-evm-bindings)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/crates/l/anoma-pa-evm-bindings)](https://choosealicense.com/licenses/mit/) [![Contracts Tests](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml) [![Bindings Tests](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml)
+[![Crates.io](https://img.shields.io/crates/v/anoma-pa-evm-bindings)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/pa-evm/refs/heads/main/LICENSE) [![Contracts Tests](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml) [![Bindings Tests](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml)
 
 # Anoma EVM Protocol Adapter
 
