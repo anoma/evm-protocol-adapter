@@ -25,7 +25,7 @@ We distinguish between three release cases:
 
 ### 1. Prerequisites
 
-- [ ] Visit https://www.soliditylang.org/ and check that Solidity compiler version used in `contracts/foundry.toml` has no known vulnerabilities.
+- [ ] Visit https://docs.soliditylang.org/en/latest/bugs.html and check that Solidity compiler version used in `contracts/foundry.toml` has no known vulnerabilities.
 
 - [ ] Install the dependencies with 
 
