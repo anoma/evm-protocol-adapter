@@ -111,11 +111,11 @@ For each chain you want to deploy to:
 ### 6. Publish Packages
 
 ```sh
-# Contracts to soldeer (remove "" for actual publish)
-just contracts-publish <X.Y.Z> ""
+# Contracts to soldeer
+just contracts-publish <X.Y.Z>
 
-# Bindings to crates.io (remove "" for actual publish)
-just bindings-publish ""
+# Bindings to crates.io
+just bindings-publish
 ```
 
 ## Deploying an existing Protocol Adapter Version to new Chains
@@ -162,7 +162,7 @@ For each **new** chain you want to deploy to:
 ### 5. Publish Bindings
 
 ```sh
-just bindings-publish ""
+just bindings-publish
 ```
 
 ## Maintaining the Bindings
@@ -180,5 +180,5 @@ just bindings-publish ""
 ### 2. Publish Bindings
 
 ```sh
-just bindings-publish ""
+just bindings-publish
 ```

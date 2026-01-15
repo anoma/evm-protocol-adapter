@@ -58,9 +58,9 @@ contracts-verify-etherscan address chain *args:
 # Verify on both sourcify and etherscan
 contracts-verify address chain: (contracts-verify-sourcify address chain) (contracts-verify-etherscan address chain)
 
-# Publish contracts (dry-run by default)
-contracts-publish version dry-run="--dry-run":
-    cd contracts && forge soldeer push anoma-pa-evm~{{version}} {{dry-run}}
+# Publish contracts
+contracts-publish version *args:
+    cd contracts && forge soldeer push anoma-pa-evm~{{version}} {{ args }}
 
 # --- Bindings ---
 
@@ -76,9 +76,9 @@ bindings-test *args:
 bindings-check: contracts-gen-bindings
     git diff --exit-code bindings/src/generated/
 
-# Publish bindings (dry-run by default)
-bindings-publish dry-run="--dry-run":
-    cd bindings && cargo publish {{dry-run}}
+# Publish bindings
+bindings-publish *args:
+    cd bindings && cargo publish {{ args }}
 
 # --- All ---
 
