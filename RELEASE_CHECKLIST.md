@@ -25,7 +25,7 @@ We distinguish between three release cases:
 
 ### 1. Prerequisites
 
-- [ ] Visit https://docs.soliditylang.org/en/latest/bugs.html and check that Solidity compiler version used in `contracts/foundry.toml` has no known vulnerabilities.
+- [ ] Visit https://www.soliditylang.org/ and check that Solidity compiler version used in `contracts/foundry.toml` has no [known vulnerabilities](https://docs.soliditylang.org/en/latest/bugs.html).
 
 - [ ] Install the dependencies with 
 
@@ -79,7 +79,7 @@ We distinguish between three release cases:
 
 ### 2. Bump the Version
 
-- [ ] Bump the `_PROTOCOL_ADAPTER_VERSION` constant in `./contracts/src/libs/Versioning.sol` to the new version number following [SemVer](https://semver.org/spec/v2.0.0.html).
+- [ ] Bump the `_PROTOCOL_ADAPTER_VERSION` constant in [`./contracts/src/libs/Versioning.sol`](./contracts/src/libs/Versioning.sol) to the new version number following [SemVer](https://semver.org/spec/v2.0.0.html).
 
 - [ ] Remove all chain name and address pairs in the
 
