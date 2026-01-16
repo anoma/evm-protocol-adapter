@@ -9,6 +9,8 @@ use anoma_pa_evm_bindings::contract::protocol_adapter;
 use anoma_pa_evm_bindings::generated::protocol_adapter;
 use anoma_pa_evm_bindings::generated::versioning_lib_external;
 use anoma_pa_evm_bindings::helpers::alchemy_url;
+use std::thread::sleep;
+use std::time::Duration;
 
 #[tokio::test]
 async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
@@ -40,6 +42,8 @@ async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
             decode_bytes32_to_utf8(expected_version),
             "Protocol adapter version mismatch on network '{chain}'."
         );
+
+        sleep(Duration::from_secs(1));
     }
 }
 
@@ -66,6 +70,8 @@ async fn call_executes_the_empty_tx_on_all_supported_chains() {
             receipt.inner.is_success(),
             "Empty transaction failed on network '{chain}'."
         );
+
+        sleep(Duration::from_secs(1));
     }
 }
 
