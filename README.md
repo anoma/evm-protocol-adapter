@@ -29,6 +29,31 @@ library.
 
 The [example-tx-generation](./example-tx-generation) folder contains a binary to generate example transactions with aggregated and non-aggregated proofs as `.bin` files for testing purposes, which can be used for testing purposes, e.g., in [./contracts/test/examples/transactions/](./contracts/test/examples/transactions/).
 
+## Quick Start
+
+This project uses [just](https://github.com/casey/just) as a command runner. Install it with:
+
+```sh
+cargo install just
+```
+
+Common commands:
+
+```sh
+just # list all commands
+just contracts-build
+just contracts-test
+just contracts-simulate <chain>
+just contracts-deploy <chain>
+just contracts-verify <addr> <chain>
+just bindings-build
+just bindings-test
+just all-build
+just all-test
+```
+
+See the [justfile](./justfile) for all available commands and [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md) for the full release process.
+
 ## Audits
 
 Our software undergoes regular [audits](./audits/):
