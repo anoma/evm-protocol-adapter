@@ -27,15 +27,15 @@ We distinguish between three release cases:
 
 - [ ] Visit https://www.soliditylang.org/ and check that Solidity compiler version used in `contracts/foundry.toml` has no [known vulnerabilities](https://docs.soliditylang.org/en/latest/bugs.html).
 
-- [ ] Install the dependencies with 
+- [ ] Install the dependencies with
 
   ```sh
   just contracts-deps
   ```
 
-- [ ] Check that the dependencies are up-to-date, have no known vulnerabilities in the dependencies
+- [ ] Check that the dependencies are up-to-date and have no known vulnerabilities in the dependencies
 
-- [ ] Check the bindings are up-to-date with 
+- [ ] Check that the bindings are up-to-date with
 
   ```sh
   just bindings-check
@@ -108,7 +108,7 @@ For each chain, you want to deploy to, do the following:
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  just contracts-deploy <CHAIN_NAME>
+  just contracts-deploy deployer <CHAIN_NAME>
   ```
 
 - [ ] Export the address of the newly deployed protocol adapter contract with
@@ -154,40 +154,27 @@ For each chain, you want to deploy to, do the following:
   - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the protocol adapter version number and
   - [ ] `bindings/A.0.0` tag, where `A` is the last `MAJOR` version incremented by 1.
 
-  ```sh
-  just contracts-publish <X.Y.Z>
-  just bindings-publish <A.0.0>
-  ```
-
 - [ ] Create new [GH releases](https://github.com/anoma/pa-evm/releases) for both packages.
 
 ### 6. Publish a new `contracts` package
 
-- [ ] Go to the `contracts` directory
-
 - [ ] Publish the `contracts` package on https://soldeer.xyz/ with
 
   ```sh
-  forge soldeer push anoma-pa-evm~<X.Y.Z> --dry-run
+  just contracts-publish <X.Y.Z> --dry-run
   ```
 
   where `<X.Y.Z>` is the `_PROTOCOL_ADAPTER_VERSION` number and check the resulting `contracts.zip` file. If everything is correct, remove the `--dry-run` flag and publish the package.
 
-Alternatively, you can run `just contracts-publish <X.Y.Z> --dry-run` and run similar checks as above.
-
 ### 7. Publish a new `bindings` package
-
-- [ ] Go to the `bindings` directory
 
 - [ ] Publish the `anoma-pa-evm-bindings` package on https://crates.io/ with
 
   ```sh
-  cargo publish --dry-run
+  just bindings-publish --dry-run
   ```
 
   and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
-
-Alternatively, you can run `just bindings-publish --dry-run` and run similar checks as above.
 
 ## Deploying an existing Protocol Adapter Version to new Chains
 
@@ -195,25 +182,19 @@ Alternatively, you can run `just bindings-publish --dry-run` and run similar che
 
 - [ ] Visit https://www.soliditylang.org/ and check that Solidity compiler version used in `contracts/foundry.toml` has no known vulnerabilities.
 
-- [ ] Install the dependencies with 
+- [ ] Install the dependencies with
 
   ```sh
   just contracts-deps
   ```
 
-- [ ] Check that the dependencies are up-to-date, have no known vulnerabilities in the dependencies
+- [ ] Check that the dependencies are up-to-date and have no known vulnerabilities in the dependencies
 
-- [ ] Check that the Rust bindings are up-to-date by regenerating them with
+- [ ] Check that the bindings are up-to-date with
 
   ```sh
-  forge bind \
-    --select '^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$' \
-    --bindings-path ../bindings/src/generated/ \
-    --module \
-    --overwrite
+  just bindings-check
   ```
-
-  and running `git status`, which should shown no changes.
 
 - [ ] Checkout a new git branch branching off from `main`.
 
@@ -256,11 +237,9 @@ Alternatively, you can run `just bindings-publish --dry-run` and run similar che
 
 ### 2. Build the contracts
 
-- [ ] Change the directory with `cd contracts`
+- [ ] Run `just contracts-build`
 
-- [ ] Run `forge clean && forge build`
-
-- [ ] Run the test suite with `forge test`
+- [ ] Run the test suite with `just contracts-test`
 
 ### 3. Deploy and Verify the Protocol Adapter
 
@@ -269,20 +248,13 @@ For each **new** chain, you want to deploy to, do the following:
 - [ ] **Simulate** the deployment by running
 
   ```sh
-  forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-  --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
-  --rpc-url <CHAIN_NAME>
+  just contracts-simulate <CHAIN_NAME>
   ```
-
-  > ![NOTE]
-  > For chains that the protocol adapter of this version has already been deployed to, the simulation will fail since the deterministic address is already taken.
 
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-   --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
-  --broadcast --rpc-url <CHAIN_NAME> --account deployer
+  just contracts-deploy deployer <CHAIN_NAME>
   ```
 
 - [ ] Export the address of the newly deployed protocol adapter contract with
@@ -296,17 +268,13 @@ For each **new** chain, you want to deploy to, do the following:
   - [ ] sourcify
 
     ```sh
-    forge verify-contract $PA_ADDRESS \
-      src/ProtocolAdapter.sol:ProtocolAdapter \
-      --chain <CHAIN> --verifier sourcify
+    just contracts-verify-sourcify <PA_ADDRESS> <CHAIN>
     ```
 
   - [ ] Etherscan
 
     ```sh
-    forge verify-contract $PA_ADDRESS \
-      src/ProtocolAdapter.sol:ProtocolAdapter \
-      --chain <CHAIN> --verifier etherscan
+    just contracts-verify-etherscan <PA_ADDRESS> <CHAIN>
     ```
 
   and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
@@ -323,9 +291,9 @@ For each **new** chain, you want to deploy to, do the following:
 
 - [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
-- [ ] Run `cargo build` and check that the `Cargo.lock` file reflects the version number change.
+- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
-- [ ] Run the tests with `cargo test`.
+- [ ] Run the tests with `just bindings-test`.
 
 - [ ] After merging, create a new `bindings/A.B.0` tag, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
@@ -333,36 +301,46 @@ For each **new** chain, you want to deploy to, do the following:
 
 ### 5. Publish a new `bindings` package
 
-- [ ] Go to the `bindings` directory
-
 - [ ] Publish the `anoma-pa-evm-bindings` package on https://crates.io/ with
 
   ```sh
-  cargo publish --dry-run
+  just bindings-publish --dry-run
   ```
 
   and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
 
 ## Maintaining the Bindings
 
-### 1. Create a new `bindings` GitHub Release
+### 1. Prerequisites
 
-- [ ] Run the tests with `cargo test`.
+- [ ] Check that the bindings are up-to-date with
 
-- [ ] Commit the changes and open a PR to `main`.
+  ```sh
+  just bindings-check
+  ```
 
-- [ ] After merging, create a new `bindings/A.B.C` tag, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers, respectively and `C` is the last `PATCH` version number incremented by 1.
+- [ ] Checkout a new git branch branching off from `main`.
+
+- [ ] Check that there are no staged or unstaged changes by running `git status`.
+
+### 2. Create a new `bindings` GitHub Release
+
+- [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.C`, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers and `C` is the last `PATCH` version number incremented by 1.
+
+- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
+
+- [ ] Run the tests with `just bindings-test`.
+
+- [ ] After merging, create a new `bindings/A.B.C` tag, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers, respectively, and `C` is the last `PATCH` version number incremented by 1.
 
 - [ ] Create a new [GH release](https://github.com/anoma/pa-evm/releases).
 
-### 2. Publish a new `bindings` package
-
-- [ ] Go to the `bindings` directory
+### 3. Publish a new `bindings` package
 
 - [ ] Publish the `anoma-pa-evm-bindings` package on https://crates.io/ with
 
   ```sh
-  cargo publish --dry-run
+  just bindings-publish --dry-run
   ```
 
   and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
