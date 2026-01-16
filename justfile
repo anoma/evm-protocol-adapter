@@ -70,6 +70,10 @@ contracts-publish version *args:
 
 # --- Bindings ---
 
+# Clean contracts
+bindings-clean:
+    cd bindings && cargo clean
+
 # Build bindings
 bindings-build *args:
     cd bindings && cargo build {{ args }}

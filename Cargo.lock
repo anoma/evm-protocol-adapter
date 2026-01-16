@@ -985,7 +985,7 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-evm-bindings"
-version = "1.0.0-rc.10"
+version = "1.0.0"
 dependencies = [
  "alloy",
  "alloy-chains",
