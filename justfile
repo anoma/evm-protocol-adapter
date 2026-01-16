@@ -47,7 +47,7 @@ contracts-simulate chain *args:
 contracts-deploy deployer chain *args:
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
-        --broadcast --rpc-url {{chain}} --account {{ deployer }} {{ args }}
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Verify on sourcify
 contracts-verify-sourcify address chain *args:
@@ -70,7 +70,7 @@ contracts-publish version *args:
 
 # --- Bindings ---
 
-# Clean contracts
+# Clean bindings
 bindings-clean:
     cd bindings && cargo clean
 
