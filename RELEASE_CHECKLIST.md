@@ -35,12 +35,6 @@ We distinguish between three release cases:
 
 - [ ] Check that the dependencies are up-to-date and have no known vulnerabilities in the dependencies
 
-- [ ] Check that the bindings are up-to-date with
-
-  ```sh
-  just bindings-check
-  ```
-
 - [ ] Check that the deployer wallet is funded and add it to `cast` with
 
   ```sh
@@ -144,6 +138,10 @@ For each chain, you want to deploy to, do the following:
   function in [`./bindings/src/addresses.rs`](./bindings/src/addresses.rs).
 
 - [ ] Change the `bindings` package version number in the [`./bindings/Cargo.toml`](./bindings/Cargo.toml) file to `A.0.0`, where `A` is the last `MAJOR` version number incremented by 1.
+
+- [ ] Clean the bindings build with `just bindings-clean`.
+
+- [ ] Regenerate the bindings with `just contracts-gen-bindings`.
 
 - [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
