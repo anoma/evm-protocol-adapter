@@ -3,6 +3,6 @@
   "detectors_to_exclude": [
     "pragma",
     "naming-convention",
-    "cyclomatic-complexity"
+    "unindexed-event-address"
   ]
 }
