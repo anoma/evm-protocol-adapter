@@ -16,6 +16,7 @@ import {Parsing} from "../libs/Parsing.sol";
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
 contract LogicProofTest is Test {
+    using Parsing for Transaction;
     using Parsing for Vm;
     using MerkleTree for bytes32[];
     using Logic for Logic.VerifierInput;
@@ -31,7 +32,7 @@ contract LogicProofTest is Test {
     function setUp() public {
         (_router, _emergencyStop,) = new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
 
-        _exampleTx = vm.parseTransaction("test/examples/transactions/test_tx_reg_01_01.bin");
+        _exampleTx.toStorage(vm.parseTransaction("test/examples/transactions/test_tx_reg_01_01.bin"));
 
         {
             bytes32[] memory leaves = new bytes32[](2);
