@@ -90,7 +90,7 @@ To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forg
 
 ```sh
 forge bind \
-  --select '^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$' \
+  --select '^(IProtocolAdapter|ProtocolAdapter|IVersion|VersioningLibExternal|ICommitmentTree|INullifierSet|IForwarder)$' \
   --bindings-path ../bindings/src/generated/ \
   --module \
   --overwrite

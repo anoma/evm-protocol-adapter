@@ -30,7 +30,7 @@ contracts-test *args:
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
     cd contracts && forge bind \
-        --select '^(IProtocolAdapter|ProtocolAdapter|VersioningLibExternal)$' \
+        --select '^(IProtocolAdapter|ProtocolAdapter|IVersion|VersioningLibExternal|ICommitmentTree|INullifierSet|IForwarder)$' \
         --bindings-path ../bindings/src/generated/ \
         --module \
         --overwrite
