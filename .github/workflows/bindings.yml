@@ -39,7 +39,7 @@ jobs:
         with:
           path: |
             target
-          key: rust-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          key: rust-${{ runner.os }}-${{ hashFiles('**/Cargo.lock', 'bindings/src/generated/**') }}
           restore-keys: rust-
 
       - name: Run rustfmt
