@@ -14,6 +14,7 @@ import {Parsing} from "../libs/Parsing.sol";
 import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
 contract ComplianceProofTest is Test {
+    using Parsing for Transaction;
     using Parsing for Vm;
     using RiscZeroUtils for Compliance.Instance;
 
@@ -25,7 +26,7 @@ contract ComplianceProofTest is Test {
     function setUp() public {
         (_router, _emergencyStop,) = new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
 
-        _exampleTx = vm.parseTransaction("test/examples/transactions/test_tx_reg_01_01.bin");
+        _exampleTx.toStorage(vm.parseTransaction("test/examples/transactions/test_tx_reg_01_01.bin"));
     }
 
     function test_verify_example_compliance_proof() public view {

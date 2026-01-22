@@ -20,6 +20,7 @@ import {Parsing} from "./libs/Parsing.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 contract ProtocolAdapterTest is Test {
+    using Parsing for Transaction;
     using Parsing for Vm;
     using SemVerLib for bytes32;
 
@@ -42,7 +43,7 @@ contract ProtocolAdapterTest is Test {
 
         _pa = new ProtocolAdapter(_router, _verifierSelector, _EMERGENCY_COMMITTEE);
 
-        _exampleTx = vm.parseTransaction("test/examples/transactions/test_tx_reg_01_01.bin");
+        _exampleTx.toStorage(vm.parseTransaction("test/examples/transactions/test_tx_reg_01_01.bin"));
     }
 
     function test_constructor_reverts_on_address_zero_router() public {
