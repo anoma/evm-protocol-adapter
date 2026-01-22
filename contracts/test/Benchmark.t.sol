@@ -131,4 +131,32 @@ contract Benchmark is Test {
             console.log(output);
         }
     }
+
+    function test_print_calldata_agg() public view {
+        for (uint256 i = 0; i < _txnsAgg.length; ++i) {
+            uint256 complianceUnitCount = 0;
+
+            uint256 actionCount = _txnsAgg[i].actions.length;
+
+            for (uint256 j = 0; j < actionCount; ++j) {
+                complianceUnitCount += _txnsAgg[i].actions[j].complianceVerifierInputs.length;
+            }
+
+            string memory output = string(
+                abi.encodePacked(
+                    "Actions: ",
+                    Strings.toString(actionCount),
+                    ", ",
+                    "CUs: ",
+                    Strings.toString(complianceUnitCount),
+                    ", ",
+                    "Calldata (bytes): ",
+                    Strings.toString(abi.encodeCall(ProtocolAdapter.execute, _txnsAgg[i]).length)
+                )
+            );
+
+            console.log(output);
+        }
+    }
 }
+
