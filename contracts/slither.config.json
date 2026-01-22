@@ -1,8 +1,4 @@
 {
   "filter_paths": "dependencies/",
-  "detectors_to_exclude": [
-    "pragma",
-    "naming-convention",
-    "unindexed-event-address"
-  ]
+  "detectors_to_exclude": ["pragma", "naming-convention"]
 }
