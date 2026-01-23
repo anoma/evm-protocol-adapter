@@ -29,7 +29,7 @@ contracts-test *args:
 
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
-    cd contracts && forge bind \
+    cd contracts && forge clean && forge bind \
         --select '^(IProtocolAdapter|ProtocolAdapter|IVersion|VersioningLibExternal|ICommitmentTree|INullifierSet|IForwarder)$' \
         --bindings-path ../bindings/src/generated/ \
         --module \
