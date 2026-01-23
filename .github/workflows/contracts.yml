@@ -75,13 +75,10 @@ jobs:
         working-directory: ./contracts
         id: fmt
 
-      - name: Run Forge build
-        run: just contracts-build
+      - name: Check that bindings are up-to-date
+        run: just bindings-check
 
       - name: Run Forge tests
         run: just contracts-test
         env:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
-
-      - name: Check that bindings are up-to-date
-        run: just bindings-check
