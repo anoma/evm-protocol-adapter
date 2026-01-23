@@ -329,7 +329,7 @@ contract ProtocolAdapter is
             revert ForwarderCallOutputMismatch({expected: expectedOutput, actual: actualOutput});
         }
 
-        // solhint-disable-next-line max-line-length
+        // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
         // slither-disable-next-line reentrancy-events
         emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
     }
@@ -343,6 +343,7 @@ contract ProtocolAdapter is
         uint256 n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
                 // slither-disable-next-line reentrancy-events
                 emit ResourcePayload({tag: tag, index: i, blob: payload[i].blob});
             }
@@ -352,6 +353,7 @@ contract ProtocolAdapter is
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
                 // slither-disable-next-line reentrancy-events
                 emit DiscoveryPayload({tag: tag, index: i, blob: payload[i].blob});
             }
@@ -361,6 +363,7 @@ contract ProtocolAdapter is
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
                 // slither-disable-next-line reentrancy-events
                 emit ExternalPayload({tag: tag, index: i, blob: payload[i].blob});
             }
@@ -370,6 +373,7 @@ contract ProtocolAdapter is
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+                // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
                 // slither-disable-next-line reentrancy-events
                 emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
             }
