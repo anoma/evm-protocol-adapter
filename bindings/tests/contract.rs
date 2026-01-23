@@ -43,7 +43,7 @@ async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
             "Protocol adapter version mismatch on network '{chain}'."
         );
 
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(3));
     }
 }
 
@@ -71,7 +71,7 @@ async fn call_executes_the_empty_tx_on_all_supported_chains() {
             "Empty transaction failed on network '{chain}'."
         );
 
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(3));
     }
 }
 
