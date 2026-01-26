@@ -79,6 +79,7 @@ contract ProtocolAdapter is
     error ZeroNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
+    error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
     error RiscZeroVerifierStopped();
     error Simulated(uint256 gasUsed);
 
@@ -449,6 +450,16 @@ contract ProtocolAdapter is
                     seal: aggregationProof, imageId: Aggregation._VERIFYING_KEY, journalDigest: jounalDigest
                 });
             }
+        }
+    }
+
+    /// @notice Checks that a given proof has the appropriate hardcoded selector.
+    /// @param seal The seal containing a proof and a selector.
+    function _checkSelector(bytes calldata seal) internal view {
+        bytes4 expected = _RISC_ZERO_VERIFIER_SELECTOR;
+        bytes4 actual = bytes4(seal[0:4]);
+        if (expected != actual) {
+            revert RiscZeroVerifierSelectorMismatch(expected, actual);
         }
     }
 
