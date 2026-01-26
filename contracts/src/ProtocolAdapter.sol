@@ -459,13 +459,12 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Checks that a given proof has the appropriate hardcoded selector.
+    /// @notice Checks that a given proof has the RISC Zero verifier selector this protocol adapter is associated with.
     /// @param seal The seal containing a proof and a selector.
     function _checkSelector(bytes calldata seal) internal view {
-        bytes4 expected = _RISC_ZERO_VERIFIER_SELECTOR;
-        bytes4 actual = bytes4(seal[0:4]);
-        if (expected != actual) {
-            revert RiscZeroVerifierSelectorMismatch(expected, actual);
+        bytes4 selector = bytes4(seal[0:4]);
+        if (selector != _RISC_ZERO_VERIFIER_SELECTOR) {
+            revert RiscZeroVerifierSelectorMismatch({expected: _RISC_ZERO_VERIFIER_SELECTOR, actual: selector});
         }
     }
 
