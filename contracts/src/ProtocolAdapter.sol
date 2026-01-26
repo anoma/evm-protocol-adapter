@@ -267,6 +267,8 @@ contract ProtocolAdapter is
                 // Aggregate the logic instance.
                 updatedVars.logicInstances[updatedVars.tagCounter] = instance;
             } else {
+                _checkSelector(input.proof);
+
                 if (!updatedVars.skipRiscZeroProofVerification) {
                     // Verify the logic proof.
                     // slither-disable-next-line calls-loop
@@ -406,6 +408,8 @@ contract ProtocolAdapter is
             updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] =
             input.instance;
         } else {
+            _checkSelector(input.proof);
+
             if (!updatedVars.skipRiscZeroProofVerification) {
                 // Verify the compliance proof.
                 // slither-disable-next-line calls-loop
@@ -435,6 +439,8 @@ contract ProtocolAdapter is
         });
 
         if (vars.isProofAggregated) {
+            _checkSelector(aggregationProof);
+
             bytes32 jounalDigest = sha256(
                 Aggregation.Instance({
                         logicRefs: vars.logicRefs,

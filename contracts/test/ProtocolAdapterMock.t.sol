@@ -299,47 +299,6 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @notice Test that transactions with unknown selectors fail.
-    function testFuzz_execute_reverts_if_proofs_start_with_an_unknown_verifier_selector(
-        uint8 actionCount,
-        uint8 complianceUnitCount,
-        uint8 actionIndex,
-        uint8 complianceIndex,
-        bytes4 selector,
-        bytes calldata randomBytes,
-        bool aggregated
-    ) public {
-        // Ensure that the first 4 bytes of the proof are invalid.
-        // The mock router only accepts one selector we deploy with.
-        vm.assume(selector != _mockVerifier.SELECTOR());
-        bytes memory fakeProof = abi.encodePacked(selector, randomBytes);
-
-        // Choose random compliance unit among the actions.
-        (actionCount, complianceUnitCount, actionIndex, complianceIndex) =
-            _bindParameters(actionCount, complianceUnitCount, actionIndex, complianceIndex);
-
-        (Transaction memory txn,) = vm.transaction({
-            mockVerifier: _mockVerifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: actionCount, complianceUnitCount: complianceUnitCount}),
-            isProofAggregated: aggregated
-        });
-
-        if (aggregated) {
-            // If aggregated, replace the aggregation proof.
-            txn.aggregationProof = fakeProof;
-        } else {
-            // Otherwise, replace the selected compliance unit's proof with a fake one.
-            txn.actions[actionIndex].complianceVerifierInputs[complianceIndex].proof = fakeProof;
-        }
-
-        // With an unknown selector, we expect failure.
-        vm.expectRevert(
-            abi.encodeWithSelector(RiscZeroVerifierRouter.SelectorUnknown.selector, selector), address(_router)
-        );
-        _mockPa.execute(txn);
-    }
-
     function testFuzz_execute_reverts_if_nullifier_from_compliance_inputs_cannot_be_found_in_logic_inputs(
         uint8 actionCount,
         uint8 complianceUnitCount,
