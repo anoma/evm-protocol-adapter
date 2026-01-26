@@ -14,11 +14,13 @@ import {Transaction} from "../src/Types.sol";
 import {Parsing} from "./libs/Parsing.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
+uint256 constant UPPER_RISC_ZERO_PROOF_GAS_COST_BOUND = 239000;
+uint256 constant EXPECTED_AGGREGATION_PROOF_GAS_COST = 238285;
+uint256 constant EXPECTED_EMPTY_TX_GAS_COST = 7256;
+
 contract Benchmark is Test {
     using Parsing for Transaction;
     using Parsing for Vm;
-
-    uint256 internal _upperRiscZeroProofGasCostBound = 239000;
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
@@ -59,9 +61,8 @@ contract Benchmark is Test {
         uint256 gasWithoutProofs = _executionGasCost({transaction: _txnEmpty, skipProofVerification: true});
         uint256 gasWithProofs = _executionGasCost({transaction: _txnEmpty, skipProofVerification: false});
 
-        console.log(gasWithoutProofs, gasWithProofs);
-
         assertEq(gasWithProofs, gasWithoutProofs);
+        assertEq(gasWithoutProofs, EXPECTED_EMPTY_TX_GAS_COST);
     }
 
     function test_aggregated_proof_gas_cost_is_fixed() public {
@@ -72,7 +73,7 @@ contract Benchmark is Test {
 
             uint256 aggregationProofCost = gasWithProofs - gasWithoutProofs;
 
-            assertEq(aggregationProofCost, 238285);
+            assertEq(aggregationProofCost, EXPECTED_AGGREGATION_PROOF_GAS_COST);
         }
     }
 
@@ -84,7 +85,7 @@ contract Benchmark is Test {
 
             uint256 averageRegularProofCost = (gasWithProofs - gasWithoutProofs) / (_countComplianceUnits(txn) * 3);
 
-            assertLt(averageRegularProofCost, _upperRiscZeroProofGasCostBound);
+            assertLt(averageRegularProofCost, UPPER_RISC_ZERO_PROOF_GAS_COST_BOUND);
         }
     }
 

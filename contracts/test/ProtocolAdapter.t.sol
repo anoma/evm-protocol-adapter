@@ -14,8 +14,8 @@ import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-
-import {Transaction, Action} from "../src/Types.sol";
+import {Transaction} from "../src/Types.sol";
+import {EXPECTED_EMPTY_TX_GAS_COST} from "./Benchmark.t.sol";
 import {Parsing} from "./libs/Parsing.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
@@ -33,6 +33,7 @@ contract ProtocolAdapterTest is Test {
     bytes4 internal _verifierSelector;
 
     Transaction internal _exampleTx;
+    Transaction internal _emptyTx;
 
     function setUp() public {
         RiscZeroGroth16Verifier verifier;
@@ -80,25 +81,35 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_execute_executes_the_empty_transaction() public {
-        Transaction memory emptyTx = Transaction({actions: new Action[](0), deltaProof: "", aggregationProof: ""});
-
         vm.expectEmit(address(_pa));
         emit IProtocolAdapter.TransactionExecuted({tags: new bytes32[](0), logicRefs: new bytes32[](0)});
-        _pa.execute(emptyTx);
+        _pa.execute(_emptyTx);
     }
 
     function test_execute_does_not_emit_the_CommitmentTreeRootAdded_event_for_the_empty_transaction() public {
-        Transaction memory emptyTx = Transaction({actions: new Action[](0), deltaProof: "", aggregationProof: ""});
-
         vm.recordLogs();
 
-        _pa.execute(emptyTx);
+        _pa.execute(_emptyTx);
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         for (uint256 i = 0; i < entries.length; i++) {
             assert(entries[i].topics[0] != ICommitmentTree.CommitmentTreeRootAdded.selector);
         }
+    }
+
+    function test_simulateExecute_reverts_if_proof_verification_is_skipped() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.Simulated.selector, EXPECTED_EMPTY_TX_GAS_COST), address(_pa)
+        );
+        _pa.simulateExecute({transaction: _emptyTx, skipProofVerification: true});
+    }
+
+    function test_simulateExecute_reverts_if_proof_verification_is_not_skipped() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.Simulated.selector, EXPECTED_EMPTY_TX_GAS_COST), address(_pa)
+        );
+        _pa.simulateExecute({transaction: _emptyTx, skipProofVerification: false});
     }
 
     function test_emergencyStop_reverts_if_the_caller_is_not_the_owner() public {
