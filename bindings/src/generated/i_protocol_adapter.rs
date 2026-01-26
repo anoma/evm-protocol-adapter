@@ -2281,6 +2281,7 @@ interface IProtocolAdapter {
     function getRiscZeroVerifierRouter() external view returns (address verifierRouter);
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
     function isEmergencyStopped() external view returns (bool isStopped);
+    function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
 }
 ```
 
@@ -2529,6 +2530,208 @@ interface IProtocolAdapter {
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "simulateExecute",
+    "inputs": [
+      {
+        "name": "transaction",
+        "type": "tuple",
+        "internalType": "struct Transaction",
+        "components": [
+          {
+            "name": "actions",
+            "type": "tuple[]",
+            "internalType": "struct Action[]",
+            "components": [
+              {
+                "name": "logicVerifierInputs",
+                "type": "tuple[]",
+                "internalType": "struct Logic.VerifierInput[]",
+                "components": [
+                  {
+                    "name": "tag",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "verifyingKey",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "appData",
+                    "type": "tuple",
+                    "internalType": "struct Logic.AppData",
+                    "components": [
+                      {
+                        "name": "resourcePayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "discoveryPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "externalPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "applicationPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "proof",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "complianceVerifierInputs",
+                "type": "tuple[]",
+                "internalType": "struct Compliance.VerifierInput[]",
+                "components": [
+                  {
+                    "name": "proof",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  },
+                  {
+                    "name": "instance",
+                    "type": "tuple",
+                    "internalType": "struct Compliance.Instance",
+                    "components": [
+                      {
+                        "name": "consumed",
+                        "type": "tuple",
+                        "internalType": "struct Compliance.ConsumedRefs",
+                        "components": [
+                          {
+                            "name": "nullifier",
+                            "type": "bytes32",
+                            "internalType": "bytes32"
+                          },
+                          {
+                            "name": "logicRef",
+                            "type": "bytes32",
+                            "internalType": "bytes32"
+                          },
+                          {
+                            "name": "commitmentTreeRoot",
+                            "type": "bytes32",
+                            "internalType": "bytes32"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "created",
+                        "type": "tuple",
+                        "internalType": "struct Compliance.CreatedRefs",
+                        "components": [
+                          {
+                            "name": "commitment",
+                            "type": "bytes32",
+                            "internalType": "bytes32"
+                          },
+                          {
+                            "name": "logicRef",
+                            "type": "bytes32",
+                            "internalType": "bytes32"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "unitDeltaX",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                      },
+                      {
+                        "name": "unitDeltaY",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "deltaProof",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "aggregationProof",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      },
+      {
+        "name": "skipRiscZeroProofVerification",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "event",
@@ -4821,6 +5024,166 @@ function isEmergencyStopped() external view returns (bool isStopped);
             }
         }
     };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive()]
+    /**Function with signature `simulateExecute((((bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]),bytes)[],(bytes,((bytes32,bytes32,bytes32),(bytes32,bytes32),bytes32,bytes32))[])[],bytes,bytes),bool)` and selector `0x82d32ad8`.
+```solidity
+function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct simulateExecuteCall {
+        #[allow(missing_docs)]
+        pub transaction: <Transaction as alloy::sol_types::SolType>::RustType,
+        #[allow(missing_docs)]
+        pub skipRiscZeroProofVerification: bool,
+    }
+    ///Container type for the return parameters of the [`simulateExecute((((bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]),bytes)[],(bytes,((bytes32,bytes32,bytes32),(bytes32,bytes32),bytes32,bytes32))[])[],bytes,bytes),bool)`](simulateExecuteCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct simulateExecuteReturn {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (
+                Transaction,
+                alloy::sol_types::sol_data::Bool,
+            );
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (
+                <Transaction as alloy::sol_types::SolType>::RustType,
+                bool,
+            );
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<simulateExecuteCall> for UnderlyingRustTuple<'_> {
+                fn from(value: simulateExecuteCall) -> Self {
+                    (value.transaction, value.skipRiscZeroProofVerification)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for simulateExecuteCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {
+                        transaction: tuple.0,
+                        skipRiscZeroProofVerification: tuple.1,
+                    }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<simulateExecuteReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: simulateExecuteReturn) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for simulateExecuteReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        impl simulateExecuteReturn {
+            fn _tokenize(
+                &self,
+            ) -> <simulateExecuteCall as alloy_sol_types::SolCall>::ReturnToken<'_> {
+                ()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for simulateExecuteCall {
+            type Parameters<'a> = (Transaction, alloy::sol_types::sol_data::Bool);
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = simulateExecuteReturn;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "simulateExecute((((bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]),bytes)[],(bytes,((bytes32,bytes32,bytes32),(bytes32,bytes32),bytes32,bytes32))[])[],bytes,bytes),bool)";
+            const SELECTOR: [u8; 4] = [130u8, 211u8, 42u8, 216u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <Transaction as alloy_sol_types::SolType>::tokenize(
+                        &self.transaction,
+                    ),
+                    <alloy::sol_types::sol_data::Bool as alloy_sol_types::SolType>::tokenize(
+                        &self.skipRiscZeroProofVerification,
+                    ),
+                )
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                simulateExecuteReturn::_tokenize(ret)
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Into::into)
+            }
+        }
+    };
     ///Container for all the [`IProtocolAdapter`](self) function calls.
     #[derive(Clone)]
     #[derive(serde::Serialize, serde::Deserialize)]
@@ -4836,6 +5199,8 @@ function isEmergencyStopped() external view returns (bool isStopped);
         getRiscZeroVerifierSelector(getRiscZeroVerifierSelectorCall),
         #[allow(missing_docs)]
         isEmergencyStopped(isEmergencyStoppedCall),
+        #[allow(missing_docs)]
+        simulateExecute(simulateExecuteCall),
     }
     impl IProtocolAdapterCalls {
         /// All the selectors of this enum.
@@ -4847,6 +5212,7 @@ function isEmergencyStopped() external view returns (bool isStopped);
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
             [91u8, 102u8, 107u8, 30u8],
             [99u8, 165u8, 153u8, 164u8],
+            [130u8, 211u8, 42u8, 216u8],
             [227u8, 56u8, 69u8, 207u8],
             [237u8, 60u8, 249u8, 31u8],
             [253u8, 221u8, 72u8, 55u8],
@@ -4855,6 +5221,7 @@ function isEmergencyStopped() external view returns (bool isStopped);
         pub const VARIANT_NAMES: &'static [&'static str] = &[
             ::core::stringify!(getRiscZeroVerifierRouter),
             ::core::stringify!(emergencyStop),
+            ::core::stringify!(simulateExecute),
             ::core::stringify!(getRiscZeroVerifierSelector),
             ::core::stringify!(execute),
             ::core::stringify!(isEmergencyStopped),
@@ -4863,6 +5230,7 @@ function isEmergencyStopped() external view returns (bool isStopped);
         pub const SIGNATURES: &'static [&'static str] = &[
             <getRiscZeroVerifierRouterCall as alloy_sol_types::SolCall>::SIGNATURE,
             <emergencyStopCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <simulateExecuteCall as alloy_sol_types::SolCall>::SIGNATURE,
             <getRiscZeroVerifierSelectorCall as alloy_sol_types::SolCall>::SIGNATURE,
             <executeCall as alloy_sol_types::SolCall>::SIGNATURE,
             <isEmergencyStoppedCall as alloy_sol_types::SolCall>::SIGNATURE,
@@ -4892,7 +5260,7 @@ function isEmergencyStopped() external view returns (bool isStopped);
     impl alloy_sol_types::SolInterface for IProtocolAdapterCalls {
         const NAME: &'static str = "IProtocolAdapterCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 5usize;
+        const COUNT: usize = 6usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -4908,6 +5276,9 @@ function isEmergencyStopped() external view returns (bool isStopped);
                 }
                 Self::isEmergencyStopped(_) => {
                     <isEmergencyStoppedCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::simulateExecute(_) => {
+                    <simulateExecuteCall as alloy_sol_types::SolCall>::SELECTOR
                 }
             }
         }
@@ -4949,6 +5320,17 @@ function isEmergencyStopped() external view returns (bool isStopped);
                             .map(IProtocolAdapterCalls::emergencyStop)
                     }
                     emergencyStop
+                },
+                {
+                    fn simulateExecute(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::simulateExecute)
+                    }
+                    simulateExecute
                 },
                 {
                     fn getRiscZeroVerifierSelector(
@@ -5024,6 +5406,17 @@ function isEmergencyStopped() external view returns (bool isStopped);
                     emergencyStop
                 },
                 {
+                    fn simulateExecute(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::simulateExecute)
+                    }
+                    simulateExecute
+                },
+                {
                     fn getRiscZeroVerifierSelector(
                         data: &[u8],
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
@@ -5093,6 +5486,11 @@ function isEmergencyStopped() external view returns (bool isStopped);
                         inner,
                     )
                 }
+                Self::simulateExecute(inner) => {
+                    <simulateExecuteCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
             }
         }
         #[inline]
@@ -5121,6 +5519,12 @@ function isEmergencyStopped() external view returns (bool isStopped);
                 }
                 Self::isEmergencyStopped(inner) => {
                     <isEmergencyStoppedCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::simulateExecute(inner) => {
+                    <simulateExecuteCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -5551,6 +5955,19 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             &self,
         ) -> alloy_contract::SolCallBuilder<&P, isEmergencyStoppedCall, N> {
             self.call_builder(&isEmergencyStoppedCall)
+        }
+        ///Creates a new call builder for the [`simulateExecute`] function.
+        pub fn simulateExecute(
+            &self,
+            transaction: <Transaction as alloy::sol_types::SolType>::RustType,
+            skipRiscZeroProofVerification: bool,
+        ) -> alloy_contract::SolCallBuilder<&P, simulateExecuteCall, N> {
+            self.call_builder(
+                &simulateExecuteCall {
+                    transaction,
+                    skipRiscZeroProofVerification,
+                },
+            )
         }
     }
     /// Event filters.

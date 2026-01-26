@@ -14,6 +14,10 @@ import {Transaction} from "../src/Types.sol";
 import {Parsing} from "./libs/Parsing.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
+uint256 constant UPPER_RISC_ZERO_PROOF_GAS_COST_BOUND = 239000;
+uint256 constant EXPECTED_AGGREGATION_PROOF_GAS_COST = 238285;
+uint256 constant EXPECTED_EMPTY_TX_GAS_COST = 7223;
+
 contract Benchmark is Test {
     using Parsing for Transaction;
     using Parsing for Vm;
@@ -50,6 +54,38 @@ contract Benchmark is Test {
                 new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
 
             _pa = new ProtocolAdapter(_router, verifier.SELECTOR(), msg.sender);
+        }
+    }
+
+    function test_empty_transaction_gas_cost_is_fixed() public {
+        uint256 gasWithoutProofs = _executionGasCost({transaction: _txnEmpty, skipRiscZeroProofVerification: true});
+        uint256 gasWithProofs = _executionGasCost({transaction: _txnEmpty, skipRiscZeroProofVerification: false});
+
+        assertEq(gasWithProofs, gasWithoutProofs);
+        assertEq(gasWithoutProofs, EXPECTED_EMPTY_TX_GAS_COST);
+    }
+
+    function test_aggregated_proof_gas_cost_is_fixed() public {
+        for (uint256 i = 0; i < _txnsAgg.length; ++i) {
+            Transaction memory txn = _txnsAgg[i];
+            uint256 gasWithoutProofs = _executionGasCost({transaction: txn, skipRiscZeroProofVerification: true});
+            uint256 gasWithProofs = _executionGasCost({transaction: txn, skipRiscZeroProofVerification: false});
+
+            uint256 aggregationProofCost = gasWithProofs - gasWithoutProofs;
+
+            assertEq(aggregationProofCost, EXPECTED_AGGREGATION_PROOF_GAS_COST);
+        }
+    }
+
+    function test_regular_proof_gas_cost_is_bound() public {
+        for (uint256 i = 0; i < _txnsReg.length; ++i) {
+            Transaction memory txn = _txnsReg[i];
+            uint256 gasWithoutProofs = _executionGasCost({transaction: txn, skipRiscZeroProofVerification: true});
+            uint256 gasWithProofs = _executionGasCost({transaction: txn, skipRiscZeroProofVerification: false});
+
+            uint256 averageRegularProofCost = (gasWithProofs - gasWithoutProofs) / (_countComplianceUnits(txn) * 3);
+
+            assertLt(averageRegularProofCost, UPPER_RISC_ZERO_PROOF_GAS_COST_BOUND);
         }
     }
 
@@ -156,6 +192,37 @@ contract Benchmark is Test {
             );
 
             console.log(output);
+        }
+    }
+
+    function _executionGasCost(Transaction memory transaction, bool skipRiscZeroProofVerification)
+        internal
+        returns (uint256 gasUsed)
+    {
+        (bool success, bytes memory data) =
+            address(_pa).call(abi.encodeCall(_pa.simulateExecute, (transaction, skipRiscZeroProofVerification))); // solhint-disable-line avoid-low-level-calls
+        assertFalse(success, "call should revert");
+
+        bytes4 selector;
+
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            // Load first 32 bytes
+            let word := mload(add(data, 32))
+            // Selector is high-order 4 bytes
+            selector := shl(224, shr(224, word))
+            // Gas used is next 32 bytes (starting at offset 4)
+            gasUsed := mload(add(data, 36))
+        }
+
+        assertEq(selector, ProtocolAdapter.Simulated.selector);
+    }
+
+    function _countComplianceUnits(Transaction memory transaction) internal pure returns (uint256 complianceUnits) {
+        uint256 actionCount = transaction.actions.length;
+
+        for (uint256 i = 0; i < actionCount; ++i) {
+            complianceUnits += transaction.actions[i].complianceVerifierInputs.length;
         }
     }
 }
