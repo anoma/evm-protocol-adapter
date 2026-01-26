@@ -267,7 +267,7 @@ contract ProtocolAdapter is
                 // Aggregate the logic instance.
                 updatedVars.logicInstances[updatedVars.tagCounter] = instance;
             } else {
-                _checkSelector(input.proof);
+                _checkSelector({selector: bytes4(input.proof[0:4])});
 
                 if (!updatedVars.skipRiscZeroProofVerification) {
                     // Verify the logic proof.
@@ -408,7 +408,7 @@ contract ProtocolAdapter is
             updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] =
             input.instance;
         } else {
-            _checkSelector(input.proof);
+            _checkSelector({selector: bytes4(input.proof[0:4])});
 
             if (!updatedVars.skipRiscZeroProofVerification) {
                 // Verify the compliance proof.
@@ -439,7 +439,7 @@ contract ProtocolAdapter is
         });
 
         if (vars.isProofAggregated) {
-            _checkSelector(aggregationProof);
+            _checkSelector({selector: bytes4(aggregationProof[0:4])});
 
             bytes32 jounalDigest = sha256(
                 Aggregation.Instance({
@@ -459,10 +459,9 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Checks that a given proof has the RISC Zero verifier selector this protocol adapter is associated with.
-    /// @param seal The seal containing a proof and a selector.
-    function _checkSelector(bytes calldata seal) internal view {
-        bytes4 selector = bytes4(seal[0:4]);
+    /// @notice Checks that a RISC Zero verifier selector matches the one the protocol adapter is associated with.
+    /// @param selector The RISC Zero verifier selector to check.
+    function _checkSelector(bytes4 selector) internal view {
         if (selector != _RISC_ZERO_VERIFIER_SELECTOR) {
             revert RiscZeroVerifierSelectorMismatch({expected: _RISC_ZERO_VERIFIER_SELECTOR, actual: selector});
         }
