@@ -54,7 +54,7 @@ contract ProtocolAdapter is
     /// the end of the `execute` function call.
     /// @param transactionDelta A variable to aggregate the unit deltas over the actions.
     /// @param tagCounter A counter representing the index of the next resource tag to visit.
-    /// @param skipProofVerification Whether to skip proof verification or not.
+    /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
     /// @param isProofAggregated Whether the transaction to execute contains an aggregated proof or not.
     /// @param complianceInstances A variable to aggregate RISC Zero compliance proof instances.
     /// @param logicInstances A variable to aggregate RISC Zero logic proof instances.
@@ -66,7 +66,7 @@ contract ProtocolAdapter is
         Delta.Point transactionDelta;
         uint256 tagCounter;
         /* Proof verification-related variables */
-        bool skipProofVerification;
+        bool skipRiscZeroProofVerification;
         /* Proof aggregation-related variables */
         bool isProofAggregated;
         Compliance.Instance[] complianceInstances;
@@ -106,14 +106,14 @@ contract ProtocolAdapter is
 
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override {
-        _execute({transaction: transaction, skipProofVerification: false});
+        _execute({transaction: transaction, skipRiscZeroProofVerification: false});
     }
 
     /// @inheritdoc IProtocolAdapter
-    function simulateExecute(Transaction calldata transaction, bool skipProofVerification) external override {
+    function simulateExecute(Transaction calldata transaction, bool skipRiscZeroProofVerification) external override {
         uint256 gasStart = gasleft();
 
-        _execute({transaction: transaction, skipProofVerification: skipProofVerification});
+        _execute({transaction: transaction, skipRiscZeroProofVerification: skipRiscZeroProofVerification});
 
         revert Simulated({gasUsed: gasStart - gasleft()});
     }
@@ -149,14 +149,14 @@ contract ProtocolAdapter is
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
     /// @param transaction The transaction to execute.
-    /// @param skipProofVerification Whether to skip proof verification or not.
+    /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
     /// @dev This function cannot be called anymore once `emergencyStop()` has been called.
-    function _execute(Transaction calldata transaction, bool skipProofVerification)
+    function _execute(Transaction calldata transaction, bool skipRiscZeroProofVerification)
         internal
         nonReentrant
         whenNotPaused
     {
-        InternalVariables memory vars = _initializeVars(transaction, skipProofVerification);
+        InternalVariables memory vars = _initializeVars(transaction, skipRiscZeroProofVerification);
 
         uint256 actionCount = transaction.actions.length;
         for (uint256 i = 0; i < actionCount; ++i) {
@@ -265,12 +265,14 @@ contract ProtocolAdapter is
             if (updatedVars.isProofAggregated) {
                 // Aggregate the logic instance.
                 updatedVars.logicInstances[updatedVars.tagCounter] = instance;
-            } else if (!updatedVars.skipProofVerification) {
-                // Verify the logic proof.
-                // slither-disable-next-line calls-loop
-                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                    seal: input.proof, imageId: logicRef, journalDigest: sha256(instance.toJournal())
-                });
+            } else {
+                if (!updatedVars.skipRiscZeroProofVerification) {
+                    // Verify the logic proof.
+                    // slither-disable-next-line calls-loop
+                    _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                        seal: input.proof, imageId: logicRef, journalDigest: sha256(instance.toJournal())
+                    });
+                }
             }
         }
 
@@ -402,12 +404,16 @@ contract ProtocolAdapter is
             // Aggregate the compliance instance
             updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] =
             input.instance;
-        } else if (!updatedVars.skipProofVerification) {
-            // Verify the compliance proof.
-            // slither-disable-next-line calls-loop
-            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                seal: input.proof, imageId: Compliance._VERIFYING_KEY, journalDigest: sha256(input.instance.toJournal())
-            });
+        } else {
+            if (!updatedVars.skipRiscZeroProofVerification) {
+                // Verify the compliance proof.
+                // slither-disable-next-line calls-loop
+                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
+                    seal: input.proof,
+                    imageId: Compliance._VERIFYING_KEY,
+                    journalDigest: sha256(input.instance.toJournal())
+                });
+            }
         }
     }
 
@@ -436,7 +442,7 @@ contract ProtocolAdapter is
                     }).toJournal()
             );
 
-            if (!vars.skipProofVerification) {
+            if (!vars.skipRiscZeroProofVerification) {
                 // Verify aggregation proof.
                 // slither-disable-next-line calls-loop
                 _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
@@ -449,9 +455,9 @@ contract ProtocolAdapter is
     /// @notice Initializes internal variables based on the tag count of the transaction and whether it contains an
     /// aggregation proof or not.
     /// @param transaction The transaction object.
-    /// @param skipProofVerification Whether to skip proof verification or not.
+    /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
     /// @return vars The initialized internal variables.
-    function _initializeVars(Transaction calldata transaction, bool skipProofVerification)
+    function _initializeVars(Transaction calldata transaction, bool skipRiscZeroProofVerification)
         internal
         pure
         returns (InternalVariables memory vars)
@@ -471,7 +477,7 @@ contract ProtocolAdapter is
             transactionDelta: Delta.zero(),
             tagCounter: 0,
             /* Proof verification-related variables */
-            skipProofVerification: skipProofVerification,
+            skipRiscZeroProofVerification: skipRiscZeroProofVerification,
             /* Proof aggregation-related variables */
             isProofAggregated: isProofAggregated,
             complianceInstances: new Compliance

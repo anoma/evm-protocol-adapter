@@ -2281,7 +2281,7 @@ interface IProtocolAdapter {
     function getRiscZeroVerifierRouter() external view returns (address verifierRouter);
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
     function isEmergencyStopped() external view returns (bool isStopped);
-    function simulateExecute(Transaction memory transaction, bool skipProofVerification) external;
+    function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
 }
 ```
 
@@ -2725,7 +2725,7 @@ interface IProtocolAdapter {
         ]
       },
       {
-        "name": "skipProofVerification",
+        "name": "skipRiscZeroProofVerification",
         "type": "bool",
         "internalType": "bool"
       }
@@ -5028,7 +5028,7 @@ function isEmergencyStopped() external view returns (bool isStopped);
     #[derive()]
     /**Function with signature `simulateExecute((((bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]),bytes)[],(bytes,((bytes32,bytes32,bytes32),(bytes32,bytes32),bytes32,bytes32))[])[],bytes,bytes),bool)` and selector `0x82d32ad8`.
 ```solidity
-function simulateExecute(Transaction memory transaction, bool skipProofVerification) external;
+function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
@@ -5036,7 +5036,7 @@ function simulateExecute(Transaction memory transaction, bool skipProofVerificat
         #[allow(missing_docs)]
         pub transaction: <Transaction as alloy::sol_types::SolType>::RustType,
         #[allow(missing_docs)]
-        pub skipProofVerification: bool,
+        pub skipRiscZeroProofVerification: bool,
     }
     ///Container type for the return parameters of the [`simulateExecute((((bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]),bytes)[],(bytes,((bytes32,bytes32,bytes32),(bytes32,bytes32),bytes32,bytes32))[])[],bytes,bytes),bool)`](simulateExecuteCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
@@ -5077,7 +5077,7 @@ function simulateExecute(Transaction memory transaction, bool skipProofVerificat
             #[doc(hidden)]
             impl ::core::convert::From<simulateExecuteCall> for UnderlyingRustTuple<'_> {
                 fn from(value: simulateExecuteCall) -> Self {
-                    (value.transaction, value.skipProofVerification)
+                    (value.transaction, value.skipRiscZeroProofVerification)
                 }
             }
             #[automatically_derived]
@@ -5086,7 +5086,7 @@ function simulateExecute(Transaction memory transaction, bool skipProofVerificat
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self {
                         transaction: tuple.0,
-                        skipProofVerification: tuple.1,
+                        skipRiscZeroProofVerification: tuple.1,
                     }
                 }
             }
@@ -5158,7 +5158,7 @@ function simulateExecute(Transaction memory transaction, bool skipProofVerificat
                         &self.transaction,
                     ),
                     <alloy::sol_types::sol_data::Bool as alloy_sol_types::SolType>::tokenize(
-                        &self.skipProofVerification,
+                        &self.skipRiscZeroProofVerification,
                     ),
                 )
             }
@@ -5960,12 +5960,12 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         pub fn simulateExecute(
             &self,
             transaction: <Transaction as alloy::sol_types::SolType>::RustType,
-            skipProofVerification: bool,
+            skipRiscZeroProofVerification: bool,
         ) -> alloy_contract::SolCallBuilder<&P, simulateExecuteCall, N> {
             self.call_builder(
                 &simulateExecuteCall {
                     transaction,
-                    skipProofVerification,
+                    skipRiscZeroProofVerification,
                 },
             )
         }

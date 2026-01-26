@@ -55,9 +55,9 @@ interface IProtocolAdapter {
 
     /// @notice Simulates a transaction and returns the gas after reverting.
     /// @param transaction The transaction to simulate execution for.
-    /// @param skipProofVerification Whether to skip proof verification or not.
+    /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
     /// @dev This transaction will always revert.
-    function simulateExecute(Transaction calldata transaction, bool skipProofVerification) external;
+    function simulateExecute(Transaction calldata transaction, bool skipRiscZeroProofVerification) external;
 
     /// @notice Stops the protocol adapter permanently in case of an emergency.
     function emergencyStop() external;

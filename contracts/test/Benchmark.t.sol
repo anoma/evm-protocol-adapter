@@ -58,8 +58,8 @@ contract Benchmark is Test {
     }
 
     function test_empty_transaction_gas_cost_is_fixed() public {
-        uint256 gasWithoutProofs = _executionGasCost({transaction: _txnEmpty, skipProofVerification: true});
-        uint256 gasWithProofs = _executionGasCost({transaction: _txnEmpty, skipProofVerification: false});
+        uint256 gasWithoutProofs = _executionGasCost({transaction: _txnEmpty, skipRiscZeroProofVerification: true});
+        uint256 gasWithProofs = _executionGasCost({transaction: _txnEmpty, skipRiscZeroProofVerification: false});
 
         assertEq(gasWithProofs, gasWithoutProofs);
         assertEq(gasWithoutProofs, EXPECTED_EMPTY_TX_GAS_COST);
@@ -68,8 +68,8 @@ contract Benchmark is Test {
     function test_aggregated_proof_gas_cost_is_fixed() public {
         for (uint256 i = 0; i < _txnsAgg.length; ++i) {
             Transaction memory txn = _txnsAgg[i];
-            uint256 gasWithoutProofs = _executionGasCost({transaction: txn, skipProofVerification: true});
-            uint256 gasWithProofs = _executionGasCost({transaction: txn, skipProofVerification: false});
+            uint256 gasWithoutProofs = _executionGasCost({transaction: txn, skipRiscZeroProofVerification: true});
+            uint256 gasWithProofs = _executionGasCost({transaction: txn, skipRiscZeroProofVerification: false});
 
             uint256 aggregationProofCost = gasWithProofs - gasWithoutProofs;
 
@@ -80,8 +80,8 @@ contract Benchmark is Test {
     function test_regular_proof_gas_cost_is_bound() public {
         for (uint256 i = 0; i < _txnsReg.length; ++i) {
             Transaction memory txn = _txnsReg[i];
-            uint256 gasWithoutProofs = _executionGasCost({transaction: txn, skipProofVerification: true});
-            uint256 gasWithProofs = _executionGasCost({transaction: txn, skipProofVerification: false});
+            uint256 gasWithoutProofs = _executionGasCost({transaction: txn, skipRiscZeroProofVerification: true});
+            uint256 gasWithProofs = _executionGasCost({transaction: txn, skipRiscZeroProofVerification: false});
 
             uint256 averageRegularProofCost = (gasWithProofs - gasWithoutProofs) / (_countComplianceUnits(txn) * 3);
 
@@ -195,12 +195,12 @@ contract Benchmark is Test {
         }
     }
 
-    function _executionGasCost(Transaction memory transaction, bool skipProofVerification)
+    function _executionGasCost(Transaction memory transaction, bool skipRiscZeroProofVerification)
         internal
         returns (uint256 gasUsed)
     {
         (bool success, bytes memory data) =
-            address(_pa).call(abi.encodeCall(_pa.simulateExecute, (transaction, skipProofVerification))); // solhint-disable-line avoid-low-level-calls
+            address(_pa).call(abi.encodeCall(_pa.simulateExecute, (transaction, skipRiscZeroProofVerification))); // solhint-disable-line avoid-low-level-calls
         assertFalse(success, "call should revert");
 
         bytes4 selector;

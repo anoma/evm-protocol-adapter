@@ -105,14 +105,14 @@ contract ProtocolAdapterTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(ProtocolAdapter.Simulated.selector, EXPECTED_EMPTY_TX_GAS_COST), address(_pa)
         );
-        _pa.simulateExecute({transaction: _emptyTx, skipProofVerification: true});
+        _pa.simulateExecute({transaction: _emptyTx, skipRiscZeroProofVerification: true});
     }
 
     function test_simulateExecute_reverts_if_proof_verification_is_not_skipped() public {
         vm.expectRevert(
             abi.encodeWithSelector(ProtocolAdapter.Simulated.selector, EXPECTED_EMPTY_TX_GAS_COST), address(_pa)
         );
-        _pa.simulateExecute({transaction: _emptyTx, skipProofVerification: false});
+        _pa.simulateExecute({transaction: _emptyTx, skipRiscZeroProofVerification: false});
     }
 
     function test_simulateExecute_reverts_on_invalid_logic_proof_if_proof_verification_is_not_skipped() public {
@@ -124,7 +124,7 @@ contract ProtocolAdapterTest is Test {
         }
 
         vm.expectRevert(VerificationFailed.selector, address(_verifier));
-        _pa.simulateExecute({transaction: modified, skipProofVerification: false});
+        _pa.simulateExecute({transaction: modified, skipRiscZeroProofVerification: false});
     }
 
     function test_simulateExecute_reverts_on_invalid_compliance_proof_if_proof_verification_is_not_skipped() public {
@@ -136,7 +136,7 @@ contract ProtocolAdapterTest is Test {
         }
 
         vm.expectRevert(VerificationFailed.selector, address(_verifier));
-        _pa.simulateExecute({transaction: modified, skipProofVerification: false});
+        _pa.simulateExecute({transaction: modified, skipRiscZeroProofVerification: false});
     }
 
     function test_simulateExecute_reverts_on_invalid_aggregation_proof_if_proof_verification_is_not_skipped() public {
@@ -148,7 +148,7 @@ contract ProtocolAdapterTest is Test {
         }
 
         vm.expectRevert(VerificationFailed.selector, address(_verifier));
-        _pa.simulateExecute({transaction: modified, skipProofVerification: false});
+        _pa.simulateExecute({transaction: modified, skipRiscZeroProofVerification: false});
     }
 
     function test_emergencyStop_reverts_if_the_caller_is_not_the_owner() public {
