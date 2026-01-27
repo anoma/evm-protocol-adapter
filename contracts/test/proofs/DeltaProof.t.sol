@@ -408,6 +408,43 @@ contract DeltaProofTest is Test {
         assertFalse(EllipticCurve.isOnCurve({_x: p2.x, _y: p2.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
     }
 
+    /// @notice Check that balanced pairs (using the new simplified approach) pass verification
+    /// @dev This test uses createBalancedPairs which guarantees balance by construction
+    function testFuzz_verify_balanced_pairs_succeeds(
+        uint256 kind,
+        DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs,
+        bytes32 verifyingKey
+    ) public {
+        kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
+        DeltaGen.InstanceInputs[] memory baseInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
+        vm.assume(baseInputs.length > 0);
+
+        // Create balanced pairs - this guarantees balance by construction
+        (DeltaGen.InstanceInputs[] memory pairedInputs, uint256 valueCommitmentRandomness) =
+            DeltaGen.createBalancedPairs(baseInputs);
+        valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
+        vm.assume(valueCommitmentRandomness != 0);
+
+        // Compute the delta instance and accumulate it
+        Delta.Point memory deltaAcc = Delta.zero();
+        for (uint256 i = 0; i < pairedInputs.length; i++) {
+            pairedInputs[i].valueCommitmentRandomness = pairedInputs[i].valueCommitmentRandomness.modOrder();
+            vm.assume(pairedInputs[i].valueCommitmentRandomness != 0);
+            vm.assume(pairedInputs[i].computePreDelta() != 0);
+
+            Delta.Point memory instance = DeltaGen.generateInstance(vm, pairedInputs[i]);
+            deltaAcc = deltaAcc.add(instance);
+        }
+
+        // Compute the proof for the balanced transaction
+        DeltaGen.ProofInputs memory sumDeltaInputs =
+            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
+
+        bytes memory proof = DeltaGen.generateProof(vm, sumDeltaInputs);
+        // Verify that the balanced transaction proof succeeds
+        DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
+    }
+
     function _getBoundedDeltaInstances(uint256 kind, DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs)
         internal
         pure
