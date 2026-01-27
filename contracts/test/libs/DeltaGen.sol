@@ -107,6 +107,31 @@ library DeltaGen {
         }
     }
 
+    /// @notice Normalizes the kind and valueCommitmentRandomness fields of an InstanceInputs struct.
+    /// @dev This function modifies the input in-place and also returns it for convenience.
+    /// @param inputs The delta instance inputs to normalize.
+    /// @return normalized The same inputs with normalized kind and valueCommitmentRandomness.
+    function normalize(InstanceInputs memory inputs) internal pure returns (InstanceInputs memory normalized) {
+        inputs.kind = inputs.kind.modOrder();
+        inputs.valueCommitmentRandomness = inputs.valueCommitmentRandomness.modOrder();
+        normalized = inputs;
+    }
+
+    /// @notice Checks if the given InstanceInputs will produce a valid (non-zero) preDelta.
+    /// @param inputs The delta instance inputs to check.
+    /// @return valid True if the inputs will produce a valid preDelta, false otherwise.
+    function isValid(InstanceInputs memory inputs) internal pure returns (bool valid) {
+        uint256 kind = inputs.kind.modOrder();
+        uint256 vcr = inputs.valueCommitmentRandomness.modOrder();
+        if (kind == 0 || vcr == 0) {
+            return false;
+        }
+        uint256 canonicalizedQuantity = canonicalizeQuantity(inputs.consumed, inputs.quantity);
+        uint256 prod = mulmod(kind, canonicalizedQuantity, SECP256K1_ORDER);
+        uint256 preDelta = addmod(prod, vcr, SECP256K1_ORDER);
+        return preDelta != 0;
+    }
+
     /// @notice Convert an exponent represented as a boolean sign and a uint128
     /// magnitude to an equivalent uint256 assuming an order of SECP256K1_ORDER
     /// @param consumed False represents a non-negative quantity, true a non-positive quantity
