@@ -7,27 +7,27 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
     HashMap::from([
         (
             NamedChain::Sepolia,
-            address!("0x249044B625fb58ba895EF7887B178cb632d01Cb1"),
+            address!("0xf152BBA809d6cba122579cee997A54B8F3FBa417"),
         ),
         (
             NamedChain::Mainnet,
-            address!("0x0000000000000000000000000000000000000000"),
+            address!("0x0eA3B55b68A3f307c8FE3fe66E443247c95F0CfF"),
         ),
         (
             NamedChain::BaseSepolia,
-            address!("0x0000000000000000000000000000000000000000"),
+            address!("0x094FCC095323080e71a037b2B1e3519c07dd84F8"),
         ),
         (
             NamedChain::Base,
-            address!("0x0000000000000000000000000000000000000000"),
+            address!("0x094FCC095323080e71a037b2B1e3519c07dd84F8"),
         ),
         (
             NamedChain::Optimism,
-            address!("0x0000000000000000000000000000000000000000"),
+            address!("0x094FCC095323080e71a037b2B1e3519c07dd84F8"),
         ),
         (
             NamedChain::Arbitrum,
-            address!("0x0000000000000000000000000000000000000000"),
+            address!("0x094FCC095323080e71a037b2B1e3519c07dd84F8"),
         ),
     ])
 }
