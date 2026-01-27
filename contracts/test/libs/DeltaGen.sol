@@ -4,10 +4,8 @@ pragma solidity ^0.8.30;
 import {VmSafe} from "forge-std-1.14.0/src/Vm.sol";
 
 import {Delta} from "../../src/libs/proving/Delta.sol";
-import {SignMagnitude} from "./SignMagnitude.sol";
 
 library DeltaGen {
-    using SignMagnitude for SignMagnitude.Number;
     using DeltaGen for uint256;
 
     /// @notice The parameters required to generate a mock delta instance for testing.
@@ -199,64 +197,4 @@ library DeltaGen {
         }
     }
 
-    /// @notice Balances an array of delta inputs by adjusting the inputs so that the sum is within the range
-    /// [halfMin, halfMax]. Moreover, it returns the accumulated quantity and value commitment randomness.
-    /// @dev DEPRECATED: Use createBalancedPairs() instead for simpler and more predictable behavior.
-    function createBalancedDeltaInputArray(DeltaGen.InstanceInputs[] memory deltaInputs)
-        internal
-        pure
-        returns (
-            DeltaGen.InstanceInputs[] memory wrappedDeltaInputs,
-            bool consumedAcc,
-            uint128 quantityMagAcc,
-            uint256 valueCommitmentRandomnessAcc
-        )
-    {
-        quantityMagAcc = 0;
-        consumedAcc = false;
-        valueCommitmentRandomnessAcc = 0;
-
-        if (deltaInputs.length == 0) {
-            return (deltaInputs, consumedAcc, quantityMagAcc, valueCommitmentRandomnessAcc);
-        }
-
-        // Compute the window into which the deltas should sum
-        int256 halfMax = int256(uint256(type(uint128).max >> 1));
-        int256 halfMin = -halfMax;
-
-        uint256 expectedKind = deltaInputs[0].kind;
-        for (uint256 i = 0; i < deltaInputs.length; i++) {
-            if (deltaInputs[i].kind != expectedKind) {
-                revert KindMismatch({expected: expectedKind, actual: deltaInputs[i].kind});
-            }
-        }
-
-        validateKind(deltaInputs[0].kind);
-
-        int256 quantityAcc = 0;
-        for (uint256 i = 0; i < deltaInputs.length; i++) {
-            // Accumulate the randomness commitments modulo SECP256K1_ORDER
-            valueCommitmentRandomnessAcc =
-                addmod(valueCommitmentRandomnessAcc, deltaInputs[i].valueCommitmentRandomness, SECP256K1_ORDER);
-            int256 currentQuantityMag = int256(uint256(deltaInputs[i].quantity));
-
-            int256 currentQuantity = deltaInputs[i].consumed ? -currentQuantityMag : currentQuantityMag;
-
-            // Adjust the delta inputs so that the sum remains in a specific range
-            if (currentQuantity >= 0 && quantityAcc > halfMax - currentQuantity) {
-                int256 overflow = quantityAcc - (halfMax - currentQuantity);
-                currentQuantity = halfMin + overflow - 1 - quantityAcc;
-            } else if (currentQuantity < 0 && quantityAcc < halfMin - currentQuantity) {
-                int256 underflow = (halfMin - currentQuantity) - quantityAcc;
-                currentQuantity = halfMax + 1 - underflow - quantityAcc;
-            }
-
-            // Finally, accumulate the adjusted quantity
-            quantityAcc += currentQuantity;
-            (deltaInputs[i].consumed, deltaInputs[i].quantity) = SignMagnitude.fromInt256(currentQuantity);
-        }
-        // Finally, return the balanced deltas
-        wrappedDeltaInputs = deltaInputs;
-        (consumedAcc, quantityMagAcc) = SignMagnitude.fromInt256(quantityAcc);
-    }
 }
