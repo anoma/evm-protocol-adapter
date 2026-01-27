@@ -29,7 +29,7 @@ jobs:
       - name: Show Foundry version
         run: forge --version
 
-      - name: Show Foundry version
+      - name: Show Soldeer version
         run: forge soldeer version
 
       - name: Run Forge Lint
