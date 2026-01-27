@@ -157,10 +157,61 @@ library DeltaGen {
         preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, SECP256K1_ORDER);
     }
 
+    /// @notice Creates balanced delta pairs from an array of inputs.
+    /// @dev Takes n inputs and creates 2n outputs: n positive (created) and n negative (consumed) with matching
+    /// quantities. The quantities sum to zero by construction, guaranteeing balance.
+    /// @param baseInputs The base delta inputs to create pairs from. All must have the same kind.
+    /// @return pairedInputs Array of 2n delta inputs (n positive followed by n negative).
+    /// @return valueCommitmentRandomnessAcc The accumulated randomness (sum of all randomnesses mod order).
+    function createBalancedPairs(InstanceInputs[] memory baseInputs)
+        internal
+        pure
+        returns (InstanceInputs[] memory pairedInputs, uint256 valueCommitmentRandomnessAcc)
+    {
+        if (baseInputs.length == 0) {
+            return (baseInputs, 0);
+        }
+
+        uint256 expectedKind = baseInputs[0].kind;
+        validateKind(expectedKind);
+
+        // Create array with double the length for pairs
+        pairedInputs = new InstanceInputs[](baseInputs.length * 2);
+        valueCommitmentRandomnessAcc = 0;
+
+        for (uint256 i = 0; i < baseInputs.length; i++) {
+            if (baseInputs[i].kind != expectedKind) {
+                revert KindMismatch({expected: expectedKind, actual: baseInputs[i].kind});
+            }
+
+            // Positive (created) version
+            pairedInputs[i] = InstanceInputs({
+                kind: expectedKind,
+                valueCommitmentRandomness: baseInputs[i].valueCommitmentRandomness,
+                quantity: baseInputs[i].quantity,
+                consumed: false
+            });
+
+            // Negative (consumed) version - same quantity, opposite sign
+            pairedInputs[baseInputs.length + i] = InstanceInputs({
+                kind: expectedKind,
+                valueCommitmentRandomness: baseInputs[i].valueCommitmentRandomness,
+                quantity: baseInputs[i].quantity,
+                consumed: true
+            });
+
+            // Accumulate randomness (each input contributes twice)
+            valueCommitmentRandomnessAcc = addmod(
+                valueCommitmentRandomnessAcc,
+                mulmod(2, baseInputs[i].valueCommitmentRandomness, SECP256K1_ORDER),
+                SECP256K1_ORDER
+            );
+        }
+    }
+
     /// @notice Balances an array of delta inputs by adjusting the inputs so that the sum is within the range
     /// [halfMin, halfMax]. Moreover, it returns the accumulated quantity and value commitment randomness.
-    /// TODO This code and its usage must be refactored. Instead of balancing a set of `n` random values, we should take
-    /// TODO `n/2` random values and negate them. This will reduce the code complexity in this function and tests.
+    /// @dev DEPRECATED: Use createBalancedPairs() instead for simpler and more predictable behavior.
     function createBalancedDeltaInputArray(DeltaGen.InstanceInputs[] memory deltaInputs)
         internal
         pure
