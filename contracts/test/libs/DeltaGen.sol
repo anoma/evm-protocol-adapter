@@ -51,14 +51,8 @@ library DeltaGen {
         internal
         returns (Delta.Point memory instance)
     {
-        deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
-        if (deltaInputs.valueCommitmentRandomness == 0) {
-            revert DeltaGen.ValueCommitmentRandomnessZero();
-        }
-        deltaInputs.kind = deltaInputs.kind.modOrder();
-        if (deltaInputs.kind == 0) {
-            revert DeltaGen.KindZero();
-        }
+        deltaInputs.valueCommitmentRandomness = validateValueCommitmentRandomness(deltaInputs.valueCommitmentRandomness);
+        deltaInputs.kind = validateKind(deltaInputs.kind);
         uint256 quantity = canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, SECP256K1_ORDER);
@@ -78,10 +72,7 @@ library DeltaGen {
     /// @param deltaInputs Parameters required to construct a delta proof
     /// @return proof The delta proof corresponding to the parameters
     function generateProof(VmSafe vm, ProofInputs memory deltaInputs) internal returns (bytes memory proof) {
-        deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
-        if (deltaInputs.valueCommitmentRandomness == 0) {
-            revert DeltaGen.ValueCommitmentRandomnessZero();
-        }
+        deltaInputs.valueCommitmentRandomness = validateValueCommitmentRandomness(deltaInputs.valueCommitmentRandomness);
         // Compute the components of the transaction delta proof
         VmSafe.Wallet memory randomWallet = vm.createWallet(deltaInputs.valueCommitmentRandomness);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(randomWallet, deltaInputs.verifyingKey);
@@ -94,6 +85,26 @@ library DeltaGen {
     /// @return remainder The remainder.
     function modOrder(uint256 value) internal pure returns (uint256 remainder) {
         remainder = value % SECP256K1_ORDER;
+    }
+
+    /// @notice Validates and normalizes the value commitment randomness.
+    /// @param value The value commitment randomness to validate.
+    /// @return normalized The normalized value (value % SECP256K1_ORDER).
+    function validateValueCommitmentRandomness(uint256 value) internal pure returns (uint256 normalized) {
+        normalized = value.modOrder();
+        if (normalized == 0) {
+            revert ValueCommitmentRandomnessZero();
+        }
+    }
+
+    /// @notice Validates and normalizes the kind.
+    /// @param value The kind value to validate.
+    /// @return normalized The normalized kind (value % SECP256K1_ORDER).
+    function validateKind(uint256 value) internal pure returns (uint256 normalized) {
+        normalized = value.modOrder();
+        if (normalized == 0) {
+            revert KindZero();
+        }
     }
 
     /// @notice Convert an exponent represented as a boolean sign and a uint128
@@ -154,9 +165,7 @@ library DeltaGen {
             }
         }
 
-        if (deltaInputs[0].kind.modOrder() == 0) {
-            revert KindZero();
-        }
+        validateKind(deltaInputs[0].kind);
 
         int256 quantityAcc = 0;
         for (uint256 i = 0; i < deltaInputs.length; i++) {
