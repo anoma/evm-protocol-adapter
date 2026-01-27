@@ -107,16 +107,6 @@ library DeltaGen {
         }
     }
 
-    /// @notice Normalizes the kind and valueCommitmentRandomness fields of an InstanceInputs struct.
-    /// @dev This function modifies the input in-place and also returns it for convenience.
-    /// @param inputs The delta instance inputs to normalize.
-    /// @return normalized The same inputs with normalized kind and valueCommitmentRandomness.
-    function normalize(InstanceInputs memory inputs) internal pure returns (InstanceInputs memory normalized) {
-        inputs.kind = inputs.kind.modOrder();
-        inputs.valueCommitmentRandomness = inputs.valueCommitmentRandomness.modOrder();
-        normalized = inputs;
-    }
-
     /// @notice Checks if the given InstanceInputs will produce a valid (non-zero) preDelta.
     /// @param inputs The delta instance inputs to check.
     /// @return valid True if the inputs will produce a valid preDelta, false otherwise.
