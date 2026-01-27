@@ -2,6 +2,9 @@
 pragma solidity ^0.8.30;
 
 library SignMagnitude {
+    /// @notice Error thrown when magnitude addition would overflow uint128.
+    error MagnitudeOverflow();
+
     /// Positive numbers are represented with a false sign and negative numbers with a true sign.
     /// @param isNegative Whether the number is negative or not.
     /// @param magnitude The magnitude of the number.
@@ -16,6 +19,9 @@ library SignMagnitude {
     /// @return sum The resulting sum.
     function add(Number memory lhs, Number memory rhs) internal pure returns (Number memory sum) {
         if (lhs.isNegative == rhs.isNegative) {
+            if (lhs.magnitude > type(uint128).max - rhs.magnitude) {
+                revert MagnitudeOverflow();
+            }
             sum = Number({isNegative: lhs.isNegative, magnitude: lhs.magnitude + rhs.magnitude});
         } else if (lhs.magnitude >= rhs.magnitude) {
             sum = Number({isNegative: lhs.isNegative, magnitude: lhs.magnitude - rhs.magnitude});
