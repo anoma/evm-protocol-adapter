@@ -10,7 +10,7 @@ library DeltaGen {
     using SignMagnitude for SignMagnitude.Number;
     using DeltaGen for uint256;
 
-    /// @notice The parameters required to generate a mock delta instance for a .
+    /// @notice The parameters required to generate a mock delta instance for testing.
     /// @param valueCommitmentRandomness The value commitment randomness.
     /// @param kind The resource kind that this delta instance mocks.
     /// @param quantity The resource quantity that this delta instance mocks
@@ -22,9 +22,9 @@ library DeltaGen {
         bool consumed;
     }
 
-    /// @notice The parameters required to generate a delta proof
-    /// @notice valueCommitmentRandomness Value commitment randomness
-    /// @notice verifyingKey The hash being signed over
+    /// @notice The parameters required to generate a delta proof.
+    /// @param valueCommitmentRandomness Value commitment randomness.
+    /// @param verifyingKey The hash being signed over.
     struct ProofInputs {
         uint256 valueCommitmentRandomness;
         bytes32 verifyingKey;
@@ -90,18 +90,18 @@ library DeltaGen {
     }
 
     /// @notice Computes the modulo of a value and returns the remainder.
-    /// @param value The value to compute the module for.
+    /// @param value The value to compute the modulo for.
     /// @return remainder The remainder.
     function modOrder(uint256 value) internal pure returns (uint256 remainder) {
         remainder = value % SECP256K1_ORDER;
     }
 
     /// @notice Convert an exponent represented as a boolean sign and a uint128
-    /// magnitude to an equivalent uint256 assuming an order of SECP256K1_SECP256K1_ORDER
+    /// magnitude to an equivalent uint256 assuming an order of SECP256K1_ORDER
     /// @param consumed False represents a non-negative quantity, true a non-positive quantity
-    /// @param quantity The magnitude of the quantity being caanonicalized
-    /// @return quantityRepresentative The non-negative number less than SECP256K1_SECP256K1_ORDER
-    /// that's equivalent to the exponent modulo SECP256K1_SECP256K1_ORDER
+    /// @param quantity The magnitude of the quantity being canonicalized
+    /// @return quantityRepresentative The non-negative number less than SECP256K1_ORDER
+    /// that's equivalent to the exponent modulo SECP256K1_ORDER
     function canonicalizeQuantity(bool consumed, uint128 quantity)
         internal
         pure
@@ -111,6 +111,10 @@ library DeltaGen {
         quantityRepresentative = consumed ? ((SECP256K1_ORDER - uint256(quantity)).modOrder()) : uint256(quantity);
     }
 
+    /// @notice Computes the pre-delta value from delta inputs.
+    /// @dev preDelta = (kind * canonicalizedQuantity + valueCommitmentRandomness) mod SECP256K1_ORDER
+    /// @param deltaInputs The delta instance inputs.
+    /// @return preDelta The computed pre-delta value.
     function computePreDelta(DeltaGen.InstanceInputs memory deltaInputs) internal pure returns (uint256 preDelta) {
         uint256 canonicalizedQuantity = canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
         uint256 prod = mulmod(deltaInputs.kind, canonicalizedQuantity, SECP256K1_ORDER);
@@ -156,7 +160,7 @@ library DeltaGen {
 
         int256 quantityAcc = 0;
         for (uint256 i = 0; i < deltaInputs.length; i++) {
-            // Accumulate the randomness commitments modulo SECP256K1_SECP256K1_ORDER
+            // Accumulate the randomness commitments modulo SECP256K1_ORDER
             valueCommitmentRandomnessAcc =
                 addmod(valueCommitmentRandomnessAcc, deltaInputs[i].valueCommitmentRandomness, SECP256K1_ORDER);
             int256 currentQuantityMag = int256(uint256(deltaInputs[i].quantity));
@@ -176,7 +180,7 @@ library DeltaGen {
             quantityAcc += currentQuantity;
             (deltaInputs[i].consumed, deltaInputs[i].quantity) = SignMagnitude.fromInt256(currentQuantity);
         }
-        // Finally, return tbe balanced deltas
+        // Finally, return the balanced deltas
         wrappedDeltaInputs = deltaInputs;
         (consumedAcc, quantityMagAcc) = SignMagnitude.fromInt256(quantityAcc);
     }
