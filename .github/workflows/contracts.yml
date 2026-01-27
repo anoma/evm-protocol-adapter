@@ -29,6 +29,9 @@ jobs:
       - name: Show Foundry version
         run: forge --version
 
+      - name: Show Foundry version
+        run: forge soldeer version
+
       - name: Run Forge Lint
         run: forge lint --deny warnings
         working-directory: ./contracts
