@@ -79,6 +79,7 @@ contract ProtocolAdapter is
     error ZeroNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
+    error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
     error RiscZeroVerifierStopped();
     error Simulated(uint256 gasUsed);
 
@@ -266,6 +267,8 @@ contract ProtocolAdapter is
                 // Aggregate the logic instance.
                 updatedVars.logicInstances[updatedVars.tagCounter] = instance;
             } else {
+                _checkSelector({selector: bytes4(input.proof[0:4])});
+
                 if (!updatedVars.skipRiscZeroProofVerification) {
                     // Verify the logic proof.
                     // slither-disable-next-line calls-loop
@@ -405,6 +408,8 @@ contract ProtocolAdapter is
             updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] =
             input.instance;
         } else {
+            _checkSelector({selector: bytes4(input.proof[0:4])});
+
             if (!updatedVars.skipRiscZeroProofVerification) {
                 // Verify the compliance proof.
                 // slither-disable-next-line calls-loop
@@ -434,6 +439,8 @@ contract ProtocolAdapter is
         });
 
         if (vars.isProofAggregated) {
+            _checkSelector({selector: bytes4(aggregationProof[0:4])});
+
             bytes32 jounalDigest = sha256(
                 Aggregation.Instance({
                         logicRefs: vars.logicRefs,
@@ -449,6 +456,14 @@ contract ProtocolAdapter is
                     seal: aggregationProof, imageId: Aggregation._VERIFYING_KEY, journalDigest: jounalDigest
                 });
             }
+        }
+    }
+
+    /// @notice Checks that a RISC Zero verifier selector matches the one the protocol adapter is associated with.
+    /// @param selector The RISC Zero verifier selector to check.
+    function _checkSelector(bytes4 selector) internal view {
+        if (selector != _RISC_ZERO_VERIFIER_SELECTOR) {
+            revert RiscZeroVerifierSelectorMismatch({expected: _RISC_ZERO_VERIFIER_SELECTOR, actual: selector});
         }
     }
 

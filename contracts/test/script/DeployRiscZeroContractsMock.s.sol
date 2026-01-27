@@ -8,7 +8,7 @@ import {
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 
-bytes4 constant _MOCK_VERIFIER_SELECTOR = bytes4(0xFFFFFFFF);
+bytes4 constant MOCK_VERIFIER_SELECTOR = bytes4(0xFFFFFFFF);
 
 contract DeployRiscZeroContractsMock is Script {
     function run()
@@ -21,7 +21,7 @@ contract DeployRiscZeroContractsMock is Script {
     {
         vm.startBroadcast(msg.sender);
 
-        mockVerifier = new RiscZeroMockVerifier(_MOCK_VERIFIER_SELECTOR);
+        mockVerifier = new RiscZeroMockVerifier(MOCK_VERIFIER_SELECTOR);
 
         emergencyStop = new RiscZeroVerifierEmergencyStop({_verifier: mockVerifier, guardian: msg.sender});
 

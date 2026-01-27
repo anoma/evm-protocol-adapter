@@ -10,6 +10,7 @@ import {
     RiscZeroVerifierEmergencyStop
 } from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
+import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 
 import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
@@ -18,19 +19,25 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Transaction} from "../src/Types.sol";
 import {EXPECTED_EMPTY_TX_GAS_COST} from "./Benchmark.t.sol";
 import {Parsing} from "./libs/Parsing.sol";
+import {TxGen} from "./libs/TxGen.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
+import {DeployRiscZeroContractsMock, MOCK_VERIFIER_SELECTOR} from "./script/DeployRiscZeroContractsMock.s.sol";
 
 contract ProtocolAdapterTest is Test {
     using Parsing for Transaction;
     using Parsing for Vm;
     using SemVerLib for bytes32;
+    using TxGen for Vm;
 
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
+    RiscZeroVerifierEmergencyStop internal _mockEmergencyStop;
     RiscZeroGroth16Verifier internal _verifier;
+    RiscZeroMockVerifier internal _mockVerifier;
+
     ProtocolAdapter internal _pa;
     bytes4 internal _verifierSelector;
 
@@ -41,6 +48,9 @@ contract ProtocolAdapterTest is Test {
     function setUp() public {
         (_router, _emergencyStop, _verifier) =
             new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
+
+        (, _mockEmergencyStop, _mockVerifier) = new DeployRiscZeroContractsMock().run();
+        _router.addVerifier({selector: _mockVerifier.SELECTOR(), verifier: _mockEmergencyStop});
 
         _verifierSelector = _verifier.SELECTOR();
 
@@ -77,6 +87,40 @@ contract ProtocolAdapterTest is Test {
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
         _pa.execute(_regTx);
+    }
+
+    function test_execute_reverts_if_regular_proofs_have_been_generated_with_another_unstopped_verifier() public {
+        (Transaction memory txnWithMockProof,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
+            isProofAggregated: false
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ProtocolAdapter.RiscZeroVerifierSelectorMismatch.selector, _verifierSelector, MOCK_VERIFIER_SELECTOR
+            ),
+            address(_pa)
+        );
+        _pa.execute(txnWithMockProof);
+    }
+
+    function test_execute_reverts_if_aggregation_proof_has_been_generated_with_another_unstopped_verifier() public {
+        (Transaction memory txnWithMockProof,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
+            isProofAggregated: true
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ProtocolAdapter.RiscZeroVerifierSelectorMismatch.selector, _verifierSelector, MOCK_VERIFIER_SELECTOR
+            ),
+            address(_pa)
+        );
+        _pa.execute(txnWithMockProof);
     }
 
     function test_execute() public {
