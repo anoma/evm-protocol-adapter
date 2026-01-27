@@ -37,9 +37,9 @@ contract ProtocolAdapter is
     NullifierSet
 {
     using Delta for Delta.Point;
-    using MerkleTree for bytes32[];
     using Logic for Logic.VerifierInput[];
     using Logic for Logic.VerifierInput;
+    using MerkleTree for bytes32[];
     using RiscZeroUtils for Aggregation.Instance;
     using RiscZeroUtils for Compliance.Instance;
     using RiscZeroUtils for Logic.Instance;
@@ -134,7 +134,7 @@ contract ProtocolAdapter is
         bool risc0Paused =
             Pausable(address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))).paused();
 
-        isStopped = paused() || risc0Paused;
+        isStopped = risc0Paused || paused();
     }
 
     /// @inheritdoc IProtocolAdapter

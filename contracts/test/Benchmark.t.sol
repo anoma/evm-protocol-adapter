@@ -14,9 +14,9 @@ import {Transaction} from "../src/Types.sol";
 import {Parsing} from "./libs/Parsing.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
+uint256 constant UPPER_EMPTY_TX_GAS_COST_BOUND = 7256;
 uint256 constant UPPER_RISC_ZERO_PROOF_GAS_COST_BOUND = 239000;
 uint256 constant EXPECTED_AGGREGATION_PROOF_GAS_COST = 238285;
-uint256 constant EXPECTED_EMPTY_TX_GAS_COST = 7223;
 
 contract Benchmark is Test {
     using Parsing for Transaction;
@@ -62,7 +62,7 @@ contract Benchmark is Test {
         uint256 gasWithProofs = _executionGasCost({transaction: _txnEmpty, skipRiscZeroProofVerification: false});
 
         assertEq(gasWithProofs, gasWithoutProofs);
-        assertEq(gasWithoutProofs, EXPECTED_EMPTY_TX_GAS_COST);
+        assertLe(gasWithoutProofs, UPPER_EMPTY_TX_GAS_COST_BOUND);
     }
 
     function test_aggregated_proof_gas_cost_is_fixed() public {

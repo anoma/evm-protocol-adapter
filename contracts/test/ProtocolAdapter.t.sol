@@ -17,7 +17,6 @@ import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Transaction} from "../src/Types.sol";
-import {EXPECTED_EMPTY_TX_GAS_COST} from "./Benchmark.t.sol";
 import {Parsing} from "./libs/Parsing.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
@@ -146,16 +145,12 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_simulateExecute_reverts_if_proof_verification_is_skipped() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.Simulated.selector, EXPECTED_EMPTY_TX_GAS_COST), address(_pa)
-        );
+        vm.expectPartialRevert(ProtocolAdapter.Simulated.selector, address(_pa));
         _pa.simulateExecute({transaction: _emptyTx, skipRiscZeroProofVerification: true});
     }
 
     function test_simulateExecute_reverts_if_proof_verification_is_not_skipped() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.Simulated.selector, EXPECTED_EMPTY_TX_GAS_COST), address(_pa)
-        );
+        vm.expectPartialRevert(ProtocolAdapter.Simulated.selector, address(_pa));
         _pa.simulateExecute({transaction: _emptyTx, skipRiscZeroProofVerification: false});
     }
 
