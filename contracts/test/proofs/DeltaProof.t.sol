@@ -236,8 +236,7 @@ contract DeltaProofTest is Test {
 
         // Generate proof with the same randomness
         bytes memory proof = DeltaGen.generateProof(
-            vm,
-            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey})
+            vm, DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey})
         );
 
         // Verify should fail because quantity != 0 (transaction is imbalanced)
@@ -384,8 +383,7 @@ contract DeltaProofTest is Test {
 
         // Generate proof with the total accumulated randomness
         bytes memory proof = DeltaGen.generateProof(
-            vm,
-            DeltaGen.ProofInputs({valueCommitmentRandomness: totalRandomness, verifyingKey: verifyingKey})
+            vm, DeltaGen.ProofInputs({valueCommitmentRandomness: totalRandomness, verifyingKey: verifyingKey})
         );
 
         // Verify: should succeed because quantities are balanced (sum to zero)
