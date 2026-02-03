@@ -59,9 +59,7 @@ contract TagLookupTest is Test {
 
         // Perform a staticcall to `self` with the encoded calldata
         (bool ok, bytes memory result) = address(this).call(data); // solhint-disable-line avoid-low-level-calls
-        if (!ok) {
-            revert LookupCallFailed();
-        }
+        require(ok, LookupCallFailed());
 
         // Decode the result back into memory
         found = abi.decode(result, (Logic.VerifierInput));
