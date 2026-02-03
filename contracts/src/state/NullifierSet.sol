@@ -36,9 +36,6 @@ contract NullifierSet is INullifierSet {
     /// @notice Adds a nullifier to the set, if it does not exist already.
     /// @param nullifier The nullifier to add.
     function _addNullifier(bytes32 nullifier) internal {
-        (bool success) = _nullifierSet.add(nullifier);
-        if (!success) {
-            revert PreExistingNullifier(nullifier);
-        }
+        require(_nullifierSet.add(nullifier), PreExistingNullifier(nullifier));
     }
 }
