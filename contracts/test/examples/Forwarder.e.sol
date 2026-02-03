@@ -27,9 +27,7 @@ contract ForwarderExample {
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
     /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef) {
-        if (protocolAdapter == address(0) || calldataCarrierLogicRef == bytes32(0)) {
-            revert ZeroNotAllowed();
-        }
+        require(protocolAdapter != address(0) && calldataCarrierLogicRef != bytes32(0), ZeroNotAllowed());
 
         _PROTOCOL_ADAPTER = protocolAdapter;
 
@@ -39,13 +37,12 @@ contract ForwarderExample {
     }
 
     function forwardCall(bytes32 logicRef, bytes calldata input) external returns (bytes memory output) {
-        if (msg.sender != _PROTOCOL_ADAPTER) {
-            revert UnauthorizedCaller({expected: _PROTOCOL_ADAPTER, actual: msg.sender});
-        }
+        require(msg.sender == _PROTOCOL_ADAPTER, UnauthorizedCaller({expected: _PROTOCOL_ADAPTER, actual: msg.sender}));
 
-        if (_CALLDATA_CARRIER_LOGIC_REF != logicRef) {
-            revert UnauthorizedLogicRef({expected: _CALLDATA_CARRIER_LOGIC_REF, actual: logicRef});
-        }
+        require(
+            _CALLDATA_CARRIER_LOGIC_REF == logicRef,
+            UnauthorizedLogicRef({expected: _CALLDATA_CARRIER_LOGIC_REF, actual: logicRef})
+        );
 
         output = TARGET.functionCall(input);
 
