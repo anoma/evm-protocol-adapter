@@ -9,6 +9,4 @@ pub mod r#i_nullifier_set;
 pub mod r#i_protocol_adapter;
 pub mod r#i_version;
 pub mod r#protocol_adapter;
-pub mod r#protocol_adapter_test;
-pub mod r#protocol_adapter_mock_verifier_test;
 pub mod r#versioning_lib_external;
