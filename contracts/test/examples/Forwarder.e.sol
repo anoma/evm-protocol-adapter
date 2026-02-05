@@ -27,7 +27,8 @@ contract ForwarderExample {
     /// @param protocolAdapter The protocol adapter contract that is allowed to forward calls.
     /// @param calldataCarrierLogicRef The resource logic function of the calldata carrier resource.
     constructor(address protocolAdapter, bytes32 calldataCarrierLogicRef) {
-        require(protocolAdapter != address(0) && calldataCarrierLogicRef != bytes32(0), ZeroNotAllowed());
+        require(protocolAdapter != address(0), ZeroNotAllowed());
+        require(calldataCarrierLogicRef != bytes32(0), ZeroNotAllowed());
 
         _PROTOCOL_ADAPTER = protocolAdapter;
 
