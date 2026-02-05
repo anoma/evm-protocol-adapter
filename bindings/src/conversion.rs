@@ -126,7 +126,7 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
                 .map(ProtocolAdapter::Action::from)
                 .collect(),
             deltaProof: Bytes::from(delta_proof),
-            aggregationProof: match tx.get_raw_aggregation_proof() {
+            aggregationProof: match tx.aggregation_proof {
                 Some(proof) => Bytes::from(encode_seal(&proof).unwrap()),
                 None => Bytes::from(""),
             },
