@@ -13,8 +13,8 @@ edition = "2024"
 [workspace.dependencies]
 alloy = { version = "1.4.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.27"
-anoma-rm-risc0 = { version = "1.0.0", features = ["bonsai", "aggregation"] }
-anoma-rm-risc0-test-app = { version = "1.0.0", features = ["bonsai"] }
+anoma-rm-risc0 = { version = "1.1.0", features = ["bonsai", "aggregation"] }
+anoma-rm-risc0-test-app = { version = "1.1.0", features = ["bonsai"] }
 dotenvy = { version = "0.15.7", features = ["cli"] }
 serde = { version = "1.0.228", default-features = false }
 thiserror = "2.0.17"
