@@ -10,6 +10,6 @@ fn print_verifying_keys() {
 
     println!(
         "BATCH_AGGREGATION_VK: {:?}",
-        B256::from_slice(anoma_rm_risc0::aggregation::constants::BATCH_AGGREGATION_VK.as_bytes())
+        B256::from_slice(anoma_rm_risc0::constants::BATCH_AGGREGATION_VK.as_bytes())
     );
 }
