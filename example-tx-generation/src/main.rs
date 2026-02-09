@@ -1,6 +1,5 @@
 use anoma_pa_evm_bindings::conversion::to_evm_bin_file;
 use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter;
-use anoma_rm_risc0::aggregation::AggregationStrategy;
 use anoma_rm_risc0::proving_system::ProofType;
 use anoma_rm_risc0_test_app::generate_test_transaction;
 use std::{env, process};
@@ -66,7 +65,7 @@ fn main() {
     let mut tx = generate_test_transaction(n_actions, n_cus, proof_type);
 
     if aggregate_proofs {
-        tx.aggregate_with_strategy(AggregationStrategy::Batch, ProofType::Groth16)
+        tx.aggregate(ProofType::Groth16)
             .expect("Aggregation proof failed.");
     }
 
