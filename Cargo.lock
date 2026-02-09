@@ -999,8 +999,7 @@ dependencies = [
 [[package]]
 name = "anoma-rm-risc0"
 version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3bafed27d56b944004a4eb6bf16e98d4269cc5462ad3a07477c177d71690a6f"
+source = "git+https://github.com/anoma/arm-risc0?branch=xuyang%2Frevert_batch_elf_id#9c1e98be530027b7902443fcace0857b57179572"
 dependencies = [
  "bincode",
  "bytemuck",
@@ -1018,8 +1017,7 @@ dependencies = [
 [[package]]
 name = "anoma-rm-risc0-gadgets"
 version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82d109cad7ed60cc902bc0664e9c521176cc823c889a5291c6e19460d69ecb61"
+source = "git+https://github.com/anoma/arm-risc0?branch=xuyang%2Frevert_batch_elf_id#9c1e98be530027b7902443fcace0857b57179572"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",
@@ -1036,8 +1034,7 @@ dependencies = [
 [[package]]
 name = "anoma-rm-risc0-test-app"
 version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c62dba9780a6a12623ef5491b077eb85108285f0b3ff0e5bf055cf4459ad058e"
+source = "git+https://github.com/anoma/arm-risc0?branch=xuyang%2Frevert_batch_elf_id#9c1e98be530027b7902443fcace0857b57179572"
 dependencies = [
  "anoma-rm-risc0",
  "anoma-rm-risc0-test-witness",
@@ -1050,8 +1047,7 @@ dependencies = [
 [[package]]
 name = "anoma-rm-risc0-test-witness"
 version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a370a5bd72689be05ad75f5ea0d8556047dcd0c562f9f0b8944fb51f633c474"
+source = "git+https://github.com/anoma/arm-risc0?branch=xuyang%2Frevert_batch_elf_id#9c1e98be530027b7902443fcace0857b57179572"
 dependencies = [
  "anoma-rm-risc0",
  "anoma-rm-risc0-gadgets",
