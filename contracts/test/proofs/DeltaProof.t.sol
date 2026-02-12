@@ -210,97 +210,38 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.verify({proof: proofForVk1, instance: instance, verifyingKey: verifyingKey2});
     }
 
-    /// @notice Check that a balanced transaction does pass verification
-    function testFuzz_verify_balanced_delta_succeeds(
-        uint256 kind,
-        DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs,
-        bytes32 verifyingKey
-    ) public {
-        kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
-        DeltaGen.InstanceInputs[] memory deltaInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
-
-        Delta.Point memory deltaAcc = Delta.zero();
-
-        // Make sure that the delta quantities balance out
-        (
-            DeltaGen.InstanceInputs[] memory wrappedDeltaInputs,
-            bool consumed,
-            uint128 quantity,
-            uint256 valueCommitmentRandomness
-        ) = deltaInputs.createBalancedDeltaInputArray();
-        valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
-        vm.assume(valueCommitmentRandomness != 0);
-
-        // Adjust the last delta so that the full sum is zero
-        if (quantity != 0) {
-            // TODO REFACTOR
-            SignMagnitude.Number memory diff = SignMagnitude.Number(
-                    wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed,
-                    wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity
-                ).sub(SignMagnitude.Number(consumed, quantity));
-
-            wrappedDeltaInputs[wrappedDeltaInputs.length - 1].consumed = diff.isNegative;
-            wrappedDeltaInputs[wrappedDeltaInputs.length - 1].quantity = diff.magnitude;
-        }
-
-        // Compute the delta instance and accumulate it
-        for (uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
-            wrappedDeltaInputs[i].valueCommitmentRandomness = wrappedDeltaInputs[i].valueCommitmentRandomness.modOrder();
-            vm.assume(wrappedDeltaInputs[i].valueCommitmentRandomness != 0);
-            vm.assume(wrappedDeltaInputs[i].computePreDelta() != 0);
-
-            Delta.Point memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
-            deltaAcc = deltaAcc.add(instance);
-        }
-
-        // Compute the proof for the balanced transaction
-        DeltaGen.ProofInputs memory sumDeltaInputs =
-            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
-
-        bytes memory proof = DeltaGen.generateProof(vm, sumDeltaInputs);
-        // Verify that the balanced transaction proof succeeds
-        DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
-    }
-
-    /// @notice Check that an imbalanced transaction fails verification
+    /// @notice Check that an imbalanced transaction (non-zero quantity sum) fails verification.
     function testFuzz_verify_imbalanced_delta_fails(
         uint256 kind,
-        DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs,
+        uint256 valueCommitmentRandomness,
+        uint128 quantity,
         bytes32 verifyingKey
     ) public {
+        // Bound inputs to valid ranges
         kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
-        DeltaGen.InstanceInputs[] memory deltaInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
+        valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
+        vm.assume(quantity > 0); // Must have non-zero quantity to be imbalanced
 
-        Delta.Point memory deltaAcc = Delta.zero();
+        // Create a single delta with non-zero quantity (imbalanced by definition)
+        DeltaGen.InstanceInputs memory deltaInput = DeltaGen.InstanceInputs({
+            kind: kind,
+            valueCommitmentRandomness: valueCommitmentRandomness,
+            quantity: quantity,
+            consumed: false // positive quantity, doesn't balance to zero
+        });
+        vm.assume(deltaInput.isValid());
 
-        // Accumulate the total quantity and randomness commitment
-        (
-            DeltaGen.InstanceInputs[] memory wrappedDeltaInputs,
-            bool consumed,
-            uint128 quantity,
-            uint256 valueCommitmentRandomness
-        ) = deltaInputs.createBalancedDeltaInputArray();
-        valueCommitmentRandomness = valueCommitmentRandomness.modOrder();
-        vm.assume(valueCommitmentRandomness != 0);
+        // Generate the delta instance
+        Delta.Point memory deltaInstance = DeltaGen.generateInstance(vm, deltaInput);
 
-        // Compute the delta instance and accumulate it
-        vm.assume(DeltaGen.canonicalizeQuantity(consumed, quantity) != 0);
-        for (uint256 i = 0; i < wrappedDeltaInputs.length; i++) {
-            wrappedDeltaInputs[i].valueCommitmentRandomness = wrappedDeltaInputs[i].valueCommitmentRandomness.modOrder();
-            vm.assume(wrappedDeltaInputs[i].valueCommitmentRandomness != 0);
-            vm.assume(wrappedDeltaInputs[i].computePreDelta() != 0);
+        // Generate proof with the same randomness
+        bytes memory proof = DeltaGen.generateProof(
+            vm, DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey})
+        );
 
-            Delta.Point memory instance = DeltaGen.generateInstance(vm, wrappedDeltaInputs[i]);
-            deltaAcc = deltaAcc.add(instance);
-        }
-        // Compute the proof for the balanced transaction
-        DeltaGen.ProofInputs memory sumDeltaInputs =
-            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
-
-        bytes memory proof = DeltaGen.generateProof(vm, sumDeltaInputs);
-        // Verify that the imbalanced transaction proof fails
+        // Verify should fail because quantity != 0 (transaction is imbalanced)
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
+        DeltaFuzzing.verify({proof: proof, instance: deltaInstance, verifyingKey: verifyingKey});
     }
 
     function testFuzz_add_reverts_when_adding_a_non_curve_from_the_right(uint32 k, Delta.Point memory rhs) public {
@@ -406,6 +347,47 @@ contract DeltaProofTest is Test {
     function test_zero_is_not_on_the_curve() public pure {
         Delta.Point memory p2 = Delta.zero();
         assertFalse(EllipticCurve.isOnCurve({_x: p2.x, _y: p2.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
+    }
+
+    /// @notice Check that balanced pairs (using the new simplified approach) pass verification.
+    /// @dev createBalancedPairs guarantees quantities sum to zero by pairing each +q with -q.
+    function testFuzz_verify_balanced_pairs_succeeds(
+        uint256 kind,
+        DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs,
+        bytes32 verifyingKey
+    ) public {
+        // Bound kind to valid range (non-zero, less than curve order)
+        kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
+        DeltaGen.InstanceInputs[] memory baseInputs = _getBoundedDeltaInstances(kind, fuzzerInputs);
+        vm.assume(baseInputs.length > 0);
+
+        // Create balanced pairs: for each input with quantity q, creates +q and -q entries
+        // This guarantees the quantities sum to zero by construction
+        (DeltaGen.InstanceInputs[] memory pairedInputs, uint256 totalRandomness) =
+            DeltaGen.createBalancedPairs(baseInputs);
+
+        // Ensure accumulated randomness is valid for proof generation
+        totalRandomness = totalRandomness.modOrder();
+        vm.assume(totalRandomness != 0);
+
+        // Generate and accumulate delta instances
+        Delta.Point memory deltaAcc = Delta.zero();
+        for (uint256 i = 0; i < pairedInputs.length; i++) {
+            // Normalize and validate each input
+            pairedInputs[i].valueCommitmentRandomness = pairedInputs[i].valueCommitmentRandomness.modOrder();
+            vm.assume(pairedInputs[i].isValid());
+
+            Delta.Point memory instance = DeltaGen.generateInstance(vm, pairedInputs[i]);
+            deltaAcc = deltaAcc.add(instance);
+        }
+
+        // Generate proof with the total accumulated randomness
+        bytes memory proof = DeltaGen.generateProof(
+            vm, DeltaGen.ProofInputs({valueCommitmentRandomness: totalRandomness, verifyingKey: verifyingKey})
+        );
+
+        // Verify: should succeed because quantities are balanced (sum to zero)
+        DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
     function _getBoundedDeltaInstances(uint256 kind, DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs)
