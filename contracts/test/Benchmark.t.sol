@@ -195,6 +195,60 @@ contract Benchmark is Test {
         }
     }
 
+    function test_print_calldata_gas_analysis() public {
+        // Flat arrays: index = m * 5 + i, where m: 0=agg 1=reg, i: 0-4 for CU 1,5,10,15,20
+        uint256[10] memory bytesArr;
+        uint256[10] memory zeroArr;
+        uint256[10] memory nzArr;
+        uint256[10] memory egArr;
+
+        for (uint256 m = 0; m < 2; ++m) {
+            for (uint256 i = 0; i < 5; ++i) {
+                Transaction memory txn;
+
+                if (m == 0) {
+                    txn = _txnsAgg[i];
+                } else {
+                    txn = _txnsReg[i];
+                }
+
+                uint256 idx = m * 5 + i;
+                bytes memory cd = abi.encodeCall(ProtocolAdapter.execute, (txn));
+                bytesArr[idx] = cd.length;
+                (zeroArr[idx], nzArr[idx]) = _countCalldataBytes(cd);
+                egArr[idx] = _executionGasCost({transaction: txn, skipRiscZeroProofVerification: false});
+            }
+        }
+
+        // Collect 02_02 (4 CUs in 2 actions) for out-of-sample validation
+        uint256[2] memory valZero;
+        uint256[2] memory valNz;
+        uint256[2] memory valEg;
+
+        for (uint256 m = 0; m < 2; ++m) {
+            Transaction memory txn;
+
+            if (m == 0) {
+                txn = _txnsAgg[5];
+            } else {
+                txn = _txnsReg[5];
+            }
+
+            bytes memory cd = abi.encodeCall(ProtocolAdapter.execute, (txn));
+            (valZero[m], valNz[m]) = _countCalldataBytes(cd);
+            valEg[m] = _executionGasCost({transaction: txn, skipRiscZeroProofVerification: false});
+        }
+
+        _logCalldataGasTable(bytesArr, zeroArr, nzArr);
+        _logEip7623FloorCheck(zeroArr, nzArr, egArr);
+        _logTotalGasTable(zeroArr, nzArr, egArr);
+        _logMaxCUsTable(zeroArr, nzArr, egArr);
+        _logModelValidation({
+            zeroArr: zeroArr, nzArr: nzArr, egArr: egArr, valZero: valZero, valNz: valNz, valEg: valEg
+        });
+        _logNotes();
+    }
+
     function _executionGasCost(Transaction memory transaction, bool skipRiscZeroProofVerification)
         internal
         returns (uint256 gasUsed)
@@ -224,6 +278,329 @@ contract Benchmark is Test {
         for (uint256 i = 0; i < actionCount; ++i) {
             complianceUnits += transaction.actions[i].complianceVerifierInputs.length;
         }
+    }
+
+    function _countCalldataBytes(bytes memory data) internal pure returns (uint256 zero, uint256 nonZero) {
+        for (uint256 i = 0; i < data.length; ++i) {
+            if (data[i] == 0) {
+                ++zero;
+            } else {
+                ++nonZero;
+            }
+        }
+    }
+
+    /// @dev Scheme mapping:
+    ///   0 = EIP-2028 (4/16) — current base rate, still applies under Pectra for execution-heavy txns
+    ///   1 = EIP-7623 (10/40) — floor rate only; shown as hypothetical base rate for comparison
+    ///   2 = EIP-7976 Opt 1 (15/60) — Glamsterdam proposal
+    ///   3 = EIP-7976 Opt 2 (64/64) — Glamsterdam flat rate alternative
+    function _calldataGas(uint256 zero, uint256 nonZero, uint256 scheme) internal pure returns (uint256) {
+        if (scheme == 0) return zero * 4 + nonZero * 16;
+        if (scheme == 1) return zero * 10 + nonZero * 40;
+        if (scheme == 2) return zero * 15 + nonZero * 60;
+        return (zero + nonZero) * 64;
+    }
+
+    function _logCalldataGasTable(uint256[10] memory bytesArr, uint256[10] memory zeroArr, uint256[10] memory nzArr)
+        internal
+        pure
+    {
+        uint256[5] memory cuCounts = [uint256(1), 5, 10, 15, 20];
+        string[2] memory modeNames = ["agg", "reg"];
+
+        console.log("");
+        console.log("=== Table 1: Calldata Gas per Transaction ===");
+        console.log("Mode, CUs, Bytes, Zero, NonZero, Gas(4/16), Gas(10/40*), Gas(15/60), Gas(64/64)");
+
+        for (uint256 m = 0; m < 2; ++m) {
+            for (uint256 i = 0; i < 5; ++i) {
+                uint256 idx = m * 5 + i;
+                uint256 z = zeroArr[idx];
+                uint256 nz = nzArr[idx];
+
+                // solhint-disable-next-line func-named-parameters
+                string memory row = string.concat(
+                    modeNames[m],
+                    ", ",
+                    Strings.toString(cuCounts[i]),
+                    ", ",
+                    Strings.toString(bytesArr[idx]),
+                    ", ",
+                    Strings.toString(z),
+                    ", ",
+                    Strings.toString(nz)
+                );
+                // solhint-disable-next-line func-named-parameters
+                row = string.concat(
+                    row,
+                    ", ",
+                    Strings.toString(z * 4 + nz * 16),
+                    ", ",
+                    Strings.toString(z * 10 + nz * 40),
+                    ", ",
+                    Strings.toString(z * 15 + nz * 60),
+                    ", ",
+                    Strings.toString((z + nz) * 64)
+                );
+                console.log(row);
+            }
+        }
+
+        console.log(
+            "(*) 10/40 is the EIP-7623 floor rate. For ARM txns, execution gas dominates so standard 4/16 applies under Pectra."
+        );
+    }
+
+    function _logTotalGasTable(uint256[10] memory zeroArr, uint256[10] memory nzArr, uint256[10] memory egArr)
+        internal
+        pure
+    {
+        uint256[5] memory cuCounts = [uint256(1), 5, 10, 15, 20];
+        string[2] memory modeNames = ["agg", "reg"];
+        uint256 intrinsicGas = 21_000;
+
+        console.log("");
+        console.log("=== Table 2: Total On-Chain Gas per Transaction ===");
+        console.log(
+            "Mode, CUs, ExecGas, CD(4/16), Tot(4/16), CD(10/40), Tot(10/40), CD(15/60), Tot(15/60), CD(64/64), Tot(64/64)"
+        );
+
+        for (uint256 m = 0; m < 2; ++m) {
+            for (uint256 i = 0; i < 5; ++i) {
+                uint256 idx = m * 5 + i;
+                uint256 z = zeroArr[idx];
+                uint256 nz = nzArr[idx];
+                uint256 eg = egArr[idx];
+
+                // solhint-disable-next-line func-named-parameters
+                string memory row = string.concat(
+                    modeNames[m],
+                    ", ",
+                    Strings.toString(cuCounts[i]),
+                    ", ",
+                    Strings.toString(eg),
+                    ", ",
+                    Strings.toString(z * 4 + nz * 16),
+                    ", ",
+                    Strings.toString(intrinsicGas + z * 4 + nz * 16 + eg)
+                );
+                // solhint-disable-next-line func-named-parameters
+                row = string.concat(
+                    row,
+                    ", ",
+                    Strings.toString(z * 10 + nz * 40),
+                    ", ",
+                    Strings.toString(intrinsicGas + z * 10 + nz * 40 + eg),
+                    ", ",
+                    Strings.toString(z * 15 + nz * 60),
+                    ", ",
+                    Strings.toString(intrinsicGas + z * 15 + nz * 60 + eg)
+                );
+                // solhint-disable-next-line func-named-parameters
+                row = string.concat(
+                    row,
+                    ", ",
+                    Strings.toString((z + nz) * 64),
+                    ", ",
+                    Strings.toString(intrinsicGas + (z + nz) * 64 + eg)
+                );
+                console.log(row);
+            }
+        }
+    }
+
+    function _logMaxCUsTable(uint256[10] memory zeroArr, uint256[10] memory nzArr, uint256[10] memory egArr)
+        internal
+        pure
+    {
+        string[2] memory modeNames = ["agg", "reg"];
+        string[4] memory schemeNames = ["4/16", "10/40*", "15/60", "64/64"];
+        uint256 intrinsicGas = 21_000;
+
+        // Linear extrapolation: marginalCost = (total@20CU - total@1CU) / 19
+        // baseCost = total@1CU - marginalCost
+        // maxCUs = (gasLimit - baseCost) / marginalCost
+        console.log("");
+        console.log("=== Table 3: Max CUs per Block ===");
+        console.log("Mode, Scheme, MarginalCost/CU, MaxCUs@36M, MaxCUs@60M");
+        console.log("NOTE: 2-point model (1,20 CU) is conservative for agg mode (~5% marginal cost overestimate)");
+
+        for (uint256 m = 0; m < 2; ++m) {
+            for (uint256 s = 0; s < 4; ++s) {
+                uint256 total1 = intrinsicGas + _calldataGas(zeroArr[m * 5], nzArr[m * 5], s) + egArr[m * 5];
+                uint256 total20 =
+                    intrinsicGas + _calldataGas(zeroArr[m * 5 + 4], nzArr[m * 5 + 4], s) + egArr[m * 5 + 4];
+
+                uint256 marginalCost = (total20 - total1) / 19;
+                uint256 baseCost = total1 - marginalCost;
+
+                uint256 maxCUs36 = 0;
+                uint256 maxCUs60 = 0;
+
+                if (marginalCost > 0) {
+                    if (36_000_000 > baseCost) maxCUs36 = (36_000_000 - baseCost) / marginalCost;
+                    if (60_000_000 > baseCost) maxCUs60 = (60_000_000 - baseCost) / marginalCost;
+                }
+
+                // solhint-disable func-named-parameters
+                console.log(
+                    string.concat(
+                        modeNames[m],
+                        ", ",
+                        schemeNames[s],
+                        ", ",
+                        Strings.toString(marginalCost),
+                        ", ",
+                        Strings.toString(maxCUs36),
+                        ", ",
+                        Strings.toString(maxCUs60)
+                    )
+                );
+                // solhint-enable func-named-parameters
+            }
+        }
+    }
+
+    function _logEip7623FloorCheck(uint256[10] memory zeroArr, uint256[10] memory nzArr, uint256[10] memory egArr)
+        internal
+        pure
+    {
+        uint256[5] memory cuCounts = [uint256(1), 5, 10, 15, 20];
+        string[2] memory modeNames = ["agg", "reg"];
+
+        console.log("");
+        console.log("=== EIP-7623 Floor Check ===");
+        console.log("Floor activates when 6*zero + 24*nonzero > exec_gas (never for ARM txns)");
+        console.log("Mode, CUs, FloorThreshold, ExecGas, Ratio(%)");
+
+        for (uint256 m = 0; m < 2; ++m) {
+            for (uint256 i = 0; i < 5; ++i) {
+                uint256 idx = m * 5 + i;
+                uint256 floorThreshold = 6 * zeroArr[idx] + 24 * nzArr[idx];
+                uint256 ratioPct = (floorThreshold * 100) / egArr[idx];
+
+                // solhint-disable func-named-parameters
+                console.log(
+                    string.concat(
+                        modeNames[m],
+                        ", ",
+                        Strings.toString(cuCounts[i]),
+                        ", ",
+                        Strings.toString(floorThreshold),
+                        ", ",
+                        Strings.toString(egArr[idx]),
+                        ", ",
+                        Strings.toString(ratioPct)
+                    )
+                );
+                // solhint-enable func-named-parameters
+            }
+        }
+    }
+
+    function _logModelValidation(
+        uint256[10] memory zeroArr,
+        uint256[10] memory nzArr,
+        uint256[10] memory egArr,
+        uint256[2] memory valZero,
+        uint256[2] memory valNz,
+        uint256[2] memory valEg
+    ) internal pure {
+        uint256[5] memory cuCounts = [uint256(1), 5, 10, 15, 20];
+        string[2] memory modeNames = ["agg", "reg"];
+        uint256 intrinsicGas = 21_000;
+
+        console.log("");
+        console.log("=== Table 4: Linear Model Validation ===");
+
+        // R-squared for scheme 0 (4/16) as representative
+        console.log("R-squared (4/16 scheme, basis points where 10000 = perfect fit):");
+
+        for (uint256 m = 0; m < 2; ++m) {
+            uint256 total1 = intrinsicGas + _calldataGas(zeroArr[m * 5], nzArr[m * 5], 0) + egArr[m * 5];
+            uint256 total20 = intrinsicGas + _calldataGas(zeroArr[m * 5 + 4], nzArr[m * 5 + 4], 0) + egArr[m * 5 + 4];
+
+            uint256 marginalCost = (total20 - total1) / 19;
+            uint256 baseCost = total1 - marginalCost;
+
+            uint256 sumTotal = 0;
+            uint256[5] memory totals;
+
+            for (uint256 i = 0; i < 5; ++i) {
+                uint256 idx = m * 5 + i;
+                totals[i] = intrinsicGas + _calldataGas(zeroArr[idx], nzArr[idx], 0) + egArr[idx];
+                sumTotal += totals[i];
+            }
+
+            uint256 mean = sumTotal / 5;
+
+            uint256 ssTot = 0;
+            uint256 ssRes = 0;
+
+            for (uint256 i = 0; i < 5; ++i) {
+                uint256 predicted = baseCost + marginalCost * cuCounts[i];
+
+                uint256 resDiff = totals[i] > predicted ? totals[i] - predicted : predicted - totals[i];
+                ssRes += resDiff * resDiff;
+
+                uint256 totDiff = totals[i] > mean ? totals[i] - mean : mean - totals[i];
+                ssTot += totDiff * totDiff;
+            }
+
+            uint256 r2Bps = ssTot > 0 ? 10_000 - (10_000 * ssRes) / ssTot : 10_000;
+
+            // solhint-disable-next-line func-named-parameters
+            console.log(string.concat("  ", modeNames[m], ": ", Strings.toString(r2Bps), " / 10000"));
+        }
+
+        // Out-of-sample: 02_02 (4 CUs, 2 actions) vs linear prediction from single-action data
+        console.log("");
+        console.log("Out-of-sample: 02_02 (4 CUs in 2 actions) vs single-action model (4/16):");
+        console.log("NOTE: structural difference (multi-action) means deviation includes action-structure effect");
+
+        for (uint256 m = 0; m < 2; ++m) {
+            uint256 total1 = intrinsicGas + _calldataGas(zeroArr[m * 5], nzArr[m * 5], 0) + egArr[m * 5];
+            uint256 total20 = intrinsicGas + _calldataGas(zeroArr[m * 5 + 4], nzArr[m * 5 + 4], 0) + egArr[m * 5 + 4];
+
+            uint256 marginalCost = (total20 - total1) / 19;
+            uint256 baseCost = total1 - marginalCost;
+
+            uint256 predicted4 = baseCost + marginalCost * 4;
+            uint256 actual4 = intrinsicGas + _calldataGas(valZero[m], valNz[m], 0) + valEg[m];
+
+            uint256 diff = predicted4 > actual4 ? predicted4 - actual4 : actual4 - predicted4;
+            string memory sign = predicted4 > actual4 ? "+" : "-";
+            uint256 errPermille = (diff * 1000) / actual4;
+
+            // solhint-disable func-named-parameters
+            console.log(
+                string.concat(
+                    "  ",
+                    modeNames[m],
+                    ": predicted=",
+                    Strings.toString(predicted4),
+                    " actual=",
+                    Strings.toString(actual4),
+                    " error=",
+                    sign,
+                    Strings.toString(errPermille),
+                    " permille"
+                )
+            );
+            // solhint-enable func-named-parameters
+        }
+    }
+
+    function _logNotes() internal pure {
+        console.log("");
+        console.log("=== Notes ===");
+        console.log("- EIP-7706: If calldata gets its own gas dimension with independent basefee,");
+        console.log("  actual costs could be lower when blocks are not calldata-heavy.");
+        console.log("- 10/40 column (*): hypothetical base rate for comparison. Under Pectra (EIP-7623),");
+        console.log("  ARM txns pay standard 4/16 because the 10/40 floor never binds (see floor check).");
+        console.log("- Blob alternative (EIP-4844): posting proof data as blobs (~1 gas/byte) could");
+        console.log("  bypass calldata repricing entirely, but requires architectural changes.");
     }
 }
 
