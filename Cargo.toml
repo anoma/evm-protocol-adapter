@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["bindings", "example-tx-generation"]
+members = ["bindings", "example-tx-generation", "record-deployment"]
 
 [workspace.package]
 keywords = ["anoma", "evm", "protocol-adapter"]
