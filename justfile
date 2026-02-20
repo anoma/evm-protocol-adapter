@@ -52,7 +52,7 @@ contracts-deploy deployer chain *args:
 
 # Verify on sourcify
 contracts-verify-sourcify address chain *args:
-    cd contracts && forge verify-contract {{address}} \
+    cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} \
         src/ProtocolAdapter.sol:ProtocolAdapter \
         --chain {{chain}} --verifier sourcify {{ args }}
 
