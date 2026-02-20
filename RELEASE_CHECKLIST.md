@@ -129,13 +129,19 @@ For each chain, you want to deploy to, do the following:
 
 ### 5. Update the Deployments Map and Create a new `contracts` and `bindings` GitHub Release
 
-- [ ] Add the **new** address and chain name pairs in the
+- [ ] Record the deployment by running:
 
-  ```rust
-  pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address>
+  ```sh
+  just record-deployment <CHAIN_NAME> <VERSION>
   ```
 
-  function in [`./bindings/src/addresses.rs`](./bindings/src/addresses.rs).
+  This reads the Foundry broadcast artifact, extracts the contract address, and updates `deployments.json`. No manual editing needed.
+
+  Alternatively, deploy and record in one step:
+
+  ```sh
+  just deploy-and-record deployer <CHAIN_NAME> <VERSION>
+  ```
 
 - [ ] Change the `bindings` package version number in the [`./bindings/Cargo.toml`](./bindings/Cargo.toml) file to `A.0.0`, where `A` is the last `MAJOR` version number incremented by 1.
 
@@ -279,13 +285,19 @@ For each **new** chain, you want to deploy to, do the following:
 
 ### 4. Update the Deployments Map and Create a new `bindings` GitHub Release
 
-- [ ] Add the **new** address and chain name pairs in the
+- [ ] Record each deployment by running:
 
-  ```rust
-  pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address>
+  ```sh
+  just record-deployment <CHAIN_NAME> <VERSION>
   ```
 
-  function in `./bindings/src/addresses.rs`.
+  This reads the Foundry broadcast artifact, extracts the contract address, and updates `deployments.json`. No manual editing needed.
+
+  Alternatively, deploy and record in one step:
+
+  ```sh
+  just deploy-and-record deployer <CHAIN_NAME> <VERSION>
+  ```
 
 - [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
