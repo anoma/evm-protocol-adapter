@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["bindings", "example-tx-generation"]
+members = ["bindings", "example-tx-generation", "record-deployment"]
 
 [workspace.package]
 keywords = ["anoma", "evm", "protocol-adapter"]
@@ -17,6 +17,7 @@ anoma-rm-risc0 = { version = "1.1.1", features = ["bonsai", "aggregation"] }
 anoma-rm-risc0-test-app = { version = "1.1.1", features = ["bonsai"] }
 dotenvy = { version = "0.15.7", features = ["cli"] }
 serde = { version = "1.0.228", default-features = false }
+serde_json = "1.0"
 thiserror = "2.0.17"
 tokio = { version = "1.49", features = ["rt-multi-thread"] }
 
