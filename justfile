@@ -69,6 +69,22 @@ contracts-verify address chain: (contracts-verify-sourcify address chain) (contr
 contracts-publish version *args:
     cd contracts && forge soldeer push anoma-pa-evm~{{version}} {{ args }}
 
+# --- RISC Zero Verifier ---
+
+# Simulate RISC Zero verifier deployment (dry-run)
+risczero-simulate admin guardian chain *args:
+    cd contracts && FOUNDRY_EVM_VERSION=cancun forge script \
+        test/script/DeployRiscZeroContracts.s.sol:DeployRiscZeroContracts \
+        --sig "run(address,address)" {{admin}} {{guardian}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Deploy RISC Zero verifier (router + groth16 + emergency stop)
+risczero-deploy deployer admin guardian chain *args:
+    cd contracts && FOUNDRY_EVM_VERSION=cancun forge script \
+        test/script/DeployRiscZeroContracts.s.sol:DeployRiscZeroContracts \
+        --sig "run(address,address)" {{admin}} {{guardian}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
 # --- Bindings ---
 
 # Clean bindings
