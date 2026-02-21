@@ -85,6 +85,18 @@ risczero-deploy deployer admin guardian chain *args:
         --sig "run(address,address)" {{admin}} {{guardian}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
+# Verify RISC Zero verifier contracts on Sourcify
+risczero-verify groth16 estop router chain *args:
+    cd contracts && FOUNDRY_EVM_VERSION=cancun forge verify-contract {{groth16}} \
+        dependencies/risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol:RiscZeroGroth16Verifier \
+        --chain {{chain}} --verifier sourcify {{ args }}
+    cd contracts && FOUNDRY_EVM_VERSION=cancun forge verify-contract {{estop}} \
+        dependencies/risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol:RiscZeroVerifierEmergencyStop \
+        --chain {{chain}} --verifier sourcify {{ args }}
+    cd contracts && FOUNDRY_EVM_VERSION=cancun forge verify-contract {{router}} \
+        dependencies/risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol:RiscZeroVerifierRouter \
+        --chain {{chain}} --verifier sourcify {{ args }}
+
 # --- Bindings ---
 
 # Clean bindings
