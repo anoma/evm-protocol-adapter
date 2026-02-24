@@ -12,6 +12,7 @@ jobs:
     runs-on: macos-latest
     env:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+      RPC_URL_BINANCE_SMART_CHAIN_TESTNET: https://data-seed-prebsc-1-s1.bnbchain.org:8545
 
     steps:
       - name: Checkout repository

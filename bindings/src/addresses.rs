@@ -29,6 +29,10 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
             NamedChain::Arbitrum,
             address!("0x094FCC095323080e71a037b2B1e3519c07dd84F8"),
         ),
+        (
+            NamedChain::BinanceSmartChainTestnet,
+            address!("0x33d4F0c88ef555E105Ba5e5F1aFbF34d6f650964"),
+        ),
     ])
 }
 
