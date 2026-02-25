@@ -2,7 +2,10 @@
 pragma solidity ^0.8.30;
 
 library SignMagnitude {
-    /// Positive  numbers are represented with a false sign and negative numbers with a true sign.
+    /// @notice Error thrown when magnitude addition would overflow uint128.
+    error MagnitudeOverflow();
+
+    /// Positive numbers are represented with a false sign and negative numbers with a true sign.
     /// @param isNegative Whether the number is negative or not.
     /// @param magnitude The magnitude of the number.
     struct Number {
@@ -12,10 +15,13 @@ library SignMagnitude {
 
     /// @notice Adds two numbers in sign magnitude representation.
     /// @param lhs The left-hand side number.
-    /// @param lhs The right-hand side number to add.
+    /// @param rhs The right-hand side number to add.
     /// @return sum The resulting sum.
     function add(Number memory lhs, Number memory rhs) internal pure returns (Number memory sum) {
         if (lhs.isNegative == rhs.isNegative) {
+            if (lhs.magnitude > type(uint128).max - rhs.magnitude) {
+                revert MagnitudeOverflow();
+            }
             sum = Number({isNegative: lhs.isNegative, magnitude: lhs.magnitude + rhs.magnitude});
         } else if (lhs.magnitude >= rhs.magnitude) {
             sum = Number({isNegative: lhs.isNegative, magnitude: lhs.magnitude - rhs.magnitude});
@@ -26,7 +32,7 @@ library SignMagnitude {
 
     /// @notice Subtracts two numbers in sign magnitude representation.
     /// @param lhs The left-hand side number.
-    /// @param lhs The right-hand side number to subtract.
+    /// @param rhs The right-hand side number to subtract.
     /// @return difference The difference.
     function sub(Number memory lhs, Number memory rhs) internal pure returns (Number memory difference) {
         difference = add(lhs, negate(rhs));
