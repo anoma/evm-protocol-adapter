@@ -52,19 +52,13 @@ library DeltaGen {
         returns (Delta.Point memory instance)
     {
         deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
-        if (deltaInputs.valueCommitmentRandomness == 0) {
-            revert DeltaGen.ValueCommitmentRandomnessZero();
-        }
+        require(deltaInputs.valueCommitmentRandomness != 0, DeltaGen.ValueCommitmentRandomnessZero());
         deltaInputs.kind = deltaInputs.kind.modOrder();
-        if (deltaInputs.kind == 0) {
-            revert DeltaGen.KindZero();
-        }
+        require(deltaInputs.kind != 0, DeltaGen.KindZero());
         uint256 quantity = canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
         uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
         uint256 preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, SECP256K1_ORDER);
-        if (preDelta == 0) {
-            revert DeltaGen.PreDeltaZero();
-        }
+        require(preDelta != 0, DeltaGen.PreDeltaZero());
         // Derive address and public key from transaction delta
         VmSafe.Wallet memory valueWallet = vm.createWallet(preDelta);
 
@@ -79,9 +73,7 @@ library DeltaGen {
     /// @return proof The delta proof corresponding to the parameters
     function generateProof(VmSafe vm, ProofInputs memory deltaInputs) internal returns (bytes memory proof) {
         deltaInputs.valueCommitmentRandomness = deltaInputs.valueCommitmentRandomness.modOrder();
-        if (deltaInputs.valueCommitmentRandomness == 0) {
-            revert DeltaGen.ValueCommitmentRandomnessZero();
-        }
+        require(deltaInputs.valueCommitmentRandomness != 0, DeltaGen.ValueCommitmentRandomnessZero());
         // Compute the components of the transaction delta proof
         VmSafe.Wallet memory randomWallet = vm.createWallet(deltaInputs.valueCommitmentRandomness);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(randomWallet, deltaInputs.verifyingKey);
@@ -145,14 +137,12 @@ library DeltaGen {
 
         uint256 expectedKind = deltaInputs[0].kind;
         for (uint256 i = 0; i < deltaInputs.length; i++) {
-            if (deltaInputs[i].kind != expectedKind) {
-                revert KindMismatch({expected: expectedKind, actual: deltaInputs[i].kind});
-            }
+            require(
+                deltaInputs[i].kind == expectedKind, KindMismatch({expected: expectedKind, actual: deltaInputs[i].kind})
+            );
         }
 
-        if (deltaInputs[0].kind.modOrder() == 0) {
-            revert KindZero();
-        }
+        require(deltaInputs[0].kind.modOrder() != 0, KindZero());
 
         int256 quantityAcc = 0;
         for (uint256 i = 0; i < deltaInputs.length; i++) {

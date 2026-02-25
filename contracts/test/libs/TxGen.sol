@@ -92,9 +92,10 @@ library TxGen {
         ResourceAndAppData[] memory consumed,
         ResourceAndAppData[] memory created
     ) internal returns (Action memory action) {
-        if (consumed.length != created.length) {
-            revert ConsumedCreatedCountMismatch({nConsumed: consumed.length, nCreated: created.length});
-        }
+        require(
+            consumed.length == created.length,
+            ConsumedCreatedCountMismatch({nConsumed: consumed.length, nCreated: created.length})
+        );
         uint256 complianceUnitCount = consumed.length;
 
         Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2 * complianceUnitCount);
@@ -196,11 +197,10 @@ library TxGen {
         Action[] memory actions = new Action[](actionResources.length);
 
         for (uint256 i = 0; i < actionResources.length; ++i) {
-            if (actionResources[i].consumed.length != actionResources[i].created.length) {
-                revert ConsumedCreatedCountMismatch(
-                    actionResources[i].consumed.length, actionResources[i].created.length
-                );
-            }
+            require(
+                actionResources[i].consumed.length == actionResources[i].created.length,
+                ConsumedCreatedCountMismatch(actionResources[i].consumed.length, actionResources[i].created.length)
+            );
 
             actions[i] = createAction({
                 vm: vm,
@@ -387,9 +387,10 @@ library TxGen {
         uint256 n = 0;
         bytes32[] memory logicRefs = collectLogicRefs(txn.actions);
 
-        if (countComplianceUnits(txn.actions) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT != logicRefs.length) {
-            revert TransactionTagCountMismatch();
-        }
+        require(
+            countComplianceUnits(txn.actions) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT == logicRefs.length,
+            TransactionTagCountMismatch()
+        );
 
         Compliance.Instance[] memory complianceInstances = new Compliance.Instance[](logicRefs.length / 2);
         Logic.Instance[] memory logicInstances = new Logic.Instance[](logicRefs.length);

@@ -70,9 +70,7 @@ contract DeployProtocolAdapter is Script {
         // Lookup the RISC Zero router address from the supported networks.
         RiscZeroVerifierRouter riscZeroVerifierRouter = _riscZeroVerifierRouters[_supportedNetworks[block.chainid]];
 
-        if (address(riscZeroVerifierRouter) == address(0)) {
-            revert UnsupportedNetwork({chainId: block.chainid});
-        }
+        require(address(riscZeroVerifierRouter) != address(0), UnsupportedNetwork({chainId: block.chainid}));
 
         vm.startBroadcast();
 

@@ -50,10 +50,11 @@ library TagUtils {
         actionTagCount = action.logicVerifierInputs.length;
 
         // Check that the tag count in the action and compliance units matches.
-        if (actionTagCount != complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT) {
-            revert TagCountMismatch({
+        require(
+            actionTagCount == complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT,
+            TagCountMismatch({
                 expected: actionTagCount, actual: complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT
-            });
-        }
+            })
+        );
     }
 }

@@ -78,9 +78,7 @@ contract CommitmentTree is ICommitmentTree {
     /// @notice Adds a root to the set of historical roots and emits the `CommitmentTreeRootAdded` event.
     /// @param root The root to store.
     function _addCommitmentTreeRoot(bytes32 root) internal {
-        if (!_roots.add(root)) {
-            revert PreExistingRoot(root);
-        }
+        require(_roots.add(root), PreExistingRoot(root));
         emit CommitmentTreeRootAdded(root);
     }
 
