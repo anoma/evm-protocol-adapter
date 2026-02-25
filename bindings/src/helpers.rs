@@ -47,9 +47,8 @@ pub fn rpc_url(chain: &NamedChain) -> RpcResult<Url> {
     }
 
     // Tier 2: Alchemy fallback for supported chains
-    let subdomain = alchemy_subdomain(chain).ok_or_else(|| {
-        RpcError::RpcUrlNotConfigured(format!("{chain:?}"), env_var_name.clone())
-    })?;
+    let subdomain = alchemy_subdomain(chain)
+        .ok_or_else(|| RpcError::RpcUrlNotConfigured(format!("{chain:?}"), env_var_name.clone()))?;
 
     let api_key = env::var("ALCHEMY_API_KEY").map_err(|_| RpcError::ApiKeyNotSet)?;
 
@@ -94,10 +93,7 @@ mod tests {
 
     #[test]
     fn chain_env_var_name_compound() {
-        assert_eq!(
-            chain_env_var_name(&NamedChain::BaseSepolia),
-            "BASE_SEPOLIA"
-        );
+        assert_eq!(chain_env_var_name(&NamedChain::BaseSepolia), "BASE_SEPOLIA");
         assert_eq!(
             chain_env_var_name(&NamedChain::ArbitrumSepolia),
             "ARBITRUM_SEPOLIA"
@@ -106,10 +102,7 @@ mod tests {
             chain_env_var_name(&NamedChain::OptimismSepolia),
             "OPTIMISM_SEPOLIA"
         );
-        assert_eq!(
-            chain_env_var_name(&NamedChain::PolygonAmoy),
-            "POLYGON_AMOY"
-        );
+        assert_eq!(chain_env_var_name(&NamedChain::PolygonAmoy), "POLYGON_AMOY");
     }
 
     #[test]
