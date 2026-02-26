@@ -75,46 +75,48 @@ contract LogicProofTest is Test {
         // Generate digest where only resource payload is filled.
         input.appData.resourcePayload = payloadList;
         bytes32 resourcePayloadDigest = sha256(input.toInstance(root, consumed).toJournal());
-        assertEq(input.appData.resourcePayload.length, 1);
-        assertEq(input.appData.discoveryPayload.length, 0);
-        assertEq(input.appData.externalPayload.length, 0);
-        assertEq(input.appData.applicationPayload.length, 0);
+        assertEq(input.appData.resourcePayload.length, 1, "resourcePayload length should be 1");
+        assertEq(input.appData.discoveryPayload.length, 0, "discoveryPayload length should be 0");
+        assertEq(input.appData.externalPayload.length, 0, "externalPayload length should be 0");
+        assertEq(input.appData.applicationPayload.length, 0, "applicationPayload length should be 0");
         input.appData.resourcePayload = new Logic.ExpirableBlob[](0);
 
         // Generate digest where only discovery payload is filled.
         input.appData.discoveryPayload = payloadList;
         bytes32 discoveryPayloadDigest = sha256(input.toInstance(root, consumed).toJournal());
-        assertEq(input.appData.resourcePayload.length, 0);
-        assertEq(input.appData.discoveryPayload.length, 1);
-        assertEq(input.appData.externalPayload.length, 0);
-        assertEq(input.appData.applicationPayload.length, 0);
+        assertEq(input.appData.resourcePayload.length, 0, "resourcePayload length should be 0");
+        assertEq(input.appData.discoveryPayload.length, 1, "discoveryPayload length should be 1");
+        assertEq(input.appData.externalPayload.length, 0, "externalPayload length should be 0");
+        assertEq(input.appData.applicationPayload.length, 0, "applicationPayload length should be 0");
         input.appData.discoveryPayload = new Logic.ExpirableBlob[](0);
 
         // Generate digest where only external payload is filled.
         input.appData.externalPayload = payloadList;
         bytes32 externalPayloadDigest = sha256(input.toInstance(root, consumed).toJournal());
-        assertEq(input.appData.resourcePayload.length, 0);
-        assertEq(input.appData.discoveryPayload.length, 0);
-        assertEq(input.appData.externalPayload.length, 1);
-        assertEq(input.appData.applicationPayload.length, 0);
+        assertEq(input.appData.resourcePayload.length, 0, "resourcePayload length should be 0");
+        assertEq(input.appData.discoveryPayload.length, 0, "discoveryPayload length should be 0");
+        assertEq(input.appData.externalPayload.length, 1, "externalPayload length should be 1");
+        assertEq(input.appData.applicationPayload.length, 0, "applicationPayload length should be 0");
         input.appData.externalPayload = new Logic.ExpirableBlob[](0);
 
         // Generate digest where only application payload is filled.
         input.appData.applicationPayload = payloadList;
         bytes32 applicationPayloadDigest = sha256(input.toInstance(root, consumed).toJournal());
-        assertEq(input.appData.resourcePayload.length, 0);
-        assertEq(input.appData.discoveryPayload.length, 0);
-        assertEq(input.appData.externalPayload.length, 0);
-        assertEq(input.appData.applicationPayload.length, 1);
+        assertEq(input.appData.resourcePayload.length, 0, "resourcePayload length should be 0");
+        assertEq(input.appData.discoveryPayload.length, 0, "discoveryPayload length should be 0");
+        assertEq(input.appData.externalPayload.length, 0, "externalPayload length should be 0");
+        assertEq(input.appData.applicationPayload.length, 1, "applicationPayload length should be 1");
 
         // Assert that all four produce different digests.
-        assert(resourcePayloadDigest != discoveryPayloadDigest);
-        assert(resourcePayloadDigest != externalPayloadDigest);
-        assert(resourcePayloadDigest != applicationPayloadDigest);
+        assertTrue(resourcePayloadDigest != discoveryPayloadDigest, "resource and discovery digests should differ");
+        assertTrue(resourcePayloadDigest != externalPayloadDigest, "resource and external digests should differ");
+        assertTrue(resourcePayloadDigest != applicationPayloadDigest, "resource and application digests should differ");
 
-        assert(discoveryPayloadDigest != externalPayloadDigest);
-        assert(discoveryPayloadDigest != applicationPayloadDigest);
+        assertTrue(discoveryPayloadDigest != externalPayloadDigest, "discovery and external digests should differ");
+        assertTrue(
+            discoveryPayloadDigest != applicationPayloadDigest, "discovery and application digests should differ"
+        );
 
-        assert(externalPayloadDigest != applicationPayloadDigest);
+        assertTrue(externalPayloadDigest != applicationPayloadDigest, "external and application digests should differ");
     }
 }

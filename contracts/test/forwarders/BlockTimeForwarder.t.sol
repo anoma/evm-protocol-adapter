@@ -36,7 +36,7 @@ contract BlockTimeForwarderTest is Test {
 
         BlockTimeForwarder.TimeComparison decodedOutput = abi.decode(output, (BlockTimeForwarder.TimeComparison));
 
-        assertEq(uint8(decodedOutput), uint8(BlockTimeForwarder.TimeComparison.LT));
+        assertEq(uint8(decodedOutput), uint8(BlockTimeForwarder.TimeComparison.LT), "past timestamp should return LT");
     }
 
     function test_forwardCall_returns_GT_if_timestamp_is_in_the_future() public view {
@@ -45,7 +45,7 @@ contract BlockTimeForwarderTest is Test {
 
         BlockTimeForwarder.TimeComparison decodedOutput = abi.decode(output, (BlockTimeForwarder.TimeComparison));
 
-        assertEq(uint8(decodedOutput), uint8(BlockTimeForwarder.TimeComparison.GT));
+        assertEq(uint8(decodedOutput), uint8(BlockTimeForwarder.TimeComparison.GT), "future timestamp should return GT");
     }
 
     function test_forwardCall_returns_EQ_if_timestamp_is_in_the_present() public view {
@@ -55,7 +55,9 @@ contract BlockTimeForwarderTest is Test {
 
         BlockTimeForwarder.TimeComparison decodedOutput = abi.decode(output, (BlockTimeForwarder.TimeComparison));
 
-        assertEq(uint8(decodedOutput), uint8(BlockTimeForwarder.TimeComparison.EQ));
+        assertEq(
+            uint8(decodedOutput), uint8(BlockTimeForwarder.TimeComparison.EQ), "present timestamp should return EQ"
+        );
     }
 
     function testFuzz_forwardCall_accepts_arbitrary_logic(bytes32 logicRef) public view {

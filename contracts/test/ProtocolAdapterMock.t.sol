@@ -147,7 +147,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         address fwd2 = address(
             new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
         );
-        assertNotEq(_fwd, fwd2);
+        assertNotEq(_fwd, fwd2, "forwarder addresses should differ");
 
         address[] memory fwdList = new address[](2);
         fwdList[0] = _fwd;
@@ -255,7 +255,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         txn.actions[0].logicVerifierInputs = new Logic.VerifierInput[](0);
 
         // Make sure that all the CUs are in the first action to expect the correct revert.
-        assertEq(txn.actions[0].complianceVerifierInputs.length, complianceUnitCount);
+        assertEq(
+            txn.actions[0].complianceVerifierInputs.length,
+            complianceUnitCount,
+            "compliance verifier inputs length should match"
+        );
 
         // You expect the twice number of compliance units to be the expected resource count.
         uint256 expectedResourceCount =
@@ -578,7 +582,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         bytes32 newRoot = _mockPa.latestCommitmentTreeRoot();
 
-        assert(oldRoot != newRoot);
+        assertTrue(oldRoot != newRoot, "commitment tree root should change after execution");
     }
 
     function testFuzz_execute_updates_commitment_root_exactly_with_desired_commitments(
@@ -610,7 +614,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         newCmTree.addCommitmentTreeRoot(newRoot);
 
-        assert(_mockPa.latestCommitmentTreeRoot() == newCmTree.latestCommitmentTreeRoot());
+        assertTrue(
+            _mockPa.latestCommitmentTreeRoot() == newCmTree.latestCommitmentTreeRoot(),
+            "commitment tree roots should match"
+        );
     }
 
     function testFuzz_execute_updates_nullifier_set_exactly_with_desired_nullifiers(
@@ -622,7 +629,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
             actionCount,
             complianceUnitCount,/* actionIndex */, /* complianceIndex */
         ) = _bindParameters(actionCount, complianceUnitCount, 0, 0);
-        assertEq(_mockPa.nullifierCount(), 0);
+        assertEq(_mockPa.nullifierCount(), 0, "initial nullifier count should be 0");
         (Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
@@ -634,10 +641,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         bytes32[] memory nlfs = TxGen.collectNullifiers(txn);
 
-        assertEq(_mockPa.nullifierCount(), nlfs.length);
+        assertEq(_mockPa.nullifierCount(), nlfs.length, "nullifier count should match collected nullifiers");
 
         for (uint256 i = 0; i < nlfs.length; ++i) {
-            assert(_mockPa.isNullifierContained(nlfs[i]));
+            assertTrue(_mockPa.isNullifierContained(nlfs[i]), "nullifier should be contained after execution");
         }
     }
 
