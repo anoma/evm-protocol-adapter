@@ -140,7 +140,10 @@ contract ProtocolAdapterTest is Test {
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         for (uint256 i = 0; i < entries.length; i++) {
-            assert(entries[i].topics[0] != ICommitmentTree.CommitmentTreeRootAdded.selector);
+            assertTrue(
+                entries[i].topics[0] != ICommitmentTree.CommitmentTreeRootAdded.selector,
+                "empty tx should not emit CommitmentTreeRootAdded"
+            );
         }
     }
 
@@ -199,12 +202,12 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_emergencyStop_pauses_the_protocol_adapter() public {
-        assertEq(_pa.paused(), false);
+        assertEq(_pa.paused(), false, "PA should not be paused initially");
 
         vm.prank(_EMERGENCY_COMMITTEE);
         _pa.emergencyStop();
 
-        assertEq(_pa.paused(), true);
+        assertEq(_pa.paused(), true, "PA should be paused after emergency stop");
     }
 
     function test_emergencyStop_emits_the_Paused_event() public {
@@ -216,11 +219,11 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_getRiscZeroVerifierRouter_returns_the_router_address() public view {
-        assertEq(_pa.getRiscZeroVerifierRouter(), address(_router));
+        assertEq(_pa.getRiscZeroVerifierRouter(), address(_router), "router address should match");
     }
 
     function test_getRiscZeroVerifierSelector_returns_the_selector() public view {
-        assertEq(_pa.getRiscZeroVerifierSelector(), _verifierSelector);
+        assertEq(_pa.getRiscZeroVerifierSelector(), _verifierSelector, "verifier selector should match");
     }
 
     function test_getVersion_returns_a_semantic_version() public view {
@@ -228,11 +231,13 @@ contract ProtocolAdapterTest is Test {
 
         assertEq(
             version.cmp("0.0.0"),
-            1 /* GT */
+            1, /* GT */
+            "version should be greater than 0.0.0"
         );
         assertEq(
             version.cmp("999.999.999"),
-            -1 /* LT */
+            -1, /* LT */
+            "version should be less than 999.999.999"
         );
     }
 }

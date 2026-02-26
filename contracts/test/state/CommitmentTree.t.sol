@@ -44,11 +44,13 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
     function test_addCommitment_returns_correct_roots() public {
         bytes32 initialRoot = _cmAcc.latestCommitmentTreeRoot();
 
-        assertEq(initialRoot, _roots[0]);
-        assertEq(initialRoot, _cmAcc.initialRoot());
+        assertEq(initialRoot, _roots[0], "initial root should match expected root");
+        assertEq(initialRoot, _cmAcc.initialRoot(), "initial root should match initialRoot()");
 
         for (uint256 i = 0; i < _N_LEAVES; ++i) {
-            assertEq(_cmAcc.addCommitment(_leaves[i + 1][i]), _roots[i + 1]);
+            assertEq(
+                _cmAcc.addCommitment(_leaves[i + 1][i]), _roots[i + 1], "root should match after adding commitment"
+            );
         }
     }
 
@@ -60,7 +62,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
             _cmAcc.addCommitment(_leaves[i + 1][i]);
             newCount = _cmAcc.commitmentCount();
 
-            assertEq(newCount, ++prevCount);
+            assertEq(newCount, ++prevCount, "commitment count should increment by 1");
             prevCount = newCount;
         }
     }
@@ -78,13 +80,15 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
     function test_addCommitmentTreeRoot_stores_the_root() public {
         bytes32 rootToStore = bytes32(type(uint256).max);
 
-        assertEq(_cmAcc.latestCommitmentTreeRoot(), _cmAcc.initialRoot());
-        assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), false);
+        assertEq(
+            _cmAcc.latestCommitmentTreeRoot(), _cmAcc.initialRoot(), "latest root should be initial root before store"
+        );
+        assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), false, "root should not be contained before store");
 
         _cmAcc.addCommitmentTreeRoot(rootToStore);
 
-        assertEq(_cmAcc.latestCommitmentTreeRoot(), rootToStore);
-        assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), true);
+        assertEq(_cmAcc.latestCommitmentTreeRoot(), rootToStore, "latest root should be the stored root");
+        assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), true, "root should be contained after store");
     }
 
     function test_addCommitmentTreeRoot_emits_the_CommitmentTreeRootAdded_event_on_store_() public {

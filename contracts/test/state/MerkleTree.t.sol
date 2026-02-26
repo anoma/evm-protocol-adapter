@@ -21,41 +21,41 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
     }
 
     function test_push_expands_the_tree_depth_if_the_capacity_is_reached() public {
-        assertEq(_merkleTree.setup(), _roots[0]);
-        assertEq(_merkleTree.leafCount(), 0);
-        assertEq(_merkleTree.depth(), 0);
+        assertEq(_merkleTree.setup(), _roots[0], "initial root should match expected");
+        assertEq(_merkleTree.leafCount(), 0, "initial leaf count should be 0");
+        assertEq(_merkleTree.depth(), 0, "initial depth should be 0");
 
         _merkleTree.push(_leaves[7][0]);
-        assertEq(_merkleTree.leafCount(), 1);
-        assertEq(_merkleTree.depth(), 1);
+        assertEq(_merkleTree.leafCount(), 1, "leaf count should be 1 after first push");
+        assertEq(_merkleTree.depth(), 1, "depth should be 1 after first push");
 
         _merkleTree.push(_leaves[7][1]);
-        assertEq(_merkleTree.leafCount(), 2);
-        assertEq(_merkleTree.depth(), 2);
+        assertEq(_merkleTree.leafCount(), 2, "leaf count should be 2 after second push");
+        assertEq(_merkleTree.depth(), 2, "depth should expand to 2 after second push");
 
         _merkleTree.push(_leaves[7][2]);
-        assertEq(_merkleTree.leafCount(), 3);
-        assertEq(_merkleTree.depth(), 2);
+        assertEq(_merkleTree.leafCount(), 3, "leaf count should be 3 after third push");
+        assertEq(_merkleTree.depth(), 2, "depth should remain 2 after third push");
 
         _merkleTree.push(_leaves[7][3]);
-        assertEq(_merkleTree.leafCount(), 4);
-        assertEq(_merkleTree.depth(), 3);
+        assertEq(_merkleTree.leafCount(), 4, "leaf count should be 4 after fourth push");
+        assertEq(_merkleTree.depth(), 3, "depth should expand to 3 after fourth push");
 
         _merkleTree.push(_leaves[7][4]);
-        assertEq(_merkleTree.leafCount(), 5);
-        assertEq(_merkleTree.depth(), 3);
+        assertEq(_merkleTree.leafCount(), 5, "leaf count should be 5 after fifth push");
+        assertEq(_merkleTree.depth(), 3, "depth should remain 3 after fifth push");
 
         _merkleTree.push(_leaves[7][5]);
-        assertEq(_merkleTree.leafCount(), 6);
-        assertEq(_merkleTree.depth(), 3);
+        assertEq(_merkleTree.leafCount(), 6, "leaf count should be 6 after sixth push");
+        assertEq(_merkleTree.depth(), 3, "depth should remain 3 after sixth push");
 
         _merkleTree.push(_leaves[7][6]);
-        assertEq(_merkleTree.leafCount(), 7);
-        assertEq(_merkleTree.depth(), 3);
+        assertEq(_merkleTree.leafCount(), 7, "leaf count should be 7 after seventh push");
+        assertEq(_merkleTree.depth(), 3, "depth should remain 3 after seventh push");
     }
 
     function test_setup_returns_the_expected_initial_root() public {
-        assertEq(_merkleTree.setup(), SHA256.EMPTY_HASH);
+        assertEq(_merkleTree.setup(), SHA256.EMPTY_HASH, "initial root should be the empty hash");
     }
 
     function testFuzz_push_returns_the_same_roots(bytes32[] memory leaves) public {
@@ -78,19 +78,19 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
             (paIndex, paRoot) = _paMerkleTree.push(leaves[i]);
             (ozIndex, ozRoot) = _ozMerkleTree.push(leaves[i], _hashPair);
             // The lead counts must remain matched throughout
-            assertEq(paIndex, ozIndex);
+            assertEq(paIndex, ozIndex, "leaf indices should match during push");
             // Once we have reached the final depth, we might as well start
             // comparing the roots
             if (_paMerkleTree.depth() == _ozMerkleTree.depth()) {
-                assertEq(paRoot, ozRoot);
+                assertEq(paRoot, ozRoot, "roots should match at same depth");
             }
         }
         // Now confirm that the Merkle trees have the same leaf count
-        assertEq(paIndex, ozIndex);
+        assertEq(paIndex, ozIndex, "final leaf indices should match");
         // Same roots
-        assertEq(paRoot, ozRoot);
+        assertEq(paRoot, ozRoot, "final roots should match");
         // Same depths
-        assertEq(_paMerkleTree.depth(), _ozMerkleTree.depth());
+        assertEq(_paMerkleTree.depth(), _ozMerkleTree.depth(), "final depths should match");
     }
 
     function testFuzz_push_returns_the_same_roots() public {
@@ -112,8 +112,12 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
     }
 
     function test_compare_le() public pure {
-        assertEq(_computeMinimalTreeDepthNaive(0), MerkleTree.computeMinimalTreeDepth(0));
-        assertEq(MerkleTree.computeMinimalTreeDepth(0), 0);
+        assertEq(
+            _computeMinimalTreeDepthNaive(0),
+            MerkleTree.computeMinimalTreeDepth(0),
+            "naive and optimized should match for 0 leaves"
+        );
+        assertEq(MerkleTree.computeMinimalTreeDepth(0), 0, "minimal tree depth for 0 leaves should be 0");
     }
 
     function test_computeMinimalTreeDepth_computes_the_right_tree_depths() public pure {
@@ -121,7 +125,9 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
             [0, 0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6];
 
         for (uint256 i = 0; i < depths.length; ++i) {
-            assertEq(MerkleTree.computeMinimalTreeDepth({leavesCount: i}), depths[i]);
+            assertEq(
+                MerkleTree.computeMinimalTreeDepth({leavesCount: i}), depths[i], "tree depth should match expected"
+            );
         }
     }
 
@@ -130,7 +136,9 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
 
         for (uint256 i = 0; i < maxLeafCount; ++i) {
             assertEq(
-                _computeMinimalTreeDepthNaive({leavesCount: i}), MerkleTree.computeMinimalTreeDepth({leavesCount: i})
+                _computeMinimalTreeDepthNaive({leavesCount: i}),
+                MerkleTree.computeMinimalTreeDepth({leavesCount: i}),
+                "naive and optimized implementations should match"
             );
         }
     }
@@ -142,13 +150,25 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         for (uint256 i = 0; i < testCases.length; i++) {
             uint256 powerOfTwo = testCases[i];
 
-            assertEq(_computeMinimalTreeDepthNaive(powerOfTwo - 1), MerkleTree.computeMinimalTreeDepth(powerOfTwo - 1));
+            assertEq(
+                _computeMinimalTreeDepthNaive(powerOfTwo - 1),
+                MerkleTree.computeMinimalTreeDepth(powerOfTwo - 1),
+                "should match for power of 2 minus 1"
+            );
 
             // Test power of 2
-            assertEq(_computeMinimalTreeDepthNaive(powerOfTwo), MerkleTree.computeMinimalTreeDepth(powerOfTwo));
+            assertEq(
+                _computeMinimalTreeDepthNaive(powerOfTwo),
+                MerkleTree.computeMinimalTreeDepth(powerOfTwo),
+                "should match for power of 2"
+            );
 
             // Test power of 2 + 1
-            assertEq(_computeMinimalTreeDepthNaive(powerOfTwo + 1), MerkleTree.computeMinimalTreeDepth(powerOfTwo + 1));
+            assertEq(
+                _computeMinimalTreeDepthNaive(powerOfTwo + 1),
+                MerkleTree.computeMinimalTreeDepth(powerOfTwo + 1),
+                "should match for power of 2 plus 1"
+            );
         }
     }
 
@@ -157,7 +177,11 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         uint256[5] memory testCases = [uint256(1000), 10000, 100000, 1000000, 10000000];
 
         for (uint256 i = 0; i < testCases.length; i++) {
-            assertEq(_computeMinimalTreeDepthNaive(testCases[i]), MerkleTree.computeMinimalTreeDepth(testCases[i]));
+            assertEq(
+                _computeMinimalTreeDepthNaive(testCases[i]),
+                MerkleTree.computeMinimalTreeDepth(testCases[i]),
+                "should match for large values"
+            );
         }
     }
 
