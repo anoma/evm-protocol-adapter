@@ -266,10 +266,13 @@ contract ProtocolAdapter is
             if (updatedVars.isProofAggregated) {
                 // Aggregate the logic instance.
                 updatedVars.logicInstances[updatedVars.tagCounter] = instance;
-            } else if (!updatedVars.skipRiscZeroProofVerification) {
-                // Verify the logic proof.
-                _verifyRiscZeroProof({
-                    verifyingKey: logicRef, instance: sha256(instance.toJournal()), proof: input.proof
+            } else {
+                // Processs the logic proof.
+                _processRiscZeroProof({
+                    verifyingKey: logicRef,
+                    instance: sha256(instance.toJournal()),
+                    proof: input.proof,
+                    skipVerification: vars.skipRiscZeroProofVerification
                 });
             }
         }
@@ -402,12 +405,13 @@ contract ProtocolAdapter is
             // Aggregate the compliance instance
             updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] =
             input.instance;
-        } else if (!updatedVars.skipRiscZeroProofVerification) {
-            // Verify the compliance proof.
-            _verifyRiscZeroProof({
+        } else {
+            // Process the compliance proof.
+            _processRiscZeroProof({
                 verifyingKey: Compliance._VERIFYING_KEY,
                 instance: sha256(input.instance.toJournal()),
-                proof: input.proof
+                proof: input.proof,
+                skipVerification: vars.skipRiscZeroProofVerification
             });
         }
     }
@@ -437,24 +441,33 @@ contract ProtocolAdapter is
                     }).toJournal()
             );
 
-            if (!vars.skipRiscZeroProofVerification) {
-                // Verify aggregation proof.
-                _verifyRiscZeroProof({
-                    verifyingKey: Aggregation._VERIFYING_KEY, instance: jounalDigest, proof: aggregationProof
+            {
+                // Process aggregation proof.
+                _processRiscZeroProof({
+                    verifyingKey: Aggregation._VERIFYING_KEY,
+                    instance: jounalDigest,
+                    proof: aggregationProof,
+                    skipVerification: vars.skipRiscZeroProofVerification
                 });
             }
         }
     }
 
-    /// @notice Verifies a RISC Zero proof via the hardcoded router against provided imageID and digest.
+    /// @notice Processes a RISC Zero proof and passes it to verifier if needed.
     /// @param verifyingKey The image ID of the program to be proven.
     /// @param instance The public inputs to the proof, i.e. the digest of the journal.
     /// @param proof The proof to be verified.
-    function _verifyRiscZeroProof(bytes32 verifyingKey, bytes32 instance, bytes calldata proof) internal view {
+    /// @param skipVerification The boolean indicating whether the proof will be sent to the verifier.
+    function _processRiscZeroProof(bytes32 verifyingKey, bytes32 instance, bytes calldata proof, bool skipVerification)
+        internal
+        view
+    {
         _checkSelector(bytes4(proof[0:4]));
 
-        // slither-disable-next-line calls-loop
-        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({seal: proof, imageId: verifyingKey, journalDigest: instance});
+        if (!skipVerification) {
+            // slither-disable-next-line calls-loop
+            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({seal: proof, imageId: verifyingKey, journalDigest: instance});
+        }
     }
 
     /// @notice Checks that a RISC Zero verifier selector matches the one the protocol adapter is associated with.
