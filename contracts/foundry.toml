@@ -67,5 +67,7 @@ base = "https://base-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 base-sepolia = "https://base-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 optimism = "https://opt-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 optimism-sepolia = "https://opt-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+aurora = "https://mainnet.aurora.dev"
+aurora-testnet = "https://testnet.aurora.dev"
 
 localhost = "http://localhost:8545"

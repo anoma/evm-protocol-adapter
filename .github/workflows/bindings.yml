@@ -12,6 +12,7 @@ jobs:
     runs-on: macos-latest
     env:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+      RPC_URL_AURORA_TESTNET: https://testnet.aurora.dev
 
     steps:
       - name: Checkout repository
