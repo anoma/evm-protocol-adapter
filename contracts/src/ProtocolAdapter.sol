@@ -266,16 +266,11 @@ contract ProtocolAdapter is
             if (updatedVars.isProofAggregated) {
                 // Aggregate the logic instance.
                 updatedVars.logicInstances[updatedVars.tagCounter] = instance;
-            } else {
-                _checkSelector({selector: bytes4(input.proof[0:4])});
-
-                if (!updatedVars.skipRiscZeroProofVerification) {
-                    // Verify the logic proof.
-                    // slither-disable-next-line calls-loop
-                    _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                        seal: input.proof, imageId: logicRef, journalDigest: sha256(instance.toJournal())
-                    });
-                }
+            } else if (!updatedVars.skipRiscZeroProofVerification) {
+                // Verify the logic proof.
+                _verifyRiscZeroProof({
+                    verifyingKey: logicRef, instance: sha256(instance.toJournal()), proof: input.proof
+                });
             }
         }
 
@@ -407,18 +402,13 @@ contract ProtocolAdapter is
             // Aggregate the compliance instance
             updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] =
             input.instance;
-        } else {
-            _checkSelector({selector: bytes4(input.proof[0:4])});
-
-            if (!updatedVars.skipRiscZeroProofVerification) {
-                // Verify the compliance proof.
-                // slither-disable-next-line calls-loop
-                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                    seal: input.proof,
-                    imageId: Compliance._VERIFYING_KEY,
-                    journalDigest: sha256(input.instance.toJournal())
-                });
-            }
+        } else if (!updatedVars.skipRiscZeroProofVerification) {
+            // Verify the compliance proof.
+            _verifyRiscZeroProof({
+                verifyingKey: Compliance._VERIFYING_KEY,
+                instance: sha256(input.instance.toJournal()),
+                proof: input.proof
+            });
         }
     }
 
@@ -439,8 +429,6 @@ contract ProtocolAdapter is
         });
 
         if (vars.isProofAggregated) {
-            _checkSelector({selector: bytes4(aggregationProof[0:4])});
-
             bytes32 jounalDigest = sha256(
                 Aggregation.Instance({
                         logicRefs: vars.logicRefs,
@@ -451,12 +439,22 @@ contract ProtocolAdapter is
 
             if (!vars.skipRiscZeroProofVerification) {
                 // Verify aggregation proof.
-                // slither-disable-next-line calls-loop
-                _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({
-                    seal: aggregationProof, imageId: Aggregation._VERIFYING_KEY, journalDigest: jounalDigest
+                _verifyRiscZeroProof({
+                    verifyingKey: Aggregation._VERIFYING_KEY, instance: jounalDigest, proof: aggregationProof
                 });
             }
         }
+    }
+
+    /// @notice Verifies a RISC Zero proof via the hardcoded router against provided imageID and digest.
+    /// @param verifyingKey The image ID of the program to be proven.
+    /// @param instance The public inputs to the proof, i.e. the digest of the journal.
+    /// @param proof The proof to be verified.
+    function _verifyRiscZeroProof(bytes32 verifyingKey, bytes32 instance, bytes calldata proof) internal view {
+        _checkSelector(bytes4(proof[0:4]));
+
+        // slither-disable-next-line calls-loop
+        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({seal: proof, imageId: verifyingKey, journalDigest: instance});
     }
 
     /// @notice Checks that a RISC Zero verifier selector matches the one the protocol adapter is associated with.
