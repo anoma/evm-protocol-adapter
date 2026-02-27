@@ -59,6 +59,10 @@ contract DeployProtocolAdapter is Script {
         _supportNetwork({
             name: "optimism", chainId: 10, riscZeroVerifierRouter: 0x0b144E07A0826182B6b59788c34b32Bfa86Fb711
         });
+
+        _supportNetwork({
+            name: "bnb-testnet", chainId: 97, riscZeroVerifierRouter: 0x7C1B7b8fEB636eA9Ecd32152Bce2744a0EEf39C7
+        });
     }
 
     /// @notice Deploys the protocol adapter contract on supported networks and allows for test deployments.
