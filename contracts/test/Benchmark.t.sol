@@ -16,7 +16,7 @@ import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 uint256 constant UPPER_EMPTY_TX_GAS_COST_BOUND = 7256;
 uint256 constant UPPER_RISC_ZERO_PROOF_GAS_COST_BOUND = 239000;
-uint256 constant EXPECTED_AGGREGATION_PROOF_GAS_COST = 238285;
+uint256 constant EXPECTED_AGGREGATION_PROOF_GAS_COST = 238247;
 
 contract Benchmark is Test {
     using Parsing for Transaction;
