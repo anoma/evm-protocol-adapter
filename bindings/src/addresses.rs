@@ -33,6 +33,10 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
             NamedChain::AuroraTestnet,
             address!("0x24CEc6A74A0E39eE33C8356DB8655308112f587F"),
         ),
+        (
+            NamedChain::Aurora,
+            address!("0xFC44b66a39fe6923Ad8d3c93bFeC369728862B68"),
+        ),
     ])
 }
 
