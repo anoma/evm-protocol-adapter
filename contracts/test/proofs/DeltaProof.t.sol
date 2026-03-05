@@ -118,8 +118,8 @@ contract DeltaProofTest is Test {
         // Verify that the deltas add correctly
         Delta.Point memory computedDelta = Delta.add(instance1, instance2);
 
-        assertEq(computedDelta.x, expectedDelta.x);
-        assertEq(computedDelta.y, expectedDelta.y);
+        assertEq(computedDelta.x, expectedDelta.x, "computed delta x should match expected");
+        assertEq(computedDelta.y, expectedDelta.y, "computed delta y should match expected");
     }
 
     /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
@@ -377,8 +377,8 @@ contract DeltaProofTest is Test {
 
         // Add the two points and check that the sum is a curve point.
         Delta.Point memory sum = zero.add(rhs);
-        assertEq(sum.x, rhs.x);
-        assertEq(sum.y, rhs.y);
+        assertEq(sum.x, rhs.x, "zero + rhs x should equal rhs x");
+        assertEq(sum.y, rhs.y, "zero + rhs y should equal rhs y");
     }
 
     function testFuzz_add_adding_two_curve_points_produces_a_curve_point(uint32 k1, uint32 k2) public pure {
@@ -405,7 +405,10 @@ contract DeltaProofTest is Test {
 
     function test_zero_is_not_on_the_curve() public pure {
         Delta.Point memory p2 = Delta.zero();
-        assertFalse(EllipticCurve.isOnCurve({_x: p2.x, _y: p2.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
+        assertFalse(
+            EllipticCurve.isOnCurve({_x: p2.x, _y: p2.y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "zero point should not be on the curve"
+        );
     }
 
     function _getBoundedDeltaInstances(uint256 kind, DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs)

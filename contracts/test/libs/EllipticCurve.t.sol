@@ -130,9 +130,18 @@ contract EllipticCurvePropertiesTest is Test {
             EllipticCurve.ecMul({_k: scalar3, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
 
         // Verify all points are on curve
-        assertTrue(EllipticCurve.isOnCurve({_x: x1, _y: y1, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
-        assertTrue(EllipticCurve.isOnCurve({_x: x2, _y: y2, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
-        assertTrue(EllipticCurve.isOnCurve({_x: x3, _y: y3, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: x1, _y: y1, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "P1 must be on curve"
+        );
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: x2, _y: y2, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "P2 must be on curve"
+        );
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: x3, _y: y3, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "P3 must be on curve"
+        );
 
         // Compute (P + Q) + R
         (uint256 pqX, uint256 pqY) =
@@ -163,8 +172,14 @@ contract EllipticCurvePropertiesTest is Test {
             EllipticCurve.ecMul({_k: scalar2, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
 
         // Verify inputs are on curve
-        assertTrue(EllipticCurve.isOnCurve({_x: x1, _y: y1, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
-        assertTrue(EllipticCurve.isOnCurve({_x: x2, _y: y2, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: x1, _y: y1, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "P1 must be on curve"
+        );
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: x2, _y: y2, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "P2 must be on curve"
+        );
 
         // Add points
         (uint256 resultX, uint256 resultY) =
@@ -205,11 +220,22 @@ contract EllipticCurvePropertiesTest is Test {
         });
 
         // Expected 2G
-        assertEq(rx, 0xc6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5);
-        assertEq(ry, 0x1ae168fea63dc339a3c58419466ceaeef7f632653266d0e1236431a950cfe52a);
+        assertEq(
+            rx,
+            0xc6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5,
+            "2G x-coordinate should match expected"
+        );
+        assertEq(
+            ry,
+            0x1ae168fea63dc339a3c58419466ceaeef7f632653266d0e1236431a950cfe52a,
+            "2G y-coordinate should match expected"
+        );
 
         // Verify result is on curve
-        assertTrue(EllipticCurve.isOnCurve({_x: rx, _y: ry, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}));
+        assertTrue(
+            EllipticCurve.isOnCurve({_x: rx, _y: ry, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            "2G must be on curve"
+        );
     }
 
     /// @notice Concrete: G + O = G
@@ -217,8 +243,8 @@ contract EllipticCurvePropertiesTest is Test {
         (uint256 rx, uint256 ry) =
             EllipticCurve.ecAdd({_x1: Delta._GX, _y1: Delta._GY, _x2: 0, _y2: 0, _aa: Delta._AA, _pp: Delta._PP});
 
-        assertEq(rx, Delta._GX);
-        assertEq(ry, Delta._GY);
+        assertEq(rx, Delta._GX, "G + O x-coordinate should equal G");
+        assertEq(ry, Delta._GY, "G + O y-coordinate should equal G");
     }
 
     /// @notice Concrete: G + (-G) = O

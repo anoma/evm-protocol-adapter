@@ -50,7 +50,8 @@ contract ComplianceProofTest is Test {
                 instance.created.logicRef,
                 instance.unitDeltaX,
                 instance.unitDeltaY
-            )
+            ),
+            "compliance instance encoding should match packed encoding"
         );
     }
 }

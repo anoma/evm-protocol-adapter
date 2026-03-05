@@ -12,7 +12,9 @@ contract VersioningTest is Test {
     int256 internal constant _GT = 1;
 
     function test_check_that_the_current_version_is_a_not_a_major_release() public pure {
-        assertEq(SemVerLib.cmp(Versioning._PROTOCOL_ADAPTER_VERSION, "1.0.0"), _GT);
-        assertEq(SemVerLib.cmp(Versioning._PROTOCOL_ADAPTER_VERSION, "2.0.0"), _LT);
+        assertEq(
+            SemVerLib.cmp(Versioning._PROTOCOL_ADAPTER_VERSION, "1.0.0"), _GT, "version should be greater than 1.0.0"
+        );
+        assertEq(SemVerLib.cmp(Versioning._PROTOCOL_ADAPTER_VERSION, "2.0.0"), _LT, "version should be less than 2.0.0");
     }
 }

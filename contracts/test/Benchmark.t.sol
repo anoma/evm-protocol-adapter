@@ -61,8 +61,8 @@ contract Benchmark is Test {
         uint256 gasWithoutProofs = _executionGasCost({transaction: _txnEmpty, skipRiscZeroProofVerification: true});
         uint256 gasWithProofs = _executionGasCost({transaction: _txnEmpty, skipRiscZeroProofVerification: false});
 
-        assertEq(gasWithProofs, gasWithoutProofs);
-        assertLe(gasWithoutProofs, UPPER_EMPTY_TX_GAS_COST_BOUND);
+        assertEq(gasWithProofs, gasWithoutProofs, "empty tx gas cost should be the same with and without proofs");
+        assertLe(gasWithoutProofs, UPPER_EMPTY_TX_GAS_COST_BOUND, "empty tx gas cost should be within upper bound");
     }
 
     function test_aggregated_proof_gas_cost_is_fixed() public {
@@ -73,7 +73,11 @@ contract Benchmark is Test {
 
             uint256 aggregationProofCost = gasWithProofs - gasWithoutProofs;
 
-            assertEq(aggregationProofCost, EXPECTED_AGGREGATION_PROOF_GAS_COST);
+            assertEq(
+                aggregationProofCost,
+                EXPECTED_AGGREGATION_PROOF_GAS_COST,
+                "aggregation proof gas cost should match expected"
+            );
         }
     }
 
@@ -85,7 +89,11 @@ contract Benchmark is Test {
 
             uint256 averageRegularProofCost = (gasWithProofs - gasWithoutProofs) / (_countComplianceUnits(txn) * 3);
 
-            assertLt(averageRegularProofCost, UPPER_RISC_ZERO_PROOF_GAS_COST_BOUND);
+            assertLt(
+                averageRegularProofCost,
+                UPPER_RISC_ZERO_PROOF_GAS_COST_BOUND,
+                "average regular proof gas cost should be within upper bound"
+            );
         }
     }
 
@@ -215,7 +223,7 @@ contract Benchmark is Test {
             gasUsed := mload(add(data, 36))
         }
 
-        assertEq(selector, ProtocolAdapter.Simulated.selector);
+        assertEq(selector, ProtocolAdapter.Simulated.selector, "selector should match Simulated");
     }
 
     function _countComplianceUnits(Transaction memory transaction) internal pure returns (uint256 complianceUnits) {
