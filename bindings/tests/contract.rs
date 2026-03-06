@@ -8,7 +8,7 @@ use anoma_pa_evm_bindings::addresses::protocol_adapter_deployments_map;
 use anoma_pa_evm_bindings::contract::protocol_adapter;
 use anoma_pa_evm_bindings::generated::protocol_adapter;
 use anoma_pa_evm_bindings::generated::versioning_lib_external;
-use anoma_pa_evm_bindings::helpers::rpc_url;
+use anoma_pa_evm_bindings::helpers::{rpc_url, supports_eip1559};
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -50,6 +50,10 @@ async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
 #[tokio::test]
 async fn call_executes_the_empty_tx_on_all_supported_chains() {
     for chain in protocol_adapter_deployments_map().keys() {
+        // Skip chains that don't support EIP-1559 (Anvil forks default to EIP-1559 txs).
+        if !supports_eip1559(chain) {
+            continue;
+        }
         let empty_tx = protocol_adapter::ProtocolAdapter::Transaction {
             actions: vec![],
             deltaProof: Default::default(),

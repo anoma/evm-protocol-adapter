@@ -17,6 +17,12 @@ pub enum RpcError {
     UrlParsingError,
 }
 
+/// Returns whether the chain supports EIP-1559 transactions.
+/// Chains that don't (e.g. Aurora) require legacy transactions.
+pub fn supports_eip1559(chain: &NamedChain) -> bool {
+    !matches!(chain, NamedChain::Aurora | NamedChain::AuroraTestnet)
+}
+
 /// Maps a `NamedChain` to the suffix used for `RPC_URL_<SUFFIX>` env vars.
 fn chain_env_var_name(chain: &NamedChain) -> String {
     let s = format!("{chain:?}");
