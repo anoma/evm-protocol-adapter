@@ -74,9 +74,6 @@ fn alchemy_subdomain(chain: &NamedChain) -> Option<&'static str> {
         Base => Some("base-mainnet"),
         BaseSepolia => Some("base-sepolia"),
         //
-        // BNB is not supported by Alchemy — uses env var overrides instead.
-        //
-        //
         Polygon => Some("polygon-mainnet"),
         PolygonAmoy => Some("polygon-amoy"),
 
