@@ -8,7 +8,7 @@ use anoma_pa_evm_bindings::addresses::protocol_adapter_deployments_map;
 use anoma_pa_evm_bindings::contract::protocol_adapter;
 use anoma_pa_evm_bindings::generated::protocol_adapter;
 use anoma_pa_evm_bindings::generated::versioning_lib_external;
-use anoma_pa_evm_bindings::helpers::alchemy_url;
+use anoma_pa_evm_bindings::helpers::rpc_url;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -78,7 +78,7 @@ async fn call_executes_the_empty_tx_on_all_supported_chains() {
 async fn pa_instance(
     chain: &NamedChain,
 ) -> protocol_adapter::ProtocolAdapter::ProtocolAdapterInstance<DynProvider> {
-    let rpc_url = alchemy_url(chain).expect("Couldn't get RPC URL for chain");
+    let rpc_url = rpc_url(chain).expect("Couldn't get RPC URL for chain");
 
     let provider = ProviderBuilder::new()
         .connect_anvil_with_wallet_and_config(|a| a.fork(rpc_url))
