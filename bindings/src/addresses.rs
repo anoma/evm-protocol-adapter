@@ -1,38 +1,37 @@
-use alloy::primitives::{Address, address};
+use alloy::primitives::Address;
 use alloy_chains::NamedChain;
+use serde::Deserialize;
 use std::collections::HashMap;
+use std::sync::LazyLock;
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DeploymentEntry {
+    chain_id: u64,
+    contract_address: String,
+}
+
+static DEPLOYMENTS: LazyLock<HashMap<NamedChain, Address>> = LazyLock::new(|| {
+    let entries: Vec<DeploymentEntry> =
+        serde_json::from_str(include_str!("../../deployments.json"))
+            .expect("deployments.json: invalid JSON");
+
+    entries
+        .into_iter()
+        .filter_map(|e| {
+            let chain = NamedChain::try_from(e.chain_id).ok()?;
+            let addr: Address = e.contract_address.parse().ok()?;
+            Some((chain, addr))
+        })
+        .collect()
+});
 
 /// Returns a map of protocol adapter deployments for all supported chains.
 pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
-    HashMap::from([
-        (
-            NamedChain::Sepolia,
-            address!("0xf152BBA809d6cba122579cee997A54B8F3FBa417"),
-        ),
-        (
-            NamedChain::Mainnet,
-            address!("0x0eA3B55b68A3f307c8FE3fe66E443247c95F0CfF"),
-        ),
-        (
-            NamedChain::BaseSepolia,
-            address!("0x094FCC095323080e71a037b2B1e3519c07dd84F8"),
-        ),
-        (
-            NamedChain::Base,
-            address!("0x094FCC095323080e71a037b2B1e3519c07dd84F8"),
-        ),
-        (
-            NamedChain::Optimism,
-            address!("0x094FCC095323080e71a037b2B1e3519c07dd84F8"),
-        ),
-        (
-            NamedChain::Arbitrum,
-            address!("0x094FCC095323080e71a037b2B1e3519c07dd84F8"),
-        ),
-    ])
+    DEPLOYMENTS.clone()
 }
 
 /// Returns the address of the protocol adapter deployed on the provided chain, if any.
 pub fn protocol_adapter_address(chain: &NamedChain) -> Option<Address> {
-    protocol_adapter_deployments_map().get(chain).cloned()
+    DEPLOYMENTS.get(chain).cloned()
 }

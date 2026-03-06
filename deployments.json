@@ -1,0 +1,38 @@
+[
+  {
+    "network": "mainnet",
+    "chainId": 1,
+    "contractAddress": "0x0eA3B55b68A3f307c8FE3fe66E443247c95F0CfF",
+    "version": "1.1.0"
+  },
+  {
+    "network": "sepolia",
+    "chainId": 11155111,
+    "contractAddress": "0xf152BBA809d6cba122579cee997A54B8F3FBa417",
+    "version": "1.1.0"
+  },
+  {
+    "network": "base-sepolia",
+    "chainId": 84532,
+    "contractAddress": "0x094FCC095323080e71a037b2B1e3519c07dd84F8",
+    "version": "1.1.0"
+  },
+  {
+    "network": "base",
+    "chainId": 8453,
+    "contractAddress": "0x094FCC095323080e71a037b2B1e3519c07dd84F8",
+    "version": "1.1.0"
+  },
+  {
+    "network": "optimism",
+    "chainId": 10,
+    "contractAddress": "0x094FCC095323080e71a037b2B1e3519c07dd84F8",
+    "version": "1.1.0"
+  },
+  {
+    "network": "arbitrum",
+    "chainId": 42161,
+    "contractAddress": "0x094FCC095323080e71a037b2B1e3519c07dd84F8",
+    "version": "1.1.0"
+  }
+]
