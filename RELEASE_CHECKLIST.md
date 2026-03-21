@@ -10,16 +10,16 @@ We distinguish between three release cases:
 
 - Deploying a **new** protocol adapter version to multiple new chains resulting in a new
 
-  - `contracts/X.Y.Z` version
-  - `bindings/A.0.0` version
+  - `contracts/vX.Y.Z` version
+  - `bindings/vA.0.0` version
 
 - Deploying an **existing** protocol adapter version to multiple new chains resulting in a new
 
-  - `bindings/A.B.0` version
+  - `bindings/vA.B.0` version
 
 - Maintaining the bindings resulting in a new
 
-  - `bindings/A.B.C` version
+  - `bindings/vA.B.C` version
 
 ## Deploying a new Protocol Adapter Version
 
@@ -149,8 +149,8 @@ For each chain, you want to deploy to, do the following:
 
 - [ ] After merging, create new tags for:
 
-  - [ ] `contracts/X.Y.Z` where `X.Y.Z` must match the protocol adapter version number and
-  - [ ] `bindings/A.0.0` tag, where `A` is the last `MAJOR` version incremented by 1.
+  - [ ] `contracts/vX.Y.Z` where `X.Y.Z` must match the protocol adapter version number and
+  - [ ] `bindings/vA.0.0` tag, where `A` is the last `MAJOR` version incremented by 1.
 
 - [ ] Create new [GH releases](https://github.com/anoma/pa-evm/releases) for both packages.
 
@@ -293,7 +293,7 @@ For each **new** chain, you want to deploy to, do the following:
 
 - [ ] Run the tests with `just bindings-test`.
 
-- [ ] After merging, create a new `bindings/A.B.0` tag, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
+- [ ] After merging, create a new `bindings/vA.B.0` tag, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
 - [ ] Create a new [GH release](https://github.com/anoma/pa-evm/releases).
 
@@ -329,7 +329,7 @@ For each **new** chain, you want to deploy to, do the following:
 
 - [ ] Run the tests with `just bindings-test`.
 
-- [ ] After merging, create a new `bindings/A.B.C` tag, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers, respectively, and `C` is the last `PATCH` version number incremented by 1.
+- [ ] After merging, create a new `bindings/vA.B.C` tag, where `A` and `B` are the last `MAJOR` and `MINOR` version numbers, respectively, and `C` is the last `PATCH` version number incremented by 1.
 
 - [ ] Create a new [GH release](https://github.com/anoma/pa-evm/releases).
 
