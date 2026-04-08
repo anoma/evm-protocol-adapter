@@ -47,6 +47,9 @@ pub fn alchemy_subdomain(chain: &NamedChain) -> AlchemyResult<&'static str> {
         //
         Polygon => Ok("polygon-mainnet"),
         PolygonAmoy => Ok("polygon-amoy"),
+        //
+        BinanceSmartChain => Ok("bnb-mainnet"),
+        BinanceSmartChainTestnet => Ok("bnb-testnet"),
 
         _ => Err(AlchemyError::SubdomainNotFound),
     }
