@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Ownable} from "@openzeppelin-contracts-5.5.0/access/Ownable.sol";
-import {Pausable} from "@openzeppelin-contracts-5.5.0/utils/Pausable.sol";
-import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.5.0/utils/ReentrancyGuardTransient.sol";
+import {Ownable} from "@openzeppelin-contracts-5.6.1/access/Ownable.sol";
+import {Pausable} from "@openzeppelin-contracts-5.6.1/utils/Pausable.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.6.1/utils/ReentrancyGuardTransient.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IForwarder} from "./interfaces/IForwarder.sol";

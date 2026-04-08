@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Vm} from "forge-std-1.14.0/src/Vm.sol";
+import {Vm} from "forge-std-1.15.0/src/Vm.sol";
 
 import {Compliance} from "../../src/libs/proving/Compliance.sol";
 import {Logic} from "../../src/libs/proving/Logic.sol";
