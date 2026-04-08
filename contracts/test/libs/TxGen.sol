@@ -373,8 +373,9 @@ library TxGen {
             uint256 complianceUnitCount = actions[i].complianceVerifierInputs.length;
 
             for (uint256 j = 0; j < complianceUnitCount; ++j) {
-                logicRefs[n++] = actions[i].complianceVerifierInputs[j].instance.consumed.logicRef;
-                logicRefs[n++] = actions[i].complianceVerifierInputs[j].instance.created.logicRef;
+                Compliance.Instance memory inst = actions[i].complianceVerifierInputs[j].instance;
+                logicRefs[n++] = inst.consumed.logicRef;
+                logicRefs[n++] = inst.created.logicRef;
             }
         }
     }
