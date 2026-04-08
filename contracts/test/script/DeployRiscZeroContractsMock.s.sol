@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Script} from "forge-std-1.14.0/src/Script.sol";
+import {Script} from "forge-std-1.15.0/src/Script.sol";
 import {
     RiscZeroVerifierEmergencyStop
 } from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";

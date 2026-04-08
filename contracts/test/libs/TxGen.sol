@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {VmSafe} from "forge-std-1.14.0/src/Vm.sol";
+import {VmSafe} from "forge-std-1.15.0/src/Vm.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";

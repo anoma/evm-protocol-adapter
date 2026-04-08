@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ECDSA} from "@openzeppelin-contracts-5.5.0/utils/cryptography/ECDSA.sol";
+import {ECDSA} from "@openzeppelin-contracts-5.6.1/utils/cryptography/ECDSA.sol";
 import {EllipticCurve} from "elliptic-curve-solidity-0.2.5/contracts/EllipticCurve.sol";
 import {EfficientHashLib} from "solady-0.1.26/src/utils/EfficientHashLib.sol";
 
