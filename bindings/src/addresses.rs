@@ -33,10 +33,6 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
             NamedChain::BinanceSmartChain,
             address!("0xFC44b66a39fe6923Ad8d3c93bFeC369728862B68"),
         ),
-        (
-            NamedChain::BinanceSmartChainTestnet,
-            address!("0xFC44b66a39fe6923Ad8d3c93bFeC369728862B68"),
-        ),
     ])
 }
 
