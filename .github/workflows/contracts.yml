@@ -33,8 +33,7 @@ jobs:
         run: forge soldeer version
 
       - name: Run Forge Lint
-        run: forge lint --deny warnings
-        working-directory: ./contracts
+        run: just contracts-lint
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v1
@@ -47,20 +46,8 @@ jobs:
         run: bun install solhint
         working-directory: ./contracts
 
-      - name: Run Solhint in `src`
-        run: bunx --bun solhint --config .solhint.json 'src/**/*.sol'
-        working-directory: ./contracts
-        id: solhint-src
-
-      - name: Run Solhint in `test` dir
-        run: bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
-        working-directory: ./contracts
-        id: solhint-test
-
-      - name: Run Solhint in `script` dir
-        run: bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
-        working-directory: ./contracts
-        id: solhint-script
+      - name: Run Solhint
+        run: just contracts-solhint
 
       - name: Install Slither
         run: pip install slither-analyzer
@@ -74,9 +61,7 @@ jobs:
         id: slither
 
       - name: Run Forge fmt
-        run: forge fmt --check
-        working-directory: ./contracts
-        id: fmt
+        run: just contracts-fmt-check
 
       - name: Check that bindings are up-to-date
         run: just bindings-check
