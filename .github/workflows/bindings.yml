@@ -43,16 +43,13 @@ jobs:
           restore-keys: rust-
 
       - name: Run rustfmt
-        run: cargo fmt -- --check
+        run: just bindings-fmt-check
 
       - name: Build Bindings
         run: just bindings-build
 
       - name: Run clippy
-        run: cargo clippy --no-deps -- -Dwarnings
-
-      - name: Run Clippy on test
-        run: cargo clippy --no-deps  --tests -- -Dwarnings
+        run: just bindings-clippy
 
       - name: Run Tests
         run: just bindings-test
