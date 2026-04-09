@@ -158,6 +158,29 @@ bindings-clippy:
 
 # --- All ---
 
+# Lint all (contracts + bindings)
+all-lint:
+    @echo "==> Linting contracts (forge lint)..."
+    @just contracts-lint
+    @echo "==> Linting contracts (solhint)..."
+    @just contracts-solhint
+    @echo "==> Linting bindings (clippy)..."
+    @just bindings-clippy
+
+# Format all (contracts + bindings)
+all-fmt:
+    @echo "==> Formatting contracts..."
+    @just contracts-fmt
+    @echo "==> Formatting bindings..."
+    @just bindings-fmt
+
+# Check formatting for all (contracts + bindings)
+all-fmt-check:
+    @echo "==> Checking contract formatting..."
+    @just contracts-fmt-check
+    @echo "==> Checking bindings formatting..."
+    @just bindings-fmt-check
+
 # Build all (contracts + bindings)
 all-build:
     @echo "==> Building contracts..."
@@ -172,8 +195,12 @@ all-test:
     @echo "==> Testing bindings..."
     @just bindings-test
 
-# Prerequisites check
+# Prerequisites check (mirrors CI)
 all-check:
     git status
+    @echo "==> Checking formatting..."
+    @just all-fmt-check
+    @echo "==> Linting..."
+    @just all-lint
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
