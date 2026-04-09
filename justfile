@@ -68,6 +68,12 @@ contracts-deploy deployer chain *args:
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
+# Execute a transaction binary on a deployed protocol adapter
+contracts-execute-tx deployer pa-address filepath chain *args:
+    cd contracts && forge script script/ExecuteTransaction.s.sol:ExecuteTransaction \
+        --sig "run(address,string)" {{pa-address}} {{filepath}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
 # Verify on sourcify
 contracts-verify-sourcify address chain *args:
     cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} \
