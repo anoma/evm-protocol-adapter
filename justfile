@@ -27,6 +27,24 @@ contracts-build *args:
 contracts-test *args:
     cd contracts && forge test {{ args }}
 
+# Lint contracts (forge lint)
+contracts-lint:
+    cd contracts && forge lint --deny warnings
+
+# Run solhint on contracts
+contracts-solhint:
+    cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
+    cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
+    cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
+
+# Format contracts
+contracts-fmt:
+    cd contracts && forge fmt
+
+# Check contract formatting
+contracts-fmt-check:
+    cd contracts && forge fmt --check
+
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
     cd contracts && forge clean && forge bind \
@@ -118,6 +136,19 @@ bindings-check: contracts-gen-bindings
 # Publish bindings
 bindings-publish *args:
     cd bindings && cargo publish {{ args }}
+
+# Format Rust code
+bindings-fmt:
+    cargo fmt
+
+# Check Rust formatting
+bindings-fmt-check:
+    cargo fmt -- --check
+
+# Lint Rust code with clippy
+bindings-clippy:
+    cargo clippy --no-deps -- -Dwarnings
+    cargo clippy --no-deps --tests -- -Dwarnings
 
 # --- All ---
 
