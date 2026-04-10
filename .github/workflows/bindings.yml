@@ -8,7 +8,7 @@ on:
 
 jobs:
   tests:
-    name: Tests
+    name: Bindings Tests
     runs-on: macos-latest
     env:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}

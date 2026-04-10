@@ -8,7 +8,7 @@ on:
 
 jobs:
   tests:
-    name: Tests
+    name: Contracts Tests
     runs-on: macos-latest
     env:
       FOUNDRY_PROFILE: ci
