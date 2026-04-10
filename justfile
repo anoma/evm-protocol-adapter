@@ -23,16 +23,9 @@ contracts-clean:
 contracts-build *args:
     cd contracts && forge build {{ args }}
 
-# Run contract tests
-contracts-test *args:
-    cd contracts && forge test {{ args }}
-
-# Lint contracts (forge lint)
+# Lint contracts (forge lint + solhint)
 contracts-lint:
     cd contracts && forge lint --deny warnings
-
-# Run solhint on contracts
-contracts-solhint:
     cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
@@ -44,12 +37,16 @@ contracts-static-analysis:
     forge clean
 
 # Format contracts
-contracts-fmt:
-    cd contracts && forge fmt
+contracts-fmt *args:
+    cd contracts && forge fmt {{ args }}
 
 # Check contract formatting
 contracts-fmt-check:
     cd contracts && forge fmt --check
+
+# Run contract tests
+contracts-test *args:
+    cd contracts && forge test {{ args }}
 
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
@@ -149,29 +146,27 @@ bindings-check: contracts-gen-bindings
 bindings-publish *args:
     cd bindings && cargo publish {{ args }}
 
-# Format Rust code
+# Lint bindings (clippy)
+bindings-lint:
+    cd bindings && cargo clippy --no-deps -- -Dwarnings
+    cd bindings && cargo clippy --no-deps --tests -- -Dwarnings
+
+# Format bindings
 bindings-fmt:
     cargo fmt
 
-# Check Rust formatting
+# Check bindings formatting
 bindings-fmt-check:
     cargo fmt -- --check
-
-# Lint Rust code with clippy
-bindings-clippy:
-    cargo clippy --no-deps -- -Dwarnings
-    cargo clippy --no-deps --tests -- -Dwarnings
 
 # --- All ---
 
 # Lint all (contracts + bindings)
 all-lint:
-    @echo "==> Linting contracts (forge lint)..."
+    @echo "==> Linting contracts..."
     @just contracts-lint
-    @echo "==> Linting contracts (solhint)..."
-    @just contracts-solhint
-    @echo "==> Linting bindings (clippy)..."
-    @just bindings-clippy
+    @echo "==> Linting bindings..."
+    @just bindings-lint
 
 # Format all (contracts + bindings)
 all-fmt:

@@ -48,8 +48,8 @@ jobs:
       - name: Build Bindings
         run: just bindings-build
 
-      - name: Run clippy
-        run: just bindings-clippy
+      - name: Lint Bindings
+        run: just bindings-lint
 
       - name: Run Tests
         run: just bindings-test

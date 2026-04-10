@@ -23,17 +23,14 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Install dependencies
-        run: just contracts-deps
-
       - name: Show Foundry version
         run: forge --version
 
       - name: Show Soldeer version
         run: forge soldeer version
 
-      - name: Run Forge Lint
-        run: just contracts-lint
+      - name: Install dependencies
+        run: just contracts-deps
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v1
@@ -46,8 +43,8 @@ jobs:
         run: bun install solhint
         working-directory: ./contracts
 
-      - name: Run Solhint
-        run: just contracts-solhint
+      - name: Run Forge Lint
+        run: just contracts-lint
 
       - name: Install Slither
         run: pip install slither-analyzer
@@ -55,10 +52,8 @@ jobs:
       - name: Show Slither version
         run: slither --version
 
-      - name: Run Slither
-        run: slither . && just contracts-clean
-        working-directory: ./contracts
-        id: slither
+      - name: Run Slither Static Analyzer
+        run: just contracts-static-analysis
 
       - name: Run Forge fmt
         run: just contracts-fmt-check
