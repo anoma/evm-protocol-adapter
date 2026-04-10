@@ -37,6 +37,12 @@ contracts-solhint:
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
 
+# Run slither on contracts
+contracts-static-analysis:
+    cd contracts && slither .
+    @echo "Removing slither compilation artifacts..."
+    forge clean
+
 # Format contracts
 contracts-fmt:
     cd contracts && forge fmt
@@ -198,6 +204,8 @@ all-test:
 # Prerequisites check (mirrors CI)
 all-check:
     git status
+    @echo "==> Static analysis with slither..."
+    @just contracts-static-analysis
     @echo "==> Checking formatting..."
     @just all-fmt-check
     @echo "==> Linting..."
