@@ -12,8 +12,6 @@ jobs:
     runs-on: macos-latest
     env:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
-      RPC_URL_BINANCE_SMART_CHAIN: https://bnb-mainnet.g.alchemy.com/v2/${{ secrets.ALCHEMY_API_KEY }}
-      RPC_URL_BINANCE_SMART_CHAIN_TESTNET: https://bnb-testnet.g.alchemy.com/v2/${{ secrets.ALCHEMY_API_KEY }}
 
     steps:
       - name: Checkout repository
