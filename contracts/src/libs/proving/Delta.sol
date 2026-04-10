@@ -55,9 +55,7 @@ library Delta {
     /// done due to the delta points being added sequentially starting from the zero delta in the
     /// `ProtocolAdapter.execute()` function.
     function add(Point memory lhs, Point memory rhs) internal pure returns (Point memory sum) {
-        if (!EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: _AA, _bb: _BB, _pp: _PP})) {
-            revert PointNotOnCurve(rhs);
-        }
+        require(EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: _AA, _bb: _BB, _pp: _PP}), PointNotOnCurve(rhs));
 
         (sum.x, sum.y) = EllipticCurve.ecAdd({_x1: lhs.x, _y1: lhs.y, _x2: rhs.x, _y2: rhs.y, _aa: _AA, _pp: _PP});
     }
@@ -93,8 +91,6 @@ library Delta {
         address expected = toAccount(instance);
 
         // Compare it with the recovered address
-        if (recovered != expected) {
-            revert DeltaMismatch({expected: expected, actual: recovered});
-        }
+        require(recovered == expected, DeltaMismatch({expected: expected, actual: recovered}));
     }
 }
