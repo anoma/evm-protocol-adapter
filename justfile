@@ -23,6 +23,27 @@ contracts-clean:
 contracts-build *args:
     cd contracts && forge build {{ args }}
 
+# Lint contracts (forge lint + solhint)
+contracts-lint:
+    cd contracts && forge lint --deny warnings
+    cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
+    cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
+    cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
+
+# Run slither on contracts
+contracts-static-analysis:
+    cd contracts && slither .
+    @echo "Removing slither compilation artifacts..."
+    forge clean
+
+# Format contracts
+contracts-fmt *args:
+    cd contracts && forge fmt {{ args }}
+
+# Check contract formatting
+contracts-fmt-check:
+    cd contracts && forge fmt --check
+
 # Run contract tests
 contracts-test *args:
     cd contracts && forge test {{ args }}
@@ -48,6 +69,12 @@ contracts-simulate chain *args:
 contracts-deploy deployer chain *args:
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Execute a transaction binary on a deployed protocol adapter
+contracts-execute-tx deployer pa-address filepath chain *args:
+    cd contracts && forge script script/ExecuteTransaction.s.sol:ExecuteTransaction \
+        --sig "run(address,string)" {{pa-address}} {{filepath}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Verify on sourcify
@@ -119,7 +146,41 @@ bindings-check: contracts-gen-bindings
 bindings-publish *args:
     cd bindings && cargo publish {{ args }}
 
+# Lint bindings (clippy)
+bindings-lint:
+    cd bindings && cargo clippy --no-deps -- -Dwarnings
+    cd bindings && cargo clippy --no-deps --tests -- -Dwarnings
+
+# Format bindings
+bindings-fmt:
+    cargo fmt
+
+# Check bindings formatting
+bindings-fmt-check:
+    cargo fmt -- --check
+
 # --- All ---
+
+# Lint all (contracts + bindings)
+all-lint:
+    @echo "==> Linting contracts..."
+    @just contracts-lint
+    @echo "==> Linting bindings..."
+    @just bindings-lint
+
+# Format all (contracts + bindings)
+all-fmt:
+    @echo "==> Formatting contracts..."
+    @just contracts-fmt
+    @echo "==> Formatting bindings..."
+    @just bindings-fmt
+
+# Check formatting for all (contracts + bindings)
+all-fmt-check:
+    @echo "==> Checking contract formatting..."
+    @just contracts-fmt-check
+    @echo "==> Checking bindings formatting..."
+    @just bindings-fmt-check
 
 # Build all (contracts + bindings)
 all-build:
@@ -135,8 +196,14 @@ all-test:
     @echo "==> Testing bindings..."
     @just bindings-test
 
-# Prerequisites check
+# Prerequisites check (mirrors CI)
 all-check:
     git status
+    @echo "==> Static analysis with slither..."
+    @just contracts-static-analysis
+    @echo "==> Checking formatting..."
+    @just all-fmt-check
+    @echo "==> Linting..."
+    @just all-lint
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
