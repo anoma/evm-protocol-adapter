@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Arrays} from "@openzeppelin-contracts-5.5.0/utils/Arrays.sol";
-import {Math} from "@openzeppelin-contracts-5.5.0/utils/math/Math.sol";
+import {Arrays} from "@openzeppelin-contracts-5.6.1/utils/Arrays.sol";
+import {Math} from "@openzeppelin-contracts-5.6.1/utils/math/Math.sol";
 
 import {SHA256} from "../libs/SHA256.sol";
 
