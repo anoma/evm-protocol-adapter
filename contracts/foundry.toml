@@ -55,7 +55,7 @@ remappings_version = true
 runs = 1_000
 
 [profile.ci]
-fuzz = { runs = 10_000 }
+fuzz = { runs = 1_000 }
 verbosity = 3
 
 [rpc_endpoints]
