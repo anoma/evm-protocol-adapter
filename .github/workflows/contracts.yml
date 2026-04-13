@@ -8,7 +8,7 @@ on:
 
 jobs:
   tests:
-    name: Tests
+    name: Contracts Tests
     runs-on: macos-latest
     env:
       FOUNDRY_PROFILE: ci
@@ -23,18 +23,14 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Install dependencies
-        run: just contracts-deps
-
       - name: Show Foundry version
         run: forge --version
 
       - name: Show Soldeer version
         run: forge soldeer version
 
-      - name: Run Forge Lint
-        run: forge lint --deny warnings
-        working-directory: ./contracts
+      - name: Install dependencies
+        run: just contracts-deps
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v1
@@ -47,20 +43,8 @@ jobs:
         run: bun install solhint
         working-directory: ./contracts
 
-      - name: Run Solhint in `src`
-        run: bunx --bun solhint --config .solhint.json 'src/**/*.sol'
-        working-directory: ./contracts
-        id: solhint-src
-
-      - name: Run Solhint in `test` dir
-        run: bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
-        working-directory: ./contracts
-        id: solhint-test
-
-      - name: Run Solhint in `script` dir
-        run: bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
-        working-directory: ./contracts
-        id: solhint-script
+      - name: Run Forge Lint
+        run: just contracts-lint
 
       - name: Install Slither
         run: pip install slither-analyzer
@@ -68,15 +52,11 @@ jobs:
       - name: Show Slither version
         run: slither --version
 
-      - name: Run Slither
-        run: slither . && just contracts-clean
-        working-directory: ./contracts
-        id: slither
+      - name: Run Slither Static Analyzer
+        run: just contracts-static-analysis
 
       - name: Run Forge fmt
-        run: forge fmt --check
-        working-directory: ./contracts
-        id: fmt
+        run: just contracts-fmt-check
 
       - name: Check that bindings are up-to-date
         run: just bindings-check

@@ -8,7 +8,7 @@ on:
 
 jobs:
   tests:
-    name: Tests
+    name: Bindings Tests
     runs-on: macos-latest
     env:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
@@ -43,16 +43,13 @@ jobs:
           restore-keys: rust-
 
       - name: Run rustfmt
-        run: cargo fmt -- --check
+        run: just bindings-fmt-check
 
       - name: Build Bindings
         run: just bindings-build
 
-      - name: Run clippy
-        run: cargo clippy --no-deps -- -Dwarnings
-
-      - name: Run Clippy on test
-        run: cargo clippy --no-deps  --tests -- -Dwarnings
+      - name: Lint Bindings
+        run: just bindings-lint
 
       - name: Run Tests
         run: just bindings-test
