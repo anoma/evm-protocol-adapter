@@ -26,15 +26,8 @@ library MerkleTree {
     function setup(Tree storage self) internal returns (bytes32 initialRoot) {
         initialRoot = SHA256.EMPTY_HASH;
 
-        // Store depth in the dynamic array
-        Arrays.unsafeSetLength(self._zeros, 256);
-
-        // Build each root of zero-filled subtrees
-        bytes32 currentZero = SHA256.EMPTY_HASH;
-        for (uint256 i = 0; i < 256; ++i) {
-            Arrays.unsafeAccess(self._zeros, i).value = currentZero;
-            currentZero = SHA256.hash(currentZero, currentZero);
-        }
+        // Store the root of the empty subtree of depth 0.
+        self._zeros.push(SHA256.EMPTY_HASH);
 
         self._nextLeafIndex = 0;
     }
@@ -73,11 +66,20 @@ library MerkleTree {
 
         // Expand the tree if the capacity is reached.
         if (self._nextLeafIndex == capacity(self)) {
-            // Store the current level hash as the sibling (side) for the current level.
+            // Store the current level hash as the sibling (side).
+            // This hash is the root of the left subtree.
             self._sides.push(currentLevelHash);
 
-            // Compute the new current level hash.
-            currentLevelHash = SHA256.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, treeDepth).value);
+            // Cache the hash of the empty subtree (zero).
+            // This hash is the root of the right subtree of the expanded tree.
+            bytes32 currentZero = Arrays.unsafeAccess(self._zeros, treeDepth).value;
+
+            // Update the current level hash by computing the hash of the left and right subtree hashes.
+            // This hash is the root of the expanded subtree.
+            currentLevelHash = SHA256.hash(currentLevelHash, currentZero);
+
+            // Compute and store the root of the empty subtree of next depth.
+            self._zeros.push(SHA256.hash(currentZero, currentZero));
         }
 
         newRoot = currentLevelHash;
