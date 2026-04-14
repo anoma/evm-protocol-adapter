@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Script} from "forge-std-1.14.0/src/Script.sol";
+import {Script} from "forge-std-1.15.0/src/Script.sol";
 import {
     ControlID,
     RiscZeroGroth16Verifier
