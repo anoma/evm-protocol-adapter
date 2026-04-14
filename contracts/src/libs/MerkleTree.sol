@@ -16,7 +16,6 @@ library MerkleTree {
     struct Tree {
         uint256 _nextLeafIndex;
         bytes32[] _sides;
-        bytes32[] _zeros;
     }
 
     /// @notice Sets up the tree with an initial capacity (i.e. number of leaves) of 1
@@ -25,17 +24,6 @@ library MerkleTree {
     /// @return initialRoot The initial root of the empty tree.
     function setup(Tree storage self) internal returns (bytes32 initialRoot) {
         initialRoot = SHA256.EMPTY_HASH;
-
-        // Store depth in the dynamic array
-        Arrays.unsafeSetLength(self._zeros, 256);
-
-        // Build each root of zero-filled subtrees
-        bytes32 currentZero = SHA256.EMPTY_HASH;
-        for (uint256 i = 0; i < 256; ++i) {
-            Arrays.unsafeAccess(self._zeros, i).value = currentZero;
-            currentZero = SHA256.hash(currentZero, currentZero);
-        }
-
         self._nextLeafIndex = 0;
     }
 
@@ -47,6 +35,9 @@ library MerkleTree {
     function push(Tree storage self, bytes32 leaf) internal returns (uint256 index, bytes32 newRoot) {
         // Cache the tree depth read.
         uint256 treeDepth = depth(self);
+
+        // Compute zero hashes in memory for the needed levels.
+        bytes32[] memory zeros = zeroHashes(treeDepth);
 
         // Get the next leaf index and increment it after assignment.
         index = self._nextLeafIndex++;
@@ -62,7 +53,7 @@ library MerkleTree {
                 Arrays.unsafeAccess(self._sides, i).value = currentLevelHash;
 
                 // Compute the current level hash using the right sibling, which is the zero hash of this level.
-                currentLevelHash = SHA256.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, i).value);
+                currentLevelHash = SHA256.hash(currentLevelHash, zeros[i]);
             } else {
                 // Compute the current level hash using the left sibling (side).
                 currentLevelHash = SHA256.hash(Arrays.unsafeAccess(self._sides, i).value, currentLevelHash);
@@ -77,7 +68,7 @@ library MerkleTree {
             self._sides.push(currentLevelHash);
 
             // Compute the new current level hash.
-            currentLevelHash = SHA256.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, treeDepth).value);
+            currentLevelHash = SHA256.hash(currentLevelHash, zeros[treeDepth]);
         }
 
         newRoot = currentLevelHash;
@@ -102,6 +93,28 @@ library MerkleTree {
     /// @return treeCapacity The computed tree capacity.
     function capacity(Tree storage self) internal view returns (uint256 treeCapacity) {
         treeCapacity = uint256(1) << depth(self); // 2^treeDepth
+    }
+
+    /// @notice Computes the zero hash for a given tree level.
+    /// @dev Level 0 is EMPTY_HASH, level n is SHA256(zeroHash(n-1), zeroHash(n-1)).
+    /// @param level The tree level.
+    /// @return zero The zero hash at the given level.
+    function zeroHash(uint256 level) internal pure returns (bytes32 zero) {
+        zero = SHA256.EMPTY_HASH;
+        for (uint256 i = 0; i < level; ++i) {
+            zero = SHA256.hash(zero, zero);
+        }
+    }
+
+    /// @notice Computes zero hashes for levels 0 through count in a single pass.
+    /// @param count The number of levels to compute.
+    /// @return zeros An array of zero hashes.
+    function zeroHashes(uint256 count) internal pure returns (bytes32[] memory zeros) {
+        zeros = new bytes32[](count + 1);
+        zeros[0] = SHA256.EMPTY_HASH;
+        for (uint256 i = 1; i < count + 1; ++i) {
+            zeros[i] = SHA256.hash(zeros[i - 1], zeros[i - 1]);
+        }
     }
 
     /// @notice Checks whether a node is the left or right child according to its index.
