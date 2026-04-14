@@ -1,6 +1,6 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
 [profile.default]
-solc = "0.8.33"
+solc = "0.8.34"
 auto_detect_solc = false
 evm_version = "osaka"
 gas_reports = [

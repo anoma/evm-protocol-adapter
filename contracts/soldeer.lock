@@ -23,7 +23,7 @@ name = "risc0-risc0-ethereum"
 version = "3.0.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/risc0-risc0-ethereum/3_0_1_09-11-2025_11:23:36_risc0-risc0-ethereum-3.0.zip"
 checksum = "894cb1442a71fcbef5f7e8984aab7e1cb3079ee8876a080926f0c66e07e50e58"
-integrity = "b961eba626a93d6b9e2e1602f3684fd3a553778b7170d9eb63a82b196497ffb2"
+integrity = "4034f256eabd4a4b54ebbf66d43007005c201924262985e995583e67617f54f7"
 
 [[dependencies]]
 name = "solady"

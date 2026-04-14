@@ -92,17 +92,13 @@ contract ProtocolAdapter is
         bytes4 riscZeroVerifierSelector,
         address emergencyStopCaller
     ) Ownable(emergencyStopCaller) {
-        if (address(riscZeroVerifierRouter) == address(0)) {
-            revert ZeroNotAllowed();
-        }
+        require(address(riscZeroVerifierRouter) != address(0), ZeroNotAllowed());
 
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
         _RISC_ZERO_VERIFIER_SELECTOR = riscZeroVerifierSelector;
 
         // Sanity check that the verifier has not been stopped already.
-        if (isEmergencyStopped()) {
-            revert RiscZeroVerifierStopped();
-        }
+        require(!isEmergencyStopped(), RiscZeroVerifierStopped());
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -255,9 +251,10 @@ contract ProtocolAdapter is
 
         // Check that the logic reference from the logic verifier input matches the expected reference from the
         // compliance unit.
-        if (logicRef != logicRefFromComplianceUnit) {
-            revert LogicRefMismatch({expected: logicRefFromComplianceUnit, actual: logicRef});
-        }
+        require(
+            logicRef == logicRefFromComplianceUnit,
+            LogicRefMismatch({expected: logicRefFromComplianceUnit, actual: logicRef})
+        );
 
         {
             // Obtain the logic instance from the verifier input, action tree root, and consumed flag.
@@ -330,9 +327,10 @@ contract ProtocolAdapter is
         bytes memory actualOutput =
             IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
 
-        if (keccak256(actualOutput) != keccak256(expectedOutput)) {
-            revert ForwarderCallOutputMismatch({expected: expectedOutput, actual: actualOutput});
-        }
+        require(
+            keccak256(actualOutput) == keccak256(expectedOutput),
+            ForwarderCallOutputMismatch({expected: expectedOutput, actual: actualOutput})
+        );
 
         // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
         // slither-disable-next-line reentrancy-events
@@ -399,9 +397,7 @@ contract ProtocolAdapter is
         updatedVars = vars;
 
         bytes32 root = input.instance.consumed.commitmentTreeRoot;
-        if (!_isCommitmentTreeRootContained(root)) {
-            revert NonExistingRoot(root);
-        }
+        require(_isCommitmentTreeRootContained(root), NonExistingRoot(root));
 
         if (updatedVars.isProofAggregated) {
             // Aggregate the compliance instance
@@ -462,9 +458,10 @@ contract ProtocolAdapter is
     /// @notice Checks that a RISC Zero verifier selector matches the one the protocol adapter is associated with.
     /// @param selector The RISC Zero verifier selector to check.
     function _checkSelector(bytes4 selector) internal view {
-        if (selector != _RISC_ZERO_VERIFIER_SELECTOR) {
-            revert RiscZeroVerifierSelectorMismatch({expected: _RISC_ZERO_VERIFIER_SELECTOR, actual: selector});
-        }
+        require(
+            selector == _RISC_ZERO_VERIFIER_SELECTOR,
+            RiscZeroVerifierSelectorMismatch({expected: _RISC_ZERO_VERIFIER_SELECTOR, actual: selector})
+        );
     }
 
     /// @notice Initializes internal variables based on the tag count of the transaction and whether it contains an
