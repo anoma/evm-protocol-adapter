@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.0/script/DeployRiscZeroContracts.s.sol";
+import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.1/script/DeployRiscZeroContracts.s.sol";
 import {Test, Vm} from "forge-std-1.15.0/src/Test.sol";
 import {
     RiscZeroVerifierEmergencyStop

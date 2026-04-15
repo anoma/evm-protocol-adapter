@@ -4,11 +4,11 @@ pragma solidity ^0.8.30;
 import {Ownable} from "@openzeppelin-contracts-5.6.1/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts-5.6.1/utils/Pausable.sol";
 
-import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.0/script/DeployRiscZeroContracts.s.sol";
+import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.1/script/DeployRiscZeroContracts.s.sol";
 import {
     DeployRiscZeroContractsMock,
     MOCK_VERIFIER_SELECTOR
-} from "anoma-risc0-deployments-1.0.0-rc.0/test/script/DeployRiscZeroContractsMock.s.sol";
+} from "anoma-risc0-deployments-1.0.0-rc.1/test/script/DeployRiscZeroContractsMock.s.sol";
 
 import {Test, Vm} from "forge-std-1.15.0/src/Test.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";

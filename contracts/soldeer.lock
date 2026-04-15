@@ -7,10 +7,10 @@ integrity = "bce03af7ada1eee21a7fff393f238bcd7cd75a022a4db55ffb6b0dbb32433d35"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"
-version = "1.0.0-rc.0"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_0_0-rc_0_15-04-2026_16:36:07_risc0-deployments.zip"
-checksum = "3994a5b84b4387cfa0f1958b339c6c1e255285c962f1d8c20224fcffc7ad4a21"
-integrity = "912a5021ff0fcaef41ebf07ba790f9a3917a46b6a260f1ab9c23456878c3ce38"
+version = "1.0.0-rc.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_0_0-rc_1_15-04-2026_17:08:03_risc0-deployments.zip"
+checksum = "98bea30bf0af4f8fa69174370cc496b4e0d8cdd988ff8e577debc0506ae627d1"
+integrity = "9387aefdc94e281581dd4610453816900a66b9c98fcd8d28bf0fda5fcf4b783b"
 
 [[dependencies]]
 name = "elliptic-curve-solidity"

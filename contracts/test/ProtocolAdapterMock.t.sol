@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {
     DeployRiscZeroContractsMock
-} from "anoma-risc0-deployments-1.0.0-rc.0/test/script/DeployRiscZeroContractsMock.s.sol";
+} from "anoma-risc0-deployments-1.0.0-rc.1/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.15.0/src/Test.sol";
 import {
     RiscZeroVerifierEmergencyStop

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-1.0.0-rc.0/src/RiscZeroVerifierSelectors.sol";
-import {SupportedNetworks} from "anoma-risc0-deployments-1.0.0-rc.0/src/SupportedNetworks.sol";
+import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-1.0.0-rc.1/src/RiscZeroVerifierSelectors.sol";
+import {SupportedNetworks} from "anoma-risc0-deployments-1.0.0-rc.1/src/SupportedNetworks.sol";
 import {Script} from "forge-std-1.15.0/src/Script.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 
