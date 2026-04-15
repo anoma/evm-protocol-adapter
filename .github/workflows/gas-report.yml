@@ -1,0 +1,248 @@
+name: Gas Report
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  gas-report:
+    name: Gas Report
+    runs-on: macos-latest
+    env:
+      FOUNDRY_PROFILE: ci
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install dependencies
+        run: just contracts-deps
+
+      - name: Generate gas snapshot
+        working-directory: contracts
+        run: forge snapshot --match-contract Benchmark
+        env:
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+
+      - name: Generate gas report
+        working-directory: contracts
+        run: forge test --gas-report --match-contract Benchmark > gas-report.txt
+        env:
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+
+      - name: Generate contract sizes
+        working-directory: contracts
+        run: forge build --sizes 2>&1 | tail -n +4 > contract-sizes.txt
+
+      - name: Restore baseline gas snapshot
+        if: github.event_name == 'pull_request'
+        id: baseline
+        uses: actions/cache/restore@v4
+        with:
+          path: contracts/.gas-snapshot-main
+          key: gas-snapshot-main-
+          restore-keys: gas-snapshot-main-
+
+      - name: Generate gas diff
+        if: github.event_name == 'pull_request' && steps.baseline.outputs.cache-hit == 'true'
+        working-directory: contracts
+        run: |
+          total_base=0
+          total_pr=0
+
+          # Build a diff table comparing main vs PR gas values
+          {
+            echo "| Test | main | PR | Δ | % |"
+            echo "|------|-----:|---:|--:|--:|"
+            while IFS= read -r line || [[ -n "$line" ]]; do
+              name=$(echo "$line" | sed 's/ *(gas:.*//;s/() *$//')
+              pr_gas=$(echo "$line" | sed 's/.*(gas: \([0-9]*\))/\1/')
+              total_pr=$((total_pr + pr_gas))
+              # Look up the same test in the baseline
+              base_line=$(grep "^${name}()" .gas-snapshot-main 2>/dev/null || true)
+              if [[ -z "$base_line" ]]; then
+                pr_fmt=$(printf "%'d" "$pr_gas" 2>/dev/null || echo "$pr_gas")
+                echo "| \`${name}\` | — | ${pr_fmt} | *new* | |"
+                continue
+              fi
+              base_gas=$(echo "$base_line" | sed 's/.*(gas: \([0-9]*\))/\1/')
+              total_base=$((total_base + base_gas))
+              delta=$((pr_gas - base_gas))
+              if (( base_gas != 0 )); then
+                pct=$(awk "BEGIN { printf \"%.2f\", ($delta / $base_gas) * 100 }")
+              else
+                pct="—"
+              fi
+              base_fmt=$(printf "%'d" "$base_gas" 2>/dev/null || echo "$base_gas")
+              pr_fmt=$(printf "%'d" "$pr_gas" 2>/dev/null || echo "$pr_gas")
+              delta_fmt=$(printf "%'+d" "$delta" 2>/dev/null || echo "$delta")
+              icon=""
+              if (( delta > 0 )); then
+                icon=" :small_red_triangle:"
+              elif (( delta < 0 )); then
+                icon=" :small_red_triangle_down:"
+              fi
+              echo "| \`${name}\` | ${base_fmt} | ${pr_fmt} | ${delta_fmt}${icon} | ${pct}% |"
+            done < .gas-snapshot
+          } > gas-diff.txt
+
+          # Write summary with totals
+          total_delta=$((total_pr - total_base))
+          if (( total_base != 0 )); then
+            total_pct=$(awk "BEGIN { printf \"%.2f\", ($total_delta / $total_base) * 100 }")
+          else
+            total_pct="—"
+          fi
+          total_base_fmt=$(printf "%'d" "$total_base" 2>/dev/null || echo "$total_base")
+          total_pr_fmt=$(printf "%'d" "$total_pr" 2>/dev/null || echo "$total_pr")
+          total_delta_fmt=$(printf "%'+d" "$total_delta" 2>/dev/null || echo "$total_delta")
+          icon=""
+          if (( total_delta > 0 )); then
+            icon=":small_red_triangle:"
+          elif (( total_delta < 0 )); then
+            icon=":small_red_triangle_down:"
+          fi
+          echo "${total_base_fmt}|${total_pr_fmt}|${total_delta_fmt}|${total_pct}|${icon}" > gas-summary.txt
+
+      - name: Update baseline gas snapshot
+        if: github.ref == 'refs/heads/main'
+        working-directory: contracts
+        run: cp .gas-snapshot .gas-snapshot-main
+
+      - name: Save baseline to cache
+        if: github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v4
+        with:
+          path: contracts/.gas-snapshot-main
+          key: gas-snapshot-main-${{ github.sha }}
+
+      - name: Sanitize ref name
+        id: ref
+        run: echo "slug=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload gas artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gas-report-${{ steps.ref.outputs.slug }}-${{ github.sha }}
+          path: |
+            contracts/.gas-snapshot
+            contracts/gas-report.txt
+            contracts/contract-sizes.txt
+          include-hidden-files: true
+          retention-days: 30
+
+      - name: Build gas report comment
+        if: github.event_name == 'pull_request'
+        working-directory: contracts
+        run: |
+          {
+            echo "### Gas Report"
+
+            # --- Summary (visible) ---
+            if [[ -f gas-summary.txt ]]; then
+              IFS='|' read -r s_base s_pr s_delta s_pct s_icon < gas-summary.txt
+              echo ""
+              echo "| | main | PR | Δ | % |"
+              echo "|:--|-----:|---:|--:|--:|"
+              echo "| **Total benchmark gas** | ${s_base} | ${s_pr} | ${s_delta} ${s_icon} | **${s_pct}%** |"
+            else
+              echo ""
+              # Compute total gas for this PR when no baseline exists
+              total=0
+              while IFS= read -r line || [[ -n "$line" ]]; do
+                gas=$(echo "$line" | sed 's/.*(gas: \([0-9]*\))/\1/')
+                total=$((total + gas))
+              done < .gas-snapshot
+              total_fmt=$(printf "%'d" "$total" 2>/dev/null || echo "$total")
+              echo "**Total benchmark gas: ${total_fmt}** &mdash; no baseline yet, diff available after first merge to \`main\`"
+            fi
+
+            # --- Gas Diff (if baseline exists) ---
+            if [[ -f gas-diff.txt ]]; then
+              echo ""
+              echo "<details>"
+              echo "<summary><b>Gas Diff vs. main</b> &mdash; per-test breakdown</summary>"
+              echo ""
+              cat gas-diff.txt
+              echo ""
+              echo "</details>"
+            fi
+
+            # --- Gas Snapshot ---
+            echo ""
+            echo "<details>"
+            echo "<summary><b>Gas Snapshot</b> &mdash; per-test gas consumption</summary>"
+            echo ""
+            echo "| Test | Gas |"
+            echo "|------|----:|"
+            while IFS= read -r line || [[ -n "$line" ]]; do
+              name=$(echo "$line" | sed 's/ *(gas:.*//;s/() *$//')
+              gas=$(echo "$line"  | sed 's/.*(gas: \([0-9]*\))/\1/')
+              gas_fmt=$(printf "%'d" "$gas" 2>/dev/null || echo "$gas")
+              echo "| \`${name}\` | ${gas_fmt} |"
+            done < .gas-snapshot
+            echo ""
+            echo "</details>"
+
+            # --- Gas Report ---
+            echo ""
+            echo "<details>"
+            echo "<summary><b>Gas Report</b> &mdash; per-function statistics</summary>"
+            echo ""
+            echo '```'
+            sed -n '/╭/,/╯/p' gas-report.txt
+            echo '```'
+            echo ""
+            echo "</details>"
+
+            # --- Contract Sizes ---
+            echo ""
+            echo "<details>"
+            echo "<summary><b>Contract Sizes</b> &mdash; EVM bytecode size (24,576 B limit)</summary>"
+            echo ""
+            echo "| Contract | Runtime (B) | Initcode (B) | Margin (B) |"
+            echo "|----------|------------:|--------------:|-----------:|"
+            while IFS='|' read -r _ name runtime initcode margin _initmargin _; do
+              name=$(echo "$name" | xargs)
+              runtime=$(echo "$runtime" | xargs | tr -d ',')
+              initcode=$(echo "$initcode" | xargs | tr -d ',')
+              margin=$(echo "$margin" | xargs | tr -d ',')
+              [[ -z "$name" || "$name" == *"Contract"* || "$name" == *"---"* || "$name" == *"==="* ]] && continue
+              [[ "$runtime" =~ ^[0-9]+$ ]] || continue
+              (( runtime <= 100 )) && continue
+              [[ "$name" =~ (Mock|Test|Example|Fuzzing|^std) ]] && continue
+              runtime_fmt=$(printf "%'d" "$runtime" 2>/dev/null || echo "$runtime")
+              initcode_fmt=$(printf "%'d" "$initcode" 2>/dev/null || echo "$initcode")
+              margin_fmt=$(printf "%'d" "$margin" 2>/dev/null || echo "$margin")
+              warn=""
+              (( margin < 2048 )) && warn=" :warning:"
+              echo "| \`${name}\` | ${runtime_fmt} | ${initcode_fmt} | ${margin_fmt}${warn} |"
+            done < contract-sizes.txt
+            echo ""
+            echo "</details>"
+
+            # --- Footer ---
+            echo ""
+            echo "---"
+            echo "<sub>Generated by CI &mdash; commit \`${GITHUB_SHA::7}\` &mdash; $(date -u '+%Y-%m-%d %H:%M UTC')</sub>"
+          } > /tmp/gas-comment.md
+
+      - name: Post gas report comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: gas-report
+          path: /tmp/gas-comment.md
