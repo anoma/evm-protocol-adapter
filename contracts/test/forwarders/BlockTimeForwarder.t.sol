@@ -2,14 +2,13 @@
 pragma solidity ^0.8.30;
 
 import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
+import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.0/script/DeployRiscZeroContracts.s.sol";
 import {Test} from "forge-std-1.15.0/src/Test.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {BlockTimeForwarder} from "../../src/examples/BlockTimeForwarder.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-
-import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
 contract BlockTimeForwarderTest is Test {
     address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));

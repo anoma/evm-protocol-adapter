@@ -6,6 +6,13 @@ checksum = "a3b6bc661be858c7c27f60a1708cbebe8c71034b4cc1e9fe270d0a05b069352f"
 integrity = "bce03af7ada1eee21a7fff393f238bcd7cd75a022a4db55ffb6b0dbb32433d35"
 
 [[dependencies]]
+name = "anoma-risc0-deployments"
+version = "1.0.0-rc.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_0_0-rc_0_15-04-2026_16:36:07_risc0-deployments.zip"
+checksum = "3994a5b84b4387cfa0f1958b339c6c1e255285c962f1d8c20224fcffc7ad4a21"
+integrity = "912a5021ff0fcaef41ebf07ba790f9a3917a46b6a260f1ab9c23456878c3ce38"
+
+[[dependencies]]
 name = "elliptic-curve-solidity"
 version = "0.2.5"
 git = "https://github.com/witnet/elliptic-curve-solidity"
@@ -23,7 +30,7 @@ name = "risc0-risc0-ethereum"
 version = "3.0.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/risc0-risc0-ethereum/3_0_1_09-11-2025_11:23:36_risc0-risc0-ethereum-3.0.zip"
 checksum = "894cb1442a71fcbef5f7e8984aab7e1cb3079ee8876a080926f0c66e07e50e58"
-integrity = "4034f256eabd4a4b54ebbf66d43007005c201924262985e995583e67617f54f7"
+integrity = "f1a55e1e080b479924c27be56d1b29975b3e4167f9e4943840a67f0aa49390e5"
 
 [[dependencies]]
 name = "solady"
