@@ -3,6 +3,13 @@ pragma solidity ^0.8.30;
 
 import {Ownable} from "@openzeppelin-contracts-5.6.1/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts-5.6.1/utils/Pausable.sol";
+
+import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.1/script/DeployRiscZeroContracts.s.sol";
+import {
+    DeployRiscZeroContractsMock,
+    MOCK_VERIFIER_SELECTOR
+} from "anoma-risc0-deployments-1.0.0-rc.1/test/script/DeployRiscZeroContractsMock.s.sol";
+
 import {Test, Vm} from "forge-std-1.15.0/src/Test.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 import {VerificationFailed} from "risc0-risc0-ethereum-3.0.1/contracts/src/IRiscZeroVerifier.sol";
@@ -19,8 +26,6 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Transaction} from "../src/Types.sol";
 import {Parsing} from "./libs/Parsing.sol";
 import {TxGen} from "./libs/TxGen.sol";
-import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
-import {DeployRiscZeroContractsMock, MOCK_VERIFIER_SELECTOR} from "./script/DeployRiscZeroContractsMock.s.sol";
 
 contract ProtocolAdapterTest is Test {
     using Parsing for Transaction;

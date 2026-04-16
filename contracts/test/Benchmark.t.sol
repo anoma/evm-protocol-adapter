@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Strings} from "@openzeppelin-contracts-5.6.1/utils/Strings.sol";
+import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.1/script/DeployRiscZeroContracts.s.sol";
 import {Test, Vm, console} from "forge-std-1.15.0/src/Test.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 import {
@@ -12,7 +13,6 @@ import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/R
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Transaction} from "../src/Types.sol";
 import {Parsing} from "./libs/Parsing.sol";
-import {DeployRiscZeroContracts} from "./script/DeployRiscZeroContracts.s.sol";
 
 uint256 constant UPPER_EMPTY_TX_GAS_COST_BOUND = 7256;
 uint256 constant UPPER_RISC_ZERO_PROOF_GAS_COST_BOUND = 239000;

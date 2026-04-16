@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.1/script/DeployRiscZeroContracts.s.sol";
 import {Test, Vm} from "forge-std-1.15.0/src/Test.sol";
 import {
     RiscZeroVerifierEmergencyStop
@@ -13,7 +14,6 @@ import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {Transaction} from "../../src/Types.sol";
 
 import {Parsing} from "../libs/Parsing.sol";
-import {DeployRiscZeroContracts} from "../script/DeployRiscZeroContracts.s.sol";
 
 contract LogicProofTest is Test {
     using Parsing for Transaction;

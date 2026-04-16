@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {
+    DeployRiscZeroContractsMock
+} from "anoma-risc0-deployments-1.0.0-rc.1/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.15.0/src/Test.sol";
 import {
     RiscZeroVerifierEmergencyStop
@@ -26,7 +29,6 @@ import {ForwarderExample} from "./examples/Forwarder.e.sol";
 import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {CommitmentTreeMock} from "./mocks/CommitmentTree.m.sol";
-import {DeployRiscZeroContractsMock} from "./script/DeployRiscZeroContractsMock.s.sol";
 
 contract ProtocolAdapterMockVerifierTest is Test {
     using MerkleTree for bytes32[];

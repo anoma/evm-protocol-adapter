@@ -27,6 +27,7 @@ libs = ["dependencies"]
 auto_detect_remappings = false
 remappings = [
     "@openzeppelin-contracts-5.6.1/=dependencies/@openzeppelin-contracts-5.6.1/",
+    "anoma-risc0-deployments-1.0.0-rc.1/=dependencies/anoma-risc0-deployments-1.0.0-rc.1/",
     "elliptic-curve-solidity-0.2.5/=dependencies/elliptic-curve-solidity-0.2.5/",
     "forge-std-1.15.0/=dependencies/forge-std-1.15.0/",
     "openzeppelin/contracts/=dependencies/risc0-risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
@@ -40,6 +41,7 @@ ignored_warnings_from = [
 
 [dependencies]
 "@openzeppelin-contracts" = "5.6.1"
+"anoma-risc0-deployments" = "1.0.0-rc.1"
 "forge-std" = "1.15.0"
 "elliptic-curve-solidity" = { version = "0.2.5", git = "https://github.com/witnet/elliptic-curve-solidity", rev = "347547890840fd501809dfe0b855206407136ec0" }
 "risc0-risc0-ethereum" = "3.0.1"
