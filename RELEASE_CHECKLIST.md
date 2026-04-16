@@ -47,10 +47,10 @@ We distinguish between three release cases:
   cast wallet import deployer --mnemonic <MNEMONICC>
   ```
 
-- [ ] Set `IS_TEST_DEPLOYMENT` to `false` to deterministically deploy the protocol adapter.
+- [ ] Set `DETERMINISTIC_DEPLOYMENT` to `true` to deploy the protocol adapter deterministically.
 
   ```sh
-  export IS_TEST_DEPLOYMENT=false
+  export DETERMINISTIC_DEPLOYMENT=true
   ```
 
 - [ ] Check that the emergency caller address is set up correctly and export it with
@@ -210,10 +210,10 @@ For each chain, you want to deploy to, do the following:
   cast wallet import deployer --mnemonic <MNEMONICC>
   ```
 
-- [ ] Set `IS_TEST_DEPLOYMENT` to `false` to deterministically deploy the protocol adapter.
+- [ ] Set `DETERMINISTIC_DEPLOYMENT` to `true` to deploy the protocol adapter deterministically.
 
   ```sh
-  export IS_TEST_DEPLOYMENT=false
+  export DETERMINISTIC_DEPLOYMENT=true
   ```
 
 - [ ] Check that the emergency caller address is set up correctly and export it with
