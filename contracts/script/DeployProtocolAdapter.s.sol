@@ -66,12 +66,12 @@ contract DeployProtocolAdapter is Script {
         _supportNetwork({name: "bsc", chainId: 56, riscZeroVerifierRouter: 0x7C1B7b8fEB636eA9Ecd32152Bce2744a0EEf39C7});
     }
 
-    /// @notice Deploys the protocol adapter contract on supported networks and allows for test deployments.
-    /// @param isTestDeployment Whether the deployment is a test deployment or not. If set to `false`, the protocol
-    /// adapter is deployed deterministically.
+    /// @notice Deploys the protocol adapter contract on supported networks.
+    /// @param deterministic Whether to deploy the protocol adapter deterministically using CREATE2 with a salt.
     /// @param emergencyStopCaller The emergency stop caller that can stop the protocol adapter in an emergency.
-    /// @dev If `isTestDeployment` is set to `false`, the protocol adapter is deployed deterministically.
-    function run(bool isTestDeployment, address emergencyStopCaller) public returns (address protocolAdapter) {
+    /// @dev If `deterministic` is set to `true`, the protocol adapter is deployed using CREATE2 with a version-derived
+    /// salt, producing a predictable address. If set to `false`, the contract is deployed regularly.
+    function run(bool deterministic, address emergencyStopCaller) public returns (address protocolAdapter) {
         // Lookup the RISC Zero router address from the supported networks.
         RiscZeroVerifierRouter riscZeroVerifierRouter = _riscZeroVerifierRouters[_supportedNetworks[block.chainid]];
 
@@ -81,16 +81,7 @@ contract DeployProtocolAdapter is Script {
 
         vm.startBroadcast();
 
-        if (isTestDeployment) {
-            // Deploy regularly.
-            protocolAdapter = address(
-                new ProtocolAdapter({
-                    riscZeroVerifierRouter: riscZeroVerifierRouter,
-                    riscZeroVerifierSelector: Versioning._RISC_ZERO_VERIFIER_SELECTOR,
-                    emergencyStopCaller: emergencyStopCaller
-                })
-            );
-        } else {
+        if (deterministic) {
             // Deploy deterministically.
             protocolAdapter = address(
                 new ProtocolAdapter{
@@ -98,6 +89,15 @@ contract DeployProtocolAdapter is Script {
                         bytes(string.concat("ProtocolAdapter", Versioning._PROTOCOL_ADAPTER_VERSION.fromSmallString()))
                     )
                 }({
+                    riscZeroVerifierRouter: riscZeroVerifierRouter,
+                    riscZeroVerifierSelector: Versioning._RISC_ZERO_VERIFIER_SELECTOR,
+                    emergencyStopCaller: emergencyStopCaller
+                })
+            );
+        } else {
+            // Deploy regularly.
+            protocolAdapter = address(
+                new ProtocolAdapter({
                     riscZeroVerifierRouter: riscZeroVerifierRouter,
                     riscZeroVerifierSelector: Versioning._RISC_ZERO_VERIFIER_SELECTOR,
                     emergencyStopCaller: emergencyStopCaller

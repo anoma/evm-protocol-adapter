@@ -11,21 +11,21 @@ contract DeployProtocolAdapterTest is Test {
     }
 
     // forge-lint: disable-next-line(mixed-case-function)
-    function tableNetworksTest_DeployProtocolAdapter_test_deployment_succeeds_on_all_supported_networks(TestCase memory network)
+    function tableNetworksTest_DeployProtocolAdapter_regular_deployment_succeeds_on_all_supported_networks(TestCase memory network)
         public
     {
         vm.selectFork(vm.createFork(network.name));
 
-        new DeployProtocolAdapter().run({isTestDeployment: true, emergencyStopCaller: msg.sender});
+        new DeployProtocolAdapter().run({deterministic: false, emergencyStopCaller: msg.sender});
     }
 
     // forge-lint: disable-next-line(mixed-case-function)
-    function tableNetworksTest_DeployProtocolAdapter_prod_deployment_succeeds_on_all_supported_networks(TestCase memory network)
+    function tableNetworksTest_DeployProtocolAdapter_deterministic_deployment_succeeds_on_all_supported_networks(TestCase memory network)
         public
     {
         vm.selectFork(vm.createFork(network.name));
 
-        new DeployProtocolAdapter().run({isTestDeployment: false, emergencyStopCaller: msg.sender});
+        new DeployProtocolAdapter().run({deterministic: true, emergencyStopCaller: msg.sender});
     }
 
     function fixtureNetwork() public pure returns (TestCase[] memory network) {
