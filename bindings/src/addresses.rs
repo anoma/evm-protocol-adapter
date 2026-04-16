@@ -7,13 +7,11 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
     HashMap::from([
         (
             NamedChain::TempoModerato,
-            address!("0x5573d493120736322794D870cCEDF74073588b24"),
-            // 0xA951282CEd703DEd6E4327DEfFcA446246D3D6f8 (non-det)
+            address!("0x5573d493120736322794D870cCEDF74073588b24"), // Unverified contract due to foundry issues.
         ),
         (
             NamedChain::Tempo,
-            address!("0x5573d493120736322794D870cCEDF74073588b24"),
-            // 0xA951282CEd703DEd6E4327DEfFcA446246D3D6f8 (non-det)
+            address!("0x5573d493120736322794D870cCEDF74073588b24"), // Unverified contract due to foundry issues.
         ),
     ])
 }
