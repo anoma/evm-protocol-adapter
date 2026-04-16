@@ -449,11 +449,12 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Processes a RISC Zero proof and passes it to verifier if needed.
+    /// @notice Processes a RISC Zero proof by checking its selector and verifying it. Optionally, the verification call
+    /// can be skipped, which is used in the `simulateExecute` entry point.
     /// @param verifyingKey The image ID of the program to be proven.
     /// @param instance The public inputs to the proof, i.e. the digest of the journal.
     /// @param proof The proof to be verified.
-    /// @param skipVerification The boolean indicating whether the proof will be sent to the verifier.
+    /// @param skipVerification Whether to skip proof verification or not.
     function _processRiscZeroProof(bytes32 verifyingKey, bytes32 instance, bytes calldata proof, bool skipVerification)
         internal
         view
