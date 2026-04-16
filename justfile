@@ -93,7 +93,7 @@ contracts-verify-etherscan address chain *args:
 contracts-verify-custom address chain verifier-url *args:
     cd contracts && forge verify-contract {{address}} \
         src/ProtocolAdapter.sol:ProtocolAdapter \
-        --chain {{chain}} --verifier-url {{verifier-url}}  --watch {{ args }}
+        --chain {{chain}} --verifier-url {{verifier-url}} --watch {{ args }}
 
 # Verify on both sourcify and etherscan
 contracts-verify address chain: (contracts-verify-sourcify address chain) (contracts-verify-etherscan address chain)
