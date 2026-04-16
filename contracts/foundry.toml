@@ -71,5 +71,7 @@ optimism = "https://opt-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 optimism-sepolia = "https://opt-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 bsc = "https://bnb-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 bsc-testnet = "https://bnb-testnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+tempo = "https://tempo-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+tempo-moderato = "https://tempo-moderato.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 
 localhost = "http://localhost:8545"
