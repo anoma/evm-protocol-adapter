@@ -9,16 +9,13 @@ Releases of the packages contained in this monorepo follow the [SemVer conventio
 We distinguish between three release cases:
 
 - Deploying a **new** protocol adapter version to multiple new chains resulting in a new
-
   - `contracts/vX.Y.Z` version
   - `bindings/vA.0.0` version
 
 - Deploying an **existing** protocol adapter version to multiple new chains resulting in a new
-
   - `bindings/vA.B.0` version
 
 - Maintaining the bindings resulting in a new
-
   - `bindings/vA.B.C` version
 
 ## Deploying a new Protocol Adapter Version
@@ -106,7 +103,6 @@ For each chain, you want to deploy to, do the following:
   ```
 
 - [ ] Verify the contract on
-
   - [ ] sourcify
 
     ```sh
@@ -134,20 +130,17 @@ For each chain, you want to deploy to, do the following:
   }
   ```
 
-  No extra tools or scripts are needed — the JSON is embedded at compile time by `addresses.rs`.
-
 - [ ] Change the `bindings` package version number in the [`./bindings/Cargo.toml`](./bindings/Cargo.toml) file to `A.0.0`, where `A` is the last `MAJOR` version number incremented by 1.
 
 - [ ] Clean the bindings build with `just bindings-clean`.
 
 - [ ] Regenerate the bindings with `just contracts-gen-bindings`.
 
-- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change. This also validates the JSON in `deployments.json` at compile time.
+- [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
-- [ ] Run the tests with `just bindings-test`. This runs integrity checks on `deployments.json` (valid chain IDs, valid addresses, no duplicates).
+- [ ] Run the tests with `just bindings-test`.
 
 - [ ] After merging, create new tags for:
-
   - [ ] `contracts/vX.Y.Z` where `X.Y.Z` must match the protocol adapter version number and
   - [ ] `bindings/vA.0.0` tag, where `A` is the last `MAJOR` version incremented by 1.
 
@@ -261,7 +254,6 @@ For each **new** chain, you want to deploy to, do the following:
   ```
 
 - [ ] Verify the contract on
-
   - [ ] sourcify
 
     ```sh
@@ -289,13 +281,11 @@ For each **new** chain, you want to deploy to, do the following:
   }
   ```
 
-  No extra tools or scripts are needed — the JSON is embedded at compile time by `addresses.rs`.
-
 - [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
 - [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change. This also validates the JSON in `deployments.json` at compile time.
 
-- [ ] Run the tests with `just bindings-test`. This runs integrity checks on `deployments.json` (valid chain IDs, valid addresses, no duplicates).
+- [ ] Run the tests with `just bindings-test`.
 
 - [ ] After merging, create a new `bindings/vA.B.0` tag, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
