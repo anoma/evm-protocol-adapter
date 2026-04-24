@@ -10,7 +10,6 @@ use std::collections::HashSet;
 struct RawEntry {
     chain_id: u64,
     contract_address: String,
-    network: String,
 }
 
 fn raw_entries() -> Vec<RawEntry> {
@@ -23,8 +22,8 @@ fn all_entries_have_valid_chain_ids() {
     for entry in raw_entries() {
         NamedChain::try_from(entry.chain_id).unwrap_or_else(|_| {
             panic!(
-                "chain ID {} (network '{}') does not map to a known NamedChain variant",
-                entry.chain_id, entry.network
+                "chain ID {} does not map to a known NamedChain variant",
+                entry.chain_id
             )
         });
     }
@@ -38,8 +37,8 @@ fn all_entries_have_valid_addresses() {
             .parse::<Address>()
             .unwrap_or_else(|_| {
                 panic!(
-                    "invalid contract address '{}' for network '{}'",
-                    entry.contract_address, entry.network
+                    "invalid contract address '{}' for chain ID '{}'",
+                    entry.contract_address, entry.chain_id
                 )
             });
     }
@@ -52,9 +51,8 @@ fn no_duplicate_chain_ids() {
     for entry in &entries {
         assert!(
             seen.insert(entry.chain_id),
-            "duplicate chain ID {} (network '{}')",
-            entry.chain_id,
-            entry.network
+            "duplicate chain ID {}",
+            entry.chain_id
         );
     }
 }
