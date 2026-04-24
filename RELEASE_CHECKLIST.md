@@ -9,16 +9,13 @@ Releases of the packages contained in this monorepo follow the [SemVer conventio
 We distinguish between three release cases:
 
 - Deploying a **new** protocol adapter version to multiple new chains resulting in a new
-
   - `contracts/vX.Y.Z` version
   - `bindings/vA.0.0` version
 
 - Deploying an **existing** protocol adapter version to multiple new chains resulting in a new
-
   - `bindings/vA.B.0` version
 
 - Maintaining the bindings resulting in a new
-
   - `bindings/vA.B.C` version
 
 ## Deploying a new Protocol Adapter Version
@@ -75,13 +72,7 @@ We distinguish between three release cases:
 
 - [ ] Bump the `_PROTOCOL_ADAPTER_VERSION` constant in [`./contracts/src/libs/Versioning.sol`](./contracts/src/libs/Versioning.sol) to the new version number following [SemVer](https://semver.org/spec/v2.0.0.html).
 
-- [ ] Remove all chain name and address pairs in the
-
-  ```rust
-  pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address>
-  ```
-
-  function in [`./bindings/src/addresses.rs`](./bindings/src/addresses.rs).
+- [ ] Remove all entries from [`./deployments.json`](./deployments.json) (replace the array contents with `[]`).
 
 ### 3. Build the Contracts
 
@@ -112,7 +103,6 @@ For each chain, you want to deploy to, do the following:
   ```
 
 - [ ] Verify the contract on
-
   - [ ] sourcify
 
     ```sh
@@ -129,13 +119,7 @@ For each chain, you want to deploy to, do the following:
 
 ### 5. Update the Deployments Map and Create a new `contracts` and `bindings` GitHub Release
 
-- [ ] Add the **new** address and chain name pairs in the
-
-  ```rust
-  pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address>
-  ```
-
-  function in [`./bindings/src/addresses.rs`](./bindings/src/addresses.rs).
+- [ ] Add a deployment entry to [`./deployments.json`](./deployments.json) for each chain deployed.
 
 - [ ] Change the `bindings` package version number in the [`./bindings/Cargo.toml`](./bindings/Cargo.toml) file to `A.0.0`, where `A` is the last `MAJOR` version number incremented by 1.
 
@@ -148,7 +132,6 @@ For each chain, you want to deploy to, do the following:
 - [ ] Run the tests with `just bindings-test`.
 
 - [ ] After merging, create new tags for:
-
   - [ ] `contracts/vX.Y.Z` where `X.Y.Z` must match the protocol adapter version number and
   - [ ] `bindings/vA.0.0` tag, where `A` is the last `MAJOR` version incremented by 1.
 
@@ -262,7 +245,6 @@ For each **new** chain, you want to deploy to, do the following:
   ```
 
 - [ ] Verify the contract on
-
   - [ ] sourcify
 
     ```sh
@@ -279,13 +261,7 @@ For each **new** chain, you want to deploy to, do the following:
 
 ### 4. Update the Deployments Map and Create a new `bindings` GitHub Release
 
-- [ ] Add the **new** address and chain name pairs in the
-
-  ```rust
-  pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address>
-  ```
-
-  function in `./bindings/src/addresses.rs`.
+- [ ] Add a deployment entry to [`./deployments.json`](./deployments.json) for each **new** chain deployed.
 
 - [ ] Change the `bindings` package version number in the `./bindings/Cargo.toml` file to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
