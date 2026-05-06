@@ -2,9 +2,6 @@
 pragma solidity ^0.8.30;
 
 library SignMagnitude {
-    /// @notice Error thrown when magnitude addition would overflow uint128.
-    error MagnitudeOverflow();
-
     /// Positive numbers are represented with a false sign and negative numbers with a true sign.
     /// @param isNegative Whether the number is negative or not.
     /// @param magnitude The magnitude of the number.
@@ -12,6 +9,9 @@ library SignMagnitude {
         bool isNegative;
         uint128 magnitude;
     }
+
+    /// @notice Error thrown when magnitude addition would overflow uint128.
+    error MagnitudeOverflow();
 
     /// @notice Adds two numbers in sign magnitude representation.
     /// @param lhs The left-hand side number.
