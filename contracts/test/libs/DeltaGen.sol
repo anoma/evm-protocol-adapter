@@ -100,49 +100,6 @@ library DeltaGen {
         proof = abi.encodePacked(r, s, v);
     }
 
-    /// @notice Reduces a scalar to its canonical representative in `[0, SECP256K1_ORDER)`.
-    /// @param value The scalar to reduce.
-    /// @return reduced The canonical representative of `value` modulo `SECP256K1_ORDER`.
-    function modOrder(uint256 value) internal pure returns (uint256 reduced) {
-        reduced = value % SECP256K1_ORDER;
-    }
-
-    /// @notice Returns the value commitment randomness reduced modulo `SECP256K1_ORDER`, requiring the result to be
-    /// non-zero.
-    /// @param value The value commitment randomness to validate.
-    /// @return checked The reduced, non-zero value commitment randomness.
-    function checkedValueCommitmentRandomness(uint256 value) internal pure returns (uint256 checked) {
-        checked = value.modOrder();
-        require(checked != 0, ValueCommitmentRandomnessZero());
-    }
-
-    /// @notice Converts a signed quantity, given as a (sign, magnitude) pair, into its scalar representative in
-    /// `[0, SECP256K1_ORDER)`.
-    /// @param isNegative True for a non-positive quantity (consumed resource), false for a non-negative quantity
-    /// (created resource).
-    /// @param magnitude The absolute value of the quantity.
-    /// @return scalar The non-negative integer less than `SECP256K1_ORDER` that represents the signed quantity modulo
-    /// the curve order.
-    /// @dev Negative quantities are mapped to `SECP256K1_ORDER - magnitude` so that addition modulo the curve order
-    /// matches signed addition. This mirrors the value commitment scheme's convention: consumed resources contribute
-    /// negative scalars, created resources contribute positive ones.
-    function signedQuantityModOrder(bool isNegative, uint128 magnitude) internal pure returns (uint256 scalar) {
-        scalar = isNegative ? (SECP256K1_ORDER - uint256(magnitude)).modOrder() : uint256(magnitude);
-    }
-
-    /// @notice Computes the pre-delta scalar
-    /// (`kind * signedQuantity + valueCommitmentRandomness` mod `SECP256K1_ORDER`) for the given inputs without
-    /// invoking the cheatcode VM.
-    /// @dev Exposed so fuzz tests can pre-check that the pre-delta is non-zero before calling `generateInstance`,
-    /// which would otherwise revert.
-    /// @param inputs The delta instance inputs.
-    /// @return preDelta The pre-delta scalar.
-    function computePreDelta(InstanceInputs memory inputs) internal pure returns (uint256 preDelta) {
-        uint256 signedQuantity = signedQuantityModOrder(inputs.consumed, inputs.quantity);
-        uint256 kindTimesQuantity = mulmod(inputs.kind, signedQuantity, SECP256K1_ORDER);
-        preDelta = addmod(kindTimesQuantity, inputs.valueCommitmentRandomness, SECP256K1_ORDER);
-    }
-
     /// @notice Expands `n` instance inputs into `2n` inputs whose quantities sum to zero by construction, yielding a
     /// balanced delta when summed.
     /// @param baseInputs The `n` base delta inputs to expand. An empty array is allowed and produces an empty result.
@@ -185,5 +142,48 @@ library DeltaGen {
                 summedRandomness, mulmod(2, baseInputs[i].valueCommitmentRandomness, SECP256K1_ORDER), SECP256K1_ORDER
             );
         }
+    }
+
+    /// @notice Computes the pre-delta scalar
+    /// (`kind * signedQuantity + valueCommitmentRandomness` mod `SECP256K1_ORDER`) for the given inputs without
+    /// invoking the cheatcode VM.
+    /// @dev Exposed so fuzz tests can pre-check that the pre-delta is non-zero before calling `generateInstance`,
+    /// which would otherwise revert.
+    /// @param inputs The delta instance inputs.
+    /// @return preDelta The pre-delta scalar.
+    function computePreDelta(InstanceInputs memory inputs) internal pure returns (uint256 preDelta) {
+        uint256 signedQuantity = signedQuantityModOrder(inputs.consumed, inputs.quantity);
+        uint256 kindTimesQuantity = mulmod(inputs.kind, signedQuantity, SECP256K1_ORDER);
+        preDelta = addmod(kindTimesQuantity, inputs.valueCommitmentRandomness, SECP256K1_ORDER);
+    }
+
+    /// @notice Converts a signed quantity, given as a (sign, magnitude) pair, into its scalar representative in
+    /// `[0, SECP256K1_ORDER)`.
+    /// @param isNegative True for a non-positive quantity (consumed resource), false for a non-negative quantity
+    /// (created resource).
+    /// @param magnitude The absolute value of the quantity.
+    /// @return scalar The non-negative integer less than `SECP256K1_ORDER` that represents the signed quantity modulo
+    /// the curve order.
+    /// @dev Negative quantities are mapped to `SECP256K1_ORDER - magnitude` so that addition modulo the curve order
+    /// matches signed addition. This mirrors the value commitment scheme's convention: consumed resources contribute
+    /// negative scalars, created resources contribute positive ones.
+    function signedQuantityModOrder(bool isNegative, uint128 magnitude) internal pure returns (uint256 scalar) {
+        scalar = isNegative ? (SECP256K1_ORDER - uint256(magnitude)).modOrder() : uint256(magnitude);
+    }
+
+    /// @notice Returns the value commitment randomness reduced modulo `SECP256K1_ORDER`, requiring the result to be
+    /// non-zero.
+    /// @param value The value commitment randomness to validate.
+    /// @return checked The reduced, non-zero value commitment randomness.
+    function checkedValueCommitmentRandomness(uint256 value) internal pure returns (uint256 checked) {
+        checked = value.modOrder();
+        require(checked != 0, ValueCommitmentRandomnessZero());
+    }
+
+    /// @notice Reduces a scalar to its canonical representative in `[0, SECP256K1_ORDER)`.
+    /// @param value The scalar to reduce.
+    /// @return reduced The canonical representative of `value` modulo `SECP256K1_ORDER`.
+    function modOrder(uint256 value) internal pure returns (uint256 reduced) {
+        reduced = value % SECP256K1_ORDER;
     }
 }
