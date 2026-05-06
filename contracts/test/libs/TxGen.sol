@@ -12,7 +12,7 @@ import {Logic} from "../../src/libs/proving/Logic.sol";
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
 import {Transaction, Action, Resource} from "./../../src/Types.sol";
-import {DeltaGen} from "./../proofs/DeltaProof.t.sol";
+import {DeltaGen} from "./DeltaGen.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
