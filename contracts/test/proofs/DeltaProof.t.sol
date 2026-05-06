@@ -211,7 +211,7 @@ contract DeltaProofTest is Test {
             quantity: quantity,
             consumed: false // positive quantity, doesn't balance to zero
         });
-        vm.assume(deltaInput.producesNonPreDeltaZero());
+        vm.assume(deltaInput.computePreDelta() != 0);
 
         // Generate the delta instance
         Delta.Point memory deltaInstance = DeltaGen.generateInstance(vm, deltaInput);
@@ -283,7 +283,7 @@ contract DeltaProofTest is Test {
         for (uint256 i = 0; i < pairedInputs.length; i++) {
             // Normalize and validate each input
             pairedInputs[i].valueCommitmentRandomness = pairedInputs[i].valueCommitmentRandomness.modOrder();
-            vm.assume(pairedInputs[i].producesNonPreDeltaZero());
+            vm.assume(pairedInputs[i].computePreDelta() != 0);
 
             Delta.Point memory instance = DeltaGen.generateInstance(vm, pairedInputs[i]);
             deltaAcc = deltaAcc.add(instance);

@@ -116,28 +116,6 @@ library DeltaGen {
         require(checked != 0, ValueCommitmentRandomnessZero());
     }
 
-    /// @notice Reports whether the given inputs would produce a non-zero pre-delta and therefore a usable delta
-    /// instance.
-    /// @dev Mirrors the validation performed by `generateInstance` but as a pure predicate, so fuzz tests can use it
-    /// in `vm.assume` to discard degenerate inputs without triggering a revert.
-    /// @param inputs The delta instance inputs to check.
-    /// @return ok True if `generateInstance(vm, inputs)` would succeed, false otherwise.
-    function producesNonPreDeltaZero(InstanceInputs memory inputs) internal pure returns (bool ok) {
-        uint256 reducedKind = inputs.kind.modOrder();
-        uint256 reducedRandomness = inputs.valueCommitmentRandomness.modOrder();
-
-        // A zero kind or zero randomness is rejected by `generateInstance`, so it cannot produce a usable instance.
-        if (reducedKind == 0 || reducedRandomness == 0) {
-            return false;
-        }
-
-        uint256 signedQuantity = signedQuantityModOrder(inputs.consumed, inputs.quantity);
-        uint256 kindTimesQuantity = mulmod(reducedKind, signedQuantity, SECP256K1_ORDER);
-        uint256 preDelta = addmod(kindTimesQuantity, reducedRandomness, SECP256K1_ORDER);
-
-        ok = preDelta != 0;
-    }
-
     /// @notice Converts a signed quantity, given as a (sign, magnitude) pair, into its scalar representative in
     /// `[0, SECP256K1_ORDER)`.
     /// @param isNegative True for a non-positive quantity (consumed resource), false for a non-negative quantity
