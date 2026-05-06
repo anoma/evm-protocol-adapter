@@ -40,11 +40,11 @@ library DeltaGen {
     // Private key corresponding to delta instance must be non-zero
     error PreDeltaZero();
 
-    /// @notice Generates a transaction delta instance by computing the public
-    /// key corresponding to a(kind)^quantity * b^valueCommitmentRandomness
-    /// @param vm VmSafe instance with which to compute public key
-    /// @param deltaInputs Parameters required to determine a delta instance
-    /// @return instance The delta instance corresponding to the parameters
+    /// @notice Generates a transaction delta instance by computing the public key corresponding to
+    /// `a(kind)^quantity * b^valueCommitmentRandomness`.
+    /// @param vm VmSafe instance with which to compute public key.
+    /// @param deltaInputs Parameters required to generate a delta instance.
+    /// @return instance The delta instance corresponding to the parameters.
     function generateInstance(VmSafe vm, InstanceInputs memory deltaInputs)
         internal
         returns (Delta.Point memory instance)
@@ -64,11 +64,10 @@ library DeltaGen {
         instance = Delta.Point({x: valueWallet.publicKeyX, y: valueWallet.publicKeyY});
     }
 
-    /// @notice Generates a transaction delta proof by signing verifyingKey with
-    /// valueCommitmentRandomness
-    /// @param vm VmSafe instance with which to sign verifyingKey
-    /// @param deltaInputs Parameters required to construct a delta proof
-    /// @return proof The delta proof corresponding to the parameters
+    /// @notice Generates a transaction delta proof by signing a verifying key with value commitment randomness.
+    /// @param vm The vm instance with which to sign verifying key.
+    /// @param deltaInputs Parameters required to construct a delta proof.
+    /// @return proof The delta proof corresponding to the parameters.
     function generateProof(VmSafe vm, ProofInputs memory deltaInputs) internal returns (bytes memory proof) {
         deltaInputs.valueCommitmentRandomness = validateValueCommitmentRandomness(deltaInputs.valueCommitmentRandomness);
         // Compute the components of the transaction delta proof
