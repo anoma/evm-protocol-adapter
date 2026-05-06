@@ -9,7 +9,6 @@ import {Transaction} from "../../src/Types.sol";
 
 import {DeltaGen} from "../libs/DeltaGen.sol";
 import {Parsing} from "../libs/Parsing.sol";
-import {SignMagnitude} from "../libs/SignMagnitude.sol";
 import {TxGen} from "../libs/TxGen.sol";
 
 library DeltaFuzzing {
@@ -27,7 +26,6 @@ library DeltaFuzzing {
 
 contract DeltaProofTest is Test {
     using Parsing for Vm;
-    using SignMagnitude for SignMagnitude.Number;
     using Delta for Delta.Point;
     using DeltaGen for DeltaGen.InstanceInputs[];
     using DeltaGen for DeltaGen.InstanceInputs;
@@ -72,12 +70,6 @@ contract DeltaProofTest is Test {
         input1.valueCommitmentRandomness = bound(input1.valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
         input2.valueCommitmentRandomness = bound(input2.valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
 
-        vm.assume(input1.consumed != input2.consumed || input2.quantity <= type(uint128).max - input1.quantity);
-        vm.assume(
-            0 < input1.valueCommitmentRandomness
-                && input2.valueCommitmentRandomness <= type(uint256).max - input1.valueCommitmentRandomness
-        );
-
         // Construct delta instance inputs from the above parameters
         DeltaGen.InstanceInputs memory deltaInputs1 = DeltaGen.InstanceInputs({
             kind: kind,
@@ -94,26 +86,16 @@ contract DeltaProofTest is Test {
         });
         vm.assume(deltaInputs2.computePreDelta() != 0);
 
-        // Add the deltas
-        SignMagnitude.Number memory summedNumber = SignMagnitude.Number(deltaInputs1.consumed, deltaInputs1.quantity)
-            .add(SignMagnitude.Number(deltaInputs2.consumed, deltaInputs2.quantity));
-
-        // Compute the inputs corresponding to the sum of deltas
-        DeltaGen.InstanceInputs memory summedDeltaInputs = DeltaGen.InstanceInputs({
-            kind: deltaInputs1.kind,
-            quantity: summedNumber.magnitude,
-            consumed: summedNumber.isNegative,
-            valueCommitmentRandomness: deltaInputs1.valueCommitmentRandomness + deltaInputs2.valueCommitmentRandomness
-        });
-        // TODO refactor?
-        summedDeltaInputs.valueCommitmentRandomness = summedDeltaInputs.valueCommitmentRandomness.modOrder();
-        vm.assume(summedDeltaInputs.valueCommitmentRandomness != 0);
-        vm.assume(summedDeltaInputs.computePreDelta() != 0);
+        // The expected summed delta is the curve point derived from the sum of the two pre-delta scalars: scalar
+        // addition modulo the curve order matches point addition on the curve.
+        uint256 expectedPreDelta =
+            addmod(deltaInputs1.computePreDelta(), deltaInputs2.computePreDelta(), DeltaGen.SECP256K1_ORDER);
+        vm.assume(expectedPreDelta != 0);
 
         // Generate a delta proof and instance from the above tags and preimage
         Delta.Point memory instance1 = DeltaGen.generateInstance(vm, deltaInputs1);
         Delta.Point memory instance2 = DeltaGen.generateInstance(vm, deltaInputs2);
-        Delta.Point memory expectedDelta = DeltaGen.generateInstance(vm, summedDeltaInputs);
+        Delta.Point memory expectedDelta = DeltaGen.generateInstanceFromPreDelta(vm, expectedPreDelta);
 
         // Verify that the deltas add correctly
         Delta.Point memory computedDelta = Delta.add(instance1, instance2);

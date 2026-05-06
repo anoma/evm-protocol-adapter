@@ -75,11 +75,16 @@ library DeltaGen {
         inputs.valueCommitmentRandomness = checkedValueCommitmentRandomness(inputs.valueCommitmentRandomness);
         inputs.kind = checkedKind(inputs.kind);
 
-        // Compute the pre-delta scalar: kind * signedQuantity + valueCommitmentRandomness, all modulo SECP256K1_ORDER.
-        uint256 signedQuantity = signedQuantityModOrder(inputs.consumed, inputs.quantity);
-        uint256 kindTimesQuantity = mulmod(inputs.kind, signedQuantity, SECP256K1_ORDER);
-        uint256 preDelta = addmod(kindTimesQuantity, inputs.valueCommitmentRandomness, SECP256K1_ORDER);
+        instance = generateInstanceFromPreDelta(vm, computePreDelta(inputs));
+    }
 
+    /// @notice Mocks a delta instance directly from a pre-delta scalar.
+    /// @dev Lets tests construct a delta point from an arbitrary scalar (e.g. the sum of several pre-deltas) without
+    /// having to fit it back into an `InstanceInputs` struct.
+    /// @param vm The Forge cheatcode interface used to derive the public key from the pre-delta scalar.
+    /// @param preDelta The pre-delta scalar, expected to be reduced modulo `SECP256K1_ORDER` and non-zero.
+    /// @return instance The curve point that mocks the delta instance.
+    function generateInstanceFromPreDelta(VmSafe vm, uint256 preDelta) internal returns (Delta.Point memory instance) {
         // A zero pre-delta is not a valid ECDSA private key, so reject it explicitly rather than letting the cheatcode
         // fail with a less informative error.
         require(preDelta != 0, PreDeltaZero());
