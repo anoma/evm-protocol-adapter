@@ -67,7 +67,7 @@ library DeltaGen {
     /// generator and `preDelta = kind * signedQuantity + valueCommitmentRandomness` (mod `SECP256K1_ORDER`).
     /// @dev Forge's `vm.createWallet` performs the scalar multiplication implicitly: it treats the pre-delta as a
     /// private key and exposes the corresponding public key, which is exactly the curve point we want to mock.
-    /// @param vm The Forge cheatcode interface used to derive the public key from the pre-delta scalar.
+    /// @param vm The Forge VM interface used to derive the public key from the pre-delta scalar.
     /// @param inputs The delta instance inputs.
     /// @return instance The curve point that mocks the delta instance.
     function generateInstance(VmSafe vm, InstanceInputs memory inputs) internal returns (Delta.Point memory instance) {
@@ -81,7 +81,7 @@ library DeltaGen {
     /// @notice Mocks a delta instance directly from a pre-delta scalar.
     /// @dev Lets tests construct a delta point from an arbitrary scalar (e.g. the sum of several pre-deltas) without
     /// having to fit it back into an `InstanceInputs` struct.
-    /// @param vm The Forge cheatcode interface used to derive the public key from the pre-delta scalar.
+    /// @param vm The Forge VM interface used to derive the public key from the pre-delta scalar.
     /// @param preDelta The pre-delta scalar, expected to be reduced modulo `SECP256K1_ORDER` and non-zero.
     /// @return instance The curve point that mocks the delta instance.
     function generateInstanceFromPreDelta(VmSafe vm, uint256 preDelta) internal returns (Delta.Point memory instance) {
@@ -98,7 +98,7 @@ library DeltaGen {
     /// secp256k1.
     /// @dev The signature is the proof: a verifier recovers a public key from `(verifyingKey, signature)` and checks
     /// that it matches the address derived from the corresponding delta instance.
-    /// @param vm The Forge cheatcode interface used to perform the ECDSA signing operation.
+    /// @param vm The Forge VM interface used to perform the ECDSA signing operation.
     /// @param inputs The delta proof inputs.
     /// @return proof The ECDSA signature laid out as `r || s || v`, matching what `ECDSA.recover` expects.
     function generateProof(VmSafe vm, ProofInputs memory inputs) internal returns (bytes memory proof) {
