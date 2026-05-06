@@ -45,10 +45,6 @@ library DeltaGen {
     /// performed modulo this constant.
     uint256 internal constant SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
 
-    /// @notice Thrown when the resource kind reduces to zero modulo `SECP256K1_ORDER`. A zero kind would erase the
-    /// quantity contribution from the pre-delta and is rejected as a degenerate input.
-    error ZeroKind();
-
     /// @notice Thrown when the value commitment randomness reduces to zero modulo `SECP256K1_ORDER`. A zero blinding
     /// scalar cannot be used as an ECDSA private key.
     error ValueCommitmentRandomnessZero();
@@ -65,10 +61,8 @@ library DeltaGen {
     /// @param inputs The delta instance inputs.
     /// @return instance The curve point that mocks the delta instance.
     function generateInstance(VmSafe vm, InstanceInputs memory inputs) internal returns (Delta.Point memory instance) {
-        // Reduce and reject zero scalars before they can be combined into the pre-delta.
-        inputs.valueCommitmentRandomness = checkedValueCommitmentRandomness(inputs.valueCommitmentRandomness);
-        inputs.kind = checkedKind(inputs.kind);
-
+        // computePreDelta tolerates unreduced inputs (mulmod/addmod handle reduction), and the only failure mode
+        // for `vm.createWallet` is a zero pre-delta, which `generateInstanceFromPreDelta` rejects with a named error.
         instance = generateInstanceFromPreDelta(vm, computePreDelta(inputs));
     }
 
@@ -120,14 +114,6 @@ library DeltaGen {
     function checkedValueCommitmentRandomness(uint256 value) internal pure returns (uint256 checked) {
         checked = value.modOrder();
         require(checked != 0, ValueCommitmentRandomnessZero());
-    }
-
-    /// @notice Returns the resource kind reduced modulo `SECP256K1_ORDER`, requiring the result to be non-zero.
-    /// @param value The kind to validate.
-    /// @return checked The reduced, non-zero kind.
-    function checkedKind(uint256 value) internal pure returns (uint256 checked) {
-        checked = value.modOrder();
-        require(checked != 0, ZeroKind());
     }
 
     /// @notice Reports whether the given inputs would produce a non-zero pre-delta and therefore a usable delta
