@@ -49,12 +49,6 @@ library DeltaGen {
     /// quantity contribution from the pre-delta and is rejected as a degenerate input.
     error ZeroKind();
 
-    /// @notice Thrown when `createBalancedPairs` is given inputs whose kinds differ. Pairing only makes sense for a
-    /// single shared kind, since instances of different kinds cannot cancel each other.
-    /// @param expected The kind taken from the first input, against which all other inputs are compared.
-    /// @param actual The first kind that did not match.
-    error KindMismatch(uint256 expected, uint256 actual);
-
     /// @notice Thrown when the value commitment randomness reduces to zero modulo `SECP256K1_ORDER`. A zero blinding
     /// scalar cannot be used as an ECDSA private key.
     error ValueCommitmentRandomnessZero();
@@ -194,34 +188,21 @@ library DeltaGen {
     /// `SECP256K1_ORDER`. Tests can pass this as the proof's value commitment randomness so the proof matches the
     /// summed delta instance.
     /// @dev For each base input, emits one created (positive) copy and one consumed (negative) copy with the same
-    /// kind, quantity, and randomness. Because each resource is paired with its exact counterpart, the summed
-    /// signed quantity is zero regardless of the underlying magnitudes.
-    /// All base inputs must share the same kind: instances of different kinds cannot cancel and would not produce a
-    /// balanced delta.
+    /// kind, quantity, and randomness. Because each resource is paired with its exact counterpart of the same kind,
+    /// the pair self-cancels regardless of the underlying magnitude — and the summed delta stays balanced even when
+    /// different base inputs use different kinds.
     function createBalancedPairs(InstanceInputs[] memory baseInputs)
         internal
         pure
         returns (InstanceInputs[] memory pairedInputs, uint256 summedRandomness)
     {
-        // No inputs means no work and a trivially balanced (empty) result.
-        if (baseInputs.length == 0) {
-            return (baseInputs, 0);
-        }
-
-        // All inputs must share the kind of the first input. Validate that kind once up front.
-        uint256 commonKind = baseInputs[0].kind;
-        checkedKind(commonKind);
-
         // Each base input expands into two paired inputs, so the result has twice the length.
         pairedInputs = new InstanceInputs[](baseInputs.length * 2);
 
         for (uint256 i = 0; i < baseInputs.length; ++i) {
-            // Reject any input whose kind does not match the common kind: mismatched kinds cannot be balanced.
-            require(baseInputs[i].kind == commonKind, KindMismatch({expected: commonKind, actual: baseInputs[i].kind}));
-
             // Created copy: positive (created) contribution to the delta sum.
             pairedInputs[i] = InstanceInputs({
-                kind: commonKind,
+                kind: baseInputs[i].kind,
                 valueCommitmentRandomness: baseInputs[i].valueCommitmentRandomness,
                 quantity: baseInputs[i].quantity,
                 consumed: false
@@ -229,7 +210,7 @@ library DeltaGen {
 
             // Consumed copy: same kind, randomness, and magnitude, but opposite sign — cancels the created copy above.
             pairedInputs[baseInputs.length + i] = InstanceInputs({
-                kind: commonKind,
+                kind: baseInputs[i].kind,
                 valueCommitmentRandomness: baseInputs[i].valueCommitmentRandomness,
                 quantity: baseInputs[i].quantity,
                 consumed: true
