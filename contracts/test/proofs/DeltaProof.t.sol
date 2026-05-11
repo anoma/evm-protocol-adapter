@@ -102,8 +102,6 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
 
-    /// @notice Test that Delta.verify rejects a delta proof whose value commitment randomness differs from the one
-    /// used to construct the instance.
     function testFuzz_verify_reverts_if_value_commitment_randomness_of_instance_and_proof_mismatch(
         uint256 kind,
         bool consumed,
