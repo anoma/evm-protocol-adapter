@@ -5,14 +5,25 @@ import {VmSafe} from "forge-std-1.15.0/src/Vm.sol";
 
 import {Delta} from "../../src/libs/proving/Delta.sol";
 
+/// @title DeltaGen
+/// @author Anoma Foundation, 2026
+/// @notice A test-only library that mocks delta instances and delta proofs so tests can construct synthetic
+/// transactions for the Anoma protocol adapter without invoking the real proving system. The mock follows the same
+/// algebraic structure as the real scheme: a delta instance is the secp256k1 public key derived from a per-resource
+/// secret scalar (the pre-delta), and a delta proof is an ECDSA signature whose private key is the sum of all per-
+/// resource value commitment randomnesses.
+/// @custom:security-contact security@anoma.foundation
 library DeltaGen {
     using DeltaGen for uint256;
 
-    /// @notice The parameters required to generate a mock delta instance for testing.
-    /// @param valueCommitmentRandomness The value commitment randomness.
-    /// @param kind The resource kind that this delta instance mocks.
-    /// @param quantity The resource quantity that this delta instance mocks
-    /// @param consumed Whether the delta instance mocks a consumed resource or not.
+    /// @notice The inputs needed to mock a delta instance for a single resource.
+    /// @param kind The resource kind. Treated as a scalar reduced modulo `SECP256K1_ORDER` and required to be
+    /// non-zero.
+    /// @param valueCommitmentRandomness The blinding scalar associated with the resource. Reduced modulo
+    /// `SECP256K1_ORDER` and required to be non-zero.
+    /// @param quantity The magnitude of the resource quantity.
+    /// @param consumed Wheter the resource is consumed or created and contributes negatively or positively to the delta
+    /// sum, respectively.
     struct InstanceInputs {
         uint256 kind;
         uint256 valueCommitmentRandomness;
@@ -20,180 +31,159 @@ library DeltaGen {
         bool consumed;
     }
 
-    /// @notice The parameters required to generate a delta proof.
-    /// @param valueCommitmentRandomness Value commitment randomness.
-    /// @param verifyingKey The hash being signed over.
+    /// @notice The inputs needed to mock a delta proof.
+    /// @param valueCommitmentRandomness The signing scalar. For the proof to verify against a delta instance summed
+    /// from multiple resources, this must equal the sum of the per-resource randomnesses (modulo `SECP256K1_ORDER`).
+    /// @param verifyingKey The Keccak-256 hash of the action tags being committed to. This is the message that the
+    /// ECDSA signature signs over.
     struct ProofInputs {
         uint256 valueCommitmentRandomness;
         bytes32 verifyingKey;
     }
 
-    /// @notice The secp256k1 (K-256) elliptic curve order.
+    /// @notice The order of the secp256k1 (K-256) elliptic curve group. All scalar arithmetic in the delta scheme is
+    /// performed modulo this constant.
     uint256 internal constant SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
 
-    // Resource kind must be non-zero
-    error KindZero();
-    error KindMismatch(uint256 expected, uint256 actual);
-
-    // Value commitment randomness must be non-zero
+    /// @notice Thrown when the value commitment randomness reduces to zero modulo `SECP256K1_ORDER`. A zero blinding
+    /// scalar cannot be used as an ECDSA private key.
     error ValueCommitmentRandomnessZero();
-    // Private key corresponding to delta instance must be non-zero
+
+    /// @notice Thrown when the pre-delta scalar (the secret key from which the delta point is derived) is zero, in
+    /// which case `vm.createWallet` would not produce a usable curve point.
     error PreDeltaZero();
 
-    /// @notice Generates a transaction delta instance by computing the public
-    /// key corresponding to a(kind)^quantity * b^valueCommitmentRandomness
-    /// @param vm VmSafe instance with which to compute public key
-    /// @param deltaInputs Parameters required to determine a delta instance
-    /// @return instance The delta instance corresponding to the parameters
-    function generateInstance(VmSafe vm, InstanceInputs memory deltaInputs)
-        internal
-        returns (Delta.Point memory instance)
-    {
-        deltaInputs.valueCommitmentRandomness = validateValueCommitmentRandomness(deltaInputs.valueCommitmentRandomness);
-        deltaInputs.kind = validateKind(deltaInputs.kind);
-        uint256 quantity = canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
-        uint256 prod = mulmod(deltaInputs.kind, quantity, SECP256K1_ORDER);
-        uint256 preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, SECP256K1_ORDER);
-        if (preDelta == 0) {
-            revert DeltaGen.PreDeltaZero();
-        }
-        // Derive address and public key from transaction delta
-        VmSafe.Wallet memory valueWallet = vm.createWallet(preDelta);
-
-        // Extract the transaction delta from the wallet
-        instance = Delta.Point({x: valueWallet.publicKeyX, y: valueWallet.publicKeyY});
+    /// @notice Mocks a delta instance by deriving the curve point `preDelta * G` on secp256k1, where `G` is the curve
+    /// generator and `preDelta = kind * signedQuantity + valueCommitmentRandomness` (mod `SECP256K1_ORDER`).
+    /// @dev Forge's `vm.createWallet` performs the scalar multiplication implicitly: it treats the pre-delta as a
+    /// private key and exposes the corresponding public key, which is exactly the curve point we want to mock.
+    /// @param vm The Forge VM interface used to derive the public key from the pre-delta scalar.
+    /// @param inputs The delta instance inputs.
+    /// @return instance The curve point that mocks the delta instance.
+    function generateInstance(VmSafe vm, InstanceInputs memory inputs) internal returns (Delta.Point memory instance) {
+        // computePreDelta tolerates unreduced inputs (mulmod/addmod handle reduction), and the only failure mode
+        // for `vm.createWallet` is a zero pre-delta, which `generateInstanceFromPreDelta` rejects with a named error.
+        instance = generateInstanceFromPreDelta(vm, computePreDelta(inputs));
     }
 
-    /// @notice Generates a transaction delta proof by signing verifyingKey with
-    /// valueCommitmentRandomness
-    /// @param vm VmSafe instance with which to sign verifyingKey
-    /// @param deltaInputs Parameters required to construct a delta proof
-    /// @return proof The delta proof corresponding to the parameters
-    function generateProof(VmSafe vm, ProofInputs memory deltaInputs) internal returns (bytes memory proof) {
-        deltaInputs.valueCommitmentRandomness = validateValueCommitmentRandomness(deltaInputs.valueCommitmentRandomness);
-        // Compute the components of the transaction delta proof
-        VmSafe.Wallet memory randomWallet = vm.createWallet(deltaInputs.valueCommitmentRandomness);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(randomWallet, deltaInputs.verifyingKey);
-        // Finally compute the transaction delta proof
+    /// @notice Mocks a delta instance directly from a pre-delta scalar.
+    /// @dev Lets tests construct a delta point from an arbitrary scalar (e.g. the sum of several pre-deltas) without
+    /// having to fit it back into an `InstanceInputs` struct.
+    /// @param vm The Forge VM interface used to derive the public key from the pre-delta scalar.
+    /// @param preDelta The pre-delta scalar, expected to be reduced modulo `SECP256K1_ORDER` and non-zero.
+    /// @return instance The curve point that mocks the delta instance.
+    function generateInstanceFromPreDelta(VmSafe vm, uint256 preDelta) internal returns (Delta.Point memory instance) {
+        // A zero pre-delta is not a valid ECDSA private key, so reject it explicitly rather than letting the cheatcode
+        // fail with a less informative error.
+        require(preDelta != 0, PreDeltaZero());
+
+        // Use the pre-delta as a private key; the resulting public key coordinates are the delta point.
+        VmSafe.Wallet memory wallet = vm.createWallet(preDelta);
+        instance = Delta.Point({x: wallet.publicKeyX, y: wallet.publicKeyY});
+    }
+
+    /// @notice Mocks a delta proof by signing the verifying key under the value commitment randomness using ECDSA on
+    /// secp256k1.
+    /// @dev The signature is the proof: a verifier recovers a public key from `(verifyingKey, signature)` and checks
+    /// that it matches the address derived from the corresponding delta instance.
+    /// @param vm The Forge VM interface used to perform the ECDSA signing operation.
+    /// @param inputs The delta proof inputs.
+    /// @return proof The ECDSA signature laid out as `r || s || v`, matching what `ECDSA.recover` expects.
+    function generateProof(VmSafe vm, ProofInputs memory inputs) internal returns (bytes memory proof) {
+        // Reduce and reject zero so the cheatcode is given a valid private key.
+        inputs.valueCommitmentRandomness = checkedValueCommitmentRandomness(inputs.valueCommitmentRandomness);
+
+        // The wallet's private key is the value commitment randomness; signing the verifying key produces the proof.
+        VmSafe.Wallet memory wallet = vm.createWallet(inputs.valueCommitmentRandomness);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet, inputs.verifyingKey);
+
         proof = abi.encodePacked(r, s, v);
     }
 
-    /// @notice Computes the modulo of a value and returns the remainder.
-    /// @param value The value to compute the modulo for.
-    /// @return remainder The remainder.
-    function modOrder(uint256 value) internal pure returns (uint256 remainder) {
-        remainder = value % SECP256K1_ORDER;
-    }
-
-    /// @notice Validates and normalizes the value commitment randomness.
-    /// @param value The value commitment randomness to validate.
-    /// @return normalized The normalized value (value % SECP256K1_ORDER).
-    function validateValueCommitmentRandomness(uint256 value) internal pure returns (uint256 normalized) {
-        normalized = value.modOrder();
-        if (normalized == 0) {
-            revert ValueCommitmentRandomnessZero();
-        }
-    }
-
-    /// @notice Validates and normalizes the kind.
-    /// @param value The kind value to validate.
-    /// @return normalized The normalized kind (value % SECP256K1_ORDER).
-    function validateKind(uint256 value) internal pure returns (uint256 normalized) {
-        normalized = value.modOrder();
-        if (normalized == 0) {
-            revert KindZero();
-        }
-    }
-
-    /// @notice Checks if the given InstanceInputs will produce a valid (non-zero) preDelta.
-    /// @param inputs The delta instance inputs to check.
-    /// @return valid True if the inputs will produce a valid preDelta, false otherwise.
-    function isValid(InstanceInputs memory inputs) internal pure returns (bool valid) {
-        uint256 kind = inputs.kind.modOrder();
-        uint256 vcr = inputs.valueCommitmentRandomness.modOrder();
-        if (kind == 0 || vcr == 0) {
-            return false;
-        }
-        uint256 canonicalizedQuantity = canonicalizeQuantity(inputs.consumed, inputs.quantity);
-        uint256 prod = mulmod(kind, canonicalizedQuantity, SECP256K1_ORDER);
-        uint256 preDelta = addmod(prod, vcr, SECP256K1_ORDER);
-        return preDelta != 0;
-    }
-
-    /// @notice Convert an exponent represented as a boolean sign and a uint128
-    /// magnitude to an equivalent uint256 assuming an order of SECP256K1_ORDER
-    /// @param consumed False represents a non-negative quantity, true a non-positive quantity
-    /// @param quantity The magnitude of the quantity being canonicalized
-    /// @return quantityRepresentative The non-negative number less than SECP256K1_ORDER
-    /// that's equivalent to the exponent modulo SECP256K1_ORDER
-    function canonicalizeQuantity(bool consumed, uint128 quantity)
-        internal
-        pure
-        returns (uint256 quantityRepresentative)
-    {
-        // If positive, leave the number unchanged
-        quantityRepresentative = consumed ? ((SECP256K1_ORDER - uint256(quantity)).modOrder()) : uint256(quantity);
-    }
-
-    /// @notice Computes the pre-delta value from delta inputs.
-    /// @dev preDelta = (kind * canonicalizedQuantity + valueCommitmentRandomness) mod SECP256K1_ORDER
-    /// @param deltaInputs The delta instance inputs.
-    /// @return preDelta The computed pre-delta value.
-    function computePreDelta(DeltaGen.InstanceInputs memory deltaInputs) internal pure returns (uint256 preDelta) {
-        uint256 canonicalizedQuantity = canonicalizeQuantity(deltaInputs.consumed, deltaInputs.quantity);
-        uint256 prod = mulmod(deltaInputs.kind, canonicalizedQuantity, SECP256K1_ORDER);
-        preDelta = addmod(prod, deltaInputs.valueCommitmentRandomness, SECP256K1_ORDER);
-    }
-
-    /// @notice Creates balanced delta pairs from an array of inputs.
-    /// @dev Takes n inputs and creates 2n outputs: n positive (created) and n negative (consumed) with matching
-    /// quantities. The quantities sum to zero by construction, guaranteeing balance.
-    /// @param baseInputs The base delta inputs to create pairs from. All must have the same kind.
-    /// @return pairedInputs Array of 2n delta inputs (n positive followed by n negative).
-    /// @return valueCommitmentRandomnessAcc The accumulated randomness (sum of all randomnesses mod order).
+    /// @notice Expands `n` instance inputs into `2n` inputs whose quantities sum to zero by construction, yielding a
+    /// balanced delta when summed.
+    /// @param baseInputs The `n` base delta inputs to expand. An empty array is allowed and produces an empty result.
+    /// @return pairedInputs The `2n` resulting inputs: the `n` created copies first, followed by the `n` consumed
+    /// copies in the same order.
+    /// @return summedRandomness The sum of all value commitment randomnesses across `pairedInputs`, reduced modulo
+    /// `SECP256K1_ORDER`. Tests can pass this as the proof's value commitment randomness so the proof matches the
+    /// summed delta instance.
+    /// @dev For each base input, emits one created (positive) copy and one consumed (negative) copy with the same
+    /// kind, quantity, and randomness. Because each resource is paired with its exact counterpart of the same kind,
+    /// the pair self-cancels regardless of the underlying magnitude — and the summed delta stays balanced even when
+    /// different base inputs use different kinds.
     function createBalancedPairs(InstanceInputs[] memory baseInputs)
         internal
         pure
-        returns (InstanceInputs[] memory pairedInputs, uint256 valueCommitmentRandomnessAcc)
+        returns (InstanceInputs[] memory pairedInputs, uint256 summedRandomness)
     {
-        if (baseInputs.length == 0) {
-            return (baseInputs, 0);
-        }
-
-        uint256 expectedKind = baseInputs[0].kind;
-        validateKind(expectedKind);
-
-        // Create array with double the length for pairs
+        // Each base input expands into two paired inputs, so the result has twice the length.
         pairedInputs = new InstanceInputs[](baseInputs.length * 2);
-        valueCommitmentRandomnessAcc = 0;
 
-        for (uint256 i = 0; i < baseInputs.length; i++) {
-            if (baseInputs[i].kind != expectedKind) {
-                revert KindMismatch({expected: expectedKind, actual: baseInputs[i].kind});
-            }
-
-            // Positive (created) version
+        for (uint256 i = 0; i < baseInputs.length; ++i) {
+            // Created copy: positive (created) contribution to the delta sum.
             pairedInputs[i] = InstanceInputs({
-                kind: expectedKind,
+                kind: baseInputs[i].kind,
                 valueCommitmentRandomness: baseInputs[i].valueCommitmentRandomness,
                 quantity: baseInputs[i].quantity,
                 consumed: false
             });
 
-            // Negative (consumed) version - same quantity, opposite sign
+            // Consumed copy: same kind, randomness, and magnitude, but opposite sign — cancels the created copy above.
             pairedInputs[baseInputs.length + i] = InstanceInputs({
-                kind: expectedKind,
+                kind: baseInputs[i].kind,
                 valueCommitmentRandomness: baseInputs[i].valueCommitmentRandomness,
                 quantity: baseInputs[i].quantity,
                 consumed: true
             });
 
-            // Accumulate randomness (each input contributes twice)
-            valueCommitmentRandomnessAcc = addmod(
-                valueCommitmentRandomnessAcc,
-                mulmod(2, baseInputs[i].valueCommitmentRandomness, SECP256K1_ORDER),
-                SECP256K1_ORDER
+            // Each base randomness is included twice (once per copy), so it contributes `2 * randomness` to the sum.
+            summedRandomness = addmod(
+                summedRandomness, mulmod(2, baseInputs[i].valueCommitmentRandomness, SECP256K1_ORDER), SECP256K1_ORDER
             );
         }
+    }
+
+    /// @notice Computes the pre-delta scalar
+    /// (`kind * signedQuantity + valueCommitmentRandomness` mod `SECP256K1_ORDER`) for the given inputs without
+    /// invoking the cheatcode VM.
+    /// @dev Exposed so fuzz tests can pre-check that the pre-delta is non-zero before calling `generateInstance`,
+    /// which would otherwise revert.
+    /// @param inputs The delta instance inputs.
+    /// @return preDelta The pre-delta scalar.
+    function computePreDelta(InstanceInputs memory inputs) internal pure returns (uint256 preDelta) {
+        uint256 signedQuantity = signedQuantityModOrder(inputs.consumed, inputs.quantity);
+        uint256 kindTimesQuantity = mulmod(inputs.kind, signedQuantity, SECP256K1_ORDER);
+        preDelta = addmod(kindTimesQuantity, inputs.valueCommitmentRandomness, SECP256K1_ORDER);
+    }
+
+    /// @notice Converts a signed quantity, given as a (sign, magnitude) pair, into its scalar representative in
+    /// `[0, SECP256K1_ORDER)`.
+    /// @param isNegative True for a non-positive quantity (consumed resource), false for a non-negative quantity
+    /// (created resource).
+    /// @param magnitude The absolute value of the quantity.
+    /// @return scalar The non-negative integer less than `SECP256K1_ORDER` that represents the signed quantity modulo
+    /// the curve order.
+    /// @dev Negative quantities are mapped to `SECP256K1_ORDER - magnitude` so that addition modulo the curve order
+    /// matches signed addition. This mirrors the value commitment scheme's convention: consumed resources contribute
+    /// negative scalars, created resources contribute positive ones.
+    function signedQuantityModOrder(bool isNegative, uint128 magnitude) internal pure returns (uint256 scalar) {
+        scalar = isNegative ? (SECP256K1_ORDER - uint256(magnitude)).modOrder() : uint256(magnitude);
+    }
+
+    /// @notice Returns the value commitment randomness reduced modulo `SECP256K1_ORDER`, requiring the result to be
+    /// non-zero.
+    /// @param value The value commitment randomness to validate.
+    /// @return checked The reduced, non-zero value commitment randomness.
+    function checkedValueCommitmentRandomness(uint256 value) internal pure returns (uint256 checked) {
+        checked = value.modOrder();
+        require(checked != 0, ValueCommitmentRandomnessZero());
+    }
+
+    /// @notice Reduces a scalar to its canonical representative in `[0, SECP256K1_ORDER)`.
+    /// @param value The scalar to reduce.
+    /// @return reduced The canonical representative of `value` modulo `SECP256K1_ORDER`.
+    function modOrder(uint256 value) internal pure returns (uint256 reduced) {
+        reduced = value % SECP256K1_ORDER;
     }
 }
