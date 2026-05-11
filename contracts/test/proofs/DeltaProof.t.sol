@@ -104,8 +104,9 @@ contract DeltaProofTest is Test {
         assertEq(computedDelta.y, expectedDelta.y, "computed delta y should match expected");
     }
 
-    /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function testFuzz_verify_inconsistent_delta_fails1(
+    /// @notice Test that Delta.verify rejects a delta proof when the instance has a non-zero signed quantity
+    /// component that the proof does not account for.
+    function testFuzz_verify_fails_if_instance_quantity_is_nonzero(
         DeltaGen.InstanceInputs memory deltaInstanceInputs,
         bytes32 fuzzedVerifyingKey
     ) public {
@@ -129,8 +130,9 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
 
-    /// @notice Test that Delta.verify rejects a delta proof that does not correspond to instance
-    function testFuzz_verify_inconsistent_delta_fails2( // TODO Improve name
+    /// @notice Test that Delta.verify rejects a delta proof whose value commitment randomness differs from the one
+    /// used to construct the instance.
+    function testFuzz_verify_fails_if_value_commitment_randomness_of_instance_and_proof_mismatch(
         uint256 kind,
         bool consumed,
         bytes32 verifyingKey,
