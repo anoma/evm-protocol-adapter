@@ -144,15 +144,14 @@ library DeltaGen {
         }
     }
 
-    /// @notice Computes the pre-delta scalar
-    /// (`kind * signedQuantity + valueCommitmentRandomness` mod `SECP256K1_ORDER`) for the given inputs without
-    /// invoking the cheatcode VM.
-    /// @dev Exposed so fuzz tests can pre-check that the pre-delta is non-zero before calling `generateInstance`,
-    /// which would otherwise revert.
+    /// @notice Computes the pre-delta (`kind * signedQuantity + valueCommitmentRandomness` mod `SECP256K1_ORDER`) for
+    /// the given inputs.
     /// @param inputs The delta instance inputs.
     /// @return preDelta The pre-delta scalar.
+    /// @dev This function allows fuzz tests to pre-check that the pre-delta is non-zero before calling
+    /// `generateInstance`, which would otherwise revert.
     function computePreDelta(InstanceInputs memory inputs) internal pure returns (uint256 preDelta) {
-        uint256 signedQuantity = signedQuantityModOrder(inputs.consumed, inputs.quantity);
+        uint256 signedQuantity = signedQuantityModOrder({isNegative: inputs.consumed, magnitude: inputs.quantity});
         uint256 kindTimesQuantity = mulmod(inputs.kind, signedQuantity, SECP256K1_ORDER);
         preDelta = addmod(kindTimesQuantity, inputs.valueCommitmentRandomness, SECP256K1_ORDER);
     }
