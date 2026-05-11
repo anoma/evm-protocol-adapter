@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ECDSA} from "@openzeppelin-contracts-5.6.1/utils/cryptography/ECDSA.sol";
 import {EllipticCurve} from "elliptic-curve-solidity-0.2.5/contracts/EllipticCurve.sol";
 import {Test, Vm} from "forge-std-1.15.0/src/Test.sol";
 
@@ -31,7 +32,7 @@ contract DeltaProofTest is Test {
     using DeltaGen for DeltaGen.InstanceInputs;
     using DeltaGen for uint256;
 
-    function testFuzz_verify_delta_succeeds(
+    function testFuzz_verify_verifies_a_zero_delta(
         uint256 kind,
         uint256 valueCommitmentRandomness,
         bool consumed,
@@ -40,7 +41,7 @@ contract DeltaProofTest is Test {
         kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
         valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
 
-        // Construct delta instance inputs from the above parameters
+        // Construct delta instance inputs from the above parameters for quantity zero.
         DeltaGen.InstanceInputs memory deltaInstanceInputs = DeltaGen.InstanceInputs({
             kind: kind, quantity: 0, consumed: consumed, valueCommitmentRandomness: valueCommitmentRandomness
         });
@@ -60,8 +61,7 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
 
-    /// @notice Test that Delta.add correctly adds deltas
-    function testFuzz_add_delta_correctness(
+    function testFuzz_add_adds_deltas(
         uint256 kind,
         DeltaFuzzing.InstanceInputsExceptKind memory input1,
         DeltaFuzzing.InstanceInputsExceptKind memory input2
@@ -104,35 +104,36 @@ contract DeltaProofTest is Test {
         assertEq(computedDelta.y, expectedDelta.y, "computed delta y should match expected");
     }
 
-    /// @notice Test that Delta.verify rejects a delta proof when the instance has a non-zero signed quantity
-    /// component that the proof does not account for.
-    function testFuzz_verify_fails_if_instance_quantity_is_nonzero(
+    function testFuzz_verify_reverts_if_the_delta_is_non_zero(
         DeltaGen.InstanceInputs memory deltaInstanceInputs,
-        bytes32 fuzzedVerifyingKey
+        bytes32 verifyingKey
     ) public {
         deltaInstanceInputs.kind = bound(deltaInstanceInputs.kind, 1, DeltaGen.SECP256K1_ORDER - 1);
         deltaInstanceInputs.valueCommitmentRandomness =
             bound(deltaInstanceInputs.valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
 
+        // Ensure that the quantity is non-zero and that the delta
         vm.assume(DeltaGen.signedQuantityModOrder(deltaInstanceInputs.consumed, deltaInstanceInputs.quantity) != 0);
-
         vm.assume(deltaInstanceInputs.computePreDelta() != 0);
-
-        // Construct delta proof inputs from the above parameters
-        DeltaGen.ProofInputs memory deltaProofInputs = DeltaGen.ProofInputs({
-            valueCommitmentRandomness: deltaInstanceInputs.valueCommitmentRandomness, verifyingKey: fuzzedVerifyingKey
-        });
 
         // Generate a delta proof and instance from the above tags and preimage
         Delta.Point memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
+
+        // Construct delta proof inputs from the above parameters
+        DeltaGen.ProofInputs memory deltaProofInputs = DeltaGen.ProofInputs({
+            valueCommitmentRandomness: deltaInstanceInputs.valueCommitmentRandomness, verifyingKey: verifyingKey
+        });
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
-        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
+
+        address expected = instance.toAccount();
+        address actual = ECDSA.recover(deltaProofInputs.verifyingKey, proof);
+        vm.expectRevert(abi.encodeWithSelector(Delta.DeltaMismatch.selector, expected, actual));
         DeltaFuzzing.verify({proof: proof, instance: instance, verifyingKey: deltaProofInputs.verifyingKey});
     }
 
     /// @notice Test that Delta.verify rejects a delta proof whose value commitment randomness differs from the one
     /// used to construct the instance.
-    function testFuzz_verify_fails_if_value_commitment_randomness_of_instance_and_proof_mismatch(
+    function testFuzz_verify_reverts_if_value_commitment_randomness_of_instance_and_proof_mismatch(
         uint256 kind,
         bool consumed,
         bytes32 verifyingKey,
@@ -145,26 +146,24 @@ contract DeltaProofTest is Test {
         valueCommitmentRandomness2 = bound(valueCommitmentRandomness2, 1, DeltaGen.SECP256K1_ORDER - 1);
         vm.assume(valueCommitmentRandomness1.modOrder() != valueCommitmentRandomness2.modOrder());
 
-        bytes memory proofRcv1 = DeltaGen.generateProof(
+        DeltaGen.InstanceInputs memory deltaInputs = DeltaGen.InstanceInputs({
+            kind: kind, quantity: 0, consumed: consumed, valueCommitmentRandomness: valueCommitmentRandomness1
+        });
+        vm.assume(deltaInputs.computePreDelta() != 0);
+        Delta.Point memory instanceRcv1 = DeltaGen.generateInstance(vm, deltaInputs);
+
+        bytes memory proofRcv2 = DeltaGen.generateProof(
             vm,
-            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness1, verifyingKey: verifyingKey})
+            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness2, verifyingKey: verifyingKey})
         );
 
-        Delta.Point memory instanceRcv2;
-        {
-            DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
-                kind: kind, quantity: 0, consumed: consumed, valueCommitmentRandomness: valueCommitmentRandomness2
-            });
-            vm.assume(deltaInputs2.computePreDelta() != 0); // TODO move?
-            instanceRcv2 = DeltaGen.generateInstance(vm, deltaInputs2);
-        }
-
-        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        DeltaFuzzing.verify({proof: proofRcv1, instance: instanceRcv2, verifyingKey: verifyingKey});
+        address expected = instanceRcv1.toAccount();
+        address actual = ECDSA.recover(verifyingKey, proofRcv2);
+        vm.expectRevert(abi.encodeWithSelector(Delta.DeltaMismatch.selector, expected, actual));
+        DeltaFuzzing.verify({proof: proofRcv2, instance: instanceRcv1, verifyingKey: verifyingKey});
     }
 
-    /// @notice Test that Delta.verify rejects a delta proof that does not correspond to the verifying key
-    function testFuzz_verify_fails_if_verifying_keys_of_instance_and_proof_mismatch(
+    function testFuzz_verify_reverts_if_verifying_keys_mismatch(
         uint256 kind,
         uint256 valueCommitmentRandomness,
         bool consumed,
@@ -175,28 +174,22 @@ contract DeltaProofTest is Test {
         valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
         vm.assume(verifyingKey1 != verifyingKey2);
 
+        DeltaGen.InstanceInputs memory deltaInputs = DeltaGen.InstanceInputs({
+            kind: kind, quantity: 0, consumed: consumed, valueCommitmentRandomness: valueCommitmentRandomness
+        });
+        vm.assume(deltaInputs.computePreDelta() != 0);
+        Delta.Point memory instance = DeltaGen.generateInstance(vm, deltaInputs);
+
         bytes memory proofForVk1 = DeltaGen.generateProof(
             vm,
             DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey1})
         );
 
-        Delta.Point memory instance;
-        {
-            DeltaGen.InstanceInputs memory deltaInputs2 = DeltaGen.InstanceInputs({
-                kind: kind, quantity: 0, consumed: consumed, valueCommitmentRandomness: valueCommitmentRandomness
-            });
-            vm.assume(deltaInputs2.computePreDelta() != 0);
-
-            instance = DeltaGen.generateInstance(vm, deltaInputs2);
-        }
-
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
         DeltaFuzzing.verify({proof: proofForVk1, instance: instance, verifyingKey: verifyingKey2});
     }
 
-    /// @notice Check that balanced pairs (using the new simplified approach) pass verification.
-    /// @dev createBalancedPairs guarantees quantities sum to zero by pairing each +q with -q.
-    function testFuzz_verify_balanced_pairs_succeeds(
+    function testFuzz_verify_passes_if_balanced_kind_and_quantity_pairs_accumulate_to_a_zero_delta(
         uint256 kind,
         DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs,
         bytes32 verifyingKey
@@ -235,8 +228,7 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
-    /// @notice Check that an imbalanced transaction (non-zero quantity sum) fails verification.
-    function testFuzz_verify_imbalanced_delta_fails(
+    function testFuzz_verify_reverts_if_the_delta_is_non_zero(
         uint256 kind,
         uint256 valueCommitmentRandomness,
         uint128 quantity,
