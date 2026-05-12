@@ -152,7 +152,7 @@ library DeltaGen {
     }
 
     /// @notice Reduces a value to its canonical representative in `[0, SECP256K1_ORDER)`.
-    /// @param value The values to reduce.
+    /// @param value The value to reduce.
     /// @return reduced The canonical representative of the value.
     function modOrder(uint256 value) internal pure returns (uint256 reduced) {
         reduced = value % SECP256K1_ORDER;
