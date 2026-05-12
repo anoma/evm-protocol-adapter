@@ -22,11 +22,11 @@ library DeltaGen {
     }
 
     /// @notice The inputs needed to mock a delta proof.
-    /// @param valueCommitmentRandomness The signing scalar, which must equal the sum of per-resource randomnesses
-    /// modulo `SECP256K1_ORDER` for the proof to verify against the summed delta instance.
+    /// @param summedValueCommitmentRandomness The sum of per-resource value commitment randomnesses modulo
+    /// `SECP256K1_ORDER`, used as the ECDSA signing scalar and required to match the summed delta instance.
     /// @param verifyingKey The Keccak-256 hash of the action tags being committed to; the ECDSA signing message.
     struct ProofInputs {
-        uint256 valueCommitmentRandomness;
+        uint256 summedValueCommitmentRandomness;
         bytes32 verifyingKey;
     }
 
@@ -76,10 +76,11 @@ library DeltaGen {
     /// it matches the address derived from the delta instance.
     function generateProof(VmSafe vm, ProofInputs memory inputs) internal returns (bytes memory proof) {
         // Reduce and reject zero so the cheatcode is given a valid private key.
-        inputs.valueCommitmentRandomness = checkedValueCommitmentRandomness(inputs.valueCommitmentRandomness);
+        inputs.summedValueCommitmentRandomness =
+            checkedValueCommitmentRandomness(inputs.summedValueCommitmentRandomness);
 
-        // The wallet's private key is the value commitment randomness; signing the verifying key produces the proof.
-        VmSafe.Wallet memory wallet = vm.createWallet(inputs.valueCommitmentRandomness);
+        // The wallet's private key is the summed randomness; signing the verifying key produces the proof.
+        VmSafe.Wallet memory wallet = vm.createWallet(inputs.summedValueCommitmentRandomness);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet, inputs.verifyingKey);
 
         proof = abi.encodePacked(r, s, v);
@@ -88,14 +89,14 @@ library DeltaGen {
     /// @notice Expands `n` instance inputs into `2n` inputs whose quantities sum to zero, yielding a balanced delta.
     /// @param baseInputs The `n` base inputs to expand (an empty array is allowed).
     /// @return pairedInputs The `2n` paired inputs: `n` created copies followed by `n` consumed copies, in input order.
-    /// @return summedRandomness The sum of all randomnesses in `pairedInputs` (mod `SECP256K1_ORDER`), suitable as
-    /// the proof's randomness for the summed delta.
+    /// @return summedValueCommitmentRandomness The sum of all randomnesses in `pairedInputs` (mod `SECP256K1_ORDER`),
+    /// suitable as the proof's randomness for the summed delta.
     /// @dev Each base input becomes a created (positive) and a consumed (negative) copy with the same kind,
     /// quantity, and randomness.
     function createBalancedPairs(InstanceInputs[] memory baseInputs)
         internal
         pure
-        returns (InstanceInputs[] memory pairedInputs, uint256 summedRandomness)
+        returns (InstanceInputs[] memory pairedInputs, uint256 summedValueCommitmentRandomness)
     {
         // Each base input expands into two paired inputs, so the result has twice the length.
         pairedInputs = new InstanceInputs[](baseInputs.length * 2);
@@ -118,8 +119,10 @@ library DeltaGen {
             });
 
             // Each base randomness is included twice (once per copy), so it contributes `2 * randomness` to the sum.
-            summedRandomness = addmod(
-                summedRandomness, mulmod(2, baseInputs[i].valueCommitmentRandomness, SECP256K1_ORDER), SECP256K1_ORDER
+            summedValueCommitmentRandomness = addmod(
+                summedValueCommitmentRandomness,
+                mulmod(2, baseInputs[i].valueCommitmentRandomness, SECP256K1_ORDER),
+                SECP256K1_ORDER
             );
         }
     }
@@ -129,18 +132,18 @@ library DeltaGen {
     /// @return preDelta The pre-delta scalar.
     /// @dev Exposed so fuzz tests can pre-check that the pre-delta is non-zero before calling `generateInstance`.
     function computePreDelta(InstanceInputs memory inputs) internal pure returns (uint256 preDelta) {
-        uint256 signedQuantity = signedQuantityModOrder({isNegative: inputs.consumed, magnitude: inputs.quantity});
+        uint256 signedQuantity = signedQuantityModOrder({isNegative: inputs.consumed, quantity: inputs.quantity});
         uint256 kindTimesQuantity = mulmod(inputs.kind, signedQuantity, SECP256K1_ORDER);
         preDelta = addmod(kindTimesQuantity, inputs.valueCommitmentRandomness, SECP256K1_ORDER);
     }
 
-    /// @notice Converts a signed quantity (sign, magnitude) to its canonical representative in `[0, SECP256K1_ORDER)`.
+    /// @notice Converts a signed resource quantity to its canonical representative in `[0, SECP256K1_ORDER)`.
     /// @param isNegative True for consumed resources (negative contribution), false for created (positive).
-    /// @param magnitude The absolute value of the quantity.
+    /// @param quantity The unsigned magnitude of the resource quantity.
     /// @return scalar The canonical representative of the signed quantity.
-    /// @dev Negatives are mapped to `SECP256K1_ORDER - magnitude` so addition mod the order matches signed addition.
-    function signedQuantityModOrder(bool isNegative, uint128 magnitude) internal pure returns (uint256 scalar) {
-        scalar = isNegative ? (SECP256K1_ORDER - uint256(magnitude)).modOrder() : uint256(magnitude);
+    /// @dev Negative inputs are mapped to `SECP256K1_ORDER - quantity` so addition mod the order matches signed addition.
+    function signedQuantityModOrder(bool isNegative, uint128 quantity) internal pure returns (uint256 scalar) {
+        scalar = isNegative ? (SECP256K1_ORDER - uint256(quantity)).modOrder() : uint256(quantity);
     }
 
     /// @notice Reduces a value commitment randomness modulo `SECP256K1_ORDER`, reverting if the result is zero.

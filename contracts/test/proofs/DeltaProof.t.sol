@@ -92,7 +92,8 @@ contract DeltaProofTest is Test {
 
         // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaProofInputs = DeltaGen.ProofInputs({
-            valueCommitmentRandomness: deltaInstanceInputs.valueCommitmentRandomness, verifyingKey: verifyingKey
+            summedValueCommitmentRandomness: deltaInstanceInputs.valueCommitmentRandomness,
+            verifyingKey: verifyingKey
         });
         bytes memory proof = DeltaGen.generateProof(vm, deltaProofInputs);
 
@@ -123,7 +124,10 @@ contract DeltaProofTest is Test {
 
         bytes memory proofRcv2 = DeltaGen.generateProof(
             vm,
-            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness2, verifyingKey: verifyingKey})
+            DeltaGen.ProofInputs({
+                summedValueCommitmentRandomness: valueCommitmentRandomness2,
+                verifyingKey: verifyingKey
+            })
         );
 
         address expected = instanceRcv1.toAccount();
@@ -151,7 +155,10 @@ contract DeltaProofTest is Test {
 
         bytes memory proofForVk1 = DeltaGen.generateProof(
             vm,
-            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey1})
+            DeltaGen.ProofInputs({
+                summedValueCommitmentRandomness: valueCommitmentRandomness,
+                verifyingKey: verifyingKey1
+            })
         );
 
         vm.expectPartialRevert(Delta.DeltaMismatch.selector);
@@ -175,7 +182,10 @@ contract DeltaProofTest is Test {
 
         // Construct delta proof inputs from the above parameters
         DeltaGen.ProofInputs memory deltaProofInputs =
-            DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey});
+            DeltaGen.ProofInputs({
+                summedValueCommitmentRandomness: valueCommitmentRandomness,
+                verifyingKey: verifyingKey
+            });
 
         // Generate a delta instance from the above inputs
         Delta.Point memory instance = DeltaGen.generateInstance(vm, deltaInstanceInputs);
@@ -219,7 +229,8 @@ contract DeltaProofTest is Test {
 
         // Generate proof with the total accumulated randomness
         bytes memory proof = DeltaGen.generateProof(
-            vm, DeltaGen.ProofInputs({valueCommitmentRandomness: totalRandomness, verifyingKey: verifyingKey})
+            vm,
+            DeltaGen.ProofInputs({summedValueCommitmentRandomness: totalRandomness, verifyingKey: verifyingKey})
         );
 
         // Verify: should succeed because quantities are balanced (sum to zero)

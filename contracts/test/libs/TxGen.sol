@@ -211,13 +211,14 @@ library TxGen {
 
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
-        // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
+        // Generate a proof over the tags where the summed randomness is the expected total
         bytes memory proof = "";
         if (tags.length != 0) {
             proof = DeltaGen.generateProof(
                 vm,
                 DeltaGen.ProofInputs({
-                    valueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
+                    summedValueCommitmentRandomness: tags.length,
+                    verifyingKey: Delta.computeVerifyingKey(tags)
                 })
             );
         }
@@ -249,13 +250,14 @@ library TxGen {
 
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
-        // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
+        // Generate a proof over the tags where the summed randomness is the expected total
         bytes memory proof = "";
         if (tags.length != 0) {
             proof = DeltaGen.generateProof(
                 vm,
                 DeltaGen.ProofInputs({
-                    valueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
+                    summedValueCommitmentRandomness: tags.length,
+                    verifyingKey: Delta.computeVerifyingKey(tags)
                 })
             );
         }
