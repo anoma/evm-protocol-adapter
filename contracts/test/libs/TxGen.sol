@@ -217,8 +217,7 @@ library TxGen {
             proof = DeltaGen.generateProof(
                 vm,
                 DeltaGen.ProofInputs({
-                    summedValueCommitmentRandomness: tags.length,
-                    verifyingKey: Delta.computeVerifyingKey(tags)
+                    summedValueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
                 })
             );
         }
@@ -256,8 +255,7 @@ library TxGen {
             proof = DeltaGen.generateProof(
                 vm,
                 DeltaGen.ProofInputs({
-                    summedValueCommitmentRandomness: tags.length,
-                    verifyingKey: Delta.computeVerifyingKey(tags)
+                    summedValueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
                 })
             );
         }
