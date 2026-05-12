@@ -80,8 +80,7 @@ library TxGen {
         unit = Compliance.VerifierInput({
             proof: mockVerifier.mockProve({
                 imageId: Compliance._VERIFYING_KEY, journalDigest: sha256(instance.toJournal())
-            })
-            .seal,
+            }).seal,
             instance: instance
         });
     }
@@ -277,8 +276,7 @@ library TxGen {
         aggregatedTxn.aggregationProof =
         mockVerifier.mockProve({
             imageId: Aggregation._VERIFYING_KEY, journalDigest: sha256(aggregatedInstanceGeneration(txn).toJournal())
-        })
-        .seal;
+        }).seal;
     }
 
     function logicVerifierInput(
@@ -298,8 +296,7 @@ library TxGen {
         input.proof =
         mockVerifier.mockProve({
             imageId: resource.logicRef, journalDigest: sha256(input.toInstance(actionTreeRoot, isConsumed).toJournal())
-        })
-        .seal;
+        }).seal;
     }
 
     function generateActionConfigs(uint256 actionCount, uint256 complianceUnitCount)

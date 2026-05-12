@@ -443,10 +443,10 @@ contract ProtocolAdapter is
 
             bytes32 jounalDigest = sha256(
                 Aggregation.Instance({
-                        logicRefs: vars.logicRefs,
-                        complianceInstances: vars.complianceInstances,
-                        logicInstances: vars.logicInstances
-                    }).toJournal()
+                    logicRefs: vars.logicRefs,
+                    complianceInstances: vars.complianceInstances,
+                    logicInstances: vars.logicInstances
+                }).toJournal()
             );
 
             if (!vars.skipRiscZeroProofVerification) {
