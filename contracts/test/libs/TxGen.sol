@@ -12,7 +12,7 @@ import {Logic} from "../../src/libs/proving/Logic.sol";
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
 import {Transaction, Action, Resource} from "./../../src/Types.sol";
-import {DeltaGen} from "./../proofs/DeltaProof.t.sol";
+import {DeltaGen} from "./DeltaGen.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
@@ -211,13 +211,13 @@ library TxGen {
 
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
-        // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
+        // Generate a proof over the tags where the summed randomness is the expected total
         bytes memory proof = "";
         if (tags.length != 0) {
             proof = DeltaGen.generateProof(
                 vm,
                 DeltaGen.ProofInputs({
-                    valueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
+                    summedValueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
                 })
             );
         }
@@ -249,13 +249,13 @@ library TxGen {
 
         // Grab the tags that will be signed over
         bytes32[] memory tags = TxGen.collectTags(actions);
-        // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
+        // Generate a proof over the tags where the summed randomness is the expected total
         bytes memory proof = "";
         if (tags.length != 0) {
             proof = DeltaGen.generateProof(
                 vm,
                 DeltaGen.ProofInputs({
-                    valueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
+                    summedValueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
                 })
             );
         }
