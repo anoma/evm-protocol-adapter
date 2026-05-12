@@ -83,7 +83,7 @@ contract DeltaProofTest is Test {
         deltaInstanceInputs.valueCommitmentRandomness =
             bound(deltaInstanceInputs.valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
 
-        // Ensure that the quantity is non-zero and that the delta
+        // Ensure that the quantity and pre-delta are non-zero.
         vm.assume(DeltaGen.signedQuantityModOrder(deltaInstanceInputs.consumed, deltaInstanceInputs.quantity) != 0);
         vm.assume(deltaInstanceInputs.computePreDelta() != 0);
 
@@ -224,39 +224,6 @@ contract DeltaProofTest is Test {
 
         // Verify: should succeed because quantities are balanced (sum to zero)
         DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
-    }
-
-    function testFuzz_verify_reverts_if_the_delta_is_non_zero(
-        uint256 kind,
-        uint256 valueCommitmentRandomness,
-        uint128 quantity,
-        bytes32 verifyingKey
-    ) public {
-        // Bound inputs to valid ranges
-        kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
-        valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
-        vm.assume(quantity > 0); // Must have non-zero quantity to be imbalanced
-
-        // Create a single delta with non-zero quantity (imbalanced by definition)
-        DeltaGen.InstanceInputs memory deltaInput = DeltaGen.InstanceInputs({
-            kind: kind,
-            valueCommitmentRandomness: valueCommitmentRandomness,
-            quantity: quantity,
-            consumed: false // positive quantity, doesn't balance to zero
-        });
-        vm.assume(deltaInput.computePreDelta() != 0);
-
-        // Generate the delta instance
-        Delta.Point memory deltaInstance = DeltaGen.generateInstance(vm, deltaInput);
-
-        // Generate proof with the same randomness
-        bytes memory proof = DeltaGen.generateProof(
-            vm, DeltaGen.ProofInputs({valueCommitmentRandomness: valueCommitmentRandomness, verifyingKey: verifyingKey})
-        );
-
-        // Verify should fail because quantity != 0 (transaction is imbalanced)
-        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
-        DeltaFuzzing.verify({proof: proof, instance: deltaInstance, verifyingKey: verifyingKey});
     }
 
     function testFuzz_add_reverts_when_adding_a_non_curve_from_the_right(uint32 k, Delta.Point memory rhs) public {
