@@ -9,9 +9,8 @@ library DeltaGen {
     using DeltaGen for uint256;
 
     /// @notice The inputs needed to mock a delta instance for a single resource.
-    /// @param kind The resource kind, reduced modulo `SECP256K1_ORDER` and required to be non-zero.
-    /// @param valueCommitmentRandomness The blinding scalar, reduced modulo `SECP256K1_ORDER` and required to be
-    /// non-zero.
+    /// @param kind The resource kind.
+    /// @param valueCommitmentRandomness The blinding scalar.
     /// @param quantity The magnitude of the resource quantity.
     /// @param consumed Whether the resource is consumed (negative contribution to the delta) or created (positive).
     struct InstanceInputs {
@@ -41,7 +40,8 @@ library DeltaGen {
     error PreDeltaZero();
 
     /// @notice Mocks a delta instance as `preDelta * G` on secp256k1, where `G` is the generator and
-    /// `preDelta = kind * signedQuantity + valueCommitmentRandomness` (mod `SECP256K1_ORDER`).
+    /// `preDelta = kind * signedQuantity + valueCommitmentRandomness` (mod `SECP256K1_ORDER`). Reverts with
+    /// `PreDeltaZero` if the pre-delta reduces to zero.
     /// @param vm The Forge VM interface.
     /// @param inputs The delta instance inputs.
     /// @return instance The mocked curve point.
