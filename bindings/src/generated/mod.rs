@@ -4,9 +4,6 @@
 //! Do not manually edit these files.
 //! These files may be overwritten by the codegen system at any time.
 pub mod i_commitment_tree;
-pub mod i_forwarder;
 pub mod i_nullifier_set;
 pub mod i_protocol_adapter;
-pub mod i_version;
 pub mod protocol_adapter;
-pub mod versioning_lib_external;

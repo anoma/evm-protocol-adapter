@@ -4,12 +4,11 @@ pragma solidity ^0.8.30;
 import {Ownable} from "@openzeppelin-contracts-5.6.1/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts-5.6.1/utils/Pausable.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.6.1/utils/ReentrancyGuardTransient.sol";
+import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.0/src/interfaces/IForwarder.sol";
+import {Version} from "anoma-forwarder-bases-1.0.0-rc.0/src/Version.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
-import {IForwarder} from "./interfaces/IForwarder.sol";
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
-import {IVersion} from "./interfaces/IVersion.sol";
-
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {Aggregation} from "./libs/proving/Aggregation.sol";
 import {Compliance} from "./libs/proving/Compliance.sol";
@@ -17,8 +16,6 @@ import {Delta} from "./libs/proving/Delta.sol";
 import {Logic} from "./libs/proving/Logic.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 import {TagUtils} from "./libs/TagUtils.sol";
-import {Versioning} from "./libs/Versioning.sol";
-
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 import {Action, Transaction} from "./Types.sol";
@@ -29,7 +26,7 @@ import {Action, Transaction} from "./Types.sol";
 /// @custom:security-contact security@anoma.foundation
 contract ProtocolAdapter is
     IProtocolAdapter,
-    IVersion,
+    Version,
     ReentrancyGuardTransient,
     Ownable,
     Pausable,
@@ -91,7 +88,7 @@ contract ProtocolAdapter is
         RiscZeroVerifierRouter riscZeroVerifierRouter,
         bytes4 riscZeroVerifierSelector,
         address emergencyStopCaller
-    ) Ownable(emergencyStopCaller) {
+    ) Version("1.2.0-rc.1") Ownable(emergencyStopCaller) {
         require(address(riscZeroVerifierRouter) != address(0), ZeroNotAllowed());
 
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
@@ -118,11 +115,6 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function emergencyStop() external override onlyOwner whenNotPaused {
         _pause();
-    }
-
-    /// @inheritdoc IVersion
-    function getVersion() external pure override returns (bytes32 version) {
-        version = Versioning._PROTOCOL_ADAPTER_VERSION;
     }
 
     /// @inheritdoc IProtocolAdapter

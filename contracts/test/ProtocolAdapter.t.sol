@@ -231,18 +231,12 @@ contract ProtocolAdapterTest is Test {
         assertEq(_pa.getRiscZeroVerifierSelector(), _verifierSelector, "verifier selector should match");
     }
 
-    function test_getVersion_returns_a_semantic_version() public view {
-        bytes32 version = _pa.getVersion();
+    function test_check_that_the_current_version_is_a_not_a_major_release() public view {
+        int256 lt = -1;
+        //int256 eq = 0;
+        int256 gt = 1;
 
-        assertEq(
-            version.cmp("0.0.0"),
-            1, /* GT */
-            "version should be greater than 0.0.0"
-        );
-        assertEq(
-            version.cmp("999.999.999"),
-            -1, /* LT */
-            "version should be less than 999.999.999"
-        );
+        assertEq(SemVerLib.cmp(_pa.getVersion(), "1.0.0"), gt, "version should be greater than 1.0.0");
+        assertEq(SemVerLib.cmp(_pa.getVersion(), "2.0.0"), lt, "version should be less than 2.0.0");
     }
 }
