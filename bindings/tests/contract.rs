@@ -7,28 +7,42 @@ use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::protocol_adapter_deployments_map;
 use anoma_pa_evm_bindings::contract::protocol_adapter;
 use anoma_pa_evm_bindings::generated::protocol_adapter;
-use anoma_pa_evm_bindings::generated::versioning_lib_external;
 use anoma_pa_evm_bindings::helpers::alchemy_url;
 
 #[tokio::test]
 async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
-    // Get the expected protocol adapter version.
-    let expected_version = {
-        let provider = ProviderBuilder::new().connect_anvil_with_wallet();
-        let contract = versioning_lib_external::VersioningLibExternal::deploy(&provider)
-            .await
-            .expect("Couldn't deploy `VersioningLibExternal` contract");
-        contract
-            .version()
-            .call()
-            .await
-            .expect("Couldn't get version")
-    };
-
     // Iterate over all supported chains
     for chain in protocol_adapter_deployments_map().keys() {
-        let actual_version: alloy::primitives::FixedBytes<32> = pa_instance(chain)
+        let existing_pa = pa_instance(chain).await;
+
+        let current_pa = protocol_adapter::ProtocolAdapter::deploy(
+            existing_pa.provider(),
+            existing_pa
+                .getRiscZeroVerifierRouter()
+                .call()
+                .await
+                .expect("Couldn't get risc zero verifier router address"),
+            existing_pa
+                .getRiscZeroVerifierSelector()
+                .call()
+                .await
+                .expect("Couldn't get risc zero verifier selector"),
+            existing_pa
+                .owner()
+                .call()
+                .await
+                .expect("Couldn't get owner address"),
+        )
+        .await
+        .expect("Couldn't deploy protocol adapter");
+
+        let expected_version = current_pa
+            .getVersion()
+            .call()
             .await
+            .expect("Couldn't get version");
+
+        let actual_version: alloy::primitives::FixedBytes<32> = existing_pa
             .getVersion()
             .call()
             .await

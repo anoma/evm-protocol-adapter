@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ForwarderExample} from "anoma-forwarder-bases-1.0.0-rc.0/test/examples/Forwarder.e.sol";
+import {INPUT, EXPECTED_OUTPUT} from "anoma-forwarder-bases-1.0.0-rc.0/test/examples/ForwarderTarget.e.sol";
 import {
     DeployRiscZeroContractsMock
 } from "anoma-risc0-deployments-1.0.0-rc.1/test/script/DeployRiscZeroContractsMock.s.sol";
@@ -20,13 +22,9 @@ import {SHA256} from "../src/libs/SHA256.sol";
 import {TagUtils} from "../src/libs/TagUtils.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-
 import {CommitmentTree} from "../src/state/CommitmentTree.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {Transaction, Action} from "../src/Types.sol";
-
-import {ForwarderExample} from "./examples/Forwarder.e.sol";
-import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {CommitmentTreeMock} from "./mocks/CommitmentTree.m.sol";
 
@@ -53,9 +51,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         _mockPa = new ProtocolAdapter(_router, _mockVerifier.SELECTOR(), _EMERGENCY_COMMITTEE);
 
-        _fwd = address(
-            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
-        );
+        _fwd = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
 
         _fwdList = new address[](1);
         _fwdList[0] = _fwd;
@@ -146,9 +142,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function testFuzz_execute_emits_all_ForwarderCallExecuted_events(bool aggregated) public {
-        address fwd2 = address(
-            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
-        );
+        address fwd2 = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
         assertNotEq(_fwd, fwd2, "forwarder addresses should differ");
 
         address[] memory fwdList = new address[](2);

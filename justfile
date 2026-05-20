@@ -52,7 +52,7 @@ contracts-test *args:
 contracts-gen-bindings:
     cd contracts && forge clean && forge bind \
         --skip test --skip script \
-        --select '^(IProtocolAdapter|ProtocolAdapter|IVersion|VersioningLibExternal|ICommitmentTree|INullifierSet|IForwarder)$' \
+        --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet)$' \
         --bindings-path ../bindings/src/generated/ \
         --module \
         --overwrite

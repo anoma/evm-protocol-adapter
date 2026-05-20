@@ -4,9 +4,7 @@ pragma solidity ^0.8.30;
 import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-1.0.0-rc.1/src/RiscZeroVerifierSelectors.sol";
 import {SupportedNetworks} from "anoma-risc0-deployments-1.0.0-rc.1/src/SupportedNetworks.sol";
 import {Script} from "forge-std-1.15.0/src/Script.sol";
-import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 
-import {Versioning} from "../src/libs/Versioning.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 /// @title DeployProtocolAdapter
@@ -14,8 +12,6 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 /// @notice A script to deploy protocol adapter contracts on supported networks.
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapter is SupportedNetworks, Script {
-    using LibString for bytes32;
-
     /// @notice Initializes the supported networks and associated RISC Zero verifier router addresses
     /// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).
     constructor() SupportedNetworks() {}
@@ -43,11 +39,7 @@ contract DeployProtocolAdapter is SupportedNetworks, Script {
         } else {
             // Deploy deterministically.
             protocolAdapter = address(
-                new ProtocolAdapter{
-                    salt: keccak256(
-                        bytes(string.concat("ProtocolAdapter", Versioning._PROTOCOL_ADAPTER_VERSION.fromSmallString()))
-                    )
-                }({
+                new ProtocolAdapter{salt: keccak256("ProtocolAdapter")}({
                     riscZeroVerifierRouter: data.router,
                     riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR,
                     emergencyStopCaller: emergencyStopCaller
